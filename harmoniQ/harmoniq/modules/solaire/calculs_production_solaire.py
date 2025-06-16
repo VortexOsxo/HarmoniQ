@@ -134,7 +134,7 @@ def calculate_energy_solar_plants(
     np.random.seed(0)  # reproductibilité
 
     # Index horaire
-    time_index = pd.date_range(start=date_start, end=date_end, freq="H", closed="left")
+    time_index = pd.date_range(start=date_start, end=date_end, freq="h")
     hours = time_index.hour
 
     # Profil solaire typique avec bruit
