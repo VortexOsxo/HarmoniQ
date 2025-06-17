@@ -87,7 +87,9 @@ class Meteo:
         hourly_data["direction_vent"] = hourly_wind_direction_100m
         hourly_data["pression"] = hourly_surface_pressure / 10
 
-        return pd.DataFrame(data=hourly_data)
+        df = pd.DataFrame(data=hourly_data)
+        df["date"] = df["date"] - pd.Timedelta(hours=4)
+        return (df)
 
     def get_weather_or_nearest(self, Latitude, Longitude, start_date, end_date):
         print(f"🌍 Recherche météo pour {Latitude}, {Longitude} de {start_date} à {end_date}")
@@ -107,8 +109,10 @@ class Meteo:
 
         if nearest["distance"] > 50:
             print(f"ℹ️ Station la plus proche à {nearest['distance']:.1f} km — appel API")
-            return self.get_weather_data(Latitude, Longitude, start_date, end_date)
-
+            start_str = start_date.strftime("%Y-%m-%d")
+            end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
+            return self.get_weather_data(Latitude, Longitude, start_str, end_str)
+        
         print(f"✅ Utilisation de la station à {nearest['distance']:.1f} km")
 
         # Conversion des dates en UTC avec seulement 00h00 inclus pour la date de fin
