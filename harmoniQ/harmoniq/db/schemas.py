@@ -5,7 +5,7 @@ from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql.schema import ForeignKey
 
-import pandera as pa
+import pandera.pandas as pa
 from pydantic import BaseModel, TypeAdapter, Field, field_validator, validator
 from typing import List, Optional
 from datetime import datetime, timedelta
