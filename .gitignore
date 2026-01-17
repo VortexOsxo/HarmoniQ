@@ -1,5 +1,6 @@
 # Gros fichiers/dossiers
 env
+venv
 harmoniq_env
 **/db.sqlite
 **/test_db.sqlite

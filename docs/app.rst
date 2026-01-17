@@ -12,7 +12,7 @@ Il faut aussi télécharger les données de la demande d'énergie. Pour le momen
 
 .. code-block:: bash
 
-    load-database -d
+    load-db
 
 Pour lancer l'application web (en mode debug), il faut exécuter la commande suivante :
 .. code-block:: bash

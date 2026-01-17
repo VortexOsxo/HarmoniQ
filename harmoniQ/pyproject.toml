@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "wheel"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -55,14 +55,8 @@ dev = [
     "flake8",
     "pytest",
     "httpx",
-    "Office365-REST-Python-Client"
+    "requests"
 ]
 
 [tool.setuptools]
 packages = ["harmoniq"]
-
-[tool.setuptools_scm]
-write_to = "harmoniq/_version.py"
-fallback_version = "0.1.0"
-version_scheme = "post-release"
-local_scheme = "node-and-date"
