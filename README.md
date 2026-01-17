@@ -3,7 +3,8 @@
 ## Prérequis
 
 Pour utiliser ce projet, vous avez besoin de :
-* **Python 3.8+** installé sur votre machine.
+* **Python 3.8+** installé sur votre machine. https://www.python.org/downloads/
+* **Git** installé sur votre machine. https://git-scm.com/install/
 
 ---
 
@@ -16,7 +17,21 @@ cd harmoniQ
 
 Suivez ensuite ces étapes dans l'ordre :
 
-### 0. Configuration de l'environnement (optionnel mais recommandé)
+### 0 Obtention du code source
+
+Pour obtenir le code source, vous devez cloner le dépôt Git :
+1. Ouvrez un terminal ou PowerShell dans le dossier où vous souhaitez installer le projet.
+2. Clonez le dépôt Git en exécutant la commande suivante :
+```powershell
+git clone https://github.com/VortexOsxo/HarmoniQ.git
+```
+
+3. Déplacez-vous dans le dossier fraîchement cloné :
+
+```powershell
+cd HarmoniQ
+```
+### 0.1 Configuration de l'environnement (optionnel mais recommandé)
 
 L'utilisation d'un environnement virtuel (`venv`) est optionnelle, mais recommandée afin d'isoler les dépendances du projet et d'éviter les conflits avec d'autres projets Python installés sur votre machine (en plus de ne pas polluer votre installation globale).
 
