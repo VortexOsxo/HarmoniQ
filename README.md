@@ -10,11 +10,6 @@ Pour utiliser ce projet, vous avez besoin de :
 
 ## Guide de prise en main
 
-Pour commencer, ouvrez votre terminal et déplacez-vous dans le dossier contenant le code source :
-```powershell
-cd harmoniQ
-```
-
 Suivez ensuite ces étapes dans l'ordre :
 
 ### 0 Obtention du code source
@@ -30,6 +25,11 @@ git clone https://github.com/VortexOsxo/HarmoniQ.git
 
 ```powershell
 cd HarmoniQ
+```
+
+4. Déplacez-vous dans le dossier contenant le code source :
+```powershell
+cd harmoniQ
 ```
 ### 0.1 Configuration de l'environnement (optionnel mais recommandé)
 
