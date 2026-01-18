@@ -3,7 +3,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary p-3">
     <div>
-        <a class="navbar-brand text-white" href="/">
+        <a class="navbar-brand text-white" routerLink="/">
             <span style="color: #ffffff;">H</span><span style="color: #ff0000; ">a</span><span
                 style="color: #ff8c00; ">r</span><span style="color: #ffff00; ">m</span><span
                 style="color: #008000; ">o</span><span style="color: #4e4e8a; ">n</span><span
@@ -26,16 +26,14 @@
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link text-white {% if request.path == '/à-propos' %}fw-bold disabled{% endif %}"
-                    href="/à-propos">À Propos</a>
+                <a class="nav-link text-white" routerLink="/à-propos" routerLinkActive="fw-bold disabled">À Propos</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-white {% if request.path == '/documentation' %}fw-bold disabled{% endif %}"
-                    href="/documentation">Documentation</a>
+                <a class="nav-link text-white" routerLink="/documentation"
+                    routerLinkActive="fw-bold disabled">Documentation</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-white {% if request.path == '/app' %}fw-bold disabled{% endif %}"
-                    href="/app">Logiciel</a>
+                <a class="nav-link text-white" routerLink="/app" routerLinkActive="fw-bold disabled">Logiciel</a>
             </li>
         </ul>
     </div>
