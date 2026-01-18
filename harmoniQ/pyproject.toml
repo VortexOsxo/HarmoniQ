@@ -55,7 +55,7 @@ dev = [
     "flake8",
     "pytest",
     "httpx",
-    "requests"
+    "gdown"
 ]
 
 [tool.setuptools]
