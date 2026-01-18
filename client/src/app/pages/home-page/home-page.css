@@ -1,0 +1,88 @@
+#content {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: linear-gradient(
+        to bottom right,
+        rgba(0, 0, 0, 0.4),
+        rgba(100, 100, 100, 0.4)
+    ), url("https://images.pexels.com/photos/1635332/pexels-photo-1635332.jpeg");
+    background-size: cover;
+    background-position: center;
+    padding: 1em;
+    text-align: center;
+}
+
+#hero-content {
+    color: white;
+    font-weight: bold;
+    z-index: 2;
+    max-width: 90%;
+    margin-bottom: 2em;
+}
+
+#hero-content h1 {
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    margin-bottom: 0.5em;
+}
+
+#hero-content h3 {
+    font-size: clamp(1.2rem, 4vw, 2rem);
+}
+
+#nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1em;
+    z-index: 2;
+}
+
+#nav a {
+    display: block;
+    width: auto;
+    text-decoration: none;
+}
+
+#nav button {
+    padding: 0.75em 1.5em;
+    background: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: 2px solid white;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-width: 140px;
+}
+
+#nav button:hover {
+    background-color: white;
+    color: black;
+}
+
+@media (max-width: 768px) {
+    #nav button {
+        width: 90%;
+        font-size: 1rem;
+    }
+
+    #hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    #hero-content h3 {
+        font-size: 1.2rem;
+    }
+}
+
+
+img.logo {
+    height: 5em;
+    margin-top: 4em;
+}
