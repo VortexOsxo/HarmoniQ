@@ -1,0 +1,91 @@
+<app-navigation-bar />
+
+<div id="main">
+    <div id="scenario" class="bg-light card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title text-center">Sélection du Scénario</h5>
+
+            <h5 class="mt-4">Scénario de croissance</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Faible Électrification</th>
+                            <th>Moyenne Électrification</th>
+                            <th>Élevée Électrification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Faible Population</th>
+                            <td><input type="radio" name="growthScenario" value="faible" [(ngModel)]="growthScenario"
+                                    (change)="updateSankey()">
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th>Moyenne Population</th>
+                            <td></td>
+                            <td><input type="radio" name="growthScenario" value="moyen" [(ngModel)]="growthScenario"
+                                    (change)="updateSankey()">
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th>Élevée Population</th>
+                            <td></td>
+                            <td></td>
+                            <td><input type="radio" name="growthScenario" value="elevee" [(ngModel)]="growthScenario"
+                                    (change)="updateSankey()">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h5 class="mt-4">Scénario climatique</h5>
+
+            <div class="btn-group w-100" role="group" aria-label="Climate Scenario">
+                <input type="radio" class="btn-check" name="climateScenario" id="climateOptimiste" value="optimiste"
+                    [(ngModel)]="climateScenario" (change)="updateSankey()" autocomplete="off">
+                <label class="btn btn-outline-primary" for="climateOptimiste">Optimiste</label>
+
+                <input type="radio" class="btn-check" name="climateScenario" id="climateNeutre" value="neutre"
+                    [(ngModel)]="climateScenario" (change)="updateSankey()" autocomplete="off">
+                <label class="btn btn-outline-primary" for="climateNeutre">Neutre</label>
+
+                <input type="radio" class="btn-check" name="climateScenario" id="climatePessimiste" value="pessimiste"
+                    [(ngModel)]="climateScenario" (change)="updateSankey()" autocomplete="off">
+                <label class="btn btn-outline-primary" for="climatePessimiste">Pessimiste</label>
+            </div>
+
+            <h5 class="mt-4">Efficacité du transport</h5>
+
+            <div class="btn-group w-100" role="group" aria-label="Transport Efficiency">
+                <input type="radio" class="btn-check" name="efficiencyScenario" id="effFaible" value="faible"
+                    [(ngModel)]="efficiencyScenario" (change)="updateSankey()" autocomplete="off">
+                <label class="btn btn-outline-primary" for="effFaible">Faible</label>
+
+                <input type="radio" class="btn-check" name="efficiencyScenario" id="effMoyen" value="moyen"
+                    [(ngModel)]="efficiencyScenario" (change)="updateSankey()" autocomplete="off">
+                <label class="btn btn-outline-primary" for="effMoyen">Moyen</label>
+
+                <input type="radio" class="btn-check" name="efficiencyScenario" id="effElevee" value="elevee"
+                    [(ngModel)]="efficiencyScenario" (change)="updateSankey()" autocomplete="off">
+                <label class="btn btn-outline-primary" for="effElevee">Élevé</label>
+            </div>
+
+            <button id="downloadPNG" class="btn btn-primary mt-3 w-100" (click)="downloadPNG()">
+                <i class="fa fa-download"></i>Télécharger
+            </button>
+        </div>
+    </div>
+
+    <div id="plots" class="mt-4">
+        <div id="sankeyContainer">
+            <div id="sankeyDiagram"></div>
+        </div>
+    </div>
+</div>
