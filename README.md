@@ -33,7 +33,7 @@ cd HarmoniQ
 ```
 ### 0.1 Configuration de l'environnement (optionnel mais recommandé)
 
-L'utilisation d'un environnement virtuel (`venv`) est optionnelle, mais recommandée afin d'isoler les dépendances du projet et d'éviter les conflits avec d'autres projets Python installés sur votre machine (en plus de ne pas polluer votre installation globale).
+L'utilisation d'un environnement virtuel (`venv`) est optionnelle, mais fortement recommandée afin d'isoler les dépendances du projet et d'éviter les conflits avec d'autres projets Python installés sur votre machine (en plus de ne pas polluer votre installation globale).
 
 Voici les deux commandes à exécuter en fonction de votre système d’exploitation :
 
@@ -46,7 +46,7 @@ python -m venv venv
 .\venv\Scripts\activate
 ```
 
-### Linux / macOS
+#### Linux / macOS
 ```powershell
 # Créer l'environnement virtuel
 python3 -m venv venv
@@ -72,7 +72,7 @@ HarmoniQ a besoin d'une base de données pour fonctionner. Vous pouvez la télé
 load-db
 ```
 
-> **Note :** Si le téléchargement automatique échoue, vous pouvez télécharger manuellement la base de données [ici](https://drive.google.com/file/d/1AChv-YwvDrE-nlYdT_aRSumKc571Cqxk/view?usp=sharing) et placer le fichier dans `harmoniq/db/`.
+> **Note :** Si le téléchargement automatique échoue, vous pouvez télécharger manuellement la base de données [ici](https://drive.google.com/file/d/1AChv-YwvDrE-nlYdT_aRSumKc571Cqxk/view?usp=sharing) et placer le fichier dans `HarmoniQ/harmoniq/db/`.
 
 ```powershell
 # 2. Initialiser le schéma et remplir les données de référence
@@ -84,7 +84,6 @@ init-db -p
 ### 3. Lancer l'application
 
 Démarrez le serveur web en mode debug :
-
 ```powershell
 launch-app --debug
 ```
@@ -92,10 +91,49 @@ launch-app --debug
 Une fois lancé, ouvrez votre navigateur et accédez à :
 **[http://localhost:5000](http://localhost:5000)**
 
+### 4. Relancer l'application ultérieurement
+
+Une fois l'installation initiale (étapes 0 à 2) terminée, vous n'avez plus besoin de les répéter. Pour relancer l'application lors de vos prochaines sessions :
+
+1. Ouvrez votre terminal dans le dossier du projet.
+2. Activez l'environnement virtuel :
+   - **Windows** : `.\venv\Scripts\activate`
+   - **Linux/macOS** : `source venv/bin/activate`
+3. Lancez l'application : `launch-app --debug`
+
 ---
 
 ## Structure du projet
 
 - **`harmoniq/`** : Code source de la bibliothèque principale.
+  - **`modules/`** : Contient les différents modules (eolienne, hydro, solaire, stockage, thermique, transmission).
+  - **`utils/`** : Fonctions et classes utilitaires partagées.
+  - **`db/`** : Base de données du projet.
+  - **`scripts/`** : Scripts d'initialisation et de chargement de la base de données.
 - **`tests/`** : Tests unitaires et d'intégration.
 - **`pyproject.toml`** : Fichier de configuration du projet et des dépendances.
+
+---
+
+## Contribution
+
+Pour ajouter des fonctionnalités au projet, vous devez ajouter des fonctions dans les modules dont vous êtes responsable :
+- `harmoniq/modules/eolienne`
+- `harmoniq/modules/hydro`
+- `harmoniq/modules/solaire`
+- `harmoniq/modules/stockage`
+- `harmoniq/modules/thermique`
+- `harmoniq/modules/transmission`
+
+### Règles de contribution
+- Vous pouvez ajouter de nouveaux fichiers dans ces dossiers, assurez-vous de les importer dans le `__init__.py` correspondant.
+- Le code partagé doit être placé dans `harmoniq/utils`. Pour l'utiliser :
+  ```python
+  from harmoniq.utils import NOM_DE_LA_FONCTION
+  ```
+
+### Tests
+Les tests sont situés dans le dossier `tests/` et utilisent `unittest`. Pour lancer l'ensemble des tests, utilisez :
+```bash
+pytest
+```
