@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:host {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9f9;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+.hero-section {
+    position: relative;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    transition: background-image 0.5s ease-in-out;
+}
+
+.hero-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.45), rgba(141, 141, 141, 0.459));
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+select {
+    font-size: 1.4em;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #555;
+    background: white;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    outline: none;
+    color: #333;
+}
+
+select:hover {
+    border-color: rgb(97, 191, 235);
+}
+
+.description-container {
+    padding-bottom: 50px;
+}
+
+.description {
+    display: none;
+    background: white;
+    margin: 30px auto;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    text-align: left;
+    line-height: 1.6;
+    animation: fadeIn 0.4s ease-in-out;
+    position: relative;
+    z-index: 2;
+    color: #333;
+}
+
+.description.active {
+    display: block;
+}
+
+.function-detail {
+    display: none;
+    margin-top: 10px;
+    padding: 10px;
+    border-left: 4px solid #007bff;
+    background-color: #eef4ff;
+    border-radius: 5px;
+}
+
+.function-detail.active {
+    display: block;
+}
+
+.cliquable {
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.2s ease-in-out;
+}
+
+.cliquable:hover {
+    color: #3498db;
+    transform: scale(1.02);
+}
+
+.marge {
+    margin-left: 0.5cm;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
