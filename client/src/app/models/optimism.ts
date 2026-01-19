@@ -12,3 +12,12 @@ export function optimismFromNumber(value: number): Optimism {
         default: return Optimism.Moyen; // fallback
     }
 }
+
+export function optimismToNumber(value: Optimism): number {
+    switch (value) {
+        case Optimism.Pessimiste: return 1;
+        case Optimism.Moyen: return 2;
+        case Optimism.Optimiste: return 3;
+        default: return 2; // fallback
+    }
+}

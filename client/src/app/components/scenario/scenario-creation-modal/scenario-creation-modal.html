@@ -1,0 +1,68 @@
+<div class="modal-dialog" role="document">
+    <form id="form-nouveau-scenario" (ngSubmit)="onSubmit()">
+        <div class="modal-content">
+            <div class="modal-header w-100 d-flex justify-content-between">
+                <h5 class="modal-title">Créer nouveau scenario</h5>
+                <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="scenario-nom">Nom du scenario</label>
+                    <input type="text" class="form-control" id="scenario-nom" name="nom" [(ngModel)]="scenario.nom"
+                        placeholder="Nom du scenario">
+
+                    <label for="scenario-description">Description</label>
+                    <textarea class="form-control" id="scenario-description" name="description"
+                        [(ngModel)]="scenario.description" rows="3"></textarea>
+
+                    <app-date-picker title="Étendue de temps" [(startDate)]="scenario.date_de_debut"
+                        [(endDate)]="scenario.date_de_fin" />
+
+                    <label for="scenario-pas_de_temps">Pas de temps</label>
+                    <select class="form-control" id="scenario-pas_de_temps" name="pas_de_temps"
+                        [(ngModel)]="scenario.pas_de_temps">
+                        <option value="PT15M" disabled>15 minutes</option>
+                        <option value="PT1H">1 heure</option>
+                        <option value="PT4H" disabled>4 heures</option>
+                        <option value="P1D" disabled>1 jour</option>
+                        <option value="P7D" disabled>7 jours</option>
+                    </select>
+
+                    <label for="scenario-weather">Meteo (consomation)</label>
+                    <select class="form-control" id="scenario-weather" name="weather" [(ngModel)]="scenario.weather">
+                        <option [value]="Weather.Cold">Froid</option>
+                        <option [value]="Weather.Typical">Typique</option>
+                        <option [value]="Weather.Hot">Chaud</option>
+                    </select>
+
+                    <label for="scenario-consomation">Modèle de consomation</label>
+                    <select class="form-control" id="scenario-consomation" name="consomation"
+                        [(ngModel)]="scenario.consomation">
+                        <option [value]="Consumption.Conservative">Conservateur</option>
+                        <option [value]="Consumption.Normal">Normal</option>
+                    </select>
+
+                    <label for="scenario-optimisme_social">Optimisme social</label>
+                    <select class="form-control" id="scenario-optimisme_social" name="optimisme_social"
+                        [(ngModel)]="scenario.optimisme_social">
+                        <option [value]="Optimism.Pessimiste">Pessimiste</option>
+                        <option [value]="Optimism.Moyen">Moyen</option>
+                        <option [value]="Optimism.Optimiste">Optimiste</option>
+                    </select>
+
+                    <label for="scenario-optimisme_ecologique">Optimisme écologique</label>
+                    <select class="form-control" id="scenario-optimisme_ecologique" name="optimisme_ecologique"
+                        [(ngModel)]="scenario.optimisme_ecologique">
+                        <option [value]="Optimism.Pessimiste">Pessimiste</option>
+                        <option [value]="Optimism.Moyen">Moyen</option>
+                        <option [value]="Optimism.Optimiste">Optimiste</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="dismiss()">Fermer</button>
+                <input type="submit" class="btn btn-primary" value="Créer">
+            </div>
+        </div>
+    </form>
+</div>
