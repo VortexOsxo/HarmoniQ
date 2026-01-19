@@ -1,0 +1,253 @@
+<app-navigation-bar />
+<div id="main">
+
+    <app-simulation-launcher />
+
+    <div id="scenario" class="bg-light card">
+        <div class="card-body">
+            <div class="d-flex w-100 mb-2 align-items-center">
+                <h5 style="white-space: nowrap;">Scénario actif:</h5>
+                <span class="mx-1"></span>
+                <select name="scenario-actif" id="scenario-actif" class="form-select flex-grow-1"
+                    onchange="changeScenario()">
+
+                </select>
+                <span class="mx-1"></span>
+                <button class="btn btn-primary" id="add-scenario" title="Créer un nouveau scénario">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div id="scenario-info" class="card p-2" style="display: none;">
+                <div class="card-body">
+                    <p class="description"></p>
+                    <p>
+                        Du
+                        <span class="scenario-debut fw-bold"></span>
+                        au
+                        <span class="scenario-fin fw-bold"></span>
+                        avec un pas de temps de
+                        <span class="scenario-pas fw-bold"></span>
+                    </p>
+                    <p>
+                        Scénario de consomation <span class="consommation-scenario fw-bold"></span> avec une météo
+                        concidéré <span class="meteo-scenario fw-bold"></span>
+                    </p>
+                    <p>
+                        Statut social:
+                        <span class="optimisme-social fw-bold"></span>
+                    </p>
+                    <p>
+                        Statut écologique:
+                        <span class="optimisme-ecologique fw-bold"></span>
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex w-100 justify-content-end mt-2">
+                <button class="btn btn-danger mx-2" id="delete-scenario" style="display: none;">
+                    Supprimer
+                    <span class="nom-supprimer"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="infrastructures" class="bg-light card">
+        <div class="d-flex w-100 justify-content-space-between align-items-center my-3">
+            <label style="white-space: nowrap;">
+                <h5>Groupe infras actif: </h5>
+            </label>
+            <span class="mx-1"></span>
+            <select name="groupe-actif" id="groupe-actif" class="form-select" onchange="changeInfra()">
+            </select>
+            <span class="mx-1"></span>
+            <button class="btn btn-primary" id="add-infra-liste" title="Créer un nouveau groupe d'infrastructure">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+        <div class="accordion" id="lists-infras"
+            style="display: none; max-height: 600px; overflow-y: auto; overflow-x: hidden;">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="hydroHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#hydroCollapse" aria-expanded="false" aria-controls="hydroCollapse">
+                        Barrage Hydro-Électrique
+                    </button>
+                </h2>
+                <div id="hydroCollapse" class="accordion-collapse collapse" aria-labelledby="hydroHeading"
+                    data-bs-parent="#sidebar">
+                    <div id="list-parc-hydro" class="accordion-body">
+                        <div class="d-flex w-100 justify-content-center my-2">
+                            <button class="btn btn-primary btn-sm select-all me-2" id="select_all_hydro">Tout
+                                sélectionner</button>
+                            <button class="btn btn-primary btn-sm select-none" id="select_none_hydro">Tout
+                                désélectionner</button>
+                        </div>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="windHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#windCollapse" aria-expanded="false" aria-controls="windCollapse">
+                        Parc Éolien
+                    </button>
+                </h2>
+                <div id="windCollapse" class="accordion-collapse collapse" aria-labelledby="windHeading"
+                    data-bs-parent="#sidebar">
+                    <div id="list-parc-eolienneparc" class="accordion-body">
+                        <div class="d-flex w-100 justify-content-center my-2">
+                            <button class="btn btn-primary btn-sm select-all me-2" id="select_all_eolien">Tout
+                                sélectionner</button>
+                            <button class="btn btn-primary btn-sm select-none" id="select_none_eolien">Tout
+                                désélectionner</button>
+                        </div>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="solarHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#solarCollapse" aria-expanded="false" aria-controls="solarCollapse">
+                        Parc Solaire
+                    </button>
+                </h2>
+                <div id="solarCollapse" class="accordion-collapse collapse" aria-labelledby="solarHeading"
+                    data-bs-parent="#sidebar">
+                    <div id="list-parc-solaire" class="accordion-body">
+                        <div class="d-flex w-100 justify-content-center my-2">
+                            <button class="btn btn-primary btn-sm select-all me-2" id="select_all_solaire">Tout
+                                sélectionner</button>
+                            <button class="btn btn-primary btn-sm select-none" id="select_none_solaire">Tout
+                                désélectionner</button>
+                        </div>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="thermalHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#thermalCollapse" aria-expanded="false" aria-controls="thermalCollapse">
+                        Central Thermique
+                    </button>
+                </h2>
+                <div id="thermalCollapse" class="accordion-collapse collapse" aria-labelledby="thermalHeading"
+                    data-bs-parent="#sidebar">
+                    <div id="list-parc-thermique" class="accordion-body">
+                        <div class="d-flex w-100 justify-content-center my-2">
+                            <button class="btn btn-primary btn-sm select-all me-2" id="select_all_thermique">Tout
+                                sélectionner</button>
+                            <button class="btn btn-primary btn-sm select-none" id="select_none_thermique">Tout
+                                désélectionner</button>
+                        </div>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="nuclearHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#nuclearCollapse" aria-expanded="false" aria-controls="nuclearCollapse">
+                        Centrale Nucléaire
+                    </button>
+                </h2>
+                <div id="nuclearCollapse" class="accordion-collapse collapse" aria-labelledby="nuclearHeading"
+                    data-bs-parent="#sidebar">
+                    <div id="list-parc-nucleaire" class="accordion-body">
+                        <div class="d-flex w-100 justify-content-center my-2">
+                            <button class="btn btn-primary btn-sm select-all me-2" id="select_all_nucleaire">Tout
+                                sélectionner</button>
+                            <button class="btn btn-primary btn-sm select-none" id="select_none_nucleaire">Tout
+                                désélectionner</button>
+                        </div>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="plots" class="d-flex flex-column">
+        <ul class="nav nav-tabs" id="hero-header" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button"
+                    role="tab" aria-controls="map" aria-selected="true">Carte</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sankey-tab" data-bs-toggle="tab" data-bs-target="#sankey" type="button"
+                    role="tab" aria-controls="sankey" aria-selected="false">Demande/Production</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="temporal-tab" data-bs-toggle="tab" data-bs-target="#temporal" type="button"
+                    role="tab" aria-controls="temporal" aria-selected="false">Données temporelle</button>
+            </li>
+        </ul>
+        <div class="tab-content flex-grow-1" id="myTabContent">
+            <div class="tab-pane show active h-100" id="map" role="tabpanel" aria-labelledby="map-tab">
+                <div id="map-box" style="width: 100%; height: 100%;">
+                </div>
+                <div class="map-overlay card p-2 m-4">
+                    <p>Ajouter infra fictive: </p>
+                    <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable"
+                        createClass="HydroCreate" createApi="/api/hydro" draggable="true" />
+                    <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable"
+                        createClass="EolienneParcCreate" createApi="/api/eolienneparc" draggable="true" />
+                    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable"
+                        createClass="SolaireCreate" createApi="/api/solaire" draggable="true" />
+                    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable"
+                        createClass="ThermiqueCreate" createApi="/api/thermique" draggable="true" />
+                    <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable"
+                        createClass="NucleaireCreate" createApi="/api/nucleaire" draggable="true" />
+                </div>
+            </div>
+            <div class="tab-pane show h-100" id="sankey" role="tabpanel" aria-labelledby="sankey-tab">
+                <div id="sankey-plot" style="height: 100%; width: 100%;">
+                    Choisi un scénario pour voir des données
+                </div>
+            </div>
+            <div class="tab-pane show h-100" id="temporal" role="tabpanel" aria-labelledby="temporal-tab">
+                <div id="temporal-plot" style="height: 100%; width: 100%;">
+                    Choisi un scénario pour voir des données temporelles
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+
+</div>
+
+<div class="modal fade" id="graphModal" tabindex="-1" aria-labelledby="graphModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="graphModalLabel">Graphique</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex justify-content-center align-items-center" style="height: 100%;">
+                <p class="text-danger" id="graph-error" style="display: none;">
+                    Une erreur est survenue. Cette infrastructure ne marche peut être pas.
+                </p>
+                <div class="spinner-border text-primary" role="status" id="graph-loading">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div id="graph-plot">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
