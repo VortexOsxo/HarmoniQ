@@ -25,10 +25,6 @@ export class ScenariosService {
       );
   }
 
-  fetchScenarios() {
-    return this.refreshScenarios();
-  }
-
   createScenario(scenario: Scenario) {
     return this.http.post(environment.apiUrl + '/scenario/', scenarioToJson(scenario), { headers: { 'Content-Type': 'application/json' } })
       .pipe(
