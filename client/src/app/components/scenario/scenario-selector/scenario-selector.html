@@ -39,7 +39,7 @@
             </div>
         </div>
         <div *ngIf="selectedScenario as scenario" class="d-flex w-100 justify-content-end mt-2">
-            <button class="btn btn-danger mx-2" id="delete-scenario">
+            <button class="btn btn-danger mx-2" (click)="deleteScenario(scenario)">
                 Supprimer
                 <span class="nom-supprimer"> {{ scenario.nom }}</span>
             </button>
