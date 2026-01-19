@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 from pathlib import Path
 
@@ -24,6 +25,16 @@ app = FastAPI(
         "url": "https://opensource.org/licenses/MIT",
     },
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.mount("/static", StaticFiles(directory=STATIC_FILE), name="static")
 
 templates = Jinja2Templates(directory=ASSET_FILE)
