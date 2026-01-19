@@ -3,7 +3,7 @@
         <div class="d-flex w-100 mb-2 align-items-center">
             <h5 style="white-space: nowrap;">Scénario actif:</h5>
             <span class="mx-1"></span>
-            <select class="form-select flex-grow-1" [(ngModel)]="selectedScenario">
+            <select class="form-select flex-grow-1" [(ngModel)]="selectedScenario" [compareWith]="compareScenarios">
                 <option *ngFor="let scenario of scenarios" [ngValue]="scenario">
                     {{ scenario.nom }}
                 </option>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { Scenario } from '@app/models/scenario';
 import { CommonModule } from '@angular/common';
@@ -12,38 +12,30 @@ import { ScenarioCreationModal } from '@app/components/scenario/scenario-creatio
   templateUrl: './scenario-selector.html',
   styleUrl: './scenario-selector.css',
 })
-export class ScenarioSelector implements OnInit {
-  scenarios: Scenario[] = [];
+export class ScenarioSelector {
+  get scenarios(): Scenario[] {
+    return this.scenariosService.scenarios();
+  }
 
   get selectedScenario(): Scenario | null {
     return this.scenariosService.selectedScenario();
   }
 
-  set selectedScenario(scenario: Scenario) {
+  set selectedScenario(scenario: Scenario | null) {
     this.scenariosService.selectedScenario.set(scenario);
   }
 
   constructor(private scenariosService: ScenariosService, private modalService: NgbModal) { }
 
-  ngOnInit(): void {
-    this.scenariosService.fetchScenarios().subscribe((scenarios) => {
-      this.scenarios = scenarios;
-    });
-  }
-
   openModal() {
-    this.modalService.open(ScenarioCreationModal).result.then((result) => {
-      if (result) {
-        this.scenariosService.fetchScenarios().subscribe((scenarios) => {
-          this.scenarios = scenarios;
-        });
-      }
-    }, () => { });
+    this.modalService.open(ScenarioCreationModal);
   }
 
   deleteScenario(scenario: Scenario) {
-    this.scenariosService.deleteScenario(scenario).subscribe(() => {
-      this.scenarios = this.scenarios.filter((s) => s.id !== scenario.id);
-    });
+    this.scenariosService.deleteScenario(scenario).subscribe();
+  }
+
+  compareScenarios(s1: Scenario, s2: Scenario): boolean {
+    return s1 && s2 ? s1.id === s2.id : s1 === s2;
   }
 }

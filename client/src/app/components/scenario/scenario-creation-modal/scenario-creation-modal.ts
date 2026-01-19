@@ -25,7 +25,6 @@ export class ScenarioCreationModal {
 
   onSubmit() {
     this.scenariosService.createScenario(this.scenario).subscribe((newScenario) => {
-      this.scenariosService.selectedScenario.set(newScenario);
       this.activeModal.close(newScenario);
     });
   }
