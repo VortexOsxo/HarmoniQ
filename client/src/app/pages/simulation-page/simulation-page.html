@@ -3,53 +3,7 @@
 
     <app-simulation-launcher />
 
-    <div id="scenario" class="bg-light card">
-        <div class="card-body">
-            <div class="d-flex w-100 mb-2 align-items-center">
-                <h5 style="white-space: nowrap;">Scénario actif:</h5>
-                <span class="mx-1"></span>
-                <select name="scenario-actif" id="scenario-actif" class="form-select flex-grow-1"
-                    onchange="changeScenario()">
-
-                </select>
-                <span class="mx-1"></span>
-                <button class="btn btn-primary" id="add-scenario" title="Créer un nouveau scénario">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
-            <div id="scenario-info" class="card p-2" style="display: none;">
-                <div class="card-body">
-                    <p class="description"></p>
-                    <p>
-                        Du
-                        <span class="scenario-debut fw-bold"></span>
-                        au
-                        <span class="scenario-fin fw-bold"></span>
-                        avec un pas de temps de
-                        <span class="scenario-pas fw-bold"></span>
-                    </p>
-                    <p>
-                        Scénario de consomation <span class="consommation-scenario fw-bold"></span> avec une météo
-                        concidéré <span class="meteo-scenario fw-bold"></span>
-                    </p>
-                    <p>
-                        Statut social:
-                        <span class="optimisme-social fw-bold"></span>
-                    </p>
-                    <p>
-                        Statut écologique:
-                        <span class="optimisme-ecologique fw-bold"></span>
-                    </p>
-                </div>
-            </div>
-            <div class="d-flex w-100 justify-content-end mt-2">
-                <button class="btn btn-danger mx-2" id="delete-scenario" style="display: none;">
-                    Supprimer
-                    <span class="nom-supprimer"></span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <app-scenario-selector />
 
     <div id="infrastructures" class="bg-light card">
         <div class="d-flex w-100 justify-content-space-between align-items-center my-3">

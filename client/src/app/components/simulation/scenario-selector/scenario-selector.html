@@ -1,0 +1,48 @@
+<div class="bg-light card container flex-grow-1">
+    <div class="card-body">
+        <div class="d-flex w-100 mb-2 align-items-center">
+            <h5 style="white-space: nowrap;">Scénario actif:</h5>
+            <span class="mx-1"></span>
+            <select class="form-select flex-grow-1" [(ngModel)]="selectedScenario">
+                <option *ngFor="let scenario of scenarios" [ngValue]="scenario">
+                    {{ scenario.nom }}
+                </option>
+            </select>
+            <span class="mx-1"></span>
+            <button class="btn btn-primary" id="add-scenario" title="Créer un nouveau scénario">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+
+        <div *ngIf="selectedScenario as scenario" class="card p-2">
+            <div class="card-body">
+                <p> {{scenario.description}}</p>
+                <p>
+                    Du <span class="fw-bold"> {{ scenario.date_de_debut | date:'mediumDate' }} </span> au
+                    <span class="fw-bold"> {{ scenario.date_de_fin | date:'mediumDate' }}
+                    </span> avec un pas de temps de
+                    <span class="fw-bold"> {{ scenario.pas_de_temps }} </span>
+                </p>
+                <p>
+                    Scénario de consomation <span class="fw-bold"> {{
+                        scenario.consomation }}</span> avec une météo
+                    concidéré <span class="fw-bold"> {{ scenario.weather }}</span>
+                </p>
+                <p>
+                    Statut social:
+                    <span class="optimisme-social fw-bold"> {{ scenario.optimisme_social }}</span>
+                </p>
+                <p>
+                    Statut écologique:
+                    <span class="optimisme-ecologique fw-bold"> {{ scenario.optimisme_ecologique}}</span>
+                </p>
+            </div>
+        </div>
+        <div *ngIf="selectedScenario as scenario" class="d-flex w-100 justify-content-end mt-2">
+            <button class="btn btn-danger mx-2" id="delete-scenario">
+                Supprimer
+                <span class="nom-supprimer"> {{ scenario.nom }}</span>
+            </button>
+        </div>
+    </div>
+</div>
