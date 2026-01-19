@@ -1,0 +1,25 @@
+<div class="bg-light card container">
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm text-center" id="gestion-table">
+            <thead>
+                <tr>
+                    <th>Scénario Actif</th>
+                    <th>Groupe Infrastructure Actif</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="active-scenario-title" class="text-muted">
+                        {{ selectedScenario ?? 'N/A' }}
+                    </td>
+                    <td id="active-groupe-title" class="text-muted">
+                        {{ selectedInfrastructure ?? 'N/A' }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <button id="run" class="btn btn-primary" [disabled]="!canLaunch" (click)="launchSimulation()">
+        Lancer Simulation
+    </button>
+</div>
