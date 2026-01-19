@@ -3,6 +3,8 @@ import { ScenariosService } from '@app/services/scenarios-service';
 import { Scenario } from '@app/models/scenario';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ScenarioCreationModal } from '@app/components/scenario/scenario-creation-modal/scenario-creation-modal';
 
 @Component({
   selector: 'app-scenario-selector',
@@ -21,9 +23,19 @@ export class ScenarioSelector {
     this.scenariosService.selectedScenario.set(scenario);
   }
 
-  constructor(private scenariosService: ScenariosService) {
+  constructor(private scenariosService: ScenariosService, private modalService: NgbModal) {
     this.scenariosService.fetchScenarios().subscribe((scenarios) => {
       this.scenarios = scenarios;
     });
+  }
+
+  openModal() {
+    this.modalService.open(ScenarioCreationModal).result.then((result) => {
+      if (result) {
+        this.scenariosService.fetchScenarios().subscribe((scenarios) => {
+          this.scenarios = scenarios;
+        });
+      }
+    }, () => { });
   }
 }

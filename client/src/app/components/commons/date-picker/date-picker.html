@@ -1,0 +1,12 @@
+<label>{{ title }}</label>
+<div class="date-range">
+    <div class="date-field">
+        <label class="field-label" for="start-date">Début</label>
+        <input type="date" id="start-date" [(ngModel)]="startDateStr" [min]="minDate" [max]="maxDate">
+    </div>
+
+    <div class="date-field">
+        <label class="field-label" for="end-date">Fin</label>
+        <input type="date" id="end-date" [(ngModel)]="endDateStr" [min]="minDate" [max]="maxDate">
+    </div>
+</div>
