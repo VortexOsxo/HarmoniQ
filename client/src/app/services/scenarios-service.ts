@@ -23,4 +23,20 @@ export class ScenariosService {
     return this.http.post(environment.apiUrl + '/scenario/', scenarioToJson(scenario), { headers: { 'Content-Type': 'application/json' } })
       .pipe(map((data: any) => getScenarioFromJson(data)));
   }
+
+  deleteScenario(scenario: Scenario) {
+
+    return this.http.delete(environment.apiUrl + '/scenario/' + scenario.id, { headers: { 'Content-Type': 'application/json' } })
+      .pipe(map((data: any) => {
+        if (!data) {
+          return null;
+        }
+
+        if (scenario.id === this.selectedScenario()?.id) {
+          this.selectedScenario.set(null);
+        }
+
+        return getScenarioFromJson(data);
+      }));
+  }
 }

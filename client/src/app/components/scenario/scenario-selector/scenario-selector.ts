@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { Scenario } from '@app/models/scenario';
 import { CommonModule } from '@angular/common';
@@ -12,7 +12,7 @@ import { ScenarioCreationModal } from '@app/components/scenario/scenario-creatio
   templateUrl: './scenario-selector.html',
   styleUrl: './scenario-selector.css',
 })
-export class ScenarioSelector {
+export class ScenarioSelector implements OnInit {
   scenarios: Scenario[] = [];
 
   get selectedScenario(): Scenario | null {
@@ -23,7 +23,9 @@ export class ScenarioSelector {
     this.scenariosService.selectedScenario.set(scenario);
   }
 
-  constructor(private scenariosService: ScenariosService, private modalService: NgbModal) {
+  constructor(private scenariosService: ScenariosService, private modalService: NgbModal) { }
+
+  ngOnInit(): void {
     this.scenariosService.fetchScenarios().subscribe((scenarios) => {
       this.scenarios = scenarios;
     });
@@ -37,5 +39,11 @@ export class ScenarioSelector {
         });
       }
     }, () => { });
+  }
+
+  deleteScenario(scenario: Scenario) {
+    this.scenariosService.deleteScenario(scenario).subscribe(() => {
+      this.scenarios = this.scenarios.filter((s) => s.id !== scenario.id);
+    });
   }
 }
