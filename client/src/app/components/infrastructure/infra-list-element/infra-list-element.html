@@ -1,0 +1,12 @@
+<li class="list-group-item d-flex justify-content-between align-items-center" role="button"
+    style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px;"
+    (click)="add_infra()" title="Cliquez pour sélectionner ou désélectionner cette infrastructure">
+    <span>{{nom}}</span>
+    <div>
+        <i class="fas fa-line-chart" style="color: #007bff; cursor: pointer;" (click)="simulate_single()"
+            title="Simuler cette infrastructure"></i>
+        <span class="mx-1"></span>
+        <i class="fas fa-info-circle" style="color: #007bff; cursor: pointer;" (click)="handleInfoClick()"
+            title="Afficher les informations de cette infrastructure"></i>
+    </div>
+</li>

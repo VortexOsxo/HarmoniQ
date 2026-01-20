@@ -10,7 +10,7 @@ export interface ThermalPowerPlant {
     type_generateur: string | null;
 }
 
-export function getPowerPlantFromJson(json: any): ThermalPowerPlant {
+export function getThermalPowerPlantFromJson(json: any): ThermalPowerPlant {
     return {
         id: json.id,
         nom: json.nom,
@@ -24,7 +24,7 @@ export function getPowerPlantFromJson(json: any): ThermalPowerPlant {
     };
 }
 
-export function powerPlantToJson(powerPlant: ThermalPowerPlant): any {
+export function thermalPowerPlantToJson(powerPlant: ThermalPowerPlant): any {
     return {
         nom: powerPlant.nom,
         latitude: powerPlant.latitude,

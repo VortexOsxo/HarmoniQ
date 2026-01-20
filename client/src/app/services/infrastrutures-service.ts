@@ -19,7 +19,7 @@ export class InfrastruturesService {
   }
 
   refreshInfraGroups() {
-    return this.http.get(environment.apiUrl + '/infrastructure-group/', { headers: { 'Content-Type': 'application/json' } })
+    return this.http.get(environment.apiUrl + '/listeinfrastructures', { headers: { 'Content-Type': 'application/json' } })
       .pipe(
         map((data: any) => data.map((group: any) => getInfrastructureGroupFromJson(group))),
         tap((groups: InfrastructureGroup[]) => this.infraGroups.set(groups))
@@ -27,7 +27,7 @@ export class InfrastruturesService {
   }
 
   createInfraGroup(group: InfrastructureGroup) {
-    return this.http.post(environment.apiUrl + '/infrastructure-group/', infrastructureGroupToJson(group), { headers: { 'Content-Type': 'application/json' } })
+    return this.http.post(environment.apiUrl + '/listeinfrastructures', infrastructureGroupToJson(group), { headers: { 'Content-Type': 'application/json' } })
       .pipe(
         map((data: any) => getInfrastructureGroupFromJson(data)),
         tap((newGroup) => {
@@ -38,7 +38,7 @@ export class InfrastruturesService {
   }
 
   deleteInfraGroup(group: InfrastructureGroup) {
-    return this.http.delete(environment.apiUrl + '/infrastructure-group/' + group.id, { headers: { 'Content-Type': 'application/json' } })
+    return this.http.delete(environment.apiUrl + '/listeinfrastructures' + group.id, { headers: { 'Content-Type': 'application/json' } })
       .pipe(
         tap(() => {
           this.infraGroups.update(s => s.filter(item => item.id !== group.id));

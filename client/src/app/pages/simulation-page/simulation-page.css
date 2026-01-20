@@ -1,13 +1,14 @@
 div#main {
     padding: 1em;
     gap: 1rem;
-    min-height: calc(100vh - 4.5em);
+    height: calc(100vh - 5em);
     display: grid;
     grid-template-areas:
         "gestion  infra plot"
         "scenario infra plot";
     grid-template-columns: 1fr 1fr 2fr;
     grid-template-rows: auto 1fr;
+    overflow: hidden;
 }
 
 @media (max-width: 1250px) {
@@ -29,6 +30,7 @@ div#main {
 @media (max-width: 768px) {
     div#main {
         height: auto;
+        overflow: auto;
         grid-template-areas:
             "gestion"
             "scenario"
@@ -40,32 +42,39 @@ div#main {
     }
 }
 
-div#main div#sgestion {
+app-simulation-launcher {
     grid-area: gestion;
 }
 
-div#main div#infrastructures {
+app-infrastructure-selector {
     grid-area: infra;
 }
 
-div#main div#scenario {
+app-scenario-selector {
     grid-area: scenario;
-}
-
-div#main div#choix-infra {
-    grid-area: choix-infra;
 }
 
 div#main div#plots {
     grid-area: plot;
 }
 
-
-div#main>div {
-    padding: 1em;
+app-simulation-launcher,
+app-infrastructure-selector,
+app-scenario-selector,
+#plots {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
-div#main>div#plots {
+app-simulation-launcher > div,
+app-infrastructure-selector > div,
+app-scenario-selector > div {
+    flex: 1;
+    overflow: hidden;
+}
+
+div#main > div#plots {
     padding: 0;
 }
 
