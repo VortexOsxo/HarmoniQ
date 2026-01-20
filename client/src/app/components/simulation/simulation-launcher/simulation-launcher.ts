@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { SimulationService } from '@app/services/simulation-service';
 import { ScenariosService } from '@app/services/scenarios-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 @Component({
   selector: 'app-simulation-launcher',
@@ -11,7 +12,7 @@ import { ScenariosService } from '@app/services/scenarios-service';
 export class SimulationLauncher {
 
   get selectedInfrastructure() {
-    return this.simulationService.selectedInfrastructure();
+    return this.infrastructuresService.selectedInfraGroup();
   }
 
   get selectedScenario() {
@@ -22,7 +23,11 @@ export class SimulationLauncher {
     return this.simulationService.canLaunch();
   }
 
-  constructor(private simulationService: SimulationService, private scenariosService: ScenariosService) { }
+  constructor(
+    private simulationService: SimulationService,
+    private scenariosService: ScenariosService,
+    private infrastructuresService: InfrastruturesService
+  ) { }
 
   launchSimulation() {
     this.simulationService.launchSimulation();
