@@ -30,6 +30,6 @@ export class SimulationLauncher {
   ) { }
 
   launchSimulation() {
-    this.simulationService.launchSimulation();
+
   }
 }
