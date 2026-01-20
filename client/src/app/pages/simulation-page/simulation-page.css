@@ -54,14 +54,14 @@ app-scenario-selector {
     grid-area: scenario;
 }
 
-div#main div#plots {
+app-simulation-results {
     grid-area: plot;
 }
 
 app-simulation-launcher,
 app-infrastructure-selector,
 app-scenario-selector,
-#plots {
+app-simulation-results {
     display: flex;
     flex-direction: column;
     min-height: 0;

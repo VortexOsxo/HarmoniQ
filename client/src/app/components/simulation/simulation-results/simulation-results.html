@@ -31,18 +31,14 @@
         <li [ngbNavItem]="'sankey'">
             <button ngbNavLink>Demande / Production</button>
             <ng-template ngbNavContent>
-                <div id="sankey-plot" class="h-100 w-100">
-                    Choisis un scénario pour voir des données
-                </div>
+                <app-scenario-demand-prod-sankey />
             </ng-template>
         </li>
 
         <li [ngbNavItem]="'temporal'">
             <button ngbNavLink>Données temporelles</button>
             <ng-template ngbNavContent>
-                <div id="temporal-plot" class="h-100 w-100">
-                    Choisis un scénario pour voir des données temporelles
-                </div>
+                <app-scenario-temporal-demand-graph />
             </ng-template>
         </li>
     </ul>
@@ -50,49 +46,4 @@
     <div class="flex-grow-1">
         <div [ngbNavOutlet]="nav"></div>
     </div>
-
-    <!-- <ul class="nav nav-tabs" id="hero-header" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button"
-                    role="tab" aria-controls="map" aria-selected="true">Carte</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="sankey-tab" data-bs-toggle="tab" data-bs-target="#sankey" type="button"
-                    role="tab" aria-controls="sankey" aria-selected="false">Demande/Production</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="temporal-tab" data-bs-toggle="tab" data-bs-target="#temporal" type="button"
-                    role="tab" aria-controls="temporal" aria-selected="false">Données temporelle</button>
-            </li>
-        </ul>
-        <div class="tab-content flex-grow-1" id="myTabContent">
-            <div class="tab-pane show active h-100" id="map" role="tabpanel" aria-labelledby="map-tab">
-                <div id="map-box" style="width: 100%; height: 100%;">
-                </div>
-                <div class="map-overlay card p-2 m-4">
-                    <p>Ajouter infra fictive: </p>
-                    <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable"
-                        createClass="HydroCreate" createApi="/api/hydro" draggable="true" />
-                    <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable"
-                        createClass="EolienneParcCreate" createApi="/api/eolienneparc" draggable="true" />
-                    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable"
-                        createClass="SolaireCreate" createApi="/api/solaire" draggable="true" />
-                    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable"
-                        createClass="ThermiqueCreate" createApi="/api/thermique" draggable="true" />
-                    <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable"
-                        createClass="NucleaireCreate" createApi="/api/nucleaire" draggable="true" />
-                </div>
-            </div>
-            <div class="tab-pane show h-100" id="sankey" role="tabpanel" aria-labelledby="sankey-tab">
-                <div id="sankey-plot" style="height: 100%; width: 100%;">
-                    Choisi un scénario pour voir des données
-                </div>
-            </div>
-            <div class="tab-pane show h-100" id="temporal" role="tabpanel" aria-labelledby="temporal-tab">
-                <div id="temporal-plot" style="height: 100%; width: 100%;">
-                    Choisi un scénario pour voir des données temporelles
-                </div>
-            </div>
-        </div>
-    </div> -->
 </div>
