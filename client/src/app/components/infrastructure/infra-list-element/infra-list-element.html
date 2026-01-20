@@ -1,6 +1,7 @@
 <li class="list-group-item d-flex justify-content-between align-items-center" role="button"
     style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px;"
-    (click)="add_infra()" title="Cliquez pour sélectionner ou désélectionner cette infrastructure">
+    (click)="toggleInfra()" [ngClass]="{ 'list-group-item-secondary': isSelected }"
+    title="Cliquez pour sélectionner ou désélectionner cette infrastructure">
     <span>{{nom}}</span>
     <div>
         <i class="fas fa-line-chart" style="color: #007bff; cursor: pointer;" (click)="simulate_single()"

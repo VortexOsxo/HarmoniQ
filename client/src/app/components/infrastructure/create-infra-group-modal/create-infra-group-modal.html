@@ -1,0 +1,15 @@
+<div class="modal-header">
+    <h4 class="modal-title">Créer un nouveau groupe d'infrastructures</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body">
+    <div class="mb-3">
+        <label for="name" class="form-label">Nom du groupe</label>
+        <input type="text" class="form-control" id="name" [(ngModel)]="name" placeholder="Nom du nouveau groupe">
+        <div class="form-text">Les infrastructures du groupe actuel seront copiées dans le nouveau groupe.</div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="activeModal.dismiss()">Annuler</button>
+    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="!name">Créer</button>
+</div>
