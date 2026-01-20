@@ -433,6 +433,7 @@ class EnergyUtils:
         
         # Vérifier la capacité totale de génération à chaque pas de temps
         if hasattr(network.generators_t, 'p_max_pu'):
+            new_pmax_cols = {}
             # Pour chaque pas de temps, vérifier si la capacité est suffisante
             for timestamp in network.snapshots:
                 # Vérifier si le timestamp existe dans p_set
@@ -473,15 +474,26 @@ class EnergyUtils:
                                 carrier="import"
                             )
                         
-                        if gen_name not in network.generators_t.p_max_pu.columns:
-                            network.generators_t.p_max_pu[gen_name] = 0
-                        
-                        if timestamp in network.generators_t.p_max_pu.index:
+                        if gen_name not in network.generators_t.p_max_pu.columns and gen_name not in new_pmax_cols:
+                            s = pd.Series(0.0, index=network.snapshots)
+                            new_pmax_cols[gen_name] = s
+
+                        # Mettre 1.0 au timestamp du gap
+                        if gen_name in network.generators_t.p_max_pu.columns:
                             network.generators_t.p_max_pu.at[timestamp, gen_name] = 1.0
+                        else:
+                            new_pmax_cols[gen_name].at[timestamp] = 1.0
                 except KeyError as e:
                     logger.error(f"Erreur lors du traitement du timestamp {timestamp}: {str(e)}")
                     # Continuer avec le timestamp suivant
                     continue
+                        
+            if new_pmax_cols:
+                add_df = pd.DataFrame(new_pmax_cols, index=network.snapshots)
+                network.generators_t.p_max_pu = pd.concat([network.generators_t.p_max_pu, add_df], axis=1)
+
+            # Optionnel: défragmenter définitivement
+            network.generators_t.p_max_pu = network.generators_t.p_max_pu.copy()
         
         # 6. Créer une matrice "safety_factor" pour tous les générateurs
         network.generators.p_nom_extendable = True

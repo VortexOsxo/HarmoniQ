@@ -138,6 +138,7 @@ class NetworkOptimizer:
         total_annual_load = 0
         total_annual_generation = 0
         production_by_carrier = {carrier: 0 for carrier in carriers_by_priority}
+        new_p_cols = {}
         
         for snapshot in self.network.snapshots:
             # 1. Calculer la demande totale pour ce pas de temps
@@ -382,18 +383,39 @@ class NetworkOptimizer:
                             carrier="import"
                         )
                         
-                        # Produire l'énergie manquante
-                        self.network.generators_t['p'].at[snapshot, emergency_gen] = remaining_load
-                        
-                        # Mise à jour des statistiques
-                        production_by_carrier['emergency'] += remaining_load
-                        remaining_load = 0
+                                      # Mettre la production dans p (sans insérer une colonne à chaque fois)
                     else:
                         logger.error("Impossible de trouver un bus approprié pour le générateur d'urgence")
+                if emergency_gen in self.network.generators_t["p"].columns:
+                    self.network.generators_t["p"].at[snapshot, emergency_gen] = remaining_load
+                else:
+                    if emergency_gen not in new_p_cols:
+                        new_p_cols[emergency_gen] = pd.Series(0.0, index=self.network.snapshots)
+                    new_p_cols[emergency_gen].at[snapshot] = remaining_load
+
+                production_by_carrier["emergency"] += remaining_load
+                remaining_load = 0
             
             # Calculer la production totale pour ce pas de temps
             total_generation_snapshot = self.network.generators_t['p'].loc[snapshot].sum()
             total_annual_generation += total_generation_snapshot
+
+        if new_p_cols:
+            add_p_df = pd.DataFrame(new_p_cols, index=self.network.snapshots)
+            self.network.generators_t["p"] = pd.concat([self.network.generators_t["p"], add_p_df], axis=1)
+            self.network.generators_t["p"] = self.network.generators_t["p"].copy()
+
+            if hasattr(self.network.generators_t, "p_max_pu"):
+                add_pmax_df = pd.DataFrame(
+                    {g: 1.0 for g in new_p_cols.keys()},
+                    index=self.network.snapshots,
+                )
+                self.network.generators_t.p_max_pu = pd.concat(
+                    [self.network.generators_t.p_max_pu, add_pmax_df],
+                    axis=1,
+                )
+                self.network.generators_t.p_max_pu = self.network.generators_t.p_max_pu.copy()
+            
         
         # Rapport final
         logger.info(f"Optimisation manuelle terminée.")
@@ -476,9 +498,10 @@ class NetworkOptimizer:
             - Contraintes actives
         """
         # Removed requirement for network.objective - we'll calculate it instead
-        
+
+        total_cost = 0.0
         # Calculate total cost if not already set
-        if not hasattr(self.network, 'objective'):
+        if not hasattr(self.network, 'objective') or self.network.objective is None:
             total_cost = 0.0
             # Calculate cost based on production and marginal costs
             for gen in self.network.generators.index:
@@ -497,9 +520,8 @@ class NetworkOptimizer:
                         cost = production.sum() * mc
                         
                     total_cost += cost
-                    
-            # Set the objective value
-            self.network.objective = float(total_cost)
+        else:
+            total_cost = self.network.objective
 
         pilotable_gens = self.network.generators[
             self.network.generators.carrier.isin(['hydro_reservoir', 'thermique'])
@@ -510,8 +532,8 @@ class NetworkOptimizer:
 
         return {
             "status": getattr(self.network, 'status', 'unknown'),
-            "objective_value": float(self.network.objective),
-            "total_cost": float(self.network.objective),
+            "objective_value": float(total_cost),
+            "total_cost": float(total_cost),
             "pilotable_production": self.network.generators_t['p'][pilotable_gens].sum().sum(),
             "non_pilotable_production": self.network.generators_t['p'][non_pilotable_gens].sum().sum(),
             "production_by_type": self.network.generators_t['p'].groupby(
