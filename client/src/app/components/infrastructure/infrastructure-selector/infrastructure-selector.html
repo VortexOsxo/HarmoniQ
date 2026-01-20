@@ -1,0 +1,30 @@
+<div id="infrastructures" class="bg-light card container">
+    <div class="d-flex w-100 justify-content-space-between align-items-center my-3">
+        <label style="white-space: nowrap;">
+            <h5>Groupe infras actif: </h5>
+        </label>
+        <span class="mx-1"></span>
+        <select class="form-select" [(ngModel)]="selectedInfrastructureGroup" [compareWith]="compareInfraGroups">
+            <option *ngFor="let infraGroup of infrastructureGroups" [ngValue]="infraGroup">
+                {{ infraGroup.nom }}
+            </option>
+        </select>
+        <span class="mx-1"></span>
+        <button class="btn btn-primary" id="add-infra-liste" title="Créer un nouveau groupe d'infrastructure">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+    <div ngbAccordion class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden;">
+
+        <div ngbAccordionItem *ngFor="let infra of infras">
+            <h2 ngbAccordionHeader>
+                <button ngbAccordionButton>{{ infra.name }}</button>
+            </h2>
+            <div ngbAccordionCollapse>
+                <div ngbAccordionBody>
+                    <app-infra-list-body [infras]="infra.infras()" [type]="infra.type" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,12 @@
+<div id="list-parc-hydro">
+    <div class="d-flex w-100 justify-content-center my-2">
+        <button class="btn btn-primary btn-sm select-all me-2" id="select_all_hydro">Tout
+            sélectionner</button>
+        <button class="btn btn-primary btn-sm select-none" id="select_none_hydro">Tout
+            désélectionner</button>
+    </div>
+    <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+        <app-infra-list-element *ngFor="let infra of infras" [nom]="infra.nom" [id]="infra.id.toString()"
+            [type]="type" />
+    </ul>
+</div>
