@@ -1,8 +1,8 @@
 <div id="list-parc-hydro">
     <div class="d-flex w-100 justify-content-center my-2">
-        <button class="btn btn-primary btn-sm select-all me-2" id="select_all_hydro">Tout
+        <button class="btn btn-primary btn-sm select-all me-2" (click)="selectAll()">Tout
             sélectionner</button>
-        <button class="btn btn-primary btn-sm select-none" id="select_none_hydro">Tout
+        <button class="btn btn-primary btn-sm select-none" (click)="selectNone()">Tout
             désélectionner</button>
     </div>
     <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">

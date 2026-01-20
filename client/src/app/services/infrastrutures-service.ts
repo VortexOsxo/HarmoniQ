@@ -6,6 +6,14 @@ import { map, tap } from 'rxjs/operators';
 import { environment } from 'environments/environment';
 import { getInfrastructureGroupFromJson, infrastructureGroupToJson } from '@app/models/infrastructure-group';
 
+// Hack pcq le code etait ass et j'ai la flemme
+const typeKeyMap: Record<string, string> = {
+  'hydro': 'central_hydroelectriques',
+  'eolienneparc': 'parc_eoliens',
+  'solaire': 'parc_solaires',
+  'thermique': 'central_thermique',
+  'nucleaire': 'central_nucleaire'
+};
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +24,41 @@ export class InfrastruturesService {
 
   constructor(private http: HttpClient) {
     this.refreshInfraGroups().subscribe();
+  }
+
+  isInfraSelected(type: string, infraId: string) {
+    const infraGroup: any = this.selectedInfraGroup();
+    if (!infraGroup) return false;
+
+    const key = typeKeyMap[type];
+    if (!key) return false;
+    return infraGroup[key].includes(infraId);
+  }
+
+  toggleInfra(type: string, infraId: string) {
+    const infraGroup: any = this.selectedInfraGroup();
+    if (!infraGroup) return;
+
+    const key = typeKeyMap[type];
+
+    if (infraGroup[key].includes(infraId)) {
+      infraGroup[key] = infraGroup[key].filter((id: string) => id !== infraId);
+    } else {
+      infraGroup[key].push(infraId);
+    }
+
+    this.selectedInfraGroup.set(infraGroup);
+  }
+
+  setInfrasForType(type: string, infrasIds: any[]) {
+    const infraGroup: any = this.selectedInfraGroup();
+    if (!infraGroup) return;
+
+    const key = typeKeyMap[type];
+    if (!key) return;
+    infraGroup[key] = infrasIds;
+
+    this.selectedInfraGroup.set(infraGroup);
   }
 
   refreshInfraGroups() {

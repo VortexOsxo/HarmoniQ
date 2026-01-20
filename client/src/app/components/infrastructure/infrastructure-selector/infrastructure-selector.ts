@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SolarFarmsService } from '@app/services/solar-farms-service';
 import { CommonModule } from '@angular/common';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
@@ -11,6 +11,7 @@ import { NuclearPowerPlantsService } from '@app/services/nuclear-power-plants-se
 import { ThermalPowerPlantsService } from '@app/services/thermal-power-plants-service';
 import { WindFarmsService } from '@app/services/wind-farms-service';
 import { InfraListBody } from '../infra-list-body/infra-list-body';
+import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-group-modal';
 
 @Component({
   selector: 'app-infrastructure-selector',
@@ -36,6 +37,7 @@ export class InfrastructureSelector {
 
   constructor(
     private infrastructuresService: InfrastruturesService,
+    private modalService: NgbModal,
     public solarFarmsService: SolarFarmsService,
     public hydroelectricDamsService: HydroelectricDamsService,
     public nuclearPowerPlantsService: NuclearPowerPlantsService,
@@ -53,6 +55,10 @@ export class InfrastructureSelector {
 
   compareInfraGroups(g1: InfrastructureGroup, g2: InfrastructureGroup): boolean {
     return g1 && g2 ? g1.id === g2.id : g1 === g2;
+  }
+
+  openCreateModal() {
+    this.modalService.open(CreateInfraGroupModal);
   }
 
 }
