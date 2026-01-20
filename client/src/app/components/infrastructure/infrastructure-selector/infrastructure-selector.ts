@@ -15,7 +15,7 @@ import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-
 
 @Component({
   selector: 'app-infrastructure-selector',
-  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListElement, InfraListBody],
+  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody],
   templateUrl: './infrastructure-selector.html',
   styleUrl: './infrastructure-selector.css',
 })
