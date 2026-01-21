@@ -3,18 +3,18 @@
 <div class="map-overlay card p-2 m-4">
     <p>Ajouter infra fictive :</p>
 
-    <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" createClass="HydroCreate"
-        createApi="/api/hydro" draggable="true" />
+    <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" type="HydroCreate"
+        route="hydro" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
 
-    <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable" createClass="EolienneParcCreate"
-        createApi="/api/eolienneparc" draggable="true" />
+    <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable" type="EolienneParcCreate"
+        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
 
-    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" createClass="SolaireCreate"
-        createApi="/api/solaire" draggable="true" />
+    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="SolaireCreate" route="solaire"
+        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
 
-    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" createClass="ThermiqueCreate"
-        createApi="/api/thermique" draggable="true" />
+    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="ThermiqueCreate"
+        route="thermique" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
 
-    <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable" createClass="NucleaireCreate"
-        createApi="/api/nucleaire" draggable="true" />
+    <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable" type="NucleaireCreate"
+        route="nucleaire" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
 </div>
