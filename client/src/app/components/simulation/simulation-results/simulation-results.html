@@ -1,30 +1,9 @@
 <div id="plots" class="d-flex flex-column">
-    <ul ngbNav #nav="ngbNav" class="nav nav-tabs" [(activeId)]="activeTab">
+    <ul ngbNav #nav="ngbNav" class="nav nav-tabs" [(activeId)]="activeTab" (navChange)="onTabChange($event)">
         <li [ngbNavItem]="'map'">
             <button ngbNavLink>Carte</button>
             <ng-template ngbNavContent>
-                <div class="h-100">
-                    <div id="map-box" style="width: 100%; height: 100%;"></div>
-
-                    <div class="map-overlay card p-2 m-4">
-                        <p>Ajouter infra fictive :</p>
-
-                        <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable"
-                            createClass="HydroCreate" createApi="/api/hydro" draggable="true" />
-
-                        <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable"
-                            createClass="EolienneParcCreate" createApi="/api/eolienneparc" draggable="true" />
-
-                        <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable"
-                            createClass="SolaireCreate" createApi="/api/solaire" draggable="true" />
-
-                        <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable"
-                            createClass="ThermiqueCreate" createApi="/api/thermique" draggable="true" />
-
-                        <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable"
-                            createClass="NucleaireCreate" createApi="/api/nucleaire" draggable="true" />
-                    </div>
-                </div>
+                <app-quebec-map class="d-block h-100 w-100" />
             </ng-template>
         </li>
 
@@ -43,7 +22,5 @@
         </li>
     </ul>
 
-    <div class="flex-grow-1">
-        <div [ngbNavOutlet]="nav"></div>
-    </div>
+    <div [ngbNavOutlet]="nav" class="flex-grow-1 w-100"></div>
 </div>
