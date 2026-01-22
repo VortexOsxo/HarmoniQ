@@ -16,7 +16,10 @@ export class ScenarioTemporalDemandGraph {
   ) { }
 
   ngAfterViewInit(): void {
-    this.isGraphGenerated = this.simulationService.generateTemporalPlot();
+    this.isGraphGenerated =
+      this.simulationService.generateSimulationDemandeGraph() ||
+      this.simulationService.generateTemporalPlot();
+
     this.cdr.markForCheck(); // TODO: make it work :(
   }
 }
