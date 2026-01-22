@@ -7,6 +7,7 @@ import { SolarFarmsService } from './solar-farms-service';
 import { WindFarmsService } from './wind-farms-service';
 import { HydroelectricDamsService } from './hydroelectric-dams-service';
 import { InfrastruturesService } from './infrastrutures-service';
+import { MapLineService } from './map-line-service';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 
@@ -33,6 +34,7 @@ export class MapService {
     private thermalPowerPlantsService: ThermalPowerPlantsService,
     private nuclearPowerPlantsService: NuclearPowerPlantsService,
     private infrasService: InfrastruturesService,
+    private mapLineService: MapLineService
   ) {
     effect(() => {
       // reload markers when selected infra group changes
@@ -111,6 +113,8 @@ export class MapService {
 
       console.log('Drag: ', { type, route, lat, lng });
     });
+
+    this.mapLineService.addLinesToMap(map);
 
     this._map = map;
     return map;
