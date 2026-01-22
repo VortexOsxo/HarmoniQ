@@ -5,6 +5,14 @@ import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { map, tap } from 'rxjs/operators';
 import { environment } from 'environments/environment';
 import { getInfrastructureGroupFromJson, infrastructureGroupToJson } from '@app/models/infrastructure-group';
+import { OpenApiService } from './open-api-service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CreateInfraModal } from '@app/components/infrastructure/create-infra-modal/create-infra-modal';
+import { HydroelectricDamsService } from './hydroelectric-dams-service';
+import { WindFarmsService } from './wind-farms-service';
+import { SolarFarmsService } from './solar-farms-service';
+import { ThermalPowerPlantsService } from './thermal-power-plants-service';
+import { NuclearPowerPlantsService } from './nuclear-power-plants-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -24,8 +32,54 @@ export class InfrastruturesService {
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private modalService: NgbModal,
+    private openApiService: OpenApiService,
+    private hydroService: HydroelectricDamsService,
+    private windService: WindFarmsService,
+    private solarService: SolarFarmsService,
+    private thermalService: ThermalPowerPlantsService,
+    private nuclearService: NuclearPowerPlantsService
+  ) {
     this.refreshInfraGroups().subscribe();
+  }
+
+  createInfra(className: string, type: string, lat: number, lon: number) {
+    const schemas = this.openApiService.getOpenApiSchemas();
+
+    const modalRef = this.modalService.open(CreateInfraModal, {});
+
+    modalRef.componentInstance.schema = schemas[className];
+    modalRef.componentInstance.type = type;
+    modalRef.componentInstance.lat = lat;
+    modalRef.componentInstance.lon = lon;
+
+    modalRef.result.then(result => {
+      if (!result) return;
+      this.http.post(`${environment.apiUrl}/${type}`, result)
+        .subscribe((res: any) => this.refreshService(type));
+    });
+  }
+
+  refreshService(type: string) {
+    switch (type) {
+      case 'hydro':
+        this.hydroService.refresh();
+        break;
+      case 'eolienneparc':
+        this.windService.refresh();
+        break;
+      case 'solaire':
+        this.solarService.refresh();
+        break;
+      case 'thermique':
+        this.thermalService.refresh();
+        break;
+      case 'nucleaire':
+        this.nuclearService.refresh();
+        break;
+    }
   }
 
   isInfraSelected(type: string, infraId: string) {
