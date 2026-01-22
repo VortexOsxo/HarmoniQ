@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 import * as Plotly from 'plotly.js-dist-min';
 
+export const graphServiceConfig = {
+    PRODUCTION_SINGLE_INFRA_ID: 'production-single-infra-id',
+    ENERGY_PROD_CONS_SANKEY_ID: 'energy-prod-cons-sankey-id',
+    SECTOR_ENERGY_CONS_SANKEY_ID: 'sector-energy-cons-sankey-id',
+    TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id'
+};
+
+
 @Injectable({
     providedIn: 'root'
 })
@@ -8,7 +16,7 @@ export class GraphService {
 
     constructor() { }
 
-    public createGraph(type: string, data: any, elementId: string = 'graph-plot'): void {
+    public generateProductionSingleInfraGraph(type: string, data: any): void {
         let unit = '';
         let xval: any[] = [];
         let yval: any[] = [];
@@ -41,12 +49,36 @@ export class GraphService {
         const trace = {
             x: xval,
             y: yval,
-            type: 'scatter' as any, // Cast to any or specific Plotly type if available
+            type: 'scatter' as any,
             mode: 'lines' as any,
             marker: { color: 'blue' },
             line: { shape: 'spline' as any }
         };
 
-        Plotly.newPlot(elementId, [trace], layout as any);
+        Plotly.newPlot(graphServiceConfig.PRODUCTION_SINGLE_INFRA_ID, [trace], layout as any);
+    }
+
+    public generateEnergyProdConsSankeyGraph(data: any): void {
+        const layout = {
+            title: {
+                text: "Flux de Production et de Consommation d'Énergie",
+                font: { size: 22, family: "Arial", color: "#333" }
+            },
+            font: { size: 14, family: "Helvetica" },
+            margin: { l: 20, r: 20, t: 60, b: 20 },
+            paper_bgcolor: "#f8f9fa",
+            plot_bgcolor: "#f8f9fa",
+        };
+
+        Plotly.react(graphServiceConfig.ENERGY_PROD_CONS_SANKEY_ID, [data], layout);
+    }
+
+    public downloadGraph(graphId: string) {
+        Plotly.downloadImage(graphId, {
+            format: "png",
+            filename: graphId,
+            height: 600,
+            width: 1000
+        });
     }
 }

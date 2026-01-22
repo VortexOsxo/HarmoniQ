@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
+import { graphServiceConfig } from '@app/services/graph-service';
 
 @Injectable({
   providedIn: 'root',
@@ -109,7 +110,7 @@ export class SimulationService {
       font: { size: 10 }
     };
 
-    Plotly.newPlot("sankey-plot", sankeyData, layout);
+    Plotly.newPlot(graphServiceConfig.SECTOR_ENERGY_CONS_SANKEY_ID, sankeyData, layout);
     return true;
   }
 
@@ -148,7 +149,7 @@ export class SimulationService {
       hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
     };
 
-    Plotly.newPlot("temporal-plot", [trace], layout);
+    Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, [trace], layout);
     return true;
   }
 
@@ -253,8 +254,8 @@ export class SimulationService {
       }
     ];
 
-    Plotly.purge("temporal-plot");
-    Plotly.newPlot("temporal-plot", productionTraces, {
+    Plotly.purge(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID);
+    Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, productionTraces, {
       title: `Production et Demande pour scénario ${this.scenariosService.selectedScenario()?.nom}`,
       xaxis: {
         title: "Date",

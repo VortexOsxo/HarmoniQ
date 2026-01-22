@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as Plotly from 'plotly.js-dist-min';
+import { GraphService } from './graph-service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +9,9 @@ export class EnergyFlowService {
   consumption: any = null;
   production: any = null;
 
-  async generateSankey(climateScenario: string, growthScenario: string, efficiencyScenario: string) {
+  constructor(private graphService: GraphService) { }
+
+  async generateEnergyProdConsSankeyGraph(climateScenario: string, growthScenario: string, efficiencyScenario: string) {
     await this.load_energy_flow_data(climateScenario, growthScenario, efficiencyScenario);
     let source: any[] = [], target: any[] = [], value: any[] = [], labels: any[] = [];
 
@@ -87,30 +89,13 @@ export class EnergyFlowService {
       }
     };
 
-    const layout = {
-      title: {
-        text: "Flux de Production et de Consommation d'Énergie",
-        font: { size: 22, family: "Arial", color: "#333" }
-      },
-      font: { size: 14, family: "Helvetica" },
-      margin: { l: 20, r: 20, t: 60, b: 20 },
-      paper_bgcolor: "#f8f9fa",
-      plot_bgcolor: "#f8f9fa",
-    };
-
-
-    Plotly.react("sankeyDiagram", [data], layout);
+    this.graphService.generateEnergyProdConsSankeyGraph(data);
   }
 
   private async loadCSV(fileName: string) {
-    try {
-      const response = await fetch(fileName);
-      if (!response.ok) throw new Error(`Error loading ${fileName}`);
-      return await response.text();
-    } catch (error) {
-      console.error("Fetch error:", error);
-      return "";
-    }
+    const response = await fetch(fileName);
+    if (!response.ok) throw new Error(`Error loading ${fileName}`);
+    return await response.text();
   }
 
   private parseCSV(data: any, climateScenario: string, growthScenario: string, efficiencyScenario: string) {
@@ -133,14 +118,5 @@ export class EnergyFlowService {
     ]);
     this.consumption = this.parseCSV(consumptionRaw, climateScenario, growthScenario, efficiencyScenario);
     this.production = this.parseCSV(productionRaw, climateScenario, growthScenario, efficiencyScenario);
-  }
-
-  async downloadPNG() {
-    Plotly.downloadImage("sankeyDiagram", {
-      format: "png",
-      filename: "sankey_diagram",
-      height: 600,
-      width: 1000
-    });
   }
 }
