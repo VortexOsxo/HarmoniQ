@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { SimulationSingleInfraModal } from '@app/components/simulation/simulation-single-infra-modal/simulation-single-infra-modal';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
+import { MapService } from '@app/services/map-service';
 
 @Component({
   selector: 'app-infra-list-element',
@@ -23,13 +24,15 @@ export class InfraListElement {
     private infrastructuresService: InfrastruturesService,
     private scenarioService: ScenariosService,
     private modalService: NgbModal,
+    private mapService: MapService,
   ) { }
 
   toggleInfra() {
     this.infrastructuresService.toggleInfra(this.type, this.id);
   }
 
-  simulate_single() {
+  simulate_single(event: any) {
+    event.stopPropagation();
     if (!this.scenarioService.selectedScenario())
       return;
 
@@ -40,5 +43,8 @@ export class InfraListElement {
     modalRef.componentInstance.type = this.type;
   }
 
-  handleInfoClick() { }
+  handleInfoClick(event: any) {
+    event.stopPropagation();
+    this.mapService.showMarker(this.type, this.id);
+  }
 }

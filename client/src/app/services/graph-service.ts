@@ -13,8 +13,6 @@ export class GraphService {
         let xval: any[] = [];
         let yval: any[] = [];
 
-        console.log(type, data);
-
         if (type === "eolienneparc") {
             unit = "MW";
             xval = Object.values(data.tempsdate);

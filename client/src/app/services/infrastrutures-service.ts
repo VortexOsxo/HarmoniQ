@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { signal } from '@angular/core';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { map, tap } from 'rxjs/operators';
@@ -22,6 +22,8 @@ export class InfrastruturesService {
   infraGroups = signal<InfrastructureGroup[]>([]);
   selectedInfraGroup = signal<InfrastructureGroup | null>(null);
 
+  infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
+
   constructor(private http: HttpClient) {
     this.refreshInfraGroups().subscribe();
   }
@@ -41,13 +43,17 @@ export class InfrastruturesService {
 
     const key = typeKeyMap[type];
 
+    let isActive = false;
     if (infraGroup[key].includes(infraId)) {
       infraGroup[key] = infraGroup[key].filter((id: string) => id !== infraId);
+      isActive = false;
     } else {
       infraGroup[key].push(infraId);
+      isActive = true;
     }
 
     this.selectedInfraGroup.set(infraGroup);
+    this.infraToggled.emit({ type, id: infraId, isActive });
   }
 
   setInfrasForType(type: string, infrasIds: any[]) {

@@ -18,7 +18,7 @@ export class SimulationResults {
 
   onTabChange(event: any) {
     if (event.nextId === 'map') {
-      this.mapService.mapLoaded.emit();
+      this.mapService.onMapLoaded();
     }
   }
 }
