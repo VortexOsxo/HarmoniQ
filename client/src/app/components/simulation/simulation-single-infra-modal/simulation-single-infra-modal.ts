@@ -2,9 +2,8 @@ import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { SimulationService } from '@app/services/simulation-service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-
 import { CommonModule } from '@angular/common';
-import { GraphService } from '@app/services/graph-service';
+import { GraphService, graphServiceConfig } from '@app/services/graph-service';
 
 @Component({
   selector: 'app-simulation-single-infra-modal',
@@ -19,6 +18,8 @@ export class SimulationSingleInfraModal implements OnInit {
 
   error?: string;
   isLoading = true;
+
+  config = graphServiceConfig;
 
   get label() {
     return `Production d'énergie de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
@@ -39,7 +40,7 @@ export class SimulationSingleInfraModal implements OnInit {
     obs.subscribe({
       next: (data) => {
         this.isLoading = false;
-        this.graphService.createGraph(this.type, data);
+        this.graphService.generateProductionSingleInfraGraph(this.type, data);
         this.cdr.detectChanges();
       },
       error: (e) => {

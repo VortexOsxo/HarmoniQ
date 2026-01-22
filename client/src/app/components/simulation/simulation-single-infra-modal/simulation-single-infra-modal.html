@@ -8,7 +8,7 @@
     <div class="spinner-border text-primary" role="status" *ngIf="isLoading">
         <span class="visually-hidden">Loading...</span>
     </div>
-    <div id="graph-plot"></div>
+    <div [id]="config.PRODUCTION_SINGLE_INFRA_ID"></div>
     <div *ngIf="error" class="alert alert-danger" role="alert">
         {{ error }}
     </div>

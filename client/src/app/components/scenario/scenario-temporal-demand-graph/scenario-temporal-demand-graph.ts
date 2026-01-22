@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SimulationService } from '@app/services/simulation-service';
+import { graphServiceConfig } from '@app/services/graph-service';
 
 @Component({
   selector: 'app-scenario-temporal-demand-graph',
@@ -8,6 +9,7 @@ import { SimulationService } from '@app/services/simulation-service';
   templateUrl: './scenario-temporal-demand-graph.html',
 })
 export class ScenarioTemporalDemandGraph {
+  config = graphServiceConfig;
   isGraphGenerated = false;
 
   constructor(

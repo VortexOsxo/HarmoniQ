@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SimulationService } from '@app/services/simulation-service';
+import { graphServiceConfig } from '@app/services/graph-service';
 
 @Component({
   selector: 'app-scenario-demand-prod-sankey',
@@ -9,6 +10,8 @@ import { SimulationService } from '@app/services/simulation-service';
 })
 export class ScenarioDemandProdSankey implements AfterViewInit {
   isGraphGenerated = false;
+
+  config = graphServiceConfig;
 
   constructor(
     private simulationService: SimulationService,
