@@ -1,15 +1,9 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbAccordionModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { SolarFarmsService } from '@app/services/solar-farms-service';
 import { CommonModule } from '@angular/common';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
-import { InfraListElement } from '../infra-list-element/infra-list-element';
-import { HydroelectricDamsService } from '@app/services/hydroelectric-dams-service';
-import { NuclearPowerPlantsService } from '@app/services/nuclear-power-plants-service';
-import { ThermalPowerPlantsService } from '@app/services/thermal-power-plants-service';
-import { WindFarmsService } from '@app/services/wind-farms-service';
 import { InfraListBody } from '../infra-list-body/infra-list-body';
 import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-group-modal';
 
@@ -22,34 +16,33 @@ import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-
 export class InfrastructureSelector {
 
   get infrastructureGroups(): InfrastructureGroup[] {
-    return this.infrastructuresService.infraGroups();
+    return this.infrasService.infraGroups();
   }
 
   get selectedInfrastructureGroup(): InfrastructureGroup | null {
-    return this.infrastructuresService.selectedInfraGroup();
+    return this.infrasService.selectedInfraGroup();
   }
 
   set selectedInfrastructureGroup(infrastructureGroup: InfrastructureGroup | null) {
-    this.infrastructuresService.selectedInfraGroup.set(infrastructureGroup);
+    this.infrasService.selectedInfraGroup.set(infrastructureGroup);
   }
 
   infras: any[] = []
 
+  getInfrasFromType(type: string) {
+    return this.infrasService.getInfrasSignalByType(type);
+  }
+
   constructor(
-    private infrastructuresService: InfrastruturesService,
+    public infrasService: InfrastruturesService,
     private modalService: NgbModal,
-    public solarFarmsService: SolarFarmsService,
-    public hydroelectricDamsService: HydroelectricDamsService,
-    public nuclearPowerPlantsService: NuclearPowerPlantsService,
-    public thermalPowerPlantsService: ThermalPowerPlantsService,
-    public windFarmsService: WindFarmsService
   ) {
     this.infras = [
-      { name: 'Barrage Hydro-Électrique', type: 'hydro', infras: this.hydroelectricDamsService.infras },
-      { name: 'Parc Éolien', type: 'eolienneparc', infras: this.windFarmsService.infras },
-      { name: 'Parc Solaire', type: 'solaire', infras: this.solarFarmsService.infras },
-      { name: 'Centrale Thermique', type: 'thermique', infras: this.thermalPowerPlantsService.infras },
-      { name: 'Centrale Nucléaire', type: 'nucleaire', infras: this.nuclearPowerPlantsService.infras }
+      { name: 'Barrage Hydro-Électrique', type: 'hydro' },
+      { name: 'Parc Éolien', type: 'eolienneparc' },
+      { name: 'Parc Solaire', type: 'solaire' },
+      { name: 'Centrale Thermique', type: 'thermique', },
+      { name: 'Centrale Nucléaire', type: 'nucleaire', }
     ]
   }
 

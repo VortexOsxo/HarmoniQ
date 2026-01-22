@@ -23,7 +23,7 @@
             </h2>
             <div ngbAccordionCollapse>
                 <div ngbAccordionBody>
-                    <app-infra-list-body [infras]="infra.infras()" [type]="infra.type" />
+                    <app-infra-list-body [infras]="this.getInfrasFromType(infra.type)()" [type]="infra.type" />
                 </div>
             </div>
         </div>

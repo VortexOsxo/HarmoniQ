@@ -8,11 +8,12 @@ import { getInfrastructureGroupFromJson, infrastructureGroupToJson } from '@app/
 import { OpenApiService } from './open-api-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateInfraModal } from '@app/components/infrastructure/create-infra-modal/create-infra-modal';
-import { HydroelectricDamsService } from './hydroelectric-dams-service';
-import { WindFarmsService } from './wind-farms-service';
-import { SolarFarmsService } from './solar-farms-service';
-import { ThermalPowerPlantsService } from './thermal-power-plants-service';
-import { NuclearPowerPlantsService } from './nuclear-power-plants-service';
+import { Infra, InfraFactory } from '@app/models/infras/infra';
+import { HydroelectricDamFactory } from '@app/models/infras/hydroelectric-dam';
+import { WindFarmFactory } from '@app/models/infras/wind-farm';
+import { SolarFarmFactory } from '@app/models/infras/solar-farm';
+import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
+import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -23,6 +24,25 @@ const typeKeyMap: Record<string, string> = {
   'nucleaire': 'central_nucleaire'
 };
 
+export class InfrasContainer<T extends Infra<T>> {
+
+  infras = signal<T[]>([]);
+
+  private get apiUrl() {
+    return `${environment.apiUrl}/${this.factory.getType()}`;
+  }
+
+  constructor(private http: HttpClient, private factory: InfraFactory<T>) {
+    this.refresh();
+  }
+
+  refresh() {
+    this.http.get(this.apiUrl).subscribe((data: any) => {
+      this.infras.set(data.map((i: any) => this.factory.fromJson(i)));
+    })
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -32,17 +52,20 @@ export class InfrastruturesService {
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
 
+  infrasContainer = new Map<string, InfrasContainer<Infra<any>>>();
+
   constructor(
     private http: HttpClient,
     private modalService: NgbModal,
     private openApiService: OpenApiService,
-    private hydroService: HydroelectricDamsService,
-    private windService: WindFarmsService,
-    private solarService: SolarFarmsService,
-    private thermalService: ThermalPowerPlantsService,
-    private nuclearService: NuclearPowerPlantsService
   ) {
     this.refreshInfraGroups().subscribe();
+
+    const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
+    factories.forEach((Factory) => {
+      const factory = new Factory();
+      this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory));
+    });
   }
 
   createInfra(className: string, type: string, lat: number, lon: number) {
@@ -62,24 +85,13 @@ export class InfrastruturesService {
     });
   }
 
+  getInfrasSignalByType(type: string) {
+    const container = this.infrasContainer.get(type);
+    return container?.infras ?? signal([]);
+  }
+
   refreshService(type: string) {
-    switch (type) {
-      case 'hydro':
-        this.hydroService.refresh();
-        break;
-      case 'eolienneparc':
-        this.windService.refresh();
-        break;
-      case 'solaire':
-        this.solarService.refresh();
-        break;
-      case 'thermique':
-        this.thermalService.refresh();
-        break;
-      case 'nucleaire':
-        this.nuclearService.refresh();
-        break;
-    }
+    this.infrasContainer.get(type)?.refresh();
   }
 
   isInfraSelected(type: string, infraId: string) {
