@@ -98,9 +98,10 @@ export class MapService {
       e.preventDefault();
     });
 
+    const infrasService = this.infrasService;
     map.getContainer().addEventListener("drop", function (e: any) {
       e.preventDefault();
-      const [type, route] = e.dataTransfer.getData("text/plain").split(",");
+      const [className, type] = e.dataTransfer.getData("text/plain").split(",");
 
       const mapPos = map.getContainer().getBoundingClientRect();
       const x = e.clientX - mapPos.left;
@@ -111,7 +112,7 @@ export class MapService {
       const lat = parseFloat(latlng.lat.toFixed(6));
       const lng = parseFloat(latlng.lng.toFixed(6));
 
-      console.log('Drag: ', { type, route, lat, lng });
+      infrasService.createInfra(className, type, lat, lng);
     });
 
     this.mapLineService.addLinesToMap(map);

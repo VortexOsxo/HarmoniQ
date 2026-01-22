@@ -1,0 +1,30 @@
+<div class="modal-header w-100 d-flex justify-content-between">
+    <h5 class="modal-title">Créer {{ prettyName }}</h5>
+    <button class="btn-close" (click)="activeModal.close()"></button>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="modal-body">
+
+        <div *ngFor="let field of fields" class="form-group mb-3">
+            <label class="form-label" [for]="field.key">
+                {{ field.title }}
+                <i *ngIf="field.description" class="fas fa-info-circle" ngbTooltip="{{ field.description }}"
+                    placement="top"></i>
+            </label>
+
+            <select *ngIf="field.enum" class="form-control" [id]="field.key" [formControlName]="field.key">
+                <option *ngFor="let v of field.enum" [value]="v">{{ v }}</option>
+            </select>
+
+            <input *ngIf="!field.enum" class="form-control" [id]="field.key" [type]="field.type"
+                [readonly]="field.readonly" [formControlName]="field.key">
+        </div>
+
+    </div>
+
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="activeModal.close()">Fermer</button>
+        <input type="submit" class="btn btn-primary" value="Créer" [disabled]="form.invalid">
+    </div>
+</form>
