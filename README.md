@@ -3,8 +3,8 @@
 ## Prérequis
 
 Pour utiliser ce projet, vous avez besoin de :
-* **Python 3.8+** installé sur votre machine. https://www.python.org/downloads/
-* **Git** installé sur votre machine. https://git-scm.com/install/
+* **Python entre 3.8 et 3.11** installé sur votre machine. https://www.python.org/downloads/ - python --version (pour verifier)
+* **Git** installé sur votre machine. https://git-scm.com/install/ - git --version (pour verifier)
 
 ---
 
@@ -100,6 +100,7 @@ Une fois l'installation initiale (étapes 0 à 2) terminée, vous n'avez plus be
    - **Windows** : `.\venv\Scripts\activate`
    - **Linux/macOS** : `source venv/bin/activate`
 3. Lancez l'application : `launch-app --debug`
+4. visitez le site web avec: `http://127.0.0.1:5000/`
 
 ---
 
