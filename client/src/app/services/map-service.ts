@@ -1,11 +1,6 @@
-import { Injectable, effect, signal, WritableSignal } from '@angular/core';
+import { Injectable, effect } from '@angular/core';
 import * as L from 'leaflet';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
-import { NuclearPowerPlantsService } from './nuclear-power-plants-service';
-import { ThermalPowerPlantsService } from './thermal-power-plants-service';
-import { SolarFarmsService } from './solar-farms-service';
-import { WindFarmsService } from './wind-farms-service';
-import { HydroelectricDamsService } from './hydroelectric-dams-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { MapLineService } from './map-line-service';
 
@@ -28,11 +23,6 @@ export class MapService {
   }
 
   constructor(
-    private hydroelectricDamnsService: HydroelectricDamsService,
-    private windFarmsService: WindFarmsService,
-    private solarFarmsService: SolarFarmsService,
-    private thermalPowerPlantsService: ThermalPowerPlantsService,
-    private nuclearPowerPlantsService: NuclearPowerPlantsService,
     private infrasService: InfrastruturesService,
     private mapLineService: MapLineService
   ) {
@@ -48,27 +38,12 @@ export class MapService {
 
     types.forEach(type => {
       effect(() => {
-        this.getInfrasSignalByType(type)();
+        this.infrasService.getInfrasSignalByType(type)();
         this.reloadMarkers();
       });
     });
   }
 
-  getInfrasSignalByType(type: string): WritableSignal<any[]> {
-    switch (type) {
-      case 'hydro':
-        return this.hydroelectricDamnsService.infras;
-      case 'eolienneparc':
-        return this.windFarmsService.infras;
-      case 'solaire':
-        return this.solarFarmsService.infras;
-      case 'thermique':
-        return this.thermalPowerPlantsService.infras;
-      case 'nucleaire':
-        return this.nuclearPowerPlantsService.infras;
-    }
-    return signal([]);
-  }
 
   onMapLoaded() { setTimeout(() => this.map?.invalidateSize(), 250); }
 
@@ -131,7 +106,7 @@ export class MapService {
 
   initMarkers() {
     if (!this.map) return;
-    types.forEach(type => this.addMarkers(type, this.getInfrasSignalByType(type)()));
+    types.forEach(type => this.addMarkers(type, this.infrasService.getInfrasSignalByType(type)()));
   }
 
   destroyMarkers() {
