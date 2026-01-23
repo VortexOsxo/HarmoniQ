@@ -275,4 +275,71 @@ export class SimulationService {
     } as any);
     return true;
   }
+
+  hasExportableData(): boolean {
+    return this.cachedSimulationResult !== null || this.cachedDemandeTemporal !== null;
+  }
+
+  exportSimulationToCSV(): void {
+    if (!this.cachedSimulationResult && !this.cachedDemandeTemporal) {
+      console.warn('No simulation data available to export');
+      return;
+    }
+
+    const headers = ['Date', 'Demande (MW)', 'Production Totale (MW)', 'Éolien (MW)', 'Solaire (MW)',
+      'Hydro Fil (MW)', 'Hydro Réservoir (MW)', 'Importations (MW)', 'Nucléaire (MW)', 'Thermique (MW)'];
+
+    const rows: string[] = [headers.join(',')];
+
+    if (this.cachedSimulationResult && this.cachedSimulationResult.production) {
+      const productionData = this.cachedSimulationResult.production;
+      const demandeData = this.cachedDemandeTemporal?.total_electricity || {};
+
+      productionData.forEach((instance: any) => {
+        // TODO : we can modify the precision if needed later (talk w meca people)
+        const date = instance['snapshot'];
+        const demande = demandeData[date] ? (demandeData[date] / 1000).toFixed(2) : '';
+        const row = [
+          date,
+          demande,
+          instance['totale']?.toFixed(2) || '',
+          instance['total_eolien']?.toFixed(2) || '',
+          instance['total_solaire']?.toFixed(2) || '',
+          instance['total_hydro_fil']?.toFixed(2) || '',
+          instance['total_hydro_reservoir']?.toFixed(2) || '',
+          instance['total_import']?.toFixed(2) || '',
+          instance['total_nucleaire']?.toFixed(2) || '',
+          instance['total_thermique']?.toFixed(2) || ''
+        ];
+        rows.push(row.join(','));
+      });
+    } else if (this.cachedDemandeTemporal) {
+      //if no simulation result, we export only the demand data
+      const demandeData = this.cachedDemandeTemporal.total_electricity;
+      Object.keys(demandeData).forEach((date: string) => {
+        const row = [
+          date,
+          (demandeData[date] / 1000).toFixed(2),
+          '', '', '', '', '', '', '', ''
+        ];
+        rows.push(row.join(','));
+      });
+    }
+
+    const csvContent = rows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    const scenarioName = this.scenariosService.selectedScenario()?.nom || 'simulation';
+    const filename = `simulation_${scenarioName}_${new Date().toISOString().split('T')[0]}.csv`;
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 }

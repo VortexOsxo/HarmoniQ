@@ -1,3 +1,11 @@
-<div id="{{config.TEMPORAL_DEMANDE_PRODUCTION_ID}}" class="h-100 w-100">
+<div id="{{config.TEMPORAL_DEMANDE_PRODUCTION_ID}}" class="h-100 w-100 position-relative">
     <p *ngIf="!isGraphGenerated">Choisis un scénario pour voir des données temporelles</p>
+    <button 
+        *ngIf="isGraphGenerated && hasExportableData()" 
+        class="btn btn-primary position-absolute download-csv-btn"
+        (click)="downloadCSV()"
+        title="Télécharger les données en CSV">
+        <i class="bi bi-download me-1"></i>
+        Télécharger CSV
+    </button>
 </div>

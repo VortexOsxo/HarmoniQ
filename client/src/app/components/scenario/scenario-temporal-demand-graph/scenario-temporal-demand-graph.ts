@@ -7,6 +7,7 @@ import { graphServiceConfig } from '@app/services/graph-service';
   selector: 'app-scenario-temporal-demand-graph',
   imports: [CommonModule],
   templateUrl: './scenario-temporal-demand-graph.html',
+  styleUrl: './scenario-temporal-demand-graph.css',
 })
 export class ScenarioTemporalDemandGraph {
   config = graphServiceConfig;
@@ -24,4 +25,13 @@ export class ScenarioTemporalDemandGraph {
 
     this.cdr.markForCheck(); // TODO: make it work :(
   }
+
+  hasExportableData(): boolean {
+    return this.simulationService.hasExportableData();
+  }
+
+  downloadCSV(): void {
+    this.simulationService.exportSimulationToCSV();
+  }
 }
+
