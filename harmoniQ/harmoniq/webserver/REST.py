@@ -1,7 +1,10 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+
+import os
+import glob
 
 from typing import List, Optional
 from datetime import datetime
@@ -32,19 +35,80 @@ from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
 from harmoniq.modules.hydro import InfraHydro
+from harmoniq.modules.reseau import NETWORK_CACHE_DIR
+from harmoniq.modules.reseau.utils.data_loader import DEMAND_CACHE_DIR
+from harmoniq.db.schemas import Scenario
+
+#Appel des modules de production énergétique, ainsi que d'autres modules, et crée des routes web pour chaque fonction CRUD et autre!
 
 router = APIRouter(
     prefix="/api",
     responses={404: {"description": "Not found"}},
 )
 
-
+# Route de test
 @router.get("/ping")
 async def ping():
     return {"ping": "pong"}
 
 
-# Initialisation des fonctions CRUD des tables de la base de données
+@router.delete(
+    "/scenario/{scenario_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a scenario and purge its on-disk caches"
+)
+async def delete_scenario_and_purge_cache(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+):
+    # 1) Load the scenario
+    scenario = await read_data_by_id(db, Scenario, scenario_id)
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+
+    # 2) Purge network cache files for this scenario
+    #    Filenames: network_s<scenario_id>_<year>_i<infra_id>_<hash>.nc
+    pattern_nc = str(NETWORK_CACHE_DIR / f"network_s{scenario_id}_*")
+    for path in glob.glob(pattern_nc):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+    # 3) Purge demand cache files for this scenario
+    #    Filenames: demand_<year>_<start>_<end>_loads<N>.pkl
+    year  = scenario.date_de_debut.year
+    start = scenario.date_de_debut.strftime("%Y-%m-%d")
+    end   = scenario.date_de_fin.strftime("%Y-%m-%d")
+    pattern_dc = str(DEMAND_CACHE_DIR / f"demand_{year}_{start}_{end}_*")
+    for path in glob.glob(pattern_dc):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+    # 4) Delete the scenario record from the database
+    result = await delete_data(db, Scenario, scenario_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+
+    # Returns 204 No Content
+    return
+
+
+
+
+
+
+
+
+
+
+
+
+#-----#-----#-----#-----#-----#  Creation des méthodes CRUD  #-----#-----#-----#-----#-----#
+
+# Création des méthodes CRUD sur FastAPI
 api_routers = {}
 for sql_class, pydantic_classes in engine.sql_tables.items():
     table_name = sql_class.__name__
@@ -144,7 +208,9 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
         sql_class, base_class, create_class, response_class, table_name_lower
     )
 
-# Demande
+#-----#-----#-----#-----#-----#  Demande d'energie  #-----#-----#-----#-----#-----#
+
+# Demande : permet de lire la demande d'energie
 demande_router = APIRouter(
     prefix="/demande",
     tags=["Demande"],
@@ -163,7 +229,6 @@ async def read_demande(
 
     demande = await read_demande_data(scenario, CUID)
     return "ping"
-
 
 @demande_router.post("/sankey")
 async def read_demande_sankey(
@@ -194,13 +259,13 @@ async def read_demande_temporal(
 
 router.include_router(demande_router)
 
-# Meteo
+#-----#-----#-----#-----#-----#  Lecture de la météo  #-----#-----#-----#-----#-----#
+
 meteo_router = APIRouter(
     prefix="/meteo",
     tags=["Meteo"],
     responses={404: {"description": "Not found"}},
 )
-
 
 @meteo_router.post("/get_data")
 def get_meteo_data(
@@ -231,12 +296,11 @@ def get_meteo_data(
         headers={"Content-Disposition": "attachment; filename=weather_data.csv"},
     )
 
-
 router.include_router(meteo_router)
 
-# Parc éolien
-parc_eolien_router = api_routers["eolienneparc"]
+#-----#-----#-----#-----#-----#  Production : Eolien  #-----#-----#-----#-----#-----#
 
+parc_eolien_router = api_routers["eolienneparc"]
 
 @parc_eolien_router.post("/{parc_eolien_id}/production")
 async def calculer_production_parc_eolien(
@@ -256,11 +320,12 @@ async def calculer_production_parc_eolien(
     await eolienne_infra.charger_scenario(scenario)
     production: pd.DataFrame = eolienne_infra.calculer_production()
     production = production.fillna(0)
+    print("Production Eolienne AHAHAHA", production)
     return production
 
-
 # TODO DRY
-# Parc solaire
+#-----#-----#-----#-----#-----#  Production : Solaire  #-----#-----#-----#-----#-----#
+
 solaire_router = api_routers["solaire"]
 
 @solaire_router.post("/{solaire_id}/production")
@@ -283,8 +348,8 @@ async def calculer_production_solaire(
     production = production.fillna(0)
     return production
 
+#-----#-----#-----#-----#-----#  Production : Thermique  #-----#-----#-----#-----#-----#
 
-# Thermique
 thermique_router = api_routers["thermique"]
 @thermique_router.post("/{thermique_id}/production")
 
@@ -307,7 +372,8 @@ async def calculer_production_thermique(
     production = production.fillna(0)
     return production
 
-# Nucléaire
+#-----#-----#-----#-----#-----#  Production : Nucleaire  #-----#-----#-----#-----#-----#
+
 nucleaire_router = api_routers["nucleaire"]
 
 @nucleaire_router.post("/{nucleaire_id}/production")
@@ -331,7 +397,8 @@ async def calculer_production_nucleaire(
     return production
 
 
-# Hydro
+#-----#-----#-----#-----#-----#  Production : Hydro  #-----#-----#-----#-----#-----#
+
 hydro_router = api_routers["hydro"]
 
 @hydro_router.post("/{hydro_id}/production")
@@ -360,7 +427,8 @@ async def calculer_production_hydro(
     return production
 
 
-# Fausses données
+#-----#-----#-----#-----#-----#  Fake Data  #-----#-----#-----#-----#-----#
+
 faker_router = APIRouter(
     prefix="/faker",
     tags=["Faker"],
@@ -380,6 +448,7 @@ async def get_production_aleatoire(scenario_id: int, db: Session = Depends(get_d
 
 router.include_router(faker_router)
 
+#-----#-----#-----#-----#-----#  Production : Reseau  #-----#-----#-----#-----#-----#
 
 reseau_router = APIRouter(
     prefix="/reseau",
@@ -439,6 +508,7 @@ async def calculer_production_reseau(
 
 router.include_router(reseau_router)
 
-# Ajout des routes aux endpoint
+#-----#-----#-----#-----#-----#  Ajout de toutes les routes  #-----#-----#-----#-----#-----#
+
 for _, api_router in api_routers.items():
     router.include_router(api_router)

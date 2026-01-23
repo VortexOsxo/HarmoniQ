@@ -65,6 +65,7 @@ var prettyNames = {
     hydro: "Barrage hydroélectrique"
 }
 
+// Initialisation de la carte ainsi que des variables et de la page en général
 
 // Utility function to fetch data and handle errors
 function fetchData(url, method = 'GET', data = null, signal = null) {
@@ -112,15 +113,30 @@ function initialiserListeScenario() {
     initializeDropdown('/api/scenario', 'scenario-actif', no_selection_scenario);
 }
 
-// Initialize infrastructure groups
 function initialiserListeInfra() {
-    initializeDropdown('/api/listeinfrastructures', 'groupe-actif', no_selection_infra);
+    initializeDropdown(
+        '/api/listeinfrastructures',
+        'groupe-actif',
+        () => {
+            const dropdown = document.getElementById('groupe-actif');
+            if (dropdown.options.length > 0) {
+                // 1) Sélectionner la première option
+                dropdown.selectedIndex = 0;
+                // 2) Charger automatiquement ce groupe
+                changeInfra();
+            } else {
+                // si pas d'option du tout, on revient au comportement initial
+                no_selection_infra();
+            }
+        }
+    );
 }
+
 
 function addMarker(lat, lon, type, data) {
     const icon = map_icons[type];
 
-    // Construire le contenu du popup en fonction du type
+    // Construction du contenu du popup
     let popupContent = `<b>${data.nom}</b><br>Catégorie: ${prettyNames[type]}<br>`;
 
     if (type === 'eolienneparc') {
@@ -131,17 +147,17 @@ function addMarker(lat, lon, type, data) {
         `;
     } else if (type === 'hydro') {
         popupContent += `
-            type de barrage: ${data.type_barrage || 'N/A'} <br>
+            Type de barrage: ${data.type_barrage || 'N/A'}<br>
             Débit nominal: ${data.debits_nominal ? parseFloat(data.debits_nominal).toFixed(1) : 'N/A'} m³/s<br>
             Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
             Volume du réservoir: ${
                 data.volume_reservoir
-                ? data.volume_reservoir >= 1e9
-                    ? (data.volume_reservoir / 1e9).toFixed(1) + ' Gm³' // Milliards de m³
-                    : data.volume_reservoir >= 1e6
-                        ? (data.volume_reservoir / 1e6).toFixed(1) + ' Mm³' // Millions de m³
-                        : (data.volume_reservoir / 1e3).toFixed(1) + ' km³' // Milliers de m³
-                : 'N/A'
+                    ? data.volume_reservoir >= 1e9
+                        ? (data.volume_reservoir / 1e9).toFixed(1) + ' Gm³'
+                        : data.volume_reservoir >= 1e6
+                            ? (data.volume_reservoir / 1e6).toFixed(1) + ' Mm³'
+                            : (data.volume_reservoir / 1e3).toFixed(1) + ' km³'
+                    : 'N/A'
             }<br>
         `;
     } else if (type === 'solaire') {
@@ -150,19 +166,25 @@ function addMarker(lat, lon, type, data) {
             Orientation des panneaux: ${data.orientation_panneau || 'N/A'}<br>
             Puissance nominale: ${data.puissance_nominal || 'N/A'} MW
         `;
-    } else if (type === 'thermique') {
-        popupContent += `
-            Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
-            Type d'intrant: ${data.type_intrant || 'N/A'}
-        `;
-    } else if (type === 'nucleaire') { // Ajout pour la catégorie nucléaire
+    } else if (type === 'thermique' || type === 'nucleaire') {
         popupContent += `
             Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
             Type d'intrant: ${data.type_intrant || 'N/A'}
         `;
     }
 
-    // Ajouter le marqueur à la carte avec le popup
+    // --- nouveau bouton Supprimer ---
+    popupContent += `
+        <div style="margin-top:8px;">
+            <button 
+                class="btn btn-sm btn-danger" 
+                onclick="deleteInfraFromMap('${type}', '${data.id}')">
+                Supprimer
+            </button>
+        </div>
+    `;
+
+    // Ajout du marqueur à la carte avec ce popup
     const marker = L.marker([lat, lon], { icon: icon })
         .addTo(map)
         .bindPopup(popupContent);
@@ -170,7 +192,8 @@ function addMarker(lat, lon, type, data) {
     marker.on('click', function () {
         this.openPopup();
     });
-    // Stocker le marqueur dans l'objet global
+
+    // On stocke le marqueur pour pouvoir le supprimer plus tard
     const markerKey = `${type}-${data.id}`;
     markers[markerKey] = marker;
 }
@@ -352,6 +375,7 @@ window.onload = function() {
 
 };
 
+// Maintenant nous passons aux actions de l'utilisateur
 
 function infraUserAction() {
     if (infraTimeout) {
@@ -576,6 +600,53 @@ $("button.select-none").on('click', function(target) {
 
     infraUserAction();
 });
+
+
+function deleteInfraFromMap(type, id) {
+    const groupeId = $("#groupe-actif").val();
+
+    // 1) Supprimer l’infra côté serveur
+    fetch(`/api/${type}/${id}`, { method: 'DELETE' })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 2) Retirer le marqueur de la carte
+        const markerKey = `${type}-${id}`;
+        if (markers[markerKey]) {
+            map.removeLayer(markers[markerKey]);
+            delete markers[markerKey];
+        }
+
+        // 3) Supprimer l’élément de la liste (au lieu de juste le désactiver)
+        const listItem = document.querySelector(`li[elementid="${id}"][type="${type}"]`);
+        if (listItem) {
+            listItem.remove();
+        }
+
+        // 4) Construire la nouvelle config de groupe sans l’ID supprimé
+        const updatedValues = load_groupe_ids();
+        console.log('Payload mise à jour :', updatedValues);
+
+        // 5) Envoyer le PUT pour mettre à jour le groupe côté serveur
+        return fetch(`/api/listeinfrastructures/${groupeId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedValues)
+        });
+    })
+    .then(response2 => {
+        if (!response2.ok) {
+            throw new Error(`Erreur mise à jour groupe ${response2.status}: ${response2.statusText}`);
+        }
+        alert("Infrastructure supprimée du serveur, de la carte et de la liste.");
+    })
+    .catch(error => {
+        console.error("Erreur lors de la suppression ou mise à jour :", error);
+        alert("Impossible de supprimer l’infrastructure : " + error.message);
+    });
+}
 
 
 function deleteScenario(id) {
@@ -1169,7 +1240,7 @@ function modeliserLignes() {
                 }, {});
 
                 // Filtrer les lignes avec un voltage de 735
-                return parseInt(ligne.voltage) === 80;
+                return parseInt(ligne.voltage) === 735;
             });
 
             lignesSelectionnees.forEach(line => {

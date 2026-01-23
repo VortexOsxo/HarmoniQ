@@ -1,19 +1,16 @@
-import asyncio
-
-from env_canada import ECHistorical
-from env_canada.ec_historical import get_historical_stations
-
-import numpy as np
-from pathlib import Path
-import pandas as pd
 from datetime import datetime, timedelta
-from typing import Optional, List
 from enum import Enum
-from geopy.distance import geodesic
-
+from pathlib import Path
+from typing import Optional
+import pandas as pd
 import logging
-
-from harmoniq.db.schemas import PositionBase, weather_schema
+from harmoniq.db.schemas import PositionBase
+import openmeteo_requests
+import requests_cache
+from retry_requests import retry
+import numpy as np
+from harmoniq import METEO_DATA_PATH
+import math
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,11 +20,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class Granularity(Enum):
     DAILY = 2
     HOURLY = 1
-
 
 class EnergyType(Enum):
     NONE = 0
@@ -35,13 +30,106 @@ class EnergyType(Enum):
     SOLAIRE = 2
     EOLIEN = 3
 
-
 _CURRENT_YEAR = datetime.now().year
-_REFERENCE_YEAR = 2020  # If future data is queried, 2020 is provided
+_REFERENCE_YEAR = 2024
 
-CACHE = Path(__file__).parent / "cache"
-if not CACHE.exists():
-    CACHE.mkdir(parents=True, exist_ok=True)
+
+class Meteo:
+    def __init__(self):
+        self.cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
+        self.retry_session = retry(self.cache_session, retries=5, backoff_factor=0.2)
+        self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
+        
+        # Load existing CSV data once
+        try:
+            self.existing_df = pd.read_csv(METEO_DATA_PATH)
+            self.existing_df["date"] = pd.to_datetime(self.existing_df["date"])
+        except Exception as e:
+            print(f"⚠️ Impossible de charger data.csv : {e}")
+            self.existing_df = None
+
+    def haversine(self, lat1, lon1, lat2, lon2):
+        R = 6371  # Radius of Earth in km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        return 2 * R * math.asin(math.sqrt(a))
+
+    def get_weather_data(self, Latitude, Longitude, start_date, end_date):
+        url = "https://archive-api.open-meteo.com/v1/archive"
+        params = {
+            "latitude": Latitude,
+            "longitude": Longitude,
+            "start_date": start_date,
+            "end_date": end_date,
+            "hourly": ["temperature_2m", "relative_humidity_2m", "dew_point_2m", "apparent_temperature", "precipitation", "rain", "snowfall", "snow_depth", "soil_temperature_0_to_7cm", "soil_temperature_7_to_28cm", "soil_temperature_28_to_100cm", "soil_temperature_100_to_255cm", "wind_speed_10m", "wind_speed_100m", "wind_direction_10m", "wind_direction_100m", "wind_gusts_10m", "weather_code", "pressure_msl", "surface_pressure", "cloud_cover", "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high", "et0_fao_evapotranspiration", "vapour_pressure_deficit", "soil_moisture_0_to_7cm", "soil_moisture_7_to_28cm", "soil_moisture_28_to_100cm", "soil_moisture_100_to_255cm"],
+            "timezone": "America/New_York",
+            "wind_speed_unit": "ms"
+        }
+        responses = self.openmeteo.weather_api(url, params=params)
+        response = responses[0]
+        hourly = response.Hourly()
+        hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+        hourly_wind_speed_100m = hourly.Variables(13).ValuesAsNumpy()
+        hourly_wind_direction_100m = hourly.Variables(15).ValuesAsNumpy()
+        hourly_surface_pressure = hourly.Variables(19).ValuesAsNumpy()
+
+        hourly_data = {
+            "date": pd.date_range(
+                start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+                end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+                freq=pd.Timedelta(seconds=hourly.Interval()),
+                inclusive="left"
+            )
+        }
+        hourly_data["temperature_C"] = hourly_temperature_2m
+        hourly_data["vitesse_vent_kmh"] = hourly_wind_speed_100m * 3.6
+        hourly_data["direction_vent"] = hourly_wind_direction_100m
+        hourly_data["pression"] = hourly_surface_pressure / 10
+
+        df = pd.DataFrame(data=hourly_data)
+        df["date"] = df["date"] - pd.Timedelta(hours=4)
+        return (df)
+
+    def get_weather_or_nearest(self, Latitude, Longitude, start_date, end_date):
+        print(f"🌍 Recherche météo pour {Latitude}, {Longitude} de {start_date} à {end_date}")
+
+        if self.existing_df is None:
+            print("❌ Pas de base de données locale, appel à l’API...")
+            start_str = start_date.strftime("%Y-%m-%d")
+            end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
+            return self.get_weather_data(Latitude, Longitude, start_str, end_str)
+
+        # Trouver la station la plus proche
+        unique_coords = self.existing_df[["lat", "lon"]].drop_duplicates()
+        unique_coords["distance"] = unique_coords.apply(
+            lambda row: self.haversine(Latitude, Longitude, row["lat"], row["lon"]), axis=1
+        )
+        nearest = unique_coords.sort_values("distance").iloc[0]
+
+        if nearest["distance"] > 50:
+            print(f"ℹ️ Station la plus proche à {nearest['distance']:.1f} km — appel API")
+            start_str = start_date.strftime("%Y-%m-%d")
+            end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
+            return self.get_weather_data(Latitude, Longitude, start_str, end_str)
+        
+        print(f"✅ Utilisation de la station à {nearest['distance']:.1f} km")
+
+        # Conversion des dates en UTC avec seulement 00h00 inclus pour la date de fin
+        start = pd.to_datetime(start_date).tz_localize("UTC") if pd.to_datetime(start_date).tzinfo is None else pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date).tz_localize("UTC") if pd.to_datetime(end_date).tzinfo is None else pd.to_datetime(end_date)
+        end = end.replace(hour=0, minute=0, second=0, microsecond=0)
+        df_filtered = self.existing_df[
+            (self.existing_df["lat"] == nearest["lat"]) &
+            (self.existing_df["lon"] == nearest["lon"]) &
+            (self.existing_df["date"] >= start) &
+            (self.existing_df["date"] <= end)
+        ].copy()
+        # Supprimer doublons exacts sur la date
+        df_filtered["date"] = pd.to_datetime(df_filtered["date"], utc=True)
+        df_filtered = df_filtered.sort_values("date")
+        return df_filtered
+
 
 class WeatherHelper:
     def __init__(
@@ -51,39 +139,24 @@ class WeatherHelper:
         start_time: datetime,
         end_time: Optional[datetime] = None,
         data_type: EnergyType = EnergyType.NONE,
-        granularity: Granularity = Granularity.DAILY,
+        granularity: Granularity = Granularity.HOURLY,
     ):
         self.position = position
-        self.elevation: Optional[float] = None
         self.interpolate = interpolate
         self.data_type = data_type
 
-        self.start_time = start_time
-        self.end_time = end_time or datetime.now()
-
-        # If the start time and end time are the same, set the end time to the end of the day
+        self.start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        self.end_time = (end_time or datetime.now()).replace(hour=0, minute=0, second=0, microsecond=0)
         if self.start_time == self.end_time:
-            self.end_time = self.start_time + pd.DateOffset(days=1)
-
-        # If the time range is after this year, set it back
-        self._timeshift = None
-        if self.end_time.year > _CURRENT_YEAR:
-            self._timeshift = timedelta(
-                days=(365 * (self.end_time.year - _REFERENCE_YEAR))
-            )
-            self.start_time -= self._timeshift
-            self.end_time -= self._timeshift
+            self.end_time += timedelta(days=1)
 
         self._granularity = granularity
-        self._nearby_stations: Optional[pd.DataFrame] = None
-        self._data: Optional[pd.DataFrame] = None
+        self._data = None
+        self.meteo_client = Meteo()
 
         logger.info(
-            f"Created WeatherHelper({self.position} de {self.start_time} à {self.end_time})"
+            f"WeatherHelper({self.position} de {self.start_time} à {self.end_time}, granularité={self.granularity})"
         )
-
-    def __repr__(self):
-        return f"WeatherHelper({self.position} de {self.start_time} à {self.end_time})"
 
     @property
     def granularity(self) -> str:
@@ -95,310 +168,69 @@ class WeatherHelper:
             raise ValueError("Data not loaded")
         return self._data
 
-    @property
-    def _cache_key(self) -> str:
-        lat = round(self.position.latitude, 4)
-        lon = round(self.position.longitude, 4)
-        energy_type = self.data_type.name.lower()
-        start_str = self.start_time.strftime("%Y-%m-%d")
-        end_str = self.end_time.strftime("%Y-%m-%d")
-        return f"{lat}_{lon}_{start_str}_{end_str}_{self.granularity}_{energy_type}"
-
-    def test_cache(self) -> bool:
-        """Test if the cache file exists and is not empty"""
-        cache_file = CACHE / f"{self._cache_key}.csv"
-        if cache_file.exists():
-            logger.info(f"Cache file {cache_file} exists")
-            return True
-        return False
-    
-    def load_cache(self) -> pd.DataFrame:
-        """Load the cache file"""
-        cache_file = CACHE / f"{self._cache_key}.csv"
-        return pd.read_csv(cache_file, index_col=0, parse_dates=True)
-
-    def save_cache(self, data: pd.DataFrame) -> None:
-        cache_file = CACHE / f"{self._cache_key}.csv"
-        data.to_csv(cache_file, index=True)
-        logger.info(f"Saved cache file {cache_file}")
-
-    def set_back_time(self, data: pd.DataFrame) -> pd.DataFrame:
-        logger.info(f"Setting back time for {self.position} from {self.start_time} to {self.end_time}")
-        if self._timeshift is not None:
-            data.index = data.index + self._timeshift
-
-        return data
-
-
-    async def load(self) -> None:
+    def load(self) -> pd.DataFrame:
         if self._data is not None:
-            return self.set_back_time(self._data)
-
-        if self.test_cache():
-            logger.info(f"Loading data from cache")
-            self._data = self.load_cache()
-            self._data = self.set_back_time(self._data)
             return self._data
 
-        self._nearby_stations = await self._get_nearest_station()
 
-        valid_data = 0
-        data_list = []
-        for station in self._nearby_stations.itertuples():
-            logger.info(f"Getting data from {station.Index}")
-            range = (
-                station.hlyRange
-                if self._granularity == Granularity.HOURLY
-                else station.dlyRange
-            )
+        original_start = self.start_time
+        original_end = self.end_time
+        # Utilise 2024 comme année de fallback si simulation dans le futur
+        if self.end_time.year > _REFERENCE_YEAR:
+            self.start_time = self.start_time.replace(year=2024)
+            self.end_time = self.end_time.replace(year=2024)
 
-            if range == "|":
-                logger.info(
-                    f"No {'hourly' if self._granularity == Granularity.HOURLY else 'daily'} data available"
-                )
-                continue
-
-            sub_data = await self._get_historical_data_range(int(station.id))
-
-            sub_data = self._to_schema(sub_data)
-
-            if not self._validate_type(sub_data, self.data_type):
-                logger.info(f"Data not of right type")
-                continue
-
-            if not self.interpolate:
-                self._data = sub_data
-                return self._data
-
-            valid_data += 1
-            logger.info(f"Found valid data from {station.Index}")
-            data_list.append(sub_data)
-
-            if valid_data >= 3:
-                break
-
-        self._data = self._interpolate_data(data_list)
-
-        if self._data is None:
-            raise ValueError("No valid data found")
-
-        # Trim data out of range
-        self._data = self._data.loc[
-            (self._data.index >= self.start_time) & (self._data.index <= self.end_time)
-        ]
-
-        self.save_cache(self._data)
-
-        self._data = self.set_back_time(self._data)
-        
-        return self._data
-
-    @staticmethod
-    def _validate_type(data: pd.DataFrame, energy_type: EnergyType) -> List[str]:
-        if energy_type == EnergyType.NONE:
-            return True
-        elif energy_type == EnergyType.HYDRO:
-            if data["precipitation_mm"].isnull().all():
-                return False
-        elif energy_type == EnergyType.SOLAIRE:
-            if data["temperature_C"].isnull().all():
-                return False
-        elif energy_type == EnergyType.EOLIEN:
-            if data["vitesse_vent_kmh"].isnull().all():
-                return False
-        else:
-            raise ValueError("Invalid energy type")
-
-        return True
-
-    def _interpolate_data(self, list_of_df: List[pd.DataFrame]) -> pd.DataFrame:
-        latlon = [i[["latitude", "longitude"]].iloc[0].values for i in list_of_df]
-
-        dist = [
-            geodesic([self.position.latitude, self.position.longitude], i).km
-            for i in latlon
-        ]
-        dist = np.array(dist)
-
-        weights = 1 / dist
-        new_data = pd.DataFrame(index=list_of_df[0].index)
-        for keys in list_of_df[0].keys():
-            if keys == "tempsdate":
-                continue
-            if keys == "latitude":
-                new_data["latitude"] = self.position.latitude
-            elif keys == "longitude":
-                new_data["longitude"] = self.position.longitude
-            else:
-                new_data[keys] = np.average(
-                    [i[keys] for i in list_of_df], axis=0, weights=weights
-                )
-
-        return new_data
-
-    async def _get_nearest_station(
-        self,
-        radius: Optional[int] = 200,
-        limit: Optional[int] = 100,
-    ) -> pd.DataFrame:
-        if self._nearby_stations is not None:
-            return self._nearby_stations
-
-        logger.info(f"Getting nearby stations for {self.position}")
-        coordinates = (self.position.latitude, self.position.longitude)
-
-        start_year = self.start_time.year
-        end_year = self.end_time.year or datetime.now().year
-
-        stations = pd.DataFrame(
-            
-            await get_historical_stations(
-                    coordinates,
-                    start_year=start_year,
-                    end_year=end_year,
-                    radius=radius,
-                    limit=limit,
-                )
-        ).T
-
-        self._nearby_stations = stations
-        return stations
-
-    def _to_schema(self, data: pd.DataFrame) -> pd.DataFrame:
-        # Create a empty dataframe with the right columns (and time as index)
-        if self._granularity == Granularity.HOURLY:
-            time = pd.to_datetime(data["Date/Time (LST)"])
-        elif self._granularity == Granularity.DAILY:
-            time = pd.to_datetime(data["Date/Time"])
-
-        clean_df = pd.DataFrame(columns=weather_schema.columns.keys(), index=time)
-        clean_df.index.name = "tempsdate"
-
-        # Align the index of the old data with the new data
-        data.index = time
-        data.index.name = "tempsdate"
-
-        # Add the time, longitude and latitude
-        clean_df["longitude"] = data["Longitude (x)"]
-        clean_df["latitude"] = data["Latitude (y)"]
-
-        if self._granularity == Granularity.HOURLY:
-            # Add the data specific to hourly granularity
-            clean_df["temperature_C"] = data["Temp (°C)"]
-            clean_df["max_temperature_C"] = np.nan
-            clean_df["min_tempature_C"] = np.nan
-            clean_df["pluie_mm"] = np.nan
-            clean_df["neige_cm"] = np.nan
-            clean_df["precipitation_mm"] = data["Precip. Amount (mm)"]
-            clean_df["neige_accumulee_cm"] = np.nan
-            clean_df["direction_vent"] = data["Wind Dir (10s deg)"]
-            clean_df["vitesse_vent_kmh"] = data["Wind Spd (km/h)"]
-            clean_df["humidite"] = data["Rel Hum (%)"]
-            clean_df["pression"] = data["Stn Press (kPa)"]
-            clean_df["point_de_rosee"] = data["Dew Point Temp (°C)"]
-        elif self._granularity == Granularity.DAILY:
-            # Add the data specific to daily granularity
-            clean_df["temperature_C"] = data["Mean Temp (°C)"]
-            clean_df["max_temperature_C"] = data["Max Temp (°C)"]
-            clean_df["min_tempature_C"] = data["Min Temp (°C)"]
-            clean_df["pluie_mm"] = data["Total Rain (mm)"]
-            clean_df["neige_cm"] = data["Total Snow (cm)"]
-            clean_df["precipitation_mm"] = data["Total Precip (mm)"]
-            clean_df["neige_accumulee_cm"] = data["Snow on Grnd (cm)"]
-            clean_df["direction_vent"] = data["Dir of Max Gust (10s deg)"]
-            clean_df["vitesse_vent_kmh"] = data["Spd of Max Gust (km/h)"]
-            clean_df["humidite"] = clean_df["pression"] = clean_df["point_de_rosee"] = (
-                np.nan
-            )
-
-        return clean_df
-
-    @staticmethod
-    async def _get_historical_data(
-        station_id: int,
-        granularity: Granularity,
-        year: Optional[int] = None,
-        month: Optional[int] = None,
-    ) -> pd.DataFrame:
-        if year is None and month is None:
-            raise ValueError("year or month must be provided")
-
-        if year is None and month is not None:
-            raise ValueError("year must be provided")
-
-        if granularity == Granularity.DAILY:
-            historical = ECHistorical(
-                station_id=station_id,
-                year=year,
-                timeframe=granularity.value,
-                language="english",
-                format="csv",
-            )
-        elif granularity == Granularity.HOURLY:
-            historical = ECHistorical(
-                station_id=int(station_id),
-                year=year,
-                month=month,
-                timeframe=granularity.value,
-                language="english",
-                format="csv",
-            )
-        else:
-            raise ValueError("Invalid granularity")
-
-        await historical.update()
-        return pd.read_csv(historical.station_data)
-
-    async def _get_historical_data_range(
-        self,
-        station_id: int,
-    ) -> pd.DataFrame:
-        if self._granularity == Granularity.HOURLY:
-            date_range = pd.date_range(
-                start=self.start_time, end=self.end_time, freq="MS"
-            )
-        elif self._granularity == Granularity.DAILY:
-            date_range = pd.date_range(
-                start=self.start_time, end=self.end_time, freq="YS"
-            )
-        else:
-            raise ValueError("Invalid granularity")
-
-        data = pd.DataFrame()
-        for date in date_range:
-            data_instance = await self._get_historical_data(
-                station_id, self._granularity, year=date.year, month=date.month
-            )
-
-            data = pd.concat([data, data_instance])
-
-        return data
-
-    async def _get_historical_data_hourly(
-        self,
-        station_id: int,
-        year: int,
-        month: int,
-    ) -> pd.DataFrame:
-        return await self._get_historical_data(
-            station_id, granularity=1, year=year, month=month
+        # Open-Meteo demande un end_date exclusif => ajouter 1 jour
+        df = self.meteo_client.get_weather_or_nearest(
+            Latitude=self.position.latitude,
+            Longitude=self.position.longitude,
+            start_date=self.start_time,
+            end_date=self.end_time
+        )
+        df["date"] = pd.to_datetime(df["date"], utc=True)
+        df["date"] = df["date"].dt.tz_convert("UTC").dt.tz_localize(None)
+        df = df.drop_duplicates(subset="date", keep="first").copy()
+        df = df.set_index("date").sort_index()
+        df["vitesse_vent_kmh"] *= 3.6  # Convertit de m/s à km/h
+        # Applique la vraie année de test
+        df.index = df.index.map(lambda ts: ts.replace(year=original_start.year))
+        expected_range = pd.date_range(
+            start=original_start,
+            end=original_end,
+            freq="h"
         )
 
-    async def _get_historical_data_daily(
-        self,
-        station_id: int,
-        year: int,
-    ) -> pd.DataFrame:
-        return await self._get_historical_data(station_id, timeframe=2, year=year)
+        df = df.reindex(expected_range)
+
+        self._data = df
+        return df
+
+
+
+
+
 
 
 if __name__ == "__main__":
-    pos = PositionBase(latitude=49.049334, longitude=-66.750423)
-    start_time = datetime(2035, 1, 1)
-    end_time = datetime(2035, 3, 31)
+    pos = PositionBase(latitude=45.80944, longitude=-73.43472)
+    start_time = datetime(2024, 9, 1)
+    end_time = datetime(2024, 9, 4)
     granularity = Granularity.HOURLY
 
     weather = WeatherHelper(
-        pos, True, start_time, end_time, EnergyType.EOLIEN, granularity
+        pos,
+        interpolate=True,
+        start_time=start_time,
+        end_time=end_time,
+        data_type=EnergyType.EOLIEN,
+        granularity=granularity,
     )
-    df = asyncio.run(weather.load())
+
+    print("#-----#-----#-----#-----#")
+    print("Running the load method...")
+    print("#-----#-----#-----#-----#")
+    df = weather.load()
+    print(df.head())
+    print("#-----#-----#-----#-----#")
+    print("Finished loading data.")
+    print("#-----#-----#-----#-----#")

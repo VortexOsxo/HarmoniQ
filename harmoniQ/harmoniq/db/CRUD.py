@@ -6,6 +6,10 @@ from typing import List
 from harmoniq.db.engine import sql_tables
 from harmoniq.db import schemas
 
+# CRUD.py : Ce fichier contient des fonctions utilitaires pour effectuer des opérations CRUD (Create, Read, Update, Delete) sur les tables SQLAlchemy.
+# Ces fonctions sont conçues pour être génériques et peuvent être utilisées pour n'importe quelle table de la base de données.
+# They are designed to be generic and can be used for any table in the database.
+
 
 async def read_all_data(db: Session, table: Table):
     return db.query(table).all()
@@ -19,14 +23,15 @@ async def create_data(db: Session, table: Table, data: BaseModel):
     return db_data
 
 
+# This function is used to read data from the database by its ID, reads everything.
 async def read_data_by_id(db: Session, table: Table, id: int):
     return db.query(table).filter(table.id == id).first()
 
-
+# This function is used to read multiple data from the database by their IDs.
 async def read_multiple_by_id(db: Session, table: Table, ids: List[int]):
     return db.query(table).filter(table.id.in_(ids)).all()
 
-
+# This function is used to update data in the database by its ID.
 async def update_data(db: Session, table: Table, id: int, data: BaseModel):
     db_data = db.query(table).filter(table.id == id).first()
     if db_data is None:
@@ -37,7 +42,7 @@ async def update_data(db: Session, table: Table, id: int, data: BaseModel):
     db.refresh(db_data)
     return db_data
 
-
+# This function is used to delete data from the database by its ID.
 async def delete_data(db: Session, table: Table, id: int):
     db_data = db.query(table).filter(table.id == id).first()
     if db_data is None:

@@ -1,5 +1,3 @@
-"Liste de modèles de données de la base de données"
-
 from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
@@ -8,12 +6,18 @@ from sqlalchemy.sql.schema import ForeignKey
 import pandera.pandas as pa
 from pydantic import BaseModel, TypeAdapter, Field, field_validator, validator
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import isodate
 from enum import Enum as PyEnum
 
+# schemas.py : Ce fichier contient les modèles de données utilisés pour la base de données.
+# Il contient des classes pour chaque table de la base de données, ainsi que des schémas Pydantic pour la validation et la sérialisation des données.
+
+#-----#-----#-----#-----# SQLAlchemy Base #-----#-----#-----#-----#
+
 SQLBase = declarative_base()
 
+#-----#-----#-----#-----# Latitude Longitude Base #-----#-----#-----#-----#
 
 class PositionBase(BaseModel):
     """Pydantic modèle de base pour les positions"""
@@ -31,6 +35,13 @@ class InfrastructureBase(BaseModel): # TODO make the other classes inherit
     longitude: float
     puissance_nominal: float
     # TODO, make cost and GHG data necissary
+
+"""
+Notion de "Enum ou PyEnum" pour les types de données:
+- Enum est une classe de base pour créer des énumérations en Python.
+- Exemples d'utilisation : Enum("Nom", "Valeur1 Valeur2 Valeur3")
+- Type d'objet : Enum
+"""
 
 class Optimisme(PyEnum):
     pessimiste = 1
@@ -76,6 +87,7 @@ class TimeDeltaString(TypeDecorator):
             return isodate.parse_duration(value)
         return value
 
+#-----#-----#-----#-----# Scenario Base #-----#-----#-----#-----#
 
 class Scenario(SQLBase):
     __tablename__ = "scenario"
@@ -138,6 +150,8 @@ class ScenarioResponse(ScenarioBase):
     class Config:
         from_attributes = True
 
+#-----#-----#-----#-----# Liste Infra Base #-----#-----#-----#-----#
+#Stocke les infrastructures actives dans la simulation (celles qui sont cochées) sous forme de chaines de caractères séparées par des virgules
 
 class ListeInfrastructures(SQLBase):
     __tablename__ = "liste_infrastructures"
@@ -194,6 +208,7 @@ class ListeInfrastructuresResponse(ListeInfrastructuresBase):
     class Config:
         from_attributes = True
 
+#-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
 class TurbineModel(str, PyEnum):
     GE_1_5SLE = "GE 1.5SLE"
@@ -213,6 +228,7 @@ class TurbineModel(str, PyEnum):
     MM82 = "MM82"
     GE_2_2_107 = "GE 2.2-107"
     MM92_CCV = "MM92 CCV"
+
 
 class EolienneParcBase(BaseModel):
     nom: str = Field(..., description="Nom du parc éolien")
@@ -257,6 +273,7 @@ class EolienneParc(SQLBase):
     modele_turbine = Column(String)
     puissance_nominal = Column(Float)
 
+#-----#-----#-----#-----# Solaire Base #-----#-----#-----#-----#
 
 class Solaire(SQLBase):
     __tablename__ = "solaire"
@@ -302,6 +319,13 @@ class SolaireBase(BaseModel):
 class SolaireCreate(SolaireBase):
     pass
 
+class SolaireResponse(SolaireBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+#-----#-----#-----#-----# Hydro Base #-----#-----#-----#-----#
 
 class HydroBase(BaseModel):
     nom: str
@@ -353,6 +377,7 @@ class Hydro(SQLBase):
     annee_commission = Column(Integer, nullable=True)
     materiau_conduite = Column(String, nullable=True)
 
+#-----#-----#-----#-----# Solaire Response #-----#-----#-----#-----#
 
 class SolaireResponse(SolaireBase):
     id: int
@@ -360,6 +385,7 @@ class SolaireResponse(SolaireBase):
     class Config:
         from_attributes = True
 
+#-----#-----#-----#-----# Thermique Base #-----#-----#-----#-----#
 
 class TypeIntrantThermique(str, PyEnum):
     GAZ_NATUREL = "Gaz naturel"
@@ -419,6 +445,7 @@ class Thermique(SQLBase):
     annee_commission = Column(Integer, nullable=True)
     type_generateur = Column(Integer, nullable=True)
 
+#-----#-----#-----#-----# Nucleaire Base #-----#-----#-----#-----#
 
 class NucleaireBase(BaseModel):
     nom: str = Field(..., description="Nom de la centrale nucléaire")
@@ -467,6 +494,7 @@ class Nucleaire(SQLBase):
     annee_commission = Column(Integer, nullable=True)
     type_generateur = Column(Integer, nullable=True)
 
+#-----#-----#-----#-----# Bus Base #-----#-----#-----#-----#
 
 class BusControlType(str, PyEnum):
     """Enumération des types de contrôle de bus"""
@@ -523,6 +551,7 @@ class BusResponse(BusBase):
     class Config:
         from_attributes = True
 
+#-----#-----#-----#-----# Line Base #-----#-----#-----#-----#
 
 class LineType(SQLBase):
     __tablename__ = "line_type"

@@ -2,7 +2,6 @@ from harmoniq.core.base import Infrastructure, necessite_scenario
 from harmoniq.db.schemas import ScenarioBase, Hydro, ListeInfrastructures
 from harmoniq.db.CRUD import read_all_hydro, read_multiple_by_id
 from harmoniq.db.engine import get_db
-from harmoniq.modules.hydro.calcule import reservoir_infill
 
 from harmoniq.modules.reseau.core import NetworkBuilder, PowerFlowAnalyzer, NetworkOptimizer
 from harmoniq.modules.reseau.utils import EnergyUtils
@@ -54,7 +53,7 @@ class InfraReseau(Infrastructure):
         logger.info(f"Scénario chargé: {scenario.nom}")
         
     @necessite_scenario
-    async def creer_reseau(self, liste_infra=None) -> pypsa.Network:
+    async def creer_reseau(self, liste_infra=None) -> pypsa.Network: #Ne sert uniquement à créer le reseau que si il n'est pas déja crée, ce qui n'arrive à priori pas
         """
         Crée un réseau PyPSA complet à partir des données statiques
         et des séries temporelles associées au scénario, avec mise en cache.
@@ -129,7 +128,7 @@ class InfraReseau(Infrastructure):
         
         return network
 
-    def _normaliser_types_reseau(self, network):
+    def _normaliser_types_reseau(self, network): #normalise les types de données pour la sauvegarde
         """
         Normalise les types de données dans le réseau pour la sauvegarde.
         
@@ -219,8 +218,9 @@ class InfraReseau(Infrastructure):
         iterations_max = 100
         
         for iteration in range(iterations_max):
-            imports = [min(Pmax, max_theorique) for max_theorique in import_max_theorique]
-            somme_imports = sum(imports)
+            #imports = [min(Pmax, max_theorique) for max_theorique in import_max_theorique]
+            #somme_imports = sum(imports)
+            somme_imports = Pmax*len(import_max_theorique)
             
             if abs(somme_imports - deltaE) < tolerance:
                 break
