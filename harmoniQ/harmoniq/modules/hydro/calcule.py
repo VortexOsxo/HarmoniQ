@@ -9,6 +9,10 @@ from harmoniq.db.CRUD import read_all_hydro
 CURRENT_DIR = Path(__file__).parent
 APPORT_DIR = CURRENT_DIR / "apport_naturel"
 
+# === Load catch coefficients
+CSVDIR = Path(__file__).parent.parent.parent
+HYDRO_INFO_PATH = CSVDIR / "db" / "CSVs" / "Info_Barrages.csv"
+catch_coeff_map = pd.read_csv(HYDRO_INFO_PATH).set_index("Nom")["catch_coefficient"].to_dict()
 
 def reservoir_infill(
     besoin_puissance, pourcentage_reservoir, apport_naturel, timestamp
@@ -38,6 +42,10 @@ def reservoir_infill(
             nb_turbines = dam_data.nb_turbines - nb_turb_maintenance
             type_turb = dam_data.modele_turbine
             apport = apport_naturel.loc[timestamp, nom]
+            apport = apport_naturel.loc[timestamp, nom]
+            catch_coeff = catch_coeff_map.get(nom, 1.0)  # default to 1.0
+            apport *= catch_coeff
+            
             # debit_amont = get_upstream_flows(temps,df_debit,barrage_amont)
             volume_reel = (
                 volume_remplie * pourcentage_reservoir + apport * 3600
@@ -215,7 +223,7 @@ def get_energy(production):
 
 
 def energy_loss(
-    Volume_evacue, Debits_nom, type_turb, nb_turbines, head, nb_turbine_maintenance
+    Volume_evacue, Debits_nom_m3s, type_turb, nb_turbines, head, nb_turbine_maintenance
 ):
 
     # Fonction permettant de calculer la perte d'énergie causé par l'activation d'un évacuateur de crue en MWh
@@ -223,7 +231,7 @@ def energy_loss(
     #   - info_barrage : Dataframe contenant les informations des barrages extraite du csv Info_Barrages.csv. Les colonnes du dataframe utilisées dans la fonction sont les suivantes
     #       - Nom : Nom du barrage [string]
     #       - Type : Type du barrage ["Fil de l'eau" vs "Reservoir" (string)]
-    #       - Debits_nom : Debit d'équipement des turbines en m^3/s [float]
+    #       - Debits_nom_m3s : Debit d'équipement des turbines en m^3/s [float]
     #       - Nb_turbines : Nombre de turbines installée dans le barrage [float]
     #       - Type_turbine : Type de turbine installée dans les barrages [string]
     #   - nom_barrage : Nom du barrage étudié [string]
@@ -240,7 +248,7 @@ def energy_loss(
 
     hp = calculate_hp_potential(
         flow=Debit,
-        design_flow=Debits_nom,
+        design_flow=Debits_nom_m3s,
         head=head,
         units=Units,
         hydropower_type=hp_type,

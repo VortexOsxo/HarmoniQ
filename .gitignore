@@ -20,3 +20,7 @@ build/
 
 # remove the data cache
 cache/
+
+.cache.sqlite
+
+*/.DS_Store
