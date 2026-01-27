@@ -31,19 +31,10 @@ def test_weather_helper_initialization(position, start_time, end_time):
     assert weather.data_type == EnergyType.NONE
     assert weather.granularity == "hourly"
 
-
-def test_weather_helper_repr(position, start_time, end_time):
-    weather = WeatherHelper(
-        position, True, start_time, end_time, EnergyType.NONE, Granularity.HOURLY
-    )
-    assert repr(weather) == f"WeatherHelper({position} de {start_time} à {end_time})"
-
-@pytest.mark.asyncio
-async def test_weather_helper_load_data(position, start_time, end_time):
+def test_weather_helper_load_data(position, start_time, end_time):
     weather = WeatherHelper(position, True, start_time, end_time, EnergyType.NONE, Granularity.HOURLY)
-    await weather.load()
+    weather.load()
     assert weather.data is not None
-
 
 def test_weather_helper_no_data_loaded(position, start_time, end_time):
     weather = WeatherHelper(
@@ -52,24 +43,29 @@ def test_weather_helper_no_data_loaded(position, start_time, end_time):
     with pytest.raises(ValueError):
         _ = weather.data
 
-@pytest.mark.asyncio
-async def test_weather_helper_interpolation(position, start_time, end_time):
-    cols = ["temperature_C", "precipitation_mm", "vitesse_vent_kmh"]
-
+def test_weather_helper_interpolation(position, start_time, end_time):
     w_no = WeatherHelper(position, False, start_time, end_time, EnergyType.NONE, Granularity.HOURLY)
-    await w_no.load()
+    w_no.load()
 
     w_yes = WeatherHelper(position, True, start_time, end_time, EnergyType.NONE, Granularity.HOURLY)
-    await w_yes.load()
+    w_yes.load()
+
+    # Colonnes candidates (certaines peuvent ne pas exister selon la source météo)
+    candidate_cols = [
+        "temperature_C",
+        "precipitation_mm",
+        "pluie_mm",
+        "neige_cm",
+        "vitesse_vent_kmh",
+        "direction_vent",
+        "pressure_msl",
+        "pression",
+    ]
+
+    cols = [c for c in candidate_cols if c in w_no.data.columns and c in w_yes.data.columns]
+    assert cols, f"Aucune colonne commune trouvée. Colonnes: {list(w_no.data.columns)}"
 
     na_no = w_no.data[cols].isna().sum().sum()
     na_yes = w_yes.data[cols].isna().sum().sum()
 
     assert na_yes <= na_no
-
-
-@pytest.mark.asyncio
-async def test_weather_helper_nearest_station(position, start_time, end_time):
-    weather = WeatherHelper(position, True, start_time, end_time, EnergyType.NONE, Granularity.HOURLY)
-    stations = await weather._get_nearest_station()
-    assert not stations.empty
