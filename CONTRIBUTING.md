@@ -81,7 +81,7 @@ Lorsque la branche est testée et prête à être ajoutée à la branche princip
      - Pourquoi le changement est nécessaire
      - Toute information utile (captures d’écran, limitations, etc.)
 5. Cliquer sur Create pull request
-6. Informer ses collègues du pull request pour qu'ils puissent la vérifier
+6. Informer ses collègues (sous-équipe et étudiant logiciel) du pull request pour qu'ils puissent la vérifier
 
 ## 6. Après la création de la PR
 
@@ -89,3 +89,4 @@ Lorsque la branche est testée et prête à être ajoutée à la branche princip
 - Ajouter de nouveaux commits sur la même branche si des corrections sont demandées
 - La PR se mettra à jour automatiquement
 - Lorsque la PR est approuvée, résoudre les conflits et appuyer sur 'Merge pull request' pour appliquer les changements sur la branche principale
+- Supprimer la branche
