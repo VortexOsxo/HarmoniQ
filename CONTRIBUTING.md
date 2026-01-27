@@ -88,5 +88,5 @@ Lorsque la branche est testée et prête à être ajoutée à la branche princip
 - Répondre aux commentaires de revue si nécessaire
 - Ajouter de nouveaux commits sur la même branche si des corrections sont demandées
 - La PR se mettra à jour automatiquement
-- Lorsque la PR est approuvée, résoudre les conflits et appuyer sur 'Merge pull request' pour appliquer les changements sur la branche principale
+- Lorsque la PR est approuvée, résoudre les conflits et sélectionner 'Rebase and merge' pour appliquer les changements sur la branche principale
 - Supprimer la branche
