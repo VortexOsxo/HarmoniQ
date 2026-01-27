@@ -5,7 +5,7 @@ Ce module gère le chargement des données statiques et temporelles
 du réseau électrique d'Hydro-Québec pour la configuration du réseau 
 et les séries temporelles de production/consommation.
 """
-
+import time
 import pypsa
 import pandas as pd
 from pathlib import Path
@@ -74,6 +74,7 @@ class NetworkDataLoader:
         self.hydro_ids = None
         self.thermique_ids = None
         self.nucleaire_ids = None
+        self.timers = {}
 
     def set_infrastructure_ids(self, liste_infra):
         """
@@ -207,7 +208,9 @@ class NetworkDataLoader:
         )
         network.set_snapshots(snapshots)
         
+        t_start = time.time()
         p_max_pu_df, marginal_cost_df = await self.generate_timeseries(network, scenario)
+        self.timers['iia_generate_timeseries'] = time.time() - t_start
         
         p_max_pu_df = p_max_pu_df.astype('float64')
         marginal_cost_df = marginal_cost_df.astype('float64')
@@ -240,8 +243,9 @@ class NetworkDataLoader:
                 
         network.generators_t.marginal_cost = marginal_cost_df
         
-        # Chargement des demandes énergétiques
+        t_start = time.time()
         load_demand_df = await self.load_demand_data(network, scenario, start_date, end_date)
+        self.timers['iib_load_demand_data'] = time.time() - t_start
         
         if not load_demand_df.empty:
             # Convertir l'index en DatetimeIndex si nécessaire
@@ -518,31 +522,39 @@ class NetworkDataLoader:
                             p_max_pu_df[nom] = aligned_production / p_nom
                             p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.85)
 
-        # Génération pour les parcs éoliens
+        # Génération pour les parcs éoliens en parallele
         if self.eolienne_ids:
             eoliennes = await read_multiple_by_id(db, EolienneParc, self.eolienne_ids)
             
-            for parc in eoliennes:
-                infraEolienne = InfraParcEolienne(parc)
-                await infraEolienne.charger_scenario(scenario)
-                production_iteration = infraEolienne.calculer_production()
-                if production_iteration is not None and not production_iteration.empty:
-                    nom = parc.nom
-                    if nom in network.generators.index:
-                        # Calcul du p_max_pu = production / puissance_nominale
+            async def process_eolienne(parc):
+                """Process a single wind farm and return (name, p_max_pu_series) or None."""
+                try:
+                    infraEolienne = InfraParcEolienne(parc)
+                    await infraEolienne.charger_scenario(scenario)
+                    production_iteration = infraEolienne.calculer_production()
+                    
+                    if production_iteration is not None and not production_iteration.empty:
+                        nom = parc.nom
                         p_nom = (parc.puissance_nominal * parc.nombre_eoliennes)
                         if 'puissance' in production_iteration.columns:
-                            # 1. Construire la série de production
                             hourly_production = pd.Series(
                                 production_iteration['puissance'].values,
                                 index=pd.to_datetime(production_iteration['tempsdate'])
                             )
-                            # 2. Réaligner sur network.snapshots
                             aligned_production = hourly_production.reindex(network.snapshots).fillna(0)
-
-                            # 3. Calcul p_max_pu
-                            p_max_pu_df[nom] = aligned_production / p_nom
-                            p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.25)  # sécurité, si jamais certaines heures sont encore manquantes
+                            p_max_pu_series = (aligned_production / p_nom).fillna(0.25)
+                            return (nom, p_max_pu_series)
+                except Exception as e:
+                    logger.warning(f"Error processing wind farm {parc.nom}: {e}")
+                return None
+            
+            results = await asyncio.gather(*[process_eolienne(parc) for parc in eoliennes])
+            
+            for result in results:
+                if result is not None:
+                    nom, p_max_pu_series = result
+                    if nom in network.generators.index:
+                        p_max_pu_df[nom] = p_max_pu_series
                         
         # Génération pour les centrales thermiques         
    
@@ -730,56 +742,52 @@ class NetworkDataLoader:
         
         demand_df = demand_df.set_index('date')
         demand_df.index = pd.to_datetime(demand_df.index)
-        load_demand_df = pd.DataFrame(index=demand_df.index, columns=loads)
         np.random.seed(42)
         
-        # Assigner des catégories pour les différentes charges
-        load_categories = {}
-        for load in loads:
-            category = np.random.choice(['small', 'medium', 'large', 'xlarge'], 
-                                       p=[0.4, 0.3, 0.2, 0.1])
-            load_categories[load] = category
-        
-        # Distribuer la demande entre les charges
         n_timestamps = len(demand_df)
+        loads_list = list(loads)
         
-        for t in range(n_timestamps):
-            timestamp = demand_df.index[t]
-            total_demand_val = demand_df.loc[timestamp, 'total_demand']
-            
-            # Normaliser en float
-            if isinstance(total_demand_val, (pd.Series, np.ndarray)):
-                total_demand = float(total_demand_val.iloc[0] if hasattr(total_demand_val, 'iloc') else total_demand_val[0])
-            else:
-                total_demand = float(total_demand_val)
-            
-            # Générer des poids aléatoires pour la distribution
-            random_weights = np.zeros(n_loads)
-            time_factor = 0.7 + 0.6 * np.sin(t / 20.0)
-            
-            for i, load in enumerate(loads):
-                category = load_categories[load]
-                
-                if category == 'small':
-                    base = np.random.beta(0.8, 4.0) * 0.5  
-                elif category == 'medium':
-                    base = 0.5 + np.random.beta(2.0, 2.0) * 1.5
-                elif category == 'large':
-                    base = 1.0 + np.random.gamma(2.0, 0.9)
-                else:  # 'xlarge'
-                    base = 3.0 + np.random.gamma(3.0, 1.2)
-                
-                time_specific = 0.6 + 0.8 * np.sin(t/10.0 + i*0.5)
-                noise_factor = 0.7 + 0.6 * np.random.random()
-                random_weights[i] = max(0.01, base * time_specific * noise_factor * time_factor)
-            
-            # Normaliser pour que la somme soit égale à la demande totale
-            total_weights = np.sum(random_weights)
-            normalized_weights = random_weights / total_weights * total_demand
-            
-            # Distribuer la demande selon les poids
-            for i, load in enumerate(loads):
-                load_demand_df.loc[timestamp, load] = normalized_weights[i]
+        categories = np.random.choice(
+            [0, 1, 2, 3],  # small=0, medium=1, large=2, xlarge=3
+            size=n_loads,
+            p=[0.4, 0.3, 0.2, 0.1]
+        )
+        
+        beta_vals_small = np.random.beta(0.8, 4.0, size=(n_timestamps, n_loads)) * 0.5
+        beta_vals_medium = 0.5 + np.random.beta(2.0, 2.0, size=(n_timestamps, n_loads)) * 1.5
+        gamma_vals_large = 1.0 + np.random.gamma(2.0, 0.9, size=(n_timestamps, n_loads))
+        gamma_vals_xlarge = 3.0 + np.random.gamma(3.0, 1.2, size=(n_timestamps, n_loads))
+        
+        base_weights = np.where(
+            categories == 0, beta_vals_small,
+            np.where(
+                categories == 1, beta_vals_medium,
+                np.where(categories == 2, gamma_vals_large, gamma_vals_xlarge)
+            )
+        )
+        
+        t_indices = np.arange(n_timestamps)[:, np.newaxis]
+        i_indices = np.arange(n_loads)[np.newaxis, :]
+        
+        time_factor = 0.7 + 0.6 * np.sin(t_indices / 20.0)
+        time_specific = 0.6 + 0.8 * np.sin(t_indices / 10.0 + i_indices * 0.5)
+        noise_factor = 0.7 + 0.6 * np.random.random(size=(n_timestamps, n_loads))
+        
+        weights_matrix = np.maximum(0.01, base_weights * time_specific * noise_factor * time_factor)
+        
+        total_demand_values = demand_df['total_demand'].values
+        if total_demand_values.ndim > 1:
+            total_demand_values = total_demand_values[:, 0]
+        total_demand_values = total_demand_values.astype(float)[:, np.newaxis]  # Shape: (n_timestamps, 1)
+        
+        row_sums = weights_matrix.sum(axis=1, keepdims=True)
+        normalized_weights = weights_matrix / row_sums * total_demand_values
+        
+        load_demand_df = pd.DataFrame(
+            normalized_weights,
+            index=demand_df.index,
+            columns=loads_list
+        )
         
         if len(network.snapshots) > 1:
             time_diff = network.snapshots[1] - network.snapshots[0]

@@ -76,9 +76,9 @@ class NetworkOptimizer:
         Optimise le réseau manuellement en allouant la production par ordre de coût marginal.
         
         Cette méthode:
-        1. Pour chaque pas de temps, calcule la demande totale
-        2. Alloue la production par ordre de priorité: fatales → réservoirs → thermiques
-        3. Respecte les contraintes de capacité (p_nom) et disponibilité (p_max_pu)
+        1. Pré-calcule les capacités maximales pour tous les générateurs et snapshots
+        2. Utilise des opérations NumPy vectorisées au lieu de boucles Python
+        3. Alloue la production par ordre de priorité: fatales → réservoirs → thermiques
         4. Assure qu'hydro_reservoir contribue au minimum 20% de la production
         
         Returns:
@@ -91,15 +91,180 @@ class NetworkOptimizer:
 
         loads_is_energy = getattr(self.network.loads_t.p_set, '_energy_not_power', self.is_journalier)
         
+        n_snapshots = len(self.network.snapshots)
+        generators = self.network.generators
+        n_generators = len(generators)
+        gen_names = generators.index.tolist()
+        gen_name_to_idx = {name: i for i, name in enumerate(gen_names)}
+        
+        p_nom_arr = generators['p_nom'].values.astype(np.float64)
+        
+        if hasattr(self.network.generators_t, 'p_max_pu') and not self.network.generators_t.p_max_pu.empty:
+            p_max_pu_df = self.network.generators_t.p_max_pu.reindex(
+                columns=gen_names, fill_value=1.0
+            ).reindex(index=self.network.snapshots, fill_value=1.0)
+            p_max_pu_arr = p_max_pu_df.values.astype(np.float64)
+        else:
+            p_max_pu_arr = np.ones((n_snapshots, n_generators), dtype=np.float64)
+        
+        max_capacity_arr = p_nom_arr[np.newaxis, :] * p_max_pu_arr
+        
+        carriers = generators['carrier'].values
+        
+        carriers_by_priority = [
+            'eolien', 'solaire', 'hydro_fil', 'nucléaire',  # Priorité 1: Fatales
+            'hydro_reservoir',                              # Priorité 2: Réservoirs  
+            'thermique', 'import', 'emergency'              # Priorité 3: Thermiques
+        ]
+        
+        gen_indices_by_carrier = {}
+        for carrier in carriers_by_priority:
+            mask = carriers == carrier
+            gen_indices_by_carrier[carrier] = np.where(mask)[0]
+        
+        if 'marginal_cost' in generators.columns:
+            marginal_costs = generators['marginal_cost'].fillna(10.0).values.astype(np.float64)
+        else:
+            marginal_costs = np.full(n_generators, 10.0, dtype=np.float64)
+        
+        sorted_gen_indices_by_carrier = {}
+        for carrier in carriers_by_priority:
+            indices = gen_indices_by_carrier[carrier]
+            if len(indices) > 0:
+                sorted_order = np.argsort(marginal_costs[indices])
+                sorted_gen_indices_by_carrier[carrier] = indices[sorted_order]
+            else:
+                sorted_gen_indices_by_carrier[carrier] = np.array([], dtype=np.int64)
+        
+        for carrier in carriers_by_priority:
+            count = len(sorted_gen_indices_by_carrier.get(carrier, []))
+            if count > 0:
+                logger.info(f"  {carrier}: {count} générateurs")
+        
+        loads_arr = self.network.loads_t.p_set.reindex(
+            index=self.network.snapshots
+        ).sum(axis=1).values.astype(np.float64)
+        
+        # Convertir MWh/jour en MW moyens si nécessaire
+        if loads_is_energy:
+            loads_arr = loads_arr / 24.0
+        
+        production_arr = np.zeros((n_snapshots, n_generators), dtype=np.float64)
+        
+        production_by_carrier = {carrier: 0.0 for carrier in carriers_by_priority}
+        
+        hydro_reservoir_indices = sorted_gen_indices_by_carrier.get('hydro_reservoir', np.array([], dtype=np.int64))
+        
+        if len(hydro_reservoir_indices) > 0:
+            max_hydro_reservoir_per_snap = max_capacity_arr[:, hydro_reservoir_indices].sum(axis=1)
+        else:
+            max_hydro_reservoir_per_snap = np.zeros(n_snapshots, dtype=np.float64)
+        
+        fatale_carriers = ['eolien', 'solaire', 'hydro_fil', 'nucléaire']
+        thermique_carriers = ['thermique', 'import', 'emergency']
+        
+        for t in range(n_snapshots):
+            total_load = loads_arr[t]
+            remaining_load = total_load
+            
+            # 2. Prévoir un minimum de 20% pour hydro_reservoir
+            min_hydro_reservoir = total_load * 0.20
+            max_hydro_avail = max_hydro_reservoir_per_snap[t]
+            
+            if max_hydro_avail < min_hydro_reservoir:
+                min_hydro_reservoir = max_hydro_avail
+            
+            # Allouer des réservoirs hydro en premier pour garantir le minimum requis
+            hydro_reservoir_supplied = 0.0
+            for gen_idx in hydro_reservoir_indices:
+                max_avail = max_capacity_arr[t, gen_idx]
+                power = min(max_avail, min_hydro_reservoir - hydro_reservoir_supplied)
+                if power > 0:
+                    production_arr[t, gen_idx] = power
+                    hydro_reservoir_supplied += power
+                    remaining_load -= power
+                if hydro_reservoir_supplied >= min_hydro_reservoir:
+                    break
+            
+            production_by_carrier['hydro_reservoir'] += hydro_reservoir_supplied
+            
+            for carrier in fatale_carriers:
+                if remaining_load <= 0:
+                    break
+                    
+                gen_indices = sorted_gen_indices_by_carrier.get(carrier, np.array([], dtype=np.int64))
+                if len(gen_indices) == 0:
+                    continue
+                
+                carrier_supplied = 0.0
+                for gen_idx in gen_indices:
+                    if remaining_load <= 0:
+                        break
+                    max_avail = max_capacity_arr[t, gen_idx]
+                    power = min(max_avail, remaining_load)
+                    if power > 0:
+                        production_arr[t, gen_idx] = power
+                        carrier_supplied += power
+                        remaining_load -= power
+                
+                production_by_carrier[carrier] += carrier_supplied
+            
+            if remaining_load > 0 and len(hydro_reservoir_indices) > 0:
+                for gen_idx in hydro_reservoir_indices:
+                    if remaining_load <= 0:
+                        break
+                    current_power = production_arr[t, gen_idx]
+                    max_avail = max_capacity_arr[t, gen_idx]
+                    remaining_capacity = max_avail - current_power
+                    if remaining_capacity > 0:
+                        additional_power = min(remaining_capacity, remaining_load)
+                        production_arr[t, gen_idx] += additional_power
+                        remaining_load -= additional_power
+                        production_by_carrier['hydro_reservoir'] += additional_power
+            
+            for carrier in thermique_carriers:
+                if remaining_load <= 0:
+                    break
+                    
+                gen_indices = sorted_gen_indices_by_carrier.get(carrier, np.array([], dtype=np.int64))
+                if len(gen_indices) == 0:
+                    continue
+                
+                carrier_supplied = 0.0
+                for gen_idx in gen_indices:
+                    if remaining_load <= 0:
+                        break
+                    max_avail = max_capacity_arr[t, gen_idx]
+                    power = min(max_avail, remaining_load)
+                    if power > 0:
+                        production_arr[t, gen_idx] = power
+                        carrier_supplied += power
+                        remaining_load -= power
+                
+                production_by_carrier[carrier] += carrier_supplied
+            
+            if remaining_load > 1.0:
+                import_indices = sorted_gen_indices_by_carrier.get('import', np.array([], dtype=np.int64))
+                if len(import_indices) > 0:
+                    for gen_idx in import_indices:
+                        current_power = production_arr[t, gen_idx]
+                        production_arr[t, gen_idx] = current_power + remaining_load
+                        production_by_carrier['import'] += remaining_load  # Track as import, not emergency
+                        remaining_load = 0
+                        break
+                else:
+                    production_by_carrier['emergency'] += remaining_load
+                    remaining_load = 0
+        
         if not hasattr(self.network, 'generators_t'):
             self.network.generators_t = {}
-
+        
         self.network.generators_t['p'] = pd.DataFrame(
-            0.0, 
-            index=self.network.snapshots, 
-            columns=self.network.generators.index
+            production_arr,
+            index=self.network.snapshots,
+            columns=gen_names
         )
-
+        
         self.network.lines_t = {}
         self.network.lines_t['p0'] = pd.DataFrame(
             0.0,
@@ -112,319 +277,12 @@ class NetworkOptimizer:
             columns=self.network.lines.index
         )
         
-        # Extraire les générateurs par type pour ordonner la priorité
-        carriers_by_priority = [
-            'eolien', 'solaire', 'hydro_fil', 'nucléaire',  # Priorité 1: Fatales
-            'hydro_reservoir',                              # Priorité 2: Réservoirs  
-            'thermique', 'import', 'emergency'              # Priorité 3: Thermiques
-        ]
+        total_annual_load = loads_arr.sum()
+        total_annual_generation = production_arr.sum()
         
-        generators_by_carrier = {}
-        for carrier in carriers_by_priority:
-            generators_by_carrier[carrier] = self.network.generators[
-                self.network.generators.carrier == carrier
-            ].index.tolist()
-        
-        # Calculer les capacités maximales disponibles par type
-        max_capacities = {}
-        for carrier in carriers_by_priority:
-            generators = generators_by_carrier.get(carrier, [])
-            if generators:
-                total_capacity = sum(self.network.generators.at[gen, 'p_nom'] for gen in generators)
-                # Multiplier la capacité par 10 pour les éoliennes
-                if carrier == 'eolien':
-                    total_capacity *= 10
-                max_capacities[carrier] = total_capacity
-                logger.info(f"Capacité maximale {carrier}: {total_capacity:.2f} MW")
-        
-        # Variables pour suivre la production
-        total_annual_load = 0
-        total_annual_generation = 0
-        production_by_carrier = {carrier: 0 for carrier in carriers_by_priority}
-        new_p_cols = {}
-        
-        for snapshot in self.network.snapshots:
-            # 1. Calculer la demande totale pour ce pas de temps
-            if snapshot in self.network.loads_t.p_set.index:
-                total_load = self.network.loads_t.p_set.loc[snapshot].sum()
-                
-                # Convertir MWh/jour en MW moyens si nécessaire
-                if loads_is_energy:
-                    total_load = total_load / 24
-            else:
-                total_load = 0
-                logger.warning(f"Pas de données de charge pour {snapshot}, utilisation de 0")
-            
-            total_annual_load += total_load
-            remaining_load = total_load
-            
-            # 2. Prévoir un minimum de 20% pour hydro_reservoir
-            min_hydro_reservoir = total_load * 0.20
-            
-            # Vérifier si le minimum hydro_reservoir est réalisable
-            hydro_reservoir_gens = generators_by_carrier.get('hydro_reservoir', [])
-            max_hydro_reservoir = 0
-            if hydro_reservoir_gens:
-                for gen in hydro_reservoir_gens:
-                    p_nom = self.network.generators.at[gen, 'p_nom']
-                    p_max_pu = 1.0
-                    if (hasattr(self.network.generators_t, 'p_max_pu') and
-                        gen in self.network.generators_t.p_max_pu.columns and
-                        snapshot in self.network.generators_t.p_max_pu.index):
-                        p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                    max_hydro_reservoir += p_nom * p_max_pu
-            
-            # Ajuster le minimum si nécessaire
-            if max_hydro_reservoir < min_hydro_reservoir:
-                min_hydro_reservoir = max_hydro_reservoir
-            
-            # Allouer des réservoirs hydro en premier pour garantir le minimum requis
-            hydro_reservoir_allocation = min_hydro_reservoir
-            hydro_reservoir_supplied = 0
-            if hydro_reservoir_gens:
-                # Trier les réservoirs par coût marginal croissant
-                sorted_hydro_reservoir = self._sort_generators_by_cost(hydro_reservoir_gens, snapshot)
-                
-                for gen in sorted_hydro_reservoir:
-                    p_nom = self.network.generators.at[gen, 'p_nom']
-                    p_max_pu = 1.0
-                    if (hasattr(self.network.generators_t, 'p_max_pu') and
-                        gen in self.network.generators_t.p_max_pu.columns and
-                        snapshot in self.network.generators_t.p_max_pu.index):
-                        p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                    
-                    max_available = p_nom * p_max_pu
-                    power = min(max_available, hydro_reservoir_allocation - hydro_reservoir_supplied)
-                    
-                    if power > 0:
-                        self.network.generators_t['p'].at[snapshot, gen] = power
-                        hydro_reservoir_supplied += power
-                        remaining_load -= power
-                        
-                        if hydro_reservoir_supplied >= hydro_reservoir_allocation:
-                            break
-                
-                production_by_carrier['hydro_reservoir'] += hydro_reservoir_supplied
-            
-            # Traiter les sources fatales par ordre de mérite
-            fatale_carriers = ['eolien', 'solaire', 'hydro_fil', 'nucléaire']
-            load_supplied_by_fatale = 0
-            
-            # Première passe: sources fatales avec leurs contraintes de capacité
-            for carrier in fatale_carriers:
-                generators = generators_by_carrier.get(carrier, [])
-                
-                if not generators or remaining_load <= 0:
-                    continue
-                
-                # Calculer la capacité maximale disponible pour ce type à ce moment
-                available_capacity = 0
-                for gen in generators:
-                    p_nom = self.network.generators.at[gen, 'p_nom']
-                    p_max_pu = 1.0
-                    if (hasattr(self.network.generators_t, 'p_max_pu') and
-                        gen in self.network.generators_t.p_max_pu.columns and
-                        snapshot in self.network.generators_t.p_max_pu.index):
-                        p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                    available_capacity += p_nom * p_max_pu
-                
-                # Limiter à la capacité disponible
-                carrier_allocation = min(available_capacity, remaining_load)
-                
-                # Trier les générateurs par coût marginal croissant
-                sorted_generators = self._sort_generators_by_cost(generators, snapshot)
-                
-                # Allouer la production dans l'ordre de mérite
-                carrier_supplied = 0
-                for gen in sorted_generators:
-                    if remaining_load <= 0:
-                        break
-                        
-                    # Capacité disponible pour ce générateur
-                    p_nom = self.network.generators.at[gen, 'p_nom']
-                    
-                    # Disponibilité (p_max_pu)
-                    p_max_pu = 1.0
-                    if (hasattr(self.network.generators_t, 'p_max_pu') and
-                        gen in self.network.generators_t.p_max_pu.columns and
-                        snapshot in self.network.generators_t.p_max_pu.index):
-                        p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                    
-                    max_available = p_nom * p_max_pu
-                    
-                    # Limité par la demande restante pour ce type
-                    power = min(max_available, carrier_allocation - carrier_supplied, remaining_load)
-                    
-                    if power <= 0:
-                        continue
-                    
-                    # Enregistrer la production pour ce générateur
-                    self.network.generators_t['p'].at[snapshot, gen] = power
-                    
-                    # Mise à jour des compteurs
-                    carrier_supplied += power
-                    remaining_load -= power
-                    
-                    if carrier_supplied >= carrier_allocation or remaining_load <= 0:
-                        break
-                
-                # Mise à jour des compteurs
-                load_supplied_by_fatale += carrier_supplied
-                production_by_carrier[carrier] += carrier_supplied
-            
-            # 4. Allouer plus d'hydroréservoirs si nécessaire
-            additional_hydro_reservoir = 0
-            if remaining_load > 0 and hydro_reservoir_gens:
-                # Calcul de la capacité hydroréservoir restante disponible
-                remaining_hydro_capacity = max_hydro_reservoir - hydro_reservoir_supplied
-                
-                if remaining_hydro_capacity > 0:
-                    additional_allocation = min(remaining_hydro_capacity, remaining_load)
-                    
-                    # Trier à nouveau pour prendre en compte d'éventuels changements de coûts
-                    sorted_hydro_reservoir = self._sort_generators_by_cost(hydro_reservoir_gens, snapshot)
-                    
-                    for gen in sorted_hydro_reservoir:
-                        if remaining_load <= 0:
-                            break
-                            
-                        # Ne pas réutiliser la puissance déjà allouée
-                        current_power = self.network.generators_t['p'].at[snapshot, gen]
-                        p_nom = self.network.generators.at[gen, 'p_nom']
-                        p_max_pu = 1.0
-                        if (hasattr(self.network.generators_t, 'p_max_pu') and
-                            gen in self.network.generators_t.p_max_pu.columns and
-                            snapshot in self.network.generators_t.p_max_pu.index):
-                            p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                        
-                        remaining_capacity = (p_nom * p_max_pu) - current_power
-                        
-                        if remaining_capacity <= 0:
-                            continue
-                        
-                        additional_power = min(remaining_capacity, remaining_load)
-                        self.network.generators_t['p'].at[snapshot, gen] += additional_power
-                        
-                        additional_hydro_reservoir += additional_power
-                        remaining_load -= additional_power
-                        
-                        if additional_hydro_reservoir >= additional_allocation or remaining_load <= 0:
-                            break
-                    
-                    production_by_carrier['hydro_reservoir'] += additional_hydro_reservoir
-            
-            # 5. Utiliser les centrales thermiques pour le reste de la demande
-            thermique_carriers = ['thermique', 'import', 'emergency']
-            
-            for carrier in thermique_carriers:
-                generators = generators_by_carrier.get(carrier, [])
-                
-                if not generators or remaining_load <= 0:
-                    continue
-                
-                # Calculer la capacité maximale disponible pour ce type
-                available_capacity = 0
-                for gen in generators:
-                    p_nom = self.network.generators.at[gen, 'p_nom']
-                    p_max_pu = 1.0
-                    if (hasattr(self.network.generators_t, 'p_max_pu') and
-                        gen in self.network.generators_t.p_max_pu.columns and
-                        snapshot in self.network.generators_t.p_max_pu.index):
-                        p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                    available_capacity += p_nom * p_max_pu
-                
-                # Limiter à la capacité disponible et à la demande restante
-                carrier_allocation = min(available_capacity, remaining_load)
-                
-                # Trier par coût
-                sorted_generators = self._sort_generators_by_cost(generators, snapshot)
-                
-                # Allouer la production dans l'ordre de mérite
-                carrier_supplied = 0
-                for gen in sorted_generators:
-                    if remaining_load <= 0:
-                        break
-                        
-                    p_nom = self.network.generators.at[gen, 'p_nom']
-                    p_max_pu = 1.0
-                    if (hasattr(self.network.generators_t, 'p_max_pu') and
-                        gen in self.network.generators_t.p_max_pu.columns and
-                        snapshot in self.network.generators_t.p_max_pu.index):
-                        p_max_pu = self.network.generators_t.p_max_pu.at[snapshot, gen]
-                    
-                    max_available = p_nom * p_max_pu
-                    
-                    # Limité par l'allocation restante et la demande restante
-                    power = min(max_available, carrier_allocation - carrier_supplied, remaining_load)
-                    
-                    if power <= 0:
-                        continue
-                    
-                    self.network.generators_t['p'].at[snapshot, gen] = power
-                    carrier_supplied += power
-                    remaining_load -= power
-                    
-                    if carrier_supplied >= carrier_allocation or remaining_load <= 0:
-                        break
-                production_by_carrier[carrier] += carrier_supplied
-
-            if remaining_load > 1.0:  # Tolérance de 1 MW
-                # Si besoin, ajouter un générateur d'urgence
-                emergency_gen = f"emergency_{snapshot.strftime('%Y%m%d')}"
-                if emergency_gen not in self.network.generators.index:
-                    # Chercher un bus approprié
-                    suitable_buses = self.network.buses[self.network.buses.type.isin(['prod', 'conso'])].index
-                    if len(suitable_buses) > 0:
-                        emergency_bus = suitable_buses[0]
-
-                        self.network.add(
-                            "Generator",
-                            emergency_gen,
-                            bus=emergency_bus,
-                            p_nom=remaining_load * 1.2,  # 20% de marge
-                            marginal_cost=800,  # Très coûteux
-                            carrier="import"
-                        )
-                        
-                                      # Mettre la production dans p (sans insérer une colonne à chaque fois)
-                    else:
-                        logger.error("Impossible de trouver un bus approprié pour le générateur d'urgence")
-                if emergency_gen in self.network.generators_t["p"].columns:
-                    self.network.generators_t["p"].at[snapshot, emergency_gen] = remaining_load
-                else:
-                    if emergency_gen not in new_p_cols:
-                        new_p_cols[emergency_gen] = pd.Series(0.0, index=self.network.snapshots)
-                    new_p_cols[emergency_gen].at[snapshot] = remaining_load
-
-                production_by_carrier["emergency"] += remaining_load
-                remaining_load = 0
-            
-            # Calculer la production totale pour ce pas de temps
-            total_generation_snapshot = self.network.generators_t['p'].loc[snapshot].sum()
-            total_annual_generation += total_generation_snapshot
-
-        if new_p_cols:
-            add_p_df = pd.DataFrame(new_p_cols, index=self.network.snapshots)
-            self.network.generators_t["p"] = pd.concat([self.network.generators_t["p"], add_p_df], axis=1)
-            self.network.generators_t["p"] = self.network.generators_t["p"].copy()
-
-            if hasattr(self.network.generators_t, "p_max_pu"):
-                add_pmax_df = pd.DataFrame(
-                    {g: 1.0 for g in new_p_cols.keys()},
-                    index=self.network.snapshots,
-                )
-                self.network.generators_t.p_max_pu = pd.concat(
-                    [self.network.generators_t.p_max_pu, add_pmax_df],
-                    axis=1,
-                )
-                self.network.generators_t.p_max_pu = self.network.generators_t.p_max_pu.copy()
-            
-        
-        # Rapport final
         logger.info(f"Optimisation manuelle terminée.")
         
-        # Afficher des statistiques sur puissance vs énergie
-        avg_demand = total_annual_load/len(self.network.snapshots)
+        avg_demand = total_annual_load / n_snapshots
         logger.info(f"Demande totale moyenne: {avg_demand:.2f} MW")
         
         # Rapport sur l'énergie
@@ -438,7 +296,7 @@ class NetworkOptimizer:
         # Production par type
         for carrier in carriers_by_priority:
             if production_by_carrier[carrier] > 0:
-                percentage = 100 * production_by_carrier[carrier] / total_annual_generation
+                percentage = 100 * production_by_carrier[carrier] / total_annual_generation if total_annual_generation > 0 else 0
                 logger.info(f"Production {carrier}: {production_by_carrier[carrier]:.2f} MW ({percentage:.1f}%)")
         
         # Marquer le réseau comme optimisé
@@ -501,7 +359,6 @@ class NetworkOptimizer:
             - Contraintes actives
         """
         # Removed requirement for network.objective - we'll calculate it instead
-
         total_cost = 0.0
         # Calculate total cost if not already set
         if not hasattr(self.network, 'objective') or self.network.objective is None:
