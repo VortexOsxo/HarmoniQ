@@ -5,6 +5,7 @@ from sqlalchemy.sql.schema import ForeignKey
 
 import pandera.pandas as pa
 from pydantic import BaseModel, TypeAdapter, Field, field_validator, validator
+from pydantic import ConfigDict
 from typing import List, Optional
 from datetime import datetime, timedelta, date
 import isodate
@@ -121,7 +122,7 @@ class ScenarioBase(BaseModel):
     optimisme_social: Optimisme = Optimisme.moyen
     optimisme_ecologique: Optimisme = Optimisme.moyen
 
-    @validator("date_de_debut", "date_de_fin", pre=True)
+    @field_validator("date_de_debut", "date_de_fin", mode="before")
     def parse_datetime(cls, value):
         if isinstance(value, str):
             try:
@@ -130,7 +131,7 @@ class ScenarioBase(BaseModel):
                 raise ValueError(f"Invalid datetime format: {value}")
         return value
 
-    @validator("pas_de_temps", pre=True)
+    @field_validator("pas_de_temps", mode="before")
     def parse_timedelta(cls, value):
         if isinstance(value, str):
             try:
@@ -147,8 +148,7 @@ class ScenarioCreate(ScenarioBase):
 class ScenarioResponse(ScenarioBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 #-----#-----#-----#-----# Liste Infra Base #-----#-----#-----#-----#
 #Stocke les infrastructures actives dans la simulation (celles qui sont cochées) sous forme de chaines de caractères séparées par des virgules
@@ -205,8 +205,7 @@ class ListeInfrastructuresCreate(ListeInfrastructuresBase):
 class ListeInfrastructuresResponse(ListeInfrastructuresBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 #-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
@@ -236,16 +235,15 @@ class EolienneParcBase(BaseModel):
     longitude: float = Field(
         ..., description="Longitude moyenne des éoliennes (degrés)"
     )
-    nombre_eoliennes: int = Field(..., description="Nombre d'éoliennes dans le parc", suggestion=12)
-    capacite_total: float = Field(..., description="Capacité totale du parc (MW)", suggestion=24.6)
+    nombre_eoliennes: int = Field(..., description="Nombre d'éoliennes dans le parc", json_schema_extra={"suggestion": 12},)
+    capacite_total: float = Field(..., description="Capacité totale du parc (MW)", json_schema_extra={"suggestion": 24.6},)
     hauteur_moyenne: float = Field(
-        ..., description="Hauteur moyenne des éoliennes du parc (m)", suggestion=80
-    )
+        ..., description="Hauteur moyenne des éoliennes du parc (m)", json_schema_extra={"suggestion": 80},)
     modele_turbine: TurbineModel = Field(
-        ..., description="Modèle de turbine utilisé dans le parc", suggestion=TurbineModel.MM92
+        ..., description="Modèle de turbine utilisé dans le parc", json_schema_extra={"suggestion": TurbineModel.MM92}
     )
     puissance_nominal: float = Field(
-        ..., description="Puissance nominale des turbines dans le parc (kW)", suggestion=2000
+        ..., description="Puissance nominale des turbines dans le parc (kW)", json_schema_extra={"suggestion": 2000}
     )
 
 
@@ -256,8 +254,7 @@ class EolienneParcCreate(EolienneParcBase):
 class EolienneParcResponse(EolienneParcBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EolienneParc(SQLBase):
@@ -297,23 +294,22 @@ class SolaireBase(BaseModel):
     longitude: float = Field(..., description="Longitude du parc solaire (degrés)")
     angle_panneau: int = Field(
         ...,
-        description="Angle d'inclinaison des panneaux comrpis entre 0° et 90° - 0° est un panneau parfaitement plat - Choisir un angle égal à la latitude est une bonne approximation", suggestion = 45,
+        description="Angle d'inclinaison des panneaux comrpis entre 0° et 90° - 0° est un panneau parfaitement plat - Choisir un angle égal à la latitude est une bonne approximation", json_schema_extra={"suggestion": 45},
     )
     orientation_panneau: int = Field(
-        ..., description="Orientation des panneaux (degrés) - 180° est plein sud", suggestion=180
+        ..., description="Orientation des panneaux (degrés) - 180° est plein sud", json_schema_extra={"suggestion": 180},
     )
     puissance_nominal: float = Field(
-        ..., description="Puissance nominale du parc solaire (MW) - Maximum de 25 MW pour un parc", suggestion=20
+        ..., description="Puissance nominale du parc solaire (MW) - Maximum de 25 MW pour un parc", json_schema_extra={"suggestion": 20}
     )
     nombre_panneau: int = Field(
-        ..., description="Nombre de panneaux solaires dans le parc", suggestion=60000
+        ..., description="Nombre de panneaux solaires dans le parc", json_schema_extra={"suggestion": 60000}
     )
     annee_commission: Optional[int] = None
     panneau_type: Optional[str] = None
     materiau_panneau: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SolaireCreate(SolaireBase):
@@ -343,8 +339,7 @@ class HydroBase(BaseModel):
     annee_commission: Optional[int] = None
     materiau_conduite: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HydroCreate(HydroBase):
@@ -354,8 +349,7 @@ class HydroCreate(HydroBase):
 class HydroResponse(HydroBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Hydro(SQLBase):
@@ -382,9 +376,7 @@ class Hydro(SQLBase):
 class SolaireResponse(SolaireBase):
     id: int
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
 #-----#-----#-----#-----# Thermique Base #-----#-----#-----#-----#
 
 class TypeIntrantThermique(str, PyEnum):
@@ -403,21 +395,20 @@ class ThermiqueBase(BaseModel):
         ..., description="Longitude de la centrale thermique (degrés)"
     )
     type_intrant: TypeIntrantThermique = Field(
-        ..., description="Type d'intrant de la centrale thermique", suggestion=TypeIntrantThermique.BIOMASSE
+        ..., description="Type d'intrant de la centrale thermique", json_schema_extra={"suggestion": TypeIntrantThermique.BIOMASSE}
     )
     puissance_nominal: float = Field(
-        ..., description="Puissance nominal de la centrale en MW", suggestion=400 
+        ..., description="Puissance nominal de la centrale en MW", json_schema_extra={"suggestion": 400} 
     )
     semaine_maintenance: int = Field(
         ...,
         description="Semaine de maintenance où la centrale thermique est à l'arrêt - Choisir une semaine entre 10 et 22 pour le printemps puisqu'il s'agit d'une période de faible consommation",
-        suggestion=15
+        json_schema_extra={"suggestion": 15}
     )
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ThermiqueCreate(ThermiqueBase):
@@ -427,8 +418,7 @@ class ThermiqueCreate(ThermiqueBase):
 class ThermiqueResponse(ThermiqueBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Thermique(SQLBase):
@@ -456,17 +446,16 @@ class NucleaireBase(BaseModel):
         ..., description="Longitude de la centrale nucléaire (degrés)"
     )
     puissance_nominal: float = Field(
-        ..., description="Puissance nominale de la centrale nucléaire (MW) - Chosir un multiple de 300 (1 réacteur SMR = 300 MW)", suggestion=1200
+        ..., description="Puissance nominale de la centrale nucléaire (MW) - Chosir un multiple de 300 (1 réacteur SMR = 300 MW)", json_schema_extra={"suggestion": 1200},
     )
     semaine_maintenance: int = Field(
-        ..., description="Semaine de maintenance où la centrale nucléaire est à l'arrêt - Choisir une semaine entre 10 et 22 pour le printemps puisqu'il s'agit d'une période de faible consommation", suggestion=20
+        ..., description="Semaine de maintenance où la centrale nucléaire est à l'arrêt - Choisir une semaine entre 10 et 22 pour le printemps puisqu'il s'agit d'une période de faible consommation", json_schema_extra={"suggestion": 20},
     )
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
     type_intrant: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NucleaireCreate(NucleaireBase):
@@ -476,8 +465,7 @@ class NucleaireCreate(NucleaireBase):
 class NucleaireResponse(NucleaireBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Nucleaire(SQLBase):
@@ -537,8 +525,7 @@ class BusBase(BaseModel):
     y: float
     control: BusControlType
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BusCreate(BusBase):
@@ -548,8 +535,7 @@ class BusCreate(BusBase):
 class BusResponse(BusBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 #-----#-----#-----#-----# Line Base #-----#-----#-----#-----#
 
@@ -571,8 +557,7 @@ class LineTypeBase(BaseModel):
     r_per_length: float
     x_per_length: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LineTypeCreate(LineTypeBase):
@@ -582,8 +567,7 @@ class LineTypeCreate(LineTypeBase):
 class LineTypeResponse(LineTypeBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Line(SQLBase):
@@ -612,8 +596,7 @@ class LineBase(BaseModel):
     length: float
     s_nom: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LineCreate(LineBase):
@@ -623,8 +606,7 @@ class LineCreate(LineBase):
 class LineResponse(LineBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 weather_schema = pa.DataFrameSchema(

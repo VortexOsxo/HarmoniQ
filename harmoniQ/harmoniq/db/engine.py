@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -11,7 +12,10 @@ from harmoniq.db import schemas
 # engine.py : Ce fichier est responsable de la création de l'engine SQLAlchemy et de la session de base de données.
 # Il est utilisé pour se connecter à la base de données et exécuter des requêtes.
 
-DATABASE__URL = f"sqlite:///{DB_PATH}"
+# engine.py : Ce fichier est responsable de la création de l'engine SQLAlchemy et de la session de base de données.
+# Il est utilisé pour se connecter à la base de données et exécuter des requêtes.
+
+DATABASE__URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
 engine = create_engine(DATABASE__URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
