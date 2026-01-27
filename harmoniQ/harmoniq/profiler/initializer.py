@@ -2,7 +2,7 @@ import inspect
 import pkgutil
 import importlib
 
-from harmoniq.profiler import timer, validate_object_source, Profiler
+from harmoniq.profiler import timer, validate_object_source, Profiler, get_func_id
 
 class Initializer:
     skipped_functions = ['__init__', '__repr__', '__new__', '__str__']
@@ -48,6 +48,7 @@ class Initializer:
 
     @classmethod
     def init_function(cls, owner, function, name):
-        if function.__name__ in cls.skipped_functions: return
-        Profiler.log_init(f"Decorating {owner.__name__}.{name}")
+        if function.__name__ in cls.skipped_functions:
+            return
         setattr(owner, name, timer(function))
+        Profiler.log_init(get_func_id(function))

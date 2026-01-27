@@ -6,10 +6,17 @@ def main():
     parser = argparse.ArgumentParser(
         description="Lancer l'interface web",
     )
-    parser.add_argument(
+    mode_group = parser.add_mutually_exclusive_group()
+
+    mode_group.add_argument(
         "--debug",
         action="store_true",
         help="Activer le mode debug",
+    )
+    mode_group.add_argument(
+        "--profile",
+        action="store_true",
+        help="Activer le mode profiler",
     )
     parser.add_argument(
         "--host",
@@ -20,12 +27,6 @@ def main():
         "--port",
         default=5000,
         help="Port du serveur",
-    )
-
-    parser.add_argument(
-        "--profile",
-        action="store_true",
-        help="Activer le mode profiler",
     )
 
     args = parser.parse_args()
