@@ -52,6 +52,7 @@ class NetworkBuilder:
         """
         self.data_loader = NetworkDataLoader(data_dir)
         self.current_network = None
+        self.timers = {}
 
     async def create_network(self, scenario,liste_infra, year: str = None, start_date=None, end_date=None) -> pypsa.Network:
         """
@@ -68,11 +69,14 @@ class NetworkBuilder:
             >>> scenario = read_scenario_by_id(db, 1)
             >>> network = builder.create_network(scenario, '2024')
         """
-        # Chargement des données statiques
+        import time
+        
+        t_start = time.time()
         self.data_loader.set_infrastructure_ids(liste_infra)
         network = await self.data_loader.load_network_data()
+        self.timers['i_load_network_data'] = time.time() - t_start
         
-        # Ajout des séries temporelles
+        t_start = time.time()
         network = await self.data_loader.load_timeseries_data(
             network=network, 
             scenario=scenario,
@@ -80,6 +84,11 @@ class NetworkBuilder:
             start_date=start_date,
             end_date=end_date
         )
+        self.timers['ii_load_timeseries_data'] = time.time() - t_start
+        
+        if hasattr(self.data_loader, 'timers'):
+            for key, value in self.data_loader.timers.items():
+                self.timers[key] = value
         
         self.current_network = network
         return network
