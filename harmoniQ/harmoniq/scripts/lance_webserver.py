@@ -31,8 +31,6 @@ def main():
 
     args = parser.parse_args()
     if args.profile:
-        import logging
-        logging.basicConfig(level=logging.INFO)
         from harmoniq.profiler import Initializer
 
         import harmoniq.modules
@@ -44,6 +42,8 @@ def main():
         import harmoniq.db
         Initializer.init_module(harmoniq.db)
 
+        import harmoniq.webserver
+        Initializer.init_module(harmoniq.webserver)
     try:
         if args.debug:
             uvicorn.run(
