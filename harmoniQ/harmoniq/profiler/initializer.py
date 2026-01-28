@@ -6,6 +6,7 @@ from harmoniq.profiler import timer, validate_object_source, Profiler, get_func_
 
 class Initializer:
     skipped_functions = ['__init__', '__repr__', '__new__', '__str__']
+    skip_privates = False
 
     @classmethod
     def init_module(cls, module, visited=None):
@@ -49,6 +50,8 @@ class Initializer:
     @classmethod
     def init_function(cls, owner, function, name):
         if function.__name__ in cls.skipped_functions:
+            return
+        if cls.skip_privates and name.startswith("_") and not (name.startswith("__") and name.endswith("__")):
             return
         setattr(owner, name, timer(function))
         Profiler.log_init(get_func_id(function))
