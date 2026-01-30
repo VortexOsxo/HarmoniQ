@@ -5,7 +5,7 @@ création de branche, conventions de nommage, commits et Pull Requests.
 
 ## 1. Mettre à jour une branche
 
-Mettre à jour la branche `main` est à jour.
+Mettre à jour la branche `main`.
 
 ```bash
 git checkout main # Se déplacer sur la branche 'main'
