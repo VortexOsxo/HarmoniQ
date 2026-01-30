@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 import os
 import hashlib
+import time
 
 logger = logging.getLogger("Reseau")
 
@@ -46,6 +47,7 @@ class InfraReseau(Infrastructure):
         self.statistics = {}
         self.builder = NetworkBuilder(data_dir)
         self.is_journalier = False  # Par défaut, le mode horaire est utilisé
+        self.timers = {}
         
     def charger_scenario(self, scenario: ScenarioBase):
 
@@ -87,11 +89,13 @@ class InfraReseau(Infrastructure):
         # Vérifier si un réseau précalculé existe
         if network_path.exists():
             logger.info(f"Chargement du réseau précalculé depuis {network_path}")
+            t_cache_start = time.time()
             try:
                 network = pypsa.Network()
                 network.import_from_netcdf(str(network_path))
                 
                 self.network = network
+                self.timers['a1a_cache_load'] = time.time() - t_cache_start
                 logger.info(f"Réseau chargé: {len(network.buses)} bus, {len(network.lines)} lignes, {len(network.generators)} générateurs")
                 return network
                 
@@ -105,6 +109,7 @@ class InfraReseau(Infrastructure):
         
         # Création d'un nouveau réseau
         logger.info("Création d'un nouveau réseau électrique")
+        t_build_start = time.time()
         
         annee = str(self.scenario.date_de_debut.year)
         start_date = self.scenario.date_de_debut
@@ -112,16 +117,23 @@ class InfraReseau(Infrastructure):
         
         network = await self.builder.create_network(self.scenario, liste_infra, annee, start_date, end_date)
         
+        self.timers['a1b_network_build'] = time.time() - t_build_start
+        
+        if hasattr(self.builder, 'timers'):
+            for key, value in self.builder.timers.items():
+                self.timers[f'a1b_{key}'] = value
         
         # Normaliser les types de données avant sauvegarde
         self._normaliser_types_reseau(network)
         
         # Sauvegarder en format netCDF
+        t_save_start = time.time()
         try:
             network.export_to_netcdf(str(network_path))
             logger.info("Réseau sauvegardé avec succès")
         except Exception as e:
             logger.warning(f"Erreur lors de la sauvegarde du réseau: {e}")
+        self.timers['a1c_cache_save'] = time.time() - t_save_start
         
         self.network = network
         logger.info(f"Réseau créé: {len(network.buses)} bus, {len(network.lines)} lignes, {len(network.generators)} générateurs")
@@ -161,8 +173,14 @@ class InfraReseau(Infrastructure):
         """
         logger.info("Calcul de la capacité d'import/export...")
         
+        # Timer: Network creation (if needed)
         if self.network is None:
+            t_start = time.time()
             await self.creer_reseau(liste_infra)
+            self.timers['a1_creer_reseau'] = time.time() - t_start
+        
+        # Timer: Pmax calculation (vectorized)
+        t_start = time.time()
         
         annee = str(self.scenario.date_de_debut.year)
         
@@ -176,51 +194,35 @@ class InfraReseau(Infrastructure):
             energie_estimee = EnergyUtils.estimer_production_annuelle(centrale)
             deltaE += energie_estimee
         
-        # Calcul de l'import maximal théorique à chaque pas de temps
-        import_max_theorique = []
-        for heure in self.network.snapshots:
-            try:
-                # Besoins énergétiques
-                besoins_df = self.network.loads_t.p_set.loc[heure]
-                besoins_heure = besoins_df.sum() if isinstance(besoins_df, pd.Series) else besoins_df.sum().sum()
-                besoins_heure = float(besoins_heure)
-                
-                # Production des sources fatales
-                sources_fatales = self.network.generators[
-                    self.network.generators.carrier.isin(['hydro_fil', 'eolien', 'solaire'])
-                ].index
-                
-                production_fatale = 0
-                if not self.network.generators_t.p_max_pu.empty and len(sources_fatales) > 0:
-                    for gen in sources_fatales:
-                        if gen in self.network.generators_t.p_max_pu.columns:
-                            p_nom = float(self.network.generators.loc[gen, 'p_nom'])
-                            p_max_pu_val = float(self.network.generators_t.p_max_pu.loc[heure, gen])
-                            
-                            if pd.isna(p_nom) or pd.isna(p_max_pu_val):
-                                continue
-                                
-                            production_fatale += p_nom * p_max_pu_val
-                
-                import_max = besoins_heure - production_fatale
-                import_max_theorique.append(import_max)
-            
-            except Exception as e:
-                logger.error(f"Erreur lors du calcul pour {heure}: {str(e)}")
-                import_max_theorique.append(0.0)
+        # pmax vectorisé
+        besoins_par_heure = self.network.loads_t.p_set.sum(axis=1)  # Series indexed by snapshots
         
-        # Recherche de Pmax par dichotomie
-        Pmax_min = min(import_max_theorique)
-        Pmax_max = max(import_max_theorique)
+        sources_fatales_mask = self.network.generators.carrier.isin(['hydro_fil', 'eolien', 'solaire'])
+        sources_fatales = self.network.generators[sources_fatales_mask].index
+        
+        if not self.network.generators_t.p_max_pu.empty and len(sources_fatales) > 0:
+            p_nom_fatales = self.network.generators.loc[sources_fatales, 'p_nom']
+            
+            p_max_pu_fatales = self.network.generators_t.p_max_pu.reindex(
+                columns=sources_fatales, fill_value=0.0
+            ).fillna(0.0)
+            
+            production_fatale_par_heure = (p_max_pu_fatales * p_nom_fatales).sum(axis=1)
+        else:
+            production_fatale_par_heure = pd.Series(0.0, index=self.network.snapshots)
+        
+        import_max_theorique = (besoins_par_heure - production_fatale_par_heure).values
+        
+        Pmax_min = float(import_max_theorique.min())
+        Pmax_max = float(import_max_theorique.max())
         Pmax = (Pmax_min + Pmax_max) / 2
         
         tolerance = 0.1
         iterations_max = 100
+        n_snapshots = len(import_max_theorique)
         
         for iteration in range(iterations_max):
-            #imports = [min(Pmax, max_theorique) for max_theorique in import_max_theorique]
-            #somme_imports = sum(imports)
-            somme_imports = Pmax*len(import_max_theorique)
+            somme_imports = Pmax * n_snapshots
             
             if abs(somme_imports - deltaE) < tolerance:
                 break
@@ -231,6 +233,8 @@ class InfraReseau(Infrastructure):
                 Pmax_min = Pmax
             
             Pmax = (Pmax_min + Pmax_max) / 2
+        
+        self.timers['a2_pmax_calculation'] = time.time() - t_start
         
         logger.info(f"Pmax calculé: {Pmax:.2f} MW après {iteration+1} itérations")
         
@@ -271,6 +275,8 @@ class InfraReseau(Infrastructure):
             else:
                 Pmax = self.Pmax
         
+        t_prep_start = time.time()
+        
         # Réechantillonner à une fréquence journalière si demandé
         if is_journalier:
             logger.info("Passage en mode journalier (pas de temps = 24h)")
@@ -289,14 +295,9 @@ class InfraReseau(Infrastructure):
             self.network.snapshots, barrages_reservoir
         )
         
-        # Calculer les coûts marginaux basés sur les niveaux
-        marginal_costs = pd.DataFrame(index=self.network.snapshots)
-        for barrage in barrages_reservoir:
-            costs = []
-            for timestamp in self.network.snapshots:
-                niveau = niveaux_reservoirs.loc[timestamp, barrage]
-                costs.append(EnergyUtils.calcul_cout_reservoir(niveau))
-            marginal_costs[barrage] = costs
+        marginal_costs = niveaux_reservoirs.apply(
+            lambda col: EnergyUtils.calcul_cout_reservoir_vectorized(col.values)
+        )
         
         # Ajouter les coûts marginaux au réseau
         if not hasattr(self.network, 'generators_t'):
@@ -312,6 +313,10 @@ class InfraReseau(Infrastructure):
         self.network = EnergyUtils.ajouter_interconnexion_import_export(self.network, Pmax)
         self.network = EnergyUtils.ensure_network_solvability(self.network)
         
+        self.timers['b1_preparation'] = time.time() - t_prep_start
+        
+        t_opt_start = time.time()
+        
         # Optimiser le réseau avec l'optimisateur manuel au lieu de PyPSA standard
         optimizer = NetworkOptimizer(self.network, is_journalier=is_journalier)
         # On vérifie quand même la faisabilité pour information
@@ -320,6 +325,11 @@ class InfraReseau(Infrastructure):
         
         # Utilise notre méthode d'optimisation manuelle
         optimized_network = optimizer.optimize_manually()
+        
+        self.timers['b2_optimize_manually'] = time.time() - t_opt_start
+        
+        t_results_start = time.time()
+        
         optimization_results = optimizer.get_optimization_results()
 
         statistics = {
@@ -336,6 +346,8 @@ class InfraReseau(Infrastructure):
             "energie_exportee": optimized_network.loads_t['p'].get(f"export_{bus_frontiere}", pd.Series()).sum() 
                 if f"export_{bus_frontiere}" in optimized_network.loads_t['p'].columns else 0
         }
+        
+        self.timers['b3_results_gathering'] = time.time() - t_results_start
         
         self.statistics = statistics
         self.network = optimized_network
@@ -397,8 +409,13 @@ class InfraReseau(Infrastructure):
         # Mettre à jour le mode de l'instance
         self.is_journalier = is_journalier
         
+        t_start = time.time()
         Pmax = await self.calculer_capacite_import_export(liste_infra)
+        self.timers['a_capacite_import_export'] = time.time() - t_start
+        
+        t_start = time.time()
         network, statistics = await self.fake_optimiser_reservoirs(liste_infra, Pmax, is_journalier)
+        self.timers['b_fake_optimiser_reservoirs'] = time.time() - t_start
         
         logger.info("Workflow d'optimisation terminé")
         return network, statistics
@@ -446,21 +463,28 @@ class InfraReseau(Infrastructure):
         for carrier in carriers:
             gens = self.network.generators[self.network.generators.carrier == carrier].index
             if len(gens) > 0:
-                # Exclure les générateurs d'urgence déjà regroupés
-                gens = [g for g in gens if not g.startswith('emergency_gen_')]
-                if gens:  # S'assurer qu'il reste des générateurs à sommer
-                    production[f'total_{carrier}'] = production[gens].sum(axis=1)
-        
+                if carrier == 'import':
+                    valid_gens = [g for g in gens if g in production.columns]
+                    if valid_gens:
+                        production[f'total_{carrier}'] = production[valid_gens].sum(axis=1)
+                else:
+                    gens = [g for g in gens if not g.startswith('emergency_gen_') and g in production.columns]
+                    if gens:  # S'assurer qu'il reste des générateurs à sommer
+                        production[f'total_{carrier}'] = production[gens].sum(axis=1)
         # Ajouter une colonne spécifique pour les générateurs d'urgence
         if 'total_emergency' in production_power.columns:
-            carrier = 'emergency'
-            if f'total_{carrier}' not in production.columns:
-                production[f'total_{carrier}'] = production['total_emergency']
+            production['total_emergency'] = production_power['total_emergency']
+        
+        if 'total_import' not in production.columns:
+            if 'total_emergency' in production.columns:
+                production['total_import'] = production['total_emergency']
+            else:
+                production['total_import'] = 0.0
         
         total_production_mwh = production['totale'].sum()
         logger.info(f"Énergie totale calculée: {total_production_mwh:.2f} MWh ({total_production_mwh/1e6:.4f} TWh)")
         
-        for carrier in list(carriers) + (['emergency'] if 'total_emergency' in production_power.columns else []):
+        for carrier in list(carriers) + (['emergency'] if 'total_emergency' in production.columns else []):
             carrier_col = f'total_{carrier}'
             if carrier_col in production.columns:
                 carrier_total = production[carrier_col].sum()
