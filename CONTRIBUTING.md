@@ -3,13 +3,19 @@
 Ce document décrit la procédure standard pour travailler sur ce dépôt :
 création de branche, conventions de nommage, commits et Pull Requests.
 
-## 1. Mettre à jour la branche principale
+## 1. Mettre à jour une branche
 
-Avant de commencer, assurez-vous que la branche `main` est à jour.
+Mettre à jour la branche `main` est à jour.
 
 ```bash
-git checkout main
-git pull origin main
+git checkout main # Se déplacer sur la branche 'main'
+git pull origin main # Aller chercher la version la plus récente de la branche 'main'
+```
+
+Si la nouvelle version contient des erreurs, il se peut que de nouvelles dépendances doivent être installées:
+
+```bash
+pip install -e .[dev]
 ```
 
 ## 2. Créer une nouvelle branche
