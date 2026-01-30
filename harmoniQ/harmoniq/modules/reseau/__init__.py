@@ -326,9 +326,11 @@ class InfraReseau(Infrastructure):
             "Pmax_calcule": Pmax,
             "niveaux_reservoirs": niveaux_reservoirs,
             "optimization_results": optimization_results,
-            "production_par_type": optimized_network.generators_t['p'].groupby(
-                optimized_network.generators.carrier, axis=1
-            ).sum(),
+            "production_par_type": optimized_network.generators_t['p']
+            .T
+            .groupby(optimized_network.generators.carrier)
+            .sum()
+            .T,
             "energie_importee": optimized_network.generators_t['p'].get(f"import_{bus_frontiere}", pd.Series()).sum() 
                 if f"import_{bus_frontiere}" in optimized_network.generators_t['p'].columns else 0,
             "energie_exportee": optimized_network.loads_t['p'].get(f"export_{bus_frontiere}", pd.Series()).sum() 
