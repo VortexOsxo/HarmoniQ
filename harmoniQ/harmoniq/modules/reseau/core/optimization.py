@@ -539,9 +539,11 @@ class NetworkOptimizer:
             "total_cost": float(total_cost),
             "pilotable_production": self.network.generators_t['p'][pilotable_gens].sum().sum(),
             "non_pilotable_production": self.network.generators_t['p'][non_pilotable_gens].sum().sum(),
-            "production_by_type": self.network.generators_t['p'].groupby(
-                self.network.generators.carrier, axis=1
-            ).sum(),
+            "production_by_type": self.network.generators_t['p']
+            .T
+            .groupby(self.network.generators.carrier)
+            .sum()
+            .T,
             "line_loading_max": self.network.lines_t['p0'].abs().max(),
             "n_active_line_constraints": (
                 self.network.lines_t['p0'].abs() > 0.99 * self.network.lines.s_nom
