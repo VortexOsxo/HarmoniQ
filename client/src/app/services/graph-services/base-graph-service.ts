@@ -51,7 +51,7 @@ export abstract class BaseGraphService {
     }
 
     private handleGraphState(state: GraphState) {
-        if (state == GraphState.Loading || state == GraphState.Unavailable)
+        if (state == GraphState.Loading || state === GraphState.Unavailable)
             this.removeGraph();
         else if (state == GraphState.Displayable)
             this.generateGraph();

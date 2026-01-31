@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable, computed } from '@angular/core';
+import { EventEmitter, Injectable, computed, } from '@angular/core';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { environment } from 'environments/environment';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { DemandeTemporalDataService } from './data-services/demande-temporal-data-service';
+import { forkJoin, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,7 @@ import { DemandeTemporalDataService } from './data-services/demande-temporal-dat
 export class SimulationService {
   canLaunch = computed(() => this.infrastructuresService.selectedInfraGroup() !== null && this.scenariosService.selectedScenario() !== null);
 
-  simulationResultsReceived = new EventEmitter<void>();
+  simulationResultsReceived = new Subject<void>();
 
   private cachedSimulationResult: any = null;
   private cachedDemandeTemporal: any = null;
@@ -43,15 +44,15 @@ export class SimulationService {
 
     if (!scenario || !infraGroup) return;
 
-    this.demandeTemporalDataService.fetch(scenario.id).subscribe((data: any) => {
-      this.cachedDemandeTemporal = data;
-    })
-
     const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&liste_infra_id=${infraGroup.id}&is_journalier=false`;
 
-    this.http.post(url, {}).subscribe((data: any) => {
-      this.cachedSimulationResult = data;
-      this.simulationResultsReceived.emit();
+    forkJoin({
+      demande: this.demandeTemporalDataService.fetch(scenario.id),
+      production: this.http.post(url, {})
+    }).subscribe((result) => {
+      this.cachedDemandeTemporal = result.demande;
+      this.cachedSimulationResult = result.production;
+      this.simulationResultsReceived.next();
     });
   }
 

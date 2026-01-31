@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, effect, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { DemandeSankeyGraphService } from '@app/services/graph-services/demande-sankey-graph-service';
@@ -19,7 +19,7 @@ export class ScenarioDemandProdSankey implements AfterViewInit, OnDestroy {
   }
 
   get selectedScenario() {
-    return this.scenariosService.selectedScenario
+    return this.scenariosService.selectedScenario;
   }
 
   constructor(
