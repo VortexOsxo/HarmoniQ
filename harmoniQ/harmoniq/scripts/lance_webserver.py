@@ -33,6 +33,12 @@ def main():
         default=5000,
         help="Port du serveur",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Nombre de processus de travail",
+    )
 
     args = parser.parse_args()
     if args.profile:
@@ -55,7 +61,7 @@ def main():
     try:
         if args.debug:
             uvicorn.run(
-                "harmoniq.webserver:app", host=args.host, port=int(args.port), reload=True
+                "harmoniq.webserver:app", host=args.host, port=int(args.port), reload=True, workers=(args.workers)
             )
         else:
             uvicorn.run(

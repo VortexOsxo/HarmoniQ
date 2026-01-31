@@ -10,16 +10,20 @@
             <tbody>
                 <tr>
                     <td id="active-scenario-title" class="text-muted">
-                        {{ selectedScenario?.nom ?? 'N/A' }}
+                        {{ selectedScenario()?.nom ?? 'N/A' }}
                     </td>
                     <td id="active-groupe-title" class="text-muted">
-                        {{ selectedInfrastructure?.nom ?? 'N/A' }}
+                        {{ selectedInfrastructure()?.nom ?? 'N/A' }}
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <button id="run" class="btn btn-primary" [disabled]="!canLaunch" (click)="launchSimulation()">
-        Lancer Simulation
-    </button>
+    <div class="text-center mb-3">
+        <button id="run" class="btn btn-primary" [disabled]="!canLaunch() || isLaunching()"
+            (click)="launchSimulation()">
+            <span *ngIf="isLaunching()" class="spinner-border spinner-border-sm me-1"></span>
+            {{ isLaunching() ? 'Lancement...' : 'Lancer Simulation' }}
+        </button>
+    </div>
 </div>

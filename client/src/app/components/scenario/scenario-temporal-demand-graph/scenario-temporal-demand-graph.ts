@@ -1,7 +1,11 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SimulationService } from '@app/services/simulation-service';
 import { graphServiceConfig } from '@app/services/graph-service';
+import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
+import { ScenariosService } from '@app/services/scenarios-service';
+import { Subscription } from 'rxjs';
+import { GraphState } from '@app/services/graph-services/base-graph-service';
 
 @Component({
   selector: 'app-scenario-temporal-demand-graph',
@@ -9,21 +13,44 @@ import { graphServiceConfig } from '@app/services/graph-service';
   templateUrl: './scenario-temporal-demand-graph.html',
   styleUrl: './scenario-temporal-demand-graph.css',
 })
-export class ScenarioTemporalDemandGraph {
+export class ScenarioTemporalDemandGraph implements AfterViewInit, OnDestroy {
   config = graphServiceConfig;
-  isGraphGenerated = false;
+  GraphState = GraphState;
+
+  get graphState() {
+    return this.graphService.state;
+  }
+
+  get selectedScenario() {
+    return this.scenariosService.selectedScenario
+  }
+
+  private subscription?: Subscription;
 
   constructor(
     private simulationService: SimulationService,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private graphService: DemandeTemporalGraphService,
+    private scenariosService: ScenariosService,
+  ) {
+    this.subscription = this.simulationService.simulationResultsReceived.subscribe(() => {
+      this.graphService.undisplay();
+      this.simulationService.generateSimulationDemandeGraph();
+    })
+  }
 
   ngAfterViewInit(): void {
-    this.isGraphGenerated =
-      this.simulationService.generateSimulationDemandeGraph() ||
-      this.simulationService.generateTemporalPlot();
+    if (!this.simulationService.hasSimulationResults()) {
+      this.graphService.display();
+    } else {
+      this.simulationService.generateSimulationDemandeGraph();
+    }
+  }
 
-    this.cdr.markForCheck(); // TODO: make it work :(
+  ngOnDestroy(): void {
+    if (!this.simulationService.hasSimulationResults()) {
+      this.graphService.undisplay();
+    }
+    this.subscription?.unsubscribe();
   }
 
   hasExportableData(): boolean {

@@ -1,6 +1,12 @@
 import { Infra, InfraFactory } from "./infra";
 
 export class HydroelectricDam extends Infra<HydroelectricDam> {
+
+    constructor(init?: Partial<HydroelectricDam>) {
+        super();
+        Object.assign(this, init);
+    }
+
     type_barrage!: string
     puissance_nominal!: number
     hauteur_chute!: number
