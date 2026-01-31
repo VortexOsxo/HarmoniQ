@@ -1,11 +1,11 @@
-import { Injectable, computed, effect } from '@angular/core';
+import { EventEmitter, Injectable, computed } from '@angular/core';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import * as Plotly from 'plotly.js-dist-min';
-import { Scenario } from '@app/models/scenario';
 import { graphServiceConfig } from '@app/services/graph-service';
+import { DemandeTemporalDataService } from './data-services/demande-temporal-data-service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,34 +13,17 @@ import { graphServiceConfig } from '@app/services/graph-service';
 export class SimulationService {
   canLaunch = computed(() => this.infrastructuresService.selectedInfraGroup() !== null && this.scenariosService.selectedScenario() !== null);
 
-  private cachedDemandeSankey: any = null;
-  private cachedDemandeTemporal: any = null;
+  simulationResultsReceived = new EventEmitter<void>();
+
   private cachedSimulationResult: any = null;
+  private cachedDemandeTemporal: any = null;
 
   constructor(
     private scenariosService: ScenariosService,
     private infrastructuresService: InfrastruturesService,
+    private demandeTemporalDataService: DemandeTemporalDataService,
     private http: HttpClient
-  ) {
-    effect(() => {
-      const scenario = this.scenariosService.selectedScenario();
-      if (scenario) {
-        this.getDemandeSankey(scenario);
-        this.getDemandeTemporal(scenario);
-      }
-    });
-  }
-
-  launchSimulation() {
-    const scenario = this.scenariosService.selectedScenario();
-    const infraGroup = this.infrastructuresService.selectedInfraGroup();
-
-    if (!scenario || !infraGroup) return;
-
-    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&liste_infra_id=${infraGroup.id}&is_journalier=false`;
-
-    this.http.post(url, {}).subscribe((data: any) => this.cachedSimulationResult = data);
-  }
+  ) { }
 
   launchSimulationSingleInfra(type: string, infraId: number) {
     const scenario = this.scenariosService.selectedScenario();
@@ -50,107 +33,26 @@ export class SimulationService {
     return this.http.post(url, {});
   }
 
-  getDemandeSankey(scenario: Scenario) {
-    const mrc_id = 1; // No idea what it is ngl
-
-    this.http.post(`${environment.apiUrl}/demande/sankey/?scenario_id=${scenario.id}&CUID=${mrc_id}`, {})
-      .subscribe((demandeSankey: any) => this.cachedDemandeSankey = demandeSankey);
+  hasSimulationResults() {
+    return !!this.cachedSimulationResult;
   }
 
-  getDemandeTemporal(scenario: Scenario) {
-    this.http.post(`${environment.apiUrl}/demande/temporal/?scenario_id=${scenario.id}`, {})
-      .subscribe((demandeTemporal: any) => this.cachedDemandeTemporal = demandeTemporal);
-  }
+  launchSimulation() {
+    const scenario = this.scenariosService.selectedScenario();
+    const infraGroup = this.infrastructuresService.selectedInfraGroup();
 
-  generateDemandeSankey() {
-    if (!this.cachedDemandeSankey) return false;
+    if (!scenario || !infraGroup) return;
 
-    const sectorLabels: any = Object.values(this.cachedDemandeSankey.sector);
-    const energyLabels = ["Electricity", "Gaz"];
-    const allLabels = energyLabels.concat(sectorLabels);
+    this.demandeTemporalDataService.fetch(scenario.id).subscribe((data: any) => {
+      this.cachedDemandeTemporal = data;
+    })
 
-    const electricitySourceIndex = 0; // Electricité
-    const gazSourceIndex = 1;         // Gaz
+    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&liste_infra_id=${infraGroup.id}&is_journalier=false`;
 
-    const sources = [];
-    const targets = [];
-    const values = [];
-
-    for (let i = 0; i < sectorLabels.length; i++) {
-      const targetIndex = i + energyLabels.length;
-
-      // Electricity to sector
-      sources.push(electricitySourceIndex);
-      targets.push(targetIndex);
-      values.push(this.cachedDemandeSankey.total_electricity[i]);
-
-      // Gaz to sector
-      sources.push(gazSourceIndex);
-      targets.push(targetIndex);
-      values.push(this.cachedDemandeSankey.total_gaz[i]);
-    }
-
-    const sankeyData: any = [{
-      type: "sankey",
-      orientation: "h",
-      node: {
-        pad: 15,
-        thickness: 20,
-        label: allLabels
-      },
-      link: {
-        source: sources,
-        target: targets,
-        value: values
-      }
-    }];
-
-    const layout: any = {
-      title: "Flux d'énergie vers les secteurs pour scénario " + this.scenariosService.selectedScenario()?.nom,
-      font: { size: 10 }
-    };
-
-    Plotly.newPlot(graphServiceConfig.SECTOR_ENERGY_CONS_SANKEY_ID, sankeyData, layout);
-    return true;
-  }
-
-  generateTemporalPlot() {
-    if (!this.cachedDemandeTemporal) return false;
-
-    const xval = Object.keys(this.cachedDemandeTemporal.total_electricity);
-    const yval = Object.values(this.cachedDemandeTemporal.total_electricity).map((value: any) => value / 1000);
-
-    const layout: any = {
-      title: "Demande pour scénario " + this.scenariosService.selectedScenario()?.nom,
-      xaxis: {
-        title: "Date",
-        tickformat: "%d %b %Y"
-      },
-      yaxis: {
-        title: "Demande (MW)",
-        autorange: true
-      },
-      legend: {
-        orientation: "h",
-        yanchor: "bottom",
-        y: 1.02,
-        xanchor: "right",
-        x: 1
-      },
-    };
-
-    const trace: any = {
-      x: xval,
-      y: yval,
-      type: 'scatter',
-      mode: 'lines',
-      marker: { color: 'blue' },
-      line: { shape: 'spline' },
-      hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-    };
-
-    Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, [trace], layout);
-    return true;
+    this.http.post(url, {}).subscribe((data: any) => {
+      this.cachedSimulationResult = data;
+      this.simulationResultsReceived.emit();
+    });
   }
 
   generateSimulationDemandeGraph() {
