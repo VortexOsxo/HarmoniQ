@@ -1,6 +1,12 @@
 import { Infra, InfraFactory } from "./infra";
 
 export class HydroelectricDam extends Infra<HydroelectricDam> {
+
+    constructor(init?: Partial<HydroelectricDam>) {
+        super();
+        Object.assign(this, init);
+    }
+
     type_barrage!: string
     puissance_nominal!: number
     hauteur_chute!: number
@@ -39,7 +45,8 @@ export class HydroelectricDamFactory extends InfraFactory<HydroelectricDam> {
     }
 
     override fromJson(json: any): HydroelectricDam {
-        return new HydroelectricDam({
+        console.log(json);
+        const a = new HydroelectricDam({
             id: json.id,
             nom: json.nom,
             longitude: json.longitude,
@@ -56,6 +63,8 @@ export class HydroelectricDamFactory extends InfraFactory<HydroelectricDam> {
             annee_commission: json.annee_commission,
             materiau_conduite: json.materiau_conduite
         });
+        console.log(a);
+        return a;
     }
 
     override createEmpty(): HydroelectricDam {

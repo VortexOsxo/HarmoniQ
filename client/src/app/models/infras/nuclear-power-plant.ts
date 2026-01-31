@@ -1,6 +1,12 @@
 import { Infra, InfraFactory } from "./infra";
 
 export class NuclearPowerPlant extends Infra<NuclearPowerPlant> {
+
+    constructor(init?: Partial<NuclearPowerPlant>) {
+        super();
+        Object.assign(this, init);
+    }
+
     puissance_nominal!: number
     semaine_maintenance!: number
     annee_commission!: number | null
