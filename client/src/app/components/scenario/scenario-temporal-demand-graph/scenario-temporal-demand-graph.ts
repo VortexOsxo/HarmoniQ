@@ -2,10 +2,10 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { SimulationService } from '@app/services/simulation-service';
 import { graphServiceConfig } from '@app/services/graph-service';
-import { GraphState } from '@app/services/graph-services/demande-sankey-graph-service';
 import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { Subscription } from 'rxjs';
+import { GraphState } from '@app/services/graph-services/base-graph-service';
 
 @Component({
   selector: 'app-scenario-temporal-demand-graph',

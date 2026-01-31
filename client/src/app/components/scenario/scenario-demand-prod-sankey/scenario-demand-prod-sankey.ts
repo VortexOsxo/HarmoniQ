@@ -1,8 +1,9 @@
 import { Component, AfterViewInit, effect, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { graphServiceConfig } from '@app/services/graph-service';
-import { DemandeSankeyGraphService, GraphState } from '@app/services/graph-services/demande-sankey-graph-service';
+import { DemandeSankeyGraphService } from '@app/services/graph-services/demande-sankey-graph-service';
 import { ScenariosService } from '@app/services/scenarios-service';
+import { GraphState } from '@app/services/graph-services/base-graph-service';
 
 @Component({
   selector: 'app-scenario-demand-prod-sankey',

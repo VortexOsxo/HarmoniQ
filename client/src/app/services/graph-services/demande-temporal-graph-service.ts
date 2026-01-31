@@ -1,72 +1,30 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ScenariosService } from '../scenarios-service';
-import { HttpClient } from '@angular/common/http';
-import { environment } from 'environments/environment';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { map } from 'rxjs';
-import { GraphState } from './demande-sankey-graph-service';
 import { DemandeTemporalDataService } from '../data-services/demande-temporal-data-service';
+import { BaseGraphService } from './base-graph-service';
 
 @Injectable({
     providedIn: 'root',
 })
-export class DemandeTemporalGraphService {
-
-    state = signal(GraphState.Unavailable);
-    private cachedData: any;
-    private isDisplayed = false;
+export class DemandeTemporalGraphService extends BaseGraphService {
 
     constructor(
         private scenariosService: ScenariosService,
         private demandeTemporalDataService: DemandeTemporalDataService,
     ) {
-        effect(() => this.onScenarioChanged());
+        super(scenariosService.selectedScenario);
     }
 
-    display() {
-        this.isDisplayed = true;
-        this.handleGraphState(this.state());
-    }
-
-    undisplay() {
-        this.isDisplayed = false;
-    }
-
-    private onScenarioChanged() {
-        const scenario = this.scenariosService.selectedScenario();
-        if (!scenario) {
-            this.updateGraphState(GraphState.Unavailable);
-            return;
-        }
-
-        this.updateGraphState(GraphState.Loading);
-        this.fetchData(scenario).subscribe(
-            () => this.updateGraphState(GraphState.Displayable)
-        );
-    }
-
-    private updateGraphState(state: GraphState) {
-        this.state.set(state);
-        if (!this.isDisplayed) return;
-
-        this.handleGraphState(state);
-    }
-
-    private handleGraphState(state: GraphState) {
-        if (state == GraphState.Loading || state == GraphState.Unavailable)
-            this.removeGraph();
-        else if (state == GraphState.Displayable)
-            this.generateGraph();
-    }
-
-    private fetchData(scenario: Scenario) {
+    protected fetchData(scenario: Scenario) {
         return this.demandeTemporalDataService.fetch(scenario.id)
             .pipe(map(this.handleData.bind(this)));
     }
 
-    private handleData(apidata: any) {
+    protected handleData(apidata: any) {
         const xval = Object.keys(apidata.total_electricity);
         const yval = Object.values(apidata.total_electricity).map((value: any) => value / 1000);
 
@@ -81,7 +39,7 @@ export class DemandeTemporalGraphService {
         }];
     }
 
-    private generateGraph() {
+    protected generateGraph() {
         const layout: any = {
             title: "Demande pour scénario " + this.scenariosService.selectedScenario()?.nom,
             xaxis: {
@@ -104,7 +62,7 @@ export class DemandeTemporalGraphService {
         Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, this.cachedData, layout);
     }
 
-    private removeGraph() {
+    protected removeGraph() {
         Plotly.purge(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID);
     }
 }
