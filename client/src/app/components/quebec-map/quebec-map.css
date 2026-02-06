@@ -6,6 +6,22 @@
     overflow: hidden;
 }
 
+/* Overlay pour aire protégé */
+div.map-overlay-layers {
+    position: absolute;
+    top: 10px;
+    left: 50px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+div.map-overlay-layers button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
 /* Map */
 div.map-overlay {
     position: absolute;
