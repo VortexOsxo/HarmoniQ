@@ -1,6 +1,12 @@
 import { Infra, InfraFactory } from "./infra";
 
 export class WindFarm extends Infra<WindFarm> {
+
+    constructor(init?: Partial<WindFarm>) {
+        super();
+        Object.assign(this, init);
+    }
+
     nombre_eoliennes!: number;
     capacite_total!: number;
     hauteur_moyenne!: number;
