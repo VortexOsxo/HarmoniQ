@@ -1,0 +1,79 @@
+#game-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  gap: 5rem;
+}
+
+#optionBox {
+  height: 40vh;
+  width: 70vw;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(30vw, 1fr));
+  gap: 1rem;
+}
+
+button {
+    padding: 0.75em 1.5em;
+    background: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: 2px solid grey;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-width: 140px;
+    
+}
+
+::ng-deep .optionButton {
+  padding: 0.75em 1.5em;
+    background: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: 2px solid grey;
+    color: grey;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-width: 140px;
+}
+
+::ng-deep .rightAnswerButtonColor {
+  background-color: green;
+}
+
+::ng-deep .wrongAnswerButtonColor {
+  background-color: red;
+}
+
+::ng-deep button:not(.answered):hover {
+    background-color: black;
+    color: white;
+}
+
+.quizButton {
+  background: white;
+  color: black;
+  width: 30vw;
+  height: 5vh;
+}
+
+.quizButton:hover {
+  background-color: black;
+  color: white
+}
+
+.quizButton {
+  text-align: center;
+}
+
+#questionText {
+  width: 70vw;
+  height: auto;
+  text-align: center;
+}

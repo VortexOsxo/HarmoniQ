@@ -1,0 +1,12 @@
+<div id="game-area">
+
+<h2 id="questionText">{{questionText}}</h2>
+
+
+<div id="optionBox"></div>
+
+<button class="quizButton" [hidden]="!questionAnswered" (click)="changeQuestion()">Prochaine question</button>
+<button class="quizButton" [hidden]="!quizTerminated" (click)="navigate('')">Retour au menu principal</button>
+<h2>{{questionInformation}}</h2>
+
+</div>

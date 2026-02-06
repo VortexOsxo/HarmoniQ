@@ -1,0 +1,103 @@
+import { Component } from '@angular/core';
+import { GameService, Question } from '@app/services/game-service';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-game-area',
+  imports: [CommonModule],
+  templateUrl: './game-area.html',
+  styleUrl: './game-area.css',
+})
+export class GameArea {
+
+  gameService : GameService;
+  questionText: string = "aaaaa";
+  questionAnswered: boolean = false;
+  questionInformation: string = "";
+  quizTerminated: boolean = false;
+
+
+  constructor(private cdr: ChangeDetectorRef, private http: HttpClient, private router: Router) {
+    this.gameService = new GameService(this.http);    
+  }
+
+  ngOnInit() {
+  this.gameService.currentQuestion$.subscribe(question => {
+    if (!question) return;
+
+    const optionBox = document.getElementById("optionBox");
+    if (!optionBox) return;
+    optionBox.innerHTML = '';
+
+    console.log(question.question)
+
+    this.gameService.currentQuestionInfo.options.forEach((option, index) => {
+      const button = document.createElement('button');
+      button.textContent = option;
+      button.addEventListener('click', () => this.answerSelected(index));
+      button.classList.add("optionButton");
+      optionBox.appendChild(button);
+    });
+
+    this.questionText = this.gameService.currentQuestionInfo.questionText;
+
+    this.cdr.detectChanges();
+  });
+}
+
+
+  answerSelected(selectedAnswer: number){
+    console.log(selectedAnswer)
+
+    let answer: number = this.gameService.checkAnswer(selectedAnswer);
+
+    if(!answer)
+      {console.error("an error has happened while fetching the correct answer.");
+      return;}
+
+    const optionButtons = document.getElementById("optionBox")?.children;
+    if(!optionButtons)
+      {console.error("an error has happend with the choices");
+      return;
+    }
+
+    if(selectedAnswer == answer)
+    {
+      if(optionButtons)
+        optionButtons[selectedAnswer].classList.add("rightAnswerButtonColor");
+    } else {
+      
+      if(optionButtons)
+      {
+        optionButtons[selectedAnswer].classList.add("wrongAnswerButtonColor");
+        optionButtons[answer].classList.add("rightAnswerButtonColor");
+      }
+    }
+
+    this.questionAnswered = true;
+
+    for (const button of optionButtons as HTMLCollectionOf<HTMLButtonElement>){
+      button.disabled = true;
+      button.classList.add('answered');
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  changeQuestion(){
+    this.gameService.getQuestion();
+    this.questionAnswered = false;
+    this.cdr.detectChanges();
+
+    if(this.gameService.currentQuestionValue.answeredQuestionList[0] == -2)
+      {this.quizTerminated = true;
+      this.cdr.detectChanges()}
+  }
+
+  navigate(path: string) {
+    this.router.navigate([path]);
+  }
+}
