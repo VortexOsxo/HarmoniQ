@@ -1,5 +1,16 @@
 <div id="map" style="height: 700px; width: 100%;"></div>
 
+<div class="map-overlay-layers card p-2 m-4">
+    <button class="btn btn-sm" [class.btn-success]="protectedAreasService.isVisible()"
+        [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
+        (click)="protectedAreasService.toggleVisibility()">
+        <i class="bi" [class.bi-eye]="protectedAreasService.isVisible()"
+            [class.bi-eye-slash]="!protectedAreasService.isVisible()"></i>
+        Aires protégées
+    </button>
+    <!-- À changer après et rajouter légende -->
+</div>
+
 <div class="map-overlay card p-2 m-4">
     <p>Ajouter infra fictive :</p>
 
