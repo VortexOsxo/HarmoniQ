@@ -25,6 +25,6 @@ jobs:
         working-directory: client
         run: npm ci
 
-      - name: Run Angular tests (headless)
+      - name: Run Angular tests
         working-directory: client
         run: npm test -- --watch=false
