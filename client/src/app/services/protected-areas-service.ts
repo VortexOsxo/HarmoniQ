@@ -18,16 +18,7 @@ export class ProtectedAreasService {
     initLayer(map: L.Map): void {
         this.map = map;
 
-        this.tiledLayer = L.tileLayer(
-            `${this.MAP_SERVER_URL}/export?` +
-            'dpi=96&transparent=true&format=png32&' +
-            'layers=show:23&' + // 23 to show all protected areas : TODO Change that later for specific area types
-            'bbox={xmin},{ymin},{xmax},{ymax}&' +
-            'bboxSR=3857&imageSR=3857&' +
-            'size=256,256&f=image',
-        );
-
-        this.tiledLayer.getTileUrl.bind(this.tiledLayer);
+        this.tiledLayer = L.tileLayer('');
 
         this.tiledLayer.getTileUrl = (coords: L.Coords) => {
             const tileSize = 256;
@@ -44,7 +35,7 @@ export class ProtectedAreasService {
 
             return `${this.MAP_SERVER_URL}/export?` +
                 `dpi=96&transparent=true&format=png32&` +
-                `layers=show:23&` +
+                `layers=show:23&` + // 23 to show all protected areas : TODO Change that later for specific area types
                 `bbox=${bbox}&` +
                 `bboxSR=3857&imageSR=3857&` +
                 `size=${tileSize},${tileSize}&f=image`;
@@ -90,8 +81,14 @@ export class ProtectedAreasService {
     }
 
     destroy(): void {
-        if (this.tiledLayer && this.map) {
-            this.map.removeLayer(this.tiledLayer);
+        if (this.tiledLayer) {
+            this.tiledLayer.off('loading');
+            this.tiledLayer.off('load');
+            this.tiledLayer.off('tileerror');
+
+            if (this.map) {
+                this.map.removeLayer(this.tiledLayer);
+            }
         }
         this.tiledLayer = undefined;
         this.map = undefined;
