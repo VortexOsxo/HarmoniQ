@@ -29,8 +29,7 @@ export class GameService {
 });
   public currentQuestion$ = this._currentQuestion.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Fetch the question immediately in the constructor
+  constructor(private http: HttpClient) {>
     this.getQuestion();
   }
 
