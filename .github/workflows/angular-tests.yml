@@ -22,7 +22,9 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        working-directory: client
         run: npm ci
 
       - name: Run Angular tests (headless)
+        working-directory: client
         run: npm test -- --watch=false --browsers=ChromeHeadless
