@@ -29,7 +29,7 @@ export class GameService {
 });
   public currentQuestion$ = this._currentQuestion.asObservable();
 
-  constructor(private http: HttpClient) {>
+  constructor(private http: HttpClient) {
     this.getQuestion();
   }
 
