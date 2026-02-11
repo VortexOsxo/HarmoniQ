@@ -33,9 +33,6 @@ class InfraHydro(Infrastructure):
         self.daly = None
         self.production = None
 
-    def charger_scenario(self, scenario):
-        self.scenario: ScenarioBase = scenario
-
     @necessite_scenario
     def charger_debit(self):  # Seulement pour les barrages au fil de l'Eau
         filename_debit = str(self.donnees.nom) + ".csv"
