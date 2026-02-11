@@ -1,6 +1,6 @@
-from harmoniq.core.base import Infrastructure, necessite_scenario
+from harmoniq.core.base import Infrastructure
 from harmoniq.core.meteo import WeatherHelper, Granularity, EnergyType
-from harmoniq.db.schemas import ScenarioBase, EolienneParcBase, PositionBase
+from harmoniq.db.schemas import ScenarioBase, PositionBase
 from harmoniq.modules.eolienne.calcule import get_parc_power
 
 import pandas as pd
@@ -10,9 +10,6 @@ logger = logging.getLogger("EolienneParc")
 
 
 class InfraParcEolienne(Infrastructure):
-    def __init__(self, donnees: EolienneParcBase):
-        super().__init__(donnees)
-
     def _charger_meteo(self, scenario: ScenarioBase):
         lat = self.donnees.latitude
         long = self.donnees.longitude
@@ -37,11 +34,10 @@ class InfraParcEolienne(Infrastructure):
         return helper.load()
 
     async def charger_scenario(self, scenario):
-        self.scenario: ScenarioBase = scenario
+        super().charger_scenario(scenario)
         self.meteo: pd.DataFrame = self._charger_meteo(scenario)
 
-    @necessite_scenario
-    def calculer_production(self) -> pd.DataFrame:
+    def calculer_production_interne(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
         parc_data = get_parc_power(self.donnees, self.meteo)

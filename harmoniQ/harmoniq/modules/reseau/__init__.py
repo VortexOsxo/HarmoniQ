@@ -1,15 +1,13 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ScenarioBase, Hydro, ListeInfrastructures
-from harmoniq.db.CRUD import read_all_hydro, read_multiple_by_id
+from harmoniq.db.schemas import ListeInfrastructures
 from harmoniq.db.engine import get_db
 
-from harmoniq.modules.reseau.core import NetworkBuilder, PowerFlowAnalyzer, NetworkOptimizer
+from harmoniq.modules.reseau.core import NetworkBuilder, NetworkOptimizer
 from harmoniq.modules.reseau.utils import EnergyUtils
 
 import pandas as pd
-import numpy as np
 import pypsa
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, Tuple
 import logging
 from pathlib import Path
 import os
@@ -48,11 +46,6 @@ class InfraReseau(Infrastructure):
         self.builder = NetworkBuilder(data_dir)
         self.is_journalier = False  # Par défaut, le mode horaire est utilisé
         self.timers = {}
-        
-    def charger_scenario(self, scenario: ScenarioBase):
-
-        self.scenario = scenario
-        logger.info(f"Scénario chargé: {scenario.nom}")
         
     @necessite_scenario
     async def creer_reseau(self, liste_infra=None) -> pypsa.Network: #Ne sert uniquement à créer le reseau que si il n'est pas déja crée, ce qui n'arrive à priori pas
@@ -420,7 +413,7 @@ class InfraReseau(Infrastructure):
         logger.info("Workflow d'optimisation terminé")
         return network, statistics
     
-    async def calculer_production(self, liste_infra, is_journalier=False) -> pd.DataFrame:
+    async def calculer_production_interne(self, liste_infra, is_journalier=False) -> pd.DataFrame:
         """
         Calcule la production optimisée par type d'énergie.
         """
