@@ -33,7 +33,7 @@ class InfraParcEolienne(Infrastructure):
 
         return helper.load()
 
-    async def charger_scenario(self, scenario):
+    def charger_scenario(self, scenario):
         super().charger_scenario(scenario)
         self.meteo: pd.DataFrame = self._charger_meteo(scenario)
 
