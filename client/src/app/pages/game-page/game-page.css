@@ -1,4 +1,3 @@
-app-game-area {
-    height: 80vh;
-    width: auto;
+.dialogPanel .mat-mdc-dialog-panel {
+  border-radius: 12px;
 }
