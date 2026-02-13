@@ -1,15 +1,34 @@
-# Seperate database since it is read only
+import os
+import sqlite3
+from pathlib import Path
+from typing import Optional
+
+import pandas as pd
 
 from harmoniq import DEMANDE_PATH
 from harmoniq.db.schemas import Scenario, Weather, Consomation
 
-import pandas as pd
-import sqlite3
+_conn: Optional[sqlite3.Connection] = None
 
-from typing import Optional
 
-_conn = sqlite3.connect(f"file:{DEMANDE_PATH}?mode=ro", uri=True)
+def _get_conn() -> sqlite3.Connection:
+    """Open the read-only DB connection lazily (no side effects at import time)."""
+    global _conn
+    if _conn is not None:
+        return _conn
 
+    # Allow overriding in CI/tests
+    db_path = os.getenv("DEMANDE_PATH", DEMANDE_PATH)
+
+    # Nice error message instead of sqlite3.OperationalError
+    if not Path(db_path).exists():
+        raise FileNotFoundError(
+            f"DEMANDE database not found at '{db_path}'. "
+            f"Set DEMANDE_PATH env var or provide the DB file."
+        )
+
+    _conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    return _conn
 
 async def get_all_sectors() -> pd.DataFrame:
     query = """
@@ -17,7 +36,7 @@ async def get_all_sectors() -> pd.DataFrame:
         FROM Metadata m
         JOIN Demande d ON d.meta_id = m.id
     """
-    df = pd.read_sql_query(query, _conn)
+    df = pd.read_sql_query(query, _get_conn())
     return df
 
 async def read_demande_data(
@@ -47,7 +66,7 @@ async def read_demande_data(
         scenario.date_de_debut,
         scenario.date_de_fin,
     )
-    df = pd.read_sql_query(query, _conn, params=params)
+    df = pd.read_sql_query(query, _get_conn(), params=params)
     return df
 
 
@@ -79,7 +98,7 @@ async def read_demande_data_sankey(
         scenario.date_de_debut,
         scenario.date_de_fin,
     )
-    df = pd.read_sql_query(query, _conn, params=params)
+    df = pd.read_sql_query(query, _get_conn(), params=params)
     return df
 
 
@@ -109,7 +128,7 @@ async def read_demande_data_temporal(
         scenario.date_de_debut,
         scenario.date_de_fin,
     )
-    df = pd.read_sql_query(query, _conn, params=params)
+    df = pd.read_sql_query(query, _get_conn(), params=params)
     df["date"] = pd.to_datetime(df["date"])
     df.set_index("date", inplace=True)
     return df

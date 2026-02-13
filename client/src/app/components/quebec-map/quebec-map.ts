@@ -1,5 +1,6 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { MapService } from '@app/services/map-service';
+import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 
@@ -16,7 +17,10 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
     return this.mapService.map;
   }
 
-  constructor(private mapService: MapService) { }
+  constructor(
+    private mapService: MapService,
+    public protectedAreasService: ProtectedAreasService
+  ) { }
 
   ngAfterViewInit(): void {
     this.initMapAndIcons();
@@ -26,6 +30,10 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
   private initMapAndIcons() {
     this.mapService.createMap();
     this.mapService.initMarkers();
+
+    if (this.mapService.map) {
+      this.protectedAreasService.initLayer(this.mapService.map);
+    }
 
     const draggableIcons = document.querySelectorAll(".icon-draggable");
 
@@ -40,6 +48,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.protectedAreasService.destroy();
     this.mapService.destroyMap();
     this.mapService.destroyMarkers();
   }
