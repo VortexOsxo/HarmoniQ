@@ -518,22 +518,19 @@ game_router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@game_router.get("/question")
+@game_router.get("/quiz")
 async def fetch_question(
     answeredQuestionList: List[int] = Query(...)
 ):
     print(answeredQuestionList)
 
-    selectedQuestion, answeredQuestionList = selectQuestion(answeredQuestionList)
+    quiz, answeredQuestionList = selectQuestion(answeredQuestionList)
     print(answeredQuestionList)
 
     return {       
-        "question": {"questionText": selectedQuestion["question"]["question"],
-    "options": selectedQuestion["question"]["options"]},
-    "answer": selectedQuestion["answer"],
+        "questions": quiz,
     "answeredQuestionList": answeredQuestionList
     }
-
 
 router.include_router(game_router)
 
