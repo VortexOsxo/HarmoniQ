@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'environments/environment';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 export type Question = {
   questionText: string;
@@ -11,61 +11,66 @@ export type Question = {
 export type ImportedQuestion = {
   question: Question;
   answer: number;
+}
+
+export type Quiz = {
   answeredQuestionList: [number];
+  questions: [ImportedQuestion];
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameService {
-//private currentQuestion: ImportedQuestion | null;
-  private _currentQuestion = new BehaviorSubject<ImportedQuestion>({
-  question: {
-    questionText: "",
-    options: []
-  },
-  answer: 0,
-  answeredQuestionList: [-1]
-});
+  private _currentQuestion = new BehaviorSubject<number>(-1);
   public currentQuestion$ = this._currentQuestion.asObservable();
+  private quiz: Quiz = 
+    {
+      questions:[{
+        question: {
+          questionText: "",
+          options: [""]
+        },
+        answer: 0
+      }],
+      answeredQuestionList: [-1]
+    };
+  private answeredQuestions: [number] = [-1];
 
   constructor(private http: HttpClient) {
-    this.getQuestion();
+    this.getQuiz();
   }
 
-  getQuestion(): any /*Question*/ {
-    console.log("ffff")
-    console.log(this.currentQuestionValue.answeredQuestionList);
-    if(this.currentQuestionValue.answeredQuestionList[0] != -2)
-    this.http.get<ImportedQuestion>(`${environment.apiUrl}/jeux-informatifs/question`, {
-      params: { answeredQuestionList: this.currentQuestionValue.answeredQuestionList }}).subscribe((question) => {
-        this._currentQuestion.next(question); console.log(this.currentQuestionValue)});
+  getQuiz(): void {
+    this.http.get<Quiz>(`${environment.apiUrl}/jeux-informatifs/quiz`, {
+      params: { answeredQuestionList: this.answeredQuestions }}).subscribe((quiz) => {
+        this.quiz.questions = quiz.questions;
+        this.answeredQuestions = quiz.answeredQuestionList;
+        this._currentQuestion.next(0);
+      })
+  }
 
-    else{
-      const quizEnded: ImportedQuestion = {
-      question: {
-      questionText: "Vous avez répondu à toutes les questions disponibles. Bravo à vous!!",
-      options: []
-      },
-      answer: -1,
-      answeredQuestionList: this.currentQuestionValue.answeredQuestionList
-    }
+  getQuestion(): Question /*Question*/ {
+    console.log(this.quiz.questions);
+    return this.quiz.questions[this._currentQuestion.value].question;
+  }
 
-    this._currentQuestion.next(quizEnded);
-    }
+  nextQuestion(): void{
+    console.log(this.questionIndex);
+    this._currentQuestion.value < this.quiz.questions.length-1 ? 
+      this._currentQuestion.next(this.questionIndex + 1) : this._currentQuestion.next(-2)
+  }
 
+  restartAvailable():boolean {
+    return this.quiz.answeredQuestionList[0] == -2 ? false:true;
   }
 
   checkAnswer(selectedOption: number /* if we want to send info about the answers for statistics */): number {
-      return this.currentQuestionValue.answer;
+      return this.quiz.questions[this._currentQuestion.value].answer;
   }
 
-  get currentQuestionValue(): ImportedQuestion {
+  get questionIndex(): number {
     return this._currentQuestion.value;
-  }
-
-  get currentQuestionInfo(): Question {
-    return this._currentQuestion.value.question;
   }
 }
 

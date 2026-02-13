@@ -3,10 +3,11 @@
 <h2 id="questionText">{{questionText}}</h2>
 
 
-<div id="optionBox"></div>
+<div id="optionBox" [hidden]="quizTerminated"></div>
 
 <button class="quizButton" [hidden]="!questionAnswered" (click)="changeQuestion()">Prochaine question</button>
 <button class="quizButton" [hidden]="!quizTerminated" (click)="navigate('')">Retour au menu principal</button>
+<button class="quizButton" [hidden]="!quizTerminated && !restartAvailable" (click)="startNewQuiz()">Commencer un nouveau quiz</button>
 <h2>{{questionInformation}}</h2>
 
 </div>

@@ -18,6 +18,7 @@ export class GameArea {
   questionAnswered: boolean = false;
   questionInformation: string = "";
   quizTerminated: boolean = false;
+  restartAvailable: boolean = false;
 
 
   constructor(private cdr: ChangeDetectorRef, private http: HttpClient, private router: Router) {
@@ -26,15 +27,13 @@ export class GameArea {
 
   ngOnInit() {
   this.gameService.currentQuestion$.subscribe(question => {
-    if (!question) return;
+    if (question < 0) return;
 
     const optionBox = document.getElementById("optionBox");
     if (!optionBox) return;
     optionBox.innerHTML = '';
 
-    console.log(question.question)
-
-    this.gameService.currentQuestionInfo.options.forEach((option, index) => {
+    this.gameService.getQuestion().options.forEach((option, index) => {
       const button = document.createElement('button');
       button.textContent = option;
       button.addEventListener('click', () => this.answerSelected(index));
@@ -42,7 +41,7 @@ export class GameArea {
       optionBox.appendChild(button);
     });
 
-    this.questionText = this.gameService.currentQuestionInfo.questionText;
+    this.questionText = this.gameService.getQuestion().questionText;
 
     this.cdr.detectChanges();
   });
@@ -88,13 +87,21 @@ export class GameArea {
   }
 
   changeQuestion(){
-    this.gameService.getQuestion();
+    this.gameService.nextQuestion();
     this.questionAnswered = false;
     this.cdr.detectChanges();
 
-    if(this.gameService.currentQuestionValue.answeredQuestionList[0] == -2)
-      {this.quizTerminated = true;
-      this.cdr.detectChanges()}
+    //Manage end of quizzes
+    if (this.gameService.questionIndex == -2)
+    {
+      this.quizTerminated = true;
+      this.cdr.detectChanges();
+      this.questionText = "Le quiz est terminé. Vous avez obtenu .../10."
+    }
+  }
+
+  startNewQuiz(){
+    this.restartAvailable = this.gameService.restartAvailable() ? false:true;
   }
 
   navigate(path: string) {
