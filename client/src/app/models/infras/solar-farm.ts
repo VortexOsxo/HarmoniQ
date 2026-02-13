@@ -1,6 +1,12 @@
 import { Infra, InfraFactory } from "./infra";
 
 export class SolarFarm extends Infra<SolarFarm> {
+
+    constructor(init?: Partial<SolarFarm>) {
+        super();
+        Object.assign(this, init);
+    }
+
     angle_panneau!: number;
     orientation_panneau!: number;
     puissance_nominal!: number;

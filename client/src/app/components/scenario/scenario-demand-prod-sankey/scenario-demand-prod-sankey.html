@@ -1,3 +1,6 @@
-<div id="{{config.SECTOR_ENERGY_CONS_SANKEY_ID}}" class="h-100 w-100">
-    <p *ngIf="!isGraphGenerated">Choisis un scénario pour voir des données</p>
+<p *ngIf=" graphState()===GraphState.Unavailable">Choisis un scénario pour voir des données</p>
+<p *ngIf="graphState() === GraphState.Loading">Chargement des données...</p>
+<p *ngIf="graphState() === GraphState.Displayable"> Graphique du scenario: {{selectedScenario()?.nom}}</p>
+<div id="{{config.SECTOR_ENERGY_CONS_SANKEY_ID}}" style="height: 700px; width: 100%;">
+
 </div>

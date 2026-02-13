@@ -463,42 +463,61 @@ async def calculer_production_reseau(
     is_journalier: bool = False,
     db: Session = Depends(get_db)
 ):
-
+    timers = {}
+    total_start = time.time()
+    
+    db_start = time.time()
     scenario_task = read_data_by_id(db, schemas.Scenario, scenario_id)
     liste_infra_task = read_data_by_id(db, schemas.ListeInfrastructures, liste_infra_id)
     
     scenario, liste_infra = await asyncio.gather(scenario_task, liste_infra_task)
+    timers['1_db_lookups'] = time.time() - db_start
     
     if scenario is None:
         raise HTTPException(status_code=404, detail="Scénario non trouvé")
     if liste_infra is None:
         raise HTTPException(status_code=404, detail="Liste d'infrastructures non trouvée")
     
+    init_start = time.time()
     infra_reseau = InfraReseau(liste_infra)
     infra_reseau.charger_scenario(scenario)
+    timers['2_infra_reseau_init'] = time.time() - init_start
     
-    start_time = time.time()
+    calc_start = time.time()
     production = await infra_reseau.calculer_production(liste_infra, is_journalier)
-    execution_time = time.time() - start_time
+    timers['3_calculer_production_total'] = time.time() - calc_start
+    
+    if hasattr(infra_reseau, 'timers'):
+        for key, value in infra_reseau.timers.items():
+            timers[f'  3.{key}'] = value
     
     if production.empty:
         raise HTTPException(status_code=500, detail="Calcul de production échoué")
     
-    # Filtrer pour ne conserver que les colonnes de totaux
-    # total_columns = ['totale'] + [col for col in production.columns if col.startswith('total_')]
-    # production_totals = production[total_columns]
-    
+    format_start = time.time()
     production_json = production.reset_index().rename(columns={'index': 'timestamp'})
     
     if 'timestamp' in production_json.columns:
         production_json['timestamp'] = production_json['timestamp'].astype(str)
+    timers['4_response_formatting'] = time.time() - format_start
+    
+    total_time = time.time() - total_start
+    timers['TOTAL'] = total_time
+    
+    print("\n" + "="*60)
+    print("TIMING BREAKDOWN - /reseau/production")
+    print("="*60)
+    for key, value in sorted(timers.items()):
+        pct = (value / total_time * 100) if total_time > 0 else 0
+        print(f"{key:40s} : {value:8.3f}s ({pct:5.1f}%)")
+    print("="*60 + "\n")
     
     response = {
         "metadata": {
             "scenario_id": scenario_id,
             "liste_infra_id": liste_infra_id,
             "is_journalier": is_journalier,
-            "execution_time_seconds": execution_time,
+            "execution_time_seconds": total_time,
             "timestamps": len(production)
         },
         "production": production_json.to_dict(orient='records')

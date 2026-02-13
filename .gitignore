@@ -24,3 +24,6 @@ cache/
 .cache.sqlite
 
 */.DS_Store
+
+# Profiler Logs
+profile_logs
