@@ -1,16 +1,15 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 from pathlib import Path
 
 from harmoniq.webserver.REST import router as api_router
 
-ASSET_FILE = Path(__file__).parent / "assets"
-STATIC_FILE = ASSET_FILE / "static"
-TEMPLATES_FILE = ASSET_FILE / "templates"
+ANGULAR_DIST = Path(__file__).parents[3] / "client" / "dist" / "client" / "browser"
+ANGULAR_INDEX = ANGULAR_DIST / "index.html"
 
 app = FastAPI(
     title="HarmoniQ",
@@ -35,51 +34,25 @@ app.add_middleware(
 )
 
 
-app.mount("/static", StaticFiles(directory=STATIC_FILE), name="static")
+class SPAFallbackMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
 
-templates = Jinja2Templates(directory=ASSET_FILE)
+        if response.status_code != 404:
+            return response
 
+        path = request.url.path.lstrip("/")
 
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+        if path.startswith("api"):
+            return response
 
+        candidate = ANGULAR_DIST / path
+        if candidate.is_file():
+            return FileResponse(candidate)
 
-@app.get("/favicon.ico", response_class=FileResponse)
-def favicon():
-    print(STATIC_FILE / "favicon" / "favicon.ico")
-    return FileResponse(STATIC_FILE / "favicon" / "favicon.ico")
-
-
-@app.get("/à-propos", response_class=HTMLResponse)
-def à_propos(request: Request):
-    return templates.TemplateResponse(request=request, name="about.html")
+        return FileResponse(ANGULAR_INDEX)
 
 
-@app.get("/documentation", response_class=HTMLResponse)
-def documentation(request: Request):
-    return templates.TemplateResponse(request=request, name="docs.html")
+app.add_middleware(SPAFallbackMiddleware)
 
-
-@app.get("/app", response_class=HTMLResponse)
-def application(request: Request):
-    return templates.TemplateResponse(request=request, name="app.html")
-
-
-@app.get("/Eloise", response_class=HTMLResponse)
-def eloisepage(request: Request):
-    return templates.TemplateResponse(request=request, name="elo.html")
-
-@app.get("/opti", response_class=HTMLResponse)
-def optimal_placement_page(request: Request):
-    return templates.TemplateResponse(request=request, name="opti.html")
-
-@app.exception_handler(404)
-def not_found(request: Request, exc):
-    if request.url.path.startswith("/api/"):
-        return JSONResponse(status_code=404, content={"message": "Not Found"})
-    return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
-
-
-# Ajoute les endpoints de REST.py
 app.include_router(api_router)
