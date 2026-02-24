@@ -159833,41 +159833,38 @@ var HomePage = class _HomePage {
   static \u0275fac = function HomePage_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _HomePage)(\u0275\u0275directiveInject(Router));
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _HomePage, selectors: [["app-home-page"]], decls: 21, vars: 0, consts: [["id", "content"], ["id", "hero-content"], ["id", "nav"], [3, "click"], ["href", "https://www.polymtl.ca/programmes/cours/projet-integrateur-iv-en-genie-mecanique-0", "target", "_blank", "rel", "noopener noreferrer"], ["src", "/icons/polymtlLogo.png", "alt", "Logo de Polytechnique Montr\xE9al", 1, "logo"], [2, "margin", "0 2em"], ["href", "https://www.hydroquebec.com/projets/planifier/prevoir-demande-electricite.html", "target", "_blank", "rel", "noopener noreferrer"], ["src", "/icons/hqLogo.png", "alt", "Logo de Hydro-Qu\xE9bec", 1, "logo"]], template: function HomePage_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _HomePage, selectors: [["app-home-page"]], decls: 19, vars: 0, consts: [["id", "content"], ["id", "hero-content"], ["id", "nav"], [3, "click"], ["href", "https://www.polymtl.ca/programmes/cours/projet-integrateur-iv-en-genie-mecanique-0", "target", "_blank", "rel", "noopener noreferrer"], ["src", "/icons/polymtlLogo.png", "alt", "Logo de Polytechnique Montr\xE9al", 1, "logo"], [2, "margin", "0 2em"], ["href", "https://www.hydroquebec.com/projets/planifier/prevoir-demande-electricite.html", "target", "_blank", "rel", "noopener noreferrer"], ["src", "/icons/hqLogo.png", "alt", "Logo de Hydro-Qu\xE9bec", 1, "logo"]], template: function HomePage_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275domElementStart(0, "div", 0)(1, "div", 1)(2, "h1");
       \u0275\u0275text(3, "HarmoniQ");
       \u0275\u0275domElementEnd();
       \u0275\u0275domElementStart(4, "h3");
       \u0275\u0275text(5, "Mod\xE8le de Production \xC9lectrique Qu\xE9becoise");
-      \u0275\u0275domElementEnd();
-      \u0275\u0275domElementStart(6, "h3");
-      \u0275\u0275text(7, "Hi pookies");
       \u0275\u0275domElementEnd()();
-      \u0275\u0275domElementStart(8, "div", 2)(9, "button", 3);
-      \u0275\u0275domListener("click", function HomePage_Template_button_click_9_listener() {
+      \u0275\u0275domElementStart(6, "div", 2)(7, "button", 3);
+      \u0275\u0275domListener("click", function HomePage_Template_button_click_7_listener() {
         return ctx.navigate("\xE0-propos");
       });
-      \u0275\u0275text(10, "\xC0 Propos");
+      \u0275\u0275text(8, "\xC0 Propos");
+      \u0275\u0275domElementEnd();
+      \u0275\u0275domElementStart(9, "button", 3);
+      \u0275\u0275domListener("click", function HomePage_Template_button_click_9_listener() {
+        return ctx.navigate("documentation");
+      });
+      \u0275\u0275text(10, "Documentation");
       \u0275\u0275domElementEnd();
       \u0275\u0275domElementStart(11, "button", 3);
       \u0275\u0275domListener("click", function HomePage_Template_button_click_11_listener() {
-        return ctx.navigate("documentation");
-      });
-      \u0275\u0275text(12, "Documentation");
-      \u0275\u0275domElementEnd();
-      \u0275\u0275domElementStart(13, "button", 3);
-      \u0275\u0275domListener("click", function HomePage_Template_button_click_13_listener() {
         return ctx.navigate("simulation");
       });
-      \u0275\u0275text(14, "Simulation");
+      \u0275\u0275text(12, "Simulation");
       \u0275\u0275domElementEnd()();
-      \u0275\u0275domElementStart(15, "div")(16, "a", 4);
-      \u0275\u0275domElement(17, "img", 5);
+      \u0275\u0275domElementStart(13, "div")(14, "a", 4);
+      \u0275\u0275domElement(15, "img", 5);
       \u0275\u0275domElementEnd();
-      \u0275\u0275domElement(18, "span", 6);
-      \u0275\u0275domElementStart(19, "a", 7);
-      \u0275\u0275domElement(20, "img", 8);
+      \u0275\u0275domElement(16, "span", 6);
+      \u0275\u0275domElementStart(17, "a", 7);
+      \u0275\u0275domElement(18, "img", 8);
       \u0275\u0275domElementEnd()()();
     }
   }, styles: ["\n\n#content[_ngcontent-%COMP%] {\n  width: 100%;\n  min-height: 100vh;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  align-items: center;\n  background-image:\n    linear-gradient(\n      to bottom right,\n      rgba(0, 0, 0, 0.4),\n      rgba(100, 100, 100, 0.4)),\n    url(https://images.pexels.com/photos/1635332/pexels-photo-1635332.jpeg);\n  background-size: cover;\n  background-position: center;\n  padding: 1em;\n  text-align: center;\n}\n#hero-content[_ngcontent-%COMP%] {\n  color: white;\n  font-weight: bold;\n  z-index: 2;\n  max-width: 90%;\n  margin-bottom: 2em;\n}\n#hero-content[_ngcontent-%COMP%]   h1[_ngcontent-%COMP%] {\n  font-size: clamp(2.5rem, 7vw, 5rem);\n  margin-bottom: 0.5em;\n}\n#hero-content[_ngcontent-%COMP%]   h3[_ngcontent-%COMP%] {\n  font-size: clamp(1.2rem, 4vw, 2rem);\n}\n#nav[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: row;\n  justify-content: center;\n  flex-wrap: wrap;\n  gap: 1em;\n  z-index: 2;\n}\n#nav[_ngcontent-%COMP%]   a[_ngcontent-%COMP%] {\n  display: block;\n  width: auto;\n  text-decoration: none;\n}\n#nav[_ngcontent-%COMP%]   button[_ngcontent-%COMP%] {\n  padding: 0.75em 1.5em;\n  background: none;\n  font-size: 1.2rem;\n  font-weight: bold;\n  border: 2px solid white;\n  color: white;\n  border-radius: 12px;\n  cursor: pointer;\n  transition: background-color 0.3s ease, color 0.3s ease;\n  min-width: 140px;\n}\n#nav[_ngcontent-%COMP%]   button[_ngcontent-%COMP%]:hover {\n  background-color: white;\n  color: black;\n}\n@media (max-width: 768px) {\n  #nav[_ngcontent-%COMP%]   button[_ngcontent-%COMP%] {\n    width: 90%;\n    font-size: 1rem;\n  }\n  #hero-content[_ngcontent-%COMP%]   h1[_ngcontent-%COMP%] {\n    font-size: 2.5rem;\n  }\n  #hero-content[_ngcontent-%COMP%]   h3[_ngcontent-%COMP%] {\n    font-size: 1.2rem;\n  }\n}\nimg.logo[_ngcontent-%COMP%] {\n  height: 5em;\n  margin-top: 4em;\n}\n/*# sourceMappingURL=home-page.css.map */"] });
@@ -159879,7 +159876,6 @@ var HomePage = class _HomePage {
     <div id="hero-content">
         <h1>HarmoniQ</h1>
         <h3>Mod\xE8le de Production \xC9lectrique Qu\xE9becoise</h3>
-        <h3>Hi pookies</h3>
     </div>
     <div id="nav">
         <button (click)="navigate('\xE0-propos')">\xC0 Propos</button>
