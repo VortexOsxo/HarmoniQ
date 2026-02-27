@@ -30,8 +30,14 @@ export class SimulationService {
     const scenario = this.scenariosService.selectedScenario();
     if (!scenario) return;
 
-    const url = `${environment.apiUrl}/${type}/${infraId}/production?scenario_id=${scenario.id}`;
-    return this.http.post(url, {});
+    const allInfras = this.infrastructuresService.getInfrasSignalByType(type)();
+    const infra = allInfras.find((i: any) => String(i.id) === String(infraId));
+    if (!infra) return;
+
+    const { isUserCreated, ...infraPayload } = infra as any;
+
+    const url = `${environment.apiUrl}/${type}/production?scenario_id=${scenario.id}`;
+    return this.http.post(url, infraPayload);
   }
 
   hasSimulationResults() {
@@ -44,11 +50,13 @@ export class SimulationService {
 
     if (!scenario || !infraGroup) return;
 
-    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&liste_infra_id=${infraGroup.id}&is_journalier=false`;
+    const infraPayload = this.infrastructuresService.buildSimulationPayload();
+
+    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&is_journalier=false`;
 
     forkJoin({
       demande: this.demandeTemporalDataService.fetch(scenario.id),
-      production: this.http.post(url, {})
+      production: this.http.post(url, infraPayload)
     }).subscribe((result) => {
       this.cachedDemandeTemporal = result.demande;
       this.cachedSimulationResult = result.production;

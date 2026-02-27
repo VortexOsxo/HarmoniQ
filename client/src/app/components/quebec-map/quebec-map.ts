@@ -42,7 +42,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
         let type = e.target.getAttribute('type');
         let route = e.target.getAttribute('route');
 
-        e.dataTransfer.setData("text/plain", `${type},${route}`);
+        e.dataTransfer.setData("text/plain", `${type}Base,${route}`);
       });
     });
   }

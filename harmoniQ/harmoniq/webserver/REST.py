@@ -112,6 +112,9 @@ async def delete_scenario_and_purge_cache(
 
 # Création des méthodes CRUD sur FastAPI
 api_routers = {}
+
+read_only_tables = ['eolienneparc', 'solaire', 'hydro', 'thermique', 'nucleaire']
+
 for sql_class, pydantic_classes in engine.sql_tables.items():
     table_name = sql_class.__name__
     table_name_lower = table_name.lower()
@@ -132,16 +135,17 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
     def create_endpoints(
         sql_class, base_class, create_class, response_class, table_name_lower
     ):
-        @class_router.post(
-            "/", response_model=response_class, summary=f"Create a {table_name}"
-        )
-        async def create(item: create_class, db: Session = Depends(get_db)):
-            result = await create_data(db, sql_class, item)
-            if result is None:
-                raise HTTPException(
-                    status_code=404, detail=f"{table_name_lower} not found"
-                )
-            return result
+        if table_name_lower not in read_only_tables:
+            @class_router.post(
+                "/", response_model=response_class, summary=f"Create a {table_name}"
+            )
+            async def create(item: create_class, db: Session = Depends(get_db)):
+                result = await create_data(db, sql_class, item)
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, detail=f"{table_name_lower} not found"
+                    )
+                return result
 
         @class_router.get(
             "/",
@@ -181,29 +185,30 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
                 )
             return result
 
-        @class_router.put(
-            "/{item_id}",
-            response_model=response_class,
-            summary=f"Update a {table_name} by id",
-        )
-        async def update(
-            item_id: int, item: create_class, db: Session = Depends(get_db)
-        ):
-            result = await update_data(db, sql_class, item_id, item)
-            if result is None:
-                raise HTTPException(
-                    status_code=404, detail=f"{table_name_lower} {item_id} not found"
-                )
-            return result
+        if table_name_lower not in read_only_tables:
+            @class_router.put(
+                "/{item_id}",
+                response_model=response_class,
+                summary=f"Update a {table_name} by id",
+            )
+            async def update(
+                item_id: int, item: create_class, db: Session = Depends(get_db)
+            ):
+                result = await update_data(db, sql_class, item_id, item)
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, detail=f"{table_name_lower} {item_id} not found"
+                    )
+                return result
 
-        @class_router.delete("/{item_id}", summary=f"Delete a {table_name} by id")
-        async def delete(item_id: int, db: Session = Depends(get_db)):
-            result = await delete_data(db, sql_class, item_id)
-            if result is None:
-                raise HTTPException(
-                    status_code=404, detail=f"{table_name_lower} {item_id} not found"
-                )
-            return result
+            @class_router.delete("/{item_id}", summary=f"Delete a {table_name} by id")
+            async def delete(item_id: int, db: Session = Depends(get_db)):
+                result = await delete_data(db, sql_class, item_id)
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, detail=f"{table_name_lower} {item_id} not found"
+                    )
+                return result
 
     # Call the closure to define the endpoints
     create_endpoints(
@@ -304,48 +309,47 @@ router.include_router(meteo_router)
 
 parc_eolien_router = api_routers["eolienneparc"]
 
-@parc_eolien_router.post("/{parc_eolien_id}/production")
+@parc_eolien_router.post("/production")
 async def calculer_production_parc_eolien(
-    parc_eolien_id: int, scenario_id: int, db: Session = Depends(get_db)
+    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
 ):
     return await response_production(
-        db, scenario_id, parc_eolien_id, InfraParcEolienne, schemas.EolienneParc
+        db, scenario_id, infra_payload, InfraParcEolienne, schemas.EolienneParc
     )
 
 #-----#-----#-----#-----#-----#  Production : Solaire  #-----#-----#-----#-----#-----#
 
 solaire_router = api_routers["solaire"]
 
-@solaire_router.post("/{solaire_id}/production")
+@solaire_router.post("/production")
 async def calculer_production_solaire(
-    solaire_id: int, scenario_id: int, db: Session = Depends(get_db)
+    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
 ):
     return await response_production(
-        db, scenario_id, solaire_id, InfraSolaire, schemas.Solaire
+        db, scenario_id, infra_payload, InfraSolaire, schemas.Solaire
     )
 
 #-----#-----#-----#-----#-----#  Production : Thermique  #-----#-----#-----#-----#-----#
 
 thermique_router = api_routers["thermique"]
-@thermique_router.post("/{thermique_id}/production")
-
+@thermique_router.post("/production")
 async def calculer_production_thermique(
-    thermique_id: int, scenario_id: int, db: Session = Depends(get_db)
+    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
 ):
     return await response_production(
-        db, scenario_id, thermique_id, InfraThermique, schemas.Thermique
+        db, scenario_id, infra_payload, InfraThermique, schemas.Thermique
     )
 
 #-----#-----#-----#-----#-----#  Production : Nucleaire  #-----#-----#-----#-----#-----#
 
 nucleaire_router = api_routers["nucleaire"]
 
-@nucleaire_router.post("/{nucleaire_id}/production")
+@nucleaire_router.post("/production")
 async def calculer_production_nucleaire(
-    nucleaire_id: int, scenario_id: int, db: Session = Depends(get_db)
+    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
 ):
     return await response_production(
-        db, scenario_id, nucleaire_id, InfraNucleaire, schemas.Nucleaire
+        db, scenario_id, infra_payload, InfraNucleaire, schemas.Nucleaire
     )
 
 
@@ -353,18 +357,12 @@ async def calculer_production_nucleaire(
 
 hydro_router = api_routers["hydro"]
 
-@hydro_router.post("/{hydro_id}/production")
+@hydro_router.post("/production")
 async def calculer_production_hydro(
-    hydro_id: int, scenario_id: int, db: Session = Depends(get_db)
+    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
 ):
-    hydro = await read_data_by_id(db, schemas.Hydro, hydro_id)
-    if hydro.type_barrage != "Fil de l'eau":
-        raise HTTPException(
-            status_code=400, detail="Production calculation is only available for run-of-river dams"
-        )
-
     return await response_production(
-        db, scenario_id, hydro_id, InfraHydro, schemas.Hydro
+        db, scenario_id, infra_payload, InfraHydro, schemas.Hydro
     )
 
 
@@ -400,7 +398,7 @@ reseau_router = APIRouter(
 @reseau_router.post("/production")
 async def calculer_production_reseau(
     scenario_id: int, 
-    liste_infra_id: int, 
+    infra_group: schemas.SimulationInfraGroup,
     is_journalier: bool = False,
     db: Session = Depends(get_db)
 ):
@@ -408,24 +406,19 @@ async def calculer_production_reseau(
     total_start = time.time()
     
     db_start = time.time()
-    scenario_task = read_data_by_id(db, schemas.Scenario, scenario_id)
-    liste_infra_task = read_data_by_id(db, schemas.ListeInfrastructures, liste_infra_id)
-    
-    scenario, liste_infra = await asyncio.gather(scenario_task, liste_infra_task)
+    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
     timers['1_db_lookups'] = time.time() - db_start
     
     if scenario is None:
         raise HTTPException(status_code=404, detail="Scénario non trouvé")
-    if liste_infra is None:
-        raise HTTPException(status_code=404, detail="Liste d'infrastructures non trouvée")
     
     init_start = time.time()
-    infra_reseau = InfraReseau(liste_infra)
+    infra_reseau = InfraReseau(infra_group)
     infra_reseau.charger_scenario(scenario)
     timers['2_infra_reseau_init'] = time.time() - init_start
     
     calc_start = time.time()
-    production = await infra_reseau.calculer_production(liste_infra, is_journalier)
+    production = await infra_reseau.calculer_production(infra_group, is_journalier)
     timers['3_calculer_production_total'] = time.time() - calc_start
     
     if hasattr(infra_reseau, 'timers'):
@@ -456,7 +449,7 @@ async def calculer_production_reseau(
     response = {
         "metadata": {
             "scenario_id": scenario_id,
-            "liste_infra_id": liste_infra_id,
+            "infra_group_nom": infra_group.nom,
             "is_journalier": is_journalier,
             "execution_time_seconds": total_time,
             "timestamps": len(production)

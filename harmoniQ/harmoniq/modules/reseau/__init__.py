@@ -1,5 +1,4 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ListeInfrastructures
 from harmoniq.db.engine import get_db
 
 from harmoniq.modules.reseau.core import NetworkBuilder, NetworkOptimizer
@@ -33,7 +32,7 @@ class InfraReseau(Infrastructure):
     4. Analyse des résultats
     """
     
-    def __init__(self, donnees: ListeInfrastructures, data_dir: str = None):
+    def __init__(self, donnees, data_dir: str = None):
         """
         Args:
             donnees: Liste des infrastructures incluses dans le réseau
@@ -489,13 +488,7 @@ class InfraReseau(Infrastructure):
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_data_by_id, read_all_scenario
     from harmoniq.db.engine import get_db
-    from harmoniq.db.schemas import ListeInfrastructures
-    import asyncio
-    
-    db = next(get_db())
-    
-    liste_infrastructures = asyncio.run(read_data_by_id(db, ListeInfrastructures, 1))
-    infraReseau = InfraReseau(liste_infrastructures)
+    infraReseau = InfraReseau(None)
     
     scenario = read_all_scenario(db)[1]
     infraReseau.charger_scenario(scenario)

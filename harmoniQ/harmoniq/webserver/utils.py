@@ -3,20 +3,22 @@ import pandas as pd
 from fastapi import HTTPException
 
 from harmoniq.db import schemas
-from harmoniq.db.CRUD import read_data_by_id
+from harmoniq.db.CRUD import read_data_by_id, hydrate_model
 
-async def response_production(db, scenario_id, infra_id, infra_class, infra_schema):
-    infra_task = read_data_by_id(db, infra_schema, infra_id)
-    scenario_task = read_data_by_id(db, schemas.Scenario, scenario_id)
-
-    eolienne_parc, scenario = await asyncio.gather(infra_task, scenario_task)
-    if eolienne_parc is None:
-        raise HTTPException(status_code=404, detail=f"Infrastructure {infra_schema.__name__} not found")
-
+async def response_production(db, scenario_id, infra_payload, infra_class, infra_schema):
+    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
     if scenario is None:
         raise HTTPException(status_code=404, detail="Scenario not found")
 
-    infra = infra_class(eolienne_parc)
+    sql_model_instance = hydrate_model(infra_schema, infra_payload)
+    
+    if infra_schema.__name__ == 'Hydro':
+        if getattr(sql_model_instance, 'type_barrage', None) != "Fil de l'eau":
+            raise HTTPException(
+                status_code=400, detail="Production calculation is only available for run-of-river dams"
+            )
+
+    infra = infra_class(sql_model_instance)
     infra.charger_scenario(scenario)
 
     production: pd.DataFrame = infra.calculer_production()

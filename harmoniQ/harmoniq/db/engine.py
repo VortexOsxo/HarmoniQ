@@ -29,12 +29,14 @@ def _get_sql_tables(schemas_module) -> Dict[type, Dict[str, type]]:
     sql_tables = {}
     for cls in base_classes:
         base_class = [c for c in all_classes if c.__name__ == f"{cls.__name__}Base"][0]
-        create_class = [
-            c for c in all_classes if c.__name__ == f"{cls.__name__}Create"
-        ][0]
-        response_class = [
-            c for c in all_classes if c.__name__ == f"{cls.__name__}Response"
-        ][0]
+        
+        create_class_matches = [c for c in all_classes if c.__name__ == f"{cls.__name__}Create"]
+        if not create_class_matches: create_class_matches = [c for c in all_classes if c.__name__ == f"{cls.__name__}Base"]
+        create_class = create_class_matches[0]
+        
+        response_class_matches = [c for c in all_classes if c.__name__ == f"{cls.__name__}Response"]
+        response_class = response_class_matches[0]
+        
         sql_tables[cls] = {
             "base": base_class,
             "create": create_class,

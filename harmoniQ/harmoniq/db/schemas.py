@@ -150,62 +150,33 @@ class ScenarioResponse(ScenarioBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-#-----#-----#-----#-----# Liste Infra Base #-----#-----#-----#-----#
-#Stocke les infrastructures actives dans la simulation (celles qui sont cochées) sous forme de chaines de caractères séparées par des virgules
 
-class ListeInfrastructures(SQLBase):
-    __tablename__ = "liste_infrastructures"
-
-    id = Column(Integer, primary_key=True)
-    nom = Column(String)
-    parc_eoliens = Column(String, nullable=True)
-    parc_solaires = Column(String, nullable=True)
-    central_hydroelectriques = Column(String, nullable=True)
-    central_thermique = Column(String, nullable=True)
-    central_nucleaire = Column(String, nullable=True)
-
-    @property
-    def parc_eolien_list(self):
-        return self.parc_eolien.split(",") if self.parc_eolien else []
-
-    @property
-    def parc_solaire_list(self):
-        return self.parc_solaire.split(",") if self.parc_solaire else []
-
-    @property
-    def central_hydroelectriques_list(self):
-        return (
-            self.central_hydroelectriques.split(",")
-            if self.central_hydroelectriques
-            else []
-        )
-
-    @property
-    def central_thermique_list(self):
-        return self.central_thermique.split(",") if self.central_thermique else []
-
-    @property
-    def central_nucleaire_list(self):
-        return self.central_nucleaire.split(",") if self.central_nucleaire else []
-
-
-class ListeInfrastructuresBase(BaseModel):
+# ── Simulation payload models ─────────────────────────────────────────────────
+class InfraPayload(BaseModel):
+    """
+    Minimal representation of a locally-created (user-defined) infrastructure.
+    All type-specific fields are accepted via model_config extra='allow'.
+    """
     nom: str
-    parc_eoliens: Optional[str] = None
-    parc_solaires: Optional[str] = None
-    central_hydroelectriques: Optional[str] = None
-    central_thermique: Optional[str] = None
-    central_nucleaire: Optional[str] = None
+    latitude: float
+    longitude: float
+
+    model_config = ConfigDict(extra="allow")
 
 
-class ListeInfrastructuresCreate(ListeInfrastructuresBase):
-    pass
+class SimulationInfraGroup(BaseModel):
+    """
+    Request body for POST /reseau/production.
 
-
-class ListeInfrastructuresResponse(ListeInfrastructuresBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
+    Each field is a list of full infrastructure objects (either DB-sourced or
+    locally created — the backend treats them identically).
+    """
+    nom: str = ""
+    parc_eoliens: Optional[List['EolienneParcBase']] = None
+    parc_solaires: Optional[List['SolaireBase']] = None
+    central_hydroelectriques: Optional[List['HydroBase']] = None
+    central_thermique: Optional[List['ThermiqueBase']] = None
+    central_nucleaire: Optional[List['NucleaireBase']] = None
 
 #-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
@@ -245,10 +216,6 @@ class EolienneParcBase(BaseModel):
     puissance_nominal: float = Field(
         ..., description="Puissance nominale des turbines dans le parc (kW)", json_schema_extra={"suggestion": 2000}
     )
-
-
-class EolienneParcCreate(EolienneParcBase):
-    pass
 
 
 class EolienneParcResponse(EolienneParcBase):
@@ -312,9 +279,6 @@ class SolaireBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SolaireCreate(SolaireBase):
-    pass
-
 class SolaireResponse(SolaireBase):
     id: int
 
@@ -339,11 +303,6 @@ class HydroBase(BaseModel):
     materiau_conduite: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class HydroCreate(HydroBase):
-    pass
-
 
 class HydroResponse(HydroBase):
     id: int
@@ -370,12 +329,7 @@ class Hydro(SQLBase):
     annee_commission = Column(Integer, nullable=True)
     materiau_conduite = Column(String, nullable=True)
 
-#-----#-----#-----#-----# Solaire Response #-----#-----#-----#-----#
 
-class SolaireResponse(SolaireBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
 #-----#-----#-----#-----# Thermique Base #-----#-----#-----#-----#
 
 class TypeIntrantThermique(str, PyEnum):
@@ -408,10 +362,6 @@ class ThermiqueBase(BaseModel):
     type_generateur: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ThermiqueCreate(ThermiqueBase):
-    pass
 
 
 class ThermiqueResponse(ThermiqueBase):
@@ -455,10 +405,6 @@ class NucleaireBase(BaseModel):
     type_intrant: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class NucleaireCreate(NucleaireBase):
-    pass
 
 
 class NucleaireResponse(NucleaireBase):

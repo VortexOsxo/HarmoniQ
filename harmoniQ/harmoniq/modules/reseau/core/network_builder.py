@@ -72,7 +72,7 @@ class NetworkBuilder:
         import time
         
         t_start = time.time()
-        self.data_loader.set_infrastructure_ids(liste_infra)
+        self.data_loader.set_infras(liste_infra)
         network = await self.data_loader.load_network_data()
         self.timers['i_load_network_data'] = time.time() - t_start
         
