@@ -1,10 +1,9 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { environment } from 'environments/environment';
-import { getScenarioFromJson, scenarioToJson } from '@app/models/scenario';
-import { map, tap } from 'rxjs/operators';
-import { signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
+import { LocalScenarioStorageService } from './local-scenario-storage-service';
+import { Weather } from '@app/models/weather';
+import { Consumption } from '@app/models/consumption';
+import { Optimism } from '@app/models/optimism';
 
 @Injectable({
   providedIn: 'root',
@@ -13,38 +12,56 @@ export class ScenariosService {
   scenarios = signal<Scenario[]>([]);
   selectedScenario = signal<Scenario | null>(null);
 
-  constructor(private http: HttpClient) {
-    this.refreshScenarios().subscribe();
+  constructor(private storageService: LocalScenarioStorageService) {
+    this.refreshScenarios();
   }
 
   refreshScenarios() {
-    return this.http.get(environment.apiUrl + '/scenario/', { headers: { 'Content-Type': 'application/json' } })
-      .pipe(
-        map((data: any) => data.map((scenario: any) => getScenarioFromJson(scenario))),
-        tap((scenarios: Scenario[]) => this.scenarios.set(scenarios))
-      );
+    const loaded = this.storageService.loadScenarios();
+    this.scenarios.set([...this.getDefaultScenarios(), ...loaded]);
   }
 
   createScenario(scenario: Scenario) {
-    return this.http.post(environment.apiUrl + '/scenario/', scenarioToJson(scenario), { headers: { 'Content-Type': 'application/json' } })
-      .pipe(
-        map((data: any) => getScenarioFromJson(data)),
-        tap((newScenario) => {
-          this.scenarios.update(s => [...s, newScenario]);
-          this.selectedScenario.set(newScenario);
-        })
-      );
+    const newScenarioObj = this.storageService.createScenario(scenario);
+
+    this.scenarios.update(s => [...s, newScenarioObj]);
+    this.selectedScenario.set(newScenarioObj);
   }
 
   deleteScenario(scenario: Scenario) {
-    return this.http.delete(environment.apiUrl + '/scenario/' + scenario.id, { headers: { 'Content-Type': 'application/json' } })
-      .pipe(
-        tap(() => {
-          this.scenarios.update(s => s.filter(item => item.id !== scenario.id));
-          if (this.selectedScenario()?.id === scenario.id) {
-            this.selectedScenario.set(null);
-          }
-        })
-      );
+    this.storageService.deleteScenario(scenario.id);
+
+    this.scenarios.update(s => s.filter(item => item.id !== scenario.id));
+    if (this.selectedScenario()?.id === scenario.id)
+      this.selectedScenario.set(null);
+  }
+
+  private getDefaultScenarios(): Scenario[] {
+    return [
+      {
+        "id": 1,
+        "nom": "année 2035",
+        "description": "Scénario de base pour l'année 2035",
+        "date_de_debut": "2035-01-01T00:00:00",
+        "date_de_fin": "2035-12-31T00:00:00",
+        "pas_de_temps": "PT1H",
+        "weather": Weather.Typical,
+        "consomation": Consumption.Normal,
+        "optimisme_social": Optimism.Moyen,
+        "optimisme_ecologique": Optimism.Moyen
+      },
+      {
+        "id": 2,
+        "nom": "année 2050",
+        "description": "Scénario de base pour l'année 2050",
+        "date_de_debut": "2050-01-01T00:00:00",
+        "date_de_fin": "2050-12-31T00:00:00",
+        "pas_de_temps": "PT1H",
+        "weather": Weather.Typical,
+        "consomation": Consumption.Conservative,
+        "optimisme_social": Optimism.Moyen,
+        "optimisme_ecologique": Optimism.Moyen
+      },
+    ]
   }
 }

@@ -16,6 +16,7 @@ DATABASE__URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
 engine = create_engine(DATABASE__URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+non_table_class = ['Scenario']
 
 def _get_sql_tables(schemas_module) -> Dict[type, Dict[str, type]]:
     all_classes = [member for _, member in inspect.getmembers(schemas_module, inspect.isclass)]
@@ -28,6 +29,7 @@ def _get_sql_tables(schemas_module) -> Dict[type, Dict[str, type]]:
     # Get corresponding pydantic, create and response classes
     sql_tables = {}
     for cls in base_classes:
+        
         base_class = [c for c in all_classes if c.__name__ == f"{cls.__name__}Base"][0]
         
         create_class_matches = [c for c in all_classes if c.__name__ == f"{cls.__name__}Create"]

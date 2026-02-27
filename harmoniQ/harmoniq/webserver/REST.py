@@ -35,9 +35,6 @@ from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
 from harmoniq.modules.hydro import InfraHydro
-from harmoniq.modules.reseau import NETWORK_CACHE_DIR
-from harmoniq.modules.reseau.utils.data_loader import DEMAND_CACHE_DIR
-from harmoniq.db.schemas import Scenario
 
 from .utils import response_production
 
@@ -52,60 +49,6 @@ router = APIRouter(
 @router.get("/ping")
 async def ping():
     return {"ping": "pong"}
-
-
-@router.delete(
-    "/scenario/{scenario_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a scenario and purge its on-disk caches"
-)
-async def delete_scenario_and_purge_cache(
-    scenario_id: int,
-    db: Session = Depends(get_db),
-):
-    # 1) Load the scenario
-    scenario = await read_data_by_id(db, Scenario, scenario_id)
-    if not scenario:
-        raise HTTPException(status_code=404, detail="Scenario not found")
-
-    # 2) Purge network cache files for this scenario
-    #    Filenames: network_s<scenario_id>_<year>_i<infra_id>_<hash>.nc
-    pattern_nc = str(NETWORK_CACHE_DIR / f"network_s{scenario_id}_*")
-    for path in glob.glob(pattern_nc):
-        try:
-            os.remove(path)
-        except OSError:
-            pass
-
-    # 3) Purge demand cache files for this scenario
-    #    Filenames: demand_<year>_<start>_<end>_loads<N>.pkl
-    year  = scenario.date_de_debut.year
-    start = scenario.date_de_debut.strftime("%Y-%m-%d")
-    end   = scenario.date_de_fin.strftime("%Y-%m-%d")
-    pattern_dc = str(DEMAND_CACHE_DIR / f"demand_{year}_{start}_{end}_*")
-    for path in glob.glob(pattern_dc):
-        try:
-            os.remove(path)
-        except OSError:
-            pass
-
-    # 4) Delete the scenario record from the database
-    result = await delete_data(db, Scenario, scenario_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Scenario not found")
-
-    # Returns 204 No Content
-    return
-
-
-
-
-
-
-
-
-
-
 
 
 #-----#-----#-----#-----#-----#  Creation des méthodes CRUD  #-----#-----#-----#-----#-----#
@@ -226,39 +169,30 @@ demande_router = APIRouter(
 
 @demande_router.post("/")
 async def read_demande(
-    scenario_id: int,
+    scenario: schemas.ScenarioResponse,
     CUID: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
-    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
-    if scenario is None:
-        raise HTTPException(status_code=404, detail="Scenario not found")
 
     demande = await read_demande_data(scenario, CUID)
     return "ping"
 
 @demande_router.post("/sankey")
 async def read_demande_sankey(
-    scenario_id: int,
+    scenario: schemas.ScenarioResponse,
     CUID: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
-    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
-    if scenario is None:
-        raise HTTPException(status_code=404, detail="Scenario not found")
 
     demande = await read_demande_data_sankey(scenario, CUID)
     return demande
 
 @demande_router.post("/temporal")
 async def read_demande_temporal(
-    scenario_id: int,
+    scenario: schemas.ScenarioResponse,
     CUID: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
-    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
-    if scenario is None:
-        raise HTTPException(status_code=404, detail="Scenario not found")
 
     demande = await read_demande_data_temporal(scenario, CUID)
     return demande
@@ -310,11 +244,9 @@ router.include_router(meteo_router)
 parc_eolien_router = api_routers["eolienneparc"]
 
 @parc_eolien_router.post("/production")
-async def calculer_production_parc_eolien(
-    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
-):
+async def calculer_production_parc_eolien(payload: schemas.InfraSimulationPayload):
     return await response_production(
-        db, scenario_id, infra_payload, InfraParcEolienne, schemas.EolienneParc
+        payload.scenario, payload.infra_payload, InfraParcEolienne, schemas.EolienneParc
     )
 
 #-----#-----#-----#-----#-----#  Production : Solaire  #-----#-----#-----#-----#-----#
@@ -322,22 +254,18 @@ async def calculer_production_parc_eolien(
 solaire_router = api_routers["solaire"]
 
 @solaire_router.post("/production")
-async def calculer_production_solaire(
-    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
-):
+async def calculer_production_solaire(payload: schemas.InfraSimulationPayload):
     return await response_production(
-        db, scenario_id, infra_payload, InfraSolaire, schemas.Solaire
+        payload.scenario, payload.infra_payload, InfraSolaire, schemas.Solaire
     )
 
 #-----#-----#-----#-----#-----#  Production : Thermique  #-----#-----#-----#-----#-----#
 
 thermique_router = api_routers["thermique"]
 @thermique_router.post("/production")
-async def calculer_production_thermique(
-    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
-):
+async def calculer_production_thermique(payload: schemas.InfraSimulationPayload):
     return await response_production(
-        db, scenario_id, infra_payload, InfraThermique, schemas.Thermique
+        payload.scenario, payload.infra_payload, InfraThermique, schemas.Thermique
     )
 
 #-----#-----#-----#-----#-----#  Production : Nucleaire  #-----#-----#-----#-----#-----#
@@ -345,11 +273,9 @@ async def calculer_production_thermique(
 nucleaire_router = api_routers["nucleaire"]
 
 @nucleaire_router.post("/production")
-async def calculer_production_nucleaire(
-    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
-):
+async def calculer_production_nucleaire(payload: schemas.InfraSimulationPayload):
     return await response_production(
-        db, scenario_id, infra_payload, InfraNucleaire, schemas.Nucleaire
+        payload.scenario, payload.infra_payload, InfraNucleaire, schemas.Nucleaire
     )
 
 
@@ -358,11 +284,9 @@ async def calculer_production_nucleaire(
 hydro_router = api_routers["hydro"]
 
 @hydro_router.post("/production")
-async def calculer_production_hydro(
-    infra_payload: schemas.InfraPayload, scenario_id: int, db: Session = Depends(get_db)
-):
+async def calculer_production_hydro(payload: schemas.InfraSimulationPayload):
     return await response_production(
-        db, scenario_id, infra_payload, InfraHydro, schemas.Hydro
+        payload.scenario, payload.infra_payload, InfraHydro, schemas.Hydro
     )
 
 
@@ -376,10 +300,7 @@ faker_router = APIRouter(
 
 
 @faker_router.post("/production")
-async def get_production_aleatoire(scenario_id: int, db: Session = Depends(get_db)):
-    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
-    if scenario is None:
-        raise HTTPException(status_code=200, detail="Scenario not found")
+async def get_production_aleatoire(scenario: schemas.ScenarioResponse):
 
     production = await asyncio.to_thread(production_aleatoire, scenario)
     return production
@@ -396,21 +317,12 @@ reseau_router = APIRouter(
 )
 
 @reseau_router.post("/production")
-async def calculer_production_reseau(
-    scenario_id: int, 
-    infra_group: schemas.SimulationInfraGroup,
-    is_journalier: bool = False,
-    db: Session = Depends(get_db)
-):
+async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, is_journalier: bool = False):
     timers = {}
     total_start = time.time()
     
-    db_start = time.time()
-    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
-    timers['1_db_lookups'] = time.time() - db_start
-    
-    if scenario is None:
-        raise HTTPException(status_code=404, detail="Scénario non trouvé")
+    scenario = payload.scenario
+    infra_group = payload.infra_group
     
     init_start = time.time()
     infra_reseau = InfraReseau(infra_group)
@@ -448,7 +360,7 @@ async def calculer_production_reseau(
     
     response = {
         "metadata": {
-            "scenario_id": scenario_id,
+            "scenario_id": payload.scenario.id,
             "infra_group_nom": infra_group.nom,
             "is_journalier": is_journalier,
             "execution_time_seconds": total_time,

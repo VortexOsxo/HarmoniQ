@@ -36,8 +36,12 @@ export class SimulationService {
 
     const { isUserCreated, ...infraPayload } = infra as any;
 
-    const url = `${environment.apiUrl}/${type}/production?scenario_id=${scenario.id}`;
-    return this.http.post(url, infraPayload);
+    const url = `${environment.apiUrl}/${type}/production`;
+    const payload = {
+      scenario: scenario,
+      infra_payload: infraPayload
+    };
+    return this.http.post(url, payload);
   }
 
   hasSimulationResults() {
@@ -50,13 +54,16 @@ export class SimulationService {
 
     if (!scenario || !infraGroup) return;
 
-    const infraPayload = this.infrastructuresService.buildSimulationPayload();
+    const payload = {
+      scenario: scenario,
+      infra_group: this.infrastructuresService.buildSimulationPayload()
+    }
 
-    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&is_journalier=false`;
+    const url = `${environment.apiUrl}/reseau/production/?is_journalier=false`;
 
     forkJoin({
-      demande: this.demandeTemporalDataService.fetch(scenario.id),
-      production: this.http.post(url, infraPayload)
+      demande: this.demandeTemporalDataService.fetch(scenario),
+      production: this.http.post(url, payload),
     }).subscribe((result) => {
       this.cachedDemandeTemporal = result.demande;
       this.cachedSimulationResult = result.production;

@@ -178,6 +178,14 @@ class SimulationInfraGroup(BaseModel):
     central_thermique: Optional[List['ThermiqueBase']] = None
     central_nucleaire: Optional[List['NucleaireBase']] = None
 
+class InfraSimulationPayload(BaseModel):
+    scenario: ScenarioResponse
+    infra_payload: InfraPayload
+
+class ReseauSimulationPayload(BaseModel):
+    scenario: ScenarioResponse
+    infra_group: SimulationInfraGroup
+
 #-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
 class TurbineModel(str, PyEnum):

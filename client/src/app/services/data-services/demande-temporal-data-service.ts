@@ -13,12 +13,12 @@ export class DemandeTemporalDataService {
 
     constructor(private http: HttpClient) { }
 
-    fetch(scenarioId: number) {
-        if (this.cachedData && this.cachedScenarioId == scenarioId) {
+    fetch(scenario: Scenario) {
+        if (this.cachedData && this.cachedScenarioId == scenario.id) {
             return of(this.cachedData);
         }
-        return this.http.post(`${environment.apiUrl}/demande/temporal/?scenario_id=${scenarioId}`, {})
-            .pipe(map((data: any) => this.handleData(data, scenarioId)));
+        return this.http.post(`${environment.apiUrl}/demande/temporal/`, scenario)
+            .pipe(map((data: any) => this.handleData(data, scenario.id)));
     }
 
     private handleData(apidata: any, scenarioId: number) {

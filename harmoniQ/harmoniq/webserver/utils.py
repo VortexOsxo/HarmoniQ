@@ -1,16 +1,12 @@
-import asyncio
 import pandas as pd
 from fastapi import HTTPException
 
 from harmoniq.db import schemas
-from harmoniq.db.CRUD import read_data_by_id, hydrate_model
+from harmoniq.db.CRUD import hydrate_model
 
-async def response_production(db, scenario_id, infra_payload, infra_class, infra_schema):
-    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
-    if scenario is None:
-        raise HTTPException(status_code=404, detail="Scenario not found")
-
+async def response_production(scenario, infra_payload, infra_class, infra_schema):
     sql_model_instance = hydrate_model(infra_schema, infra_payload)
+    scenario = hydrate_model(schemas.Scenario, scenario)
     
     if infra_schema.__name__ == 'Hydro':
         if getattr(sql_model_instance, 'type_barrage', None) != "Fil de l'eau":
