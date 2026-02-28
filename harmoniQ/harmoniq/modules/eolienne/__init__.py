@@ -22,6 +22,9 @@ class InfraParcEolienne(Infrastructure):
 
         wind_energy = EnergyType.EOLIEN
 
+        print(scenario.date_de_debut)
+        print(scenario.date_de_fin)
+
         helper = WeatherHelper(
             position=pos,
             start_time=scenario.date_de_debut,

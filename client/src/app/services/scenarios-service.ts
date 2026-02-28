@@ -1,9 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
-import { LocalScenarioStorageService } from './local-scenario-storage-service';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
 import { Optimism } from '@app/models/optimism';
+import { LocalStorageService } from './local-storage-service';
+
+const SCENARIOS_KEY = 'harmoniq_local_scenarios';
 
 @Injectable({
   providedIn: 'root',
@@ -12,24 +14,24 @@ export class ScenariosService {
   scenarios = signal<Scenario[]>([]);
   selectedScenario = signal<Scenario | null>(null);
 
-  constructor(private storageService: LocalScenarioStorageService) {
+  constructor(private storageService: LocalStorageService) {
     this.refreshScenarios();
   }
 
   refreshScenarios() {
-    const loaded = this.storageService.loadScenarios();
+    const loaded = this.storageService.loadElements<Scenario>(SCENARIOS_KEY);
     this.scenarios.set([...this.getDefaultScenarios(), ...loaded]);
   }
 
   createScenario(scenario: Scenario) {
-    const newScenarioObj = this.storageService.createScenario(scenario);
+    const createdScenario = this.storageService.createElement(SCENARIOS_KEY, scenario);
 
-    this.scenarios.update(s => [...s, newScenarioObj]);
-    this.selectedScenario.set(newScenarioObj);
+    this.scenarios.update(s => [...s, createdScenario]);
+    this.selectedScenario.set(createdScenario);
   }
 
   deleteScenario(scenario: Scenario) {
-    this.storageService.deleteScenario(scenario.id);
+    this.storageService.deleteElement<Scenario>(SCENARIOS_KEY, scenario.id);
 
     this.scenarios.update(s => s.filter(item => item.id !== scenario.id));
     if (this.selectedScenario()?.id === scenario.id)

@@ -12,7 +12,7 @@ import { WindFarmFactory } from '@app/models/infras/wind-farm';
 import { SolarFarmFactory } from '@app/models/infras/solar-farm';
 import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
-import { LocalInfraStorageService } from './local-infra-storage.service';
+import { LocalStorageService } from './local-storage-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -23,9 +23,8 @@ const typeKeyMap: Record<string, string> = {
   'nucleaire': 'central_nucleaire'
 };
 
-function randomLocalId(): number {
-  return Math.floor(Math.random() * 99_900_000) + 100_000;
-}
+const INFRA_KEY = 'harmoniq_local_infras';
+const INFRA_GROUPS_KEY = 'harmoniq_local_infra_groups';
 
 export class InfrasContainer<T extends Infra<T>> {
 
@@ -38,7 +37,7 @@ export class InfrasContainer<T extends Infra<T>> {
   constructor(
     private http: HttpClient,
     private factory: InfraFactory<T>,
-    private localStorage: LocalInfraStorageService
+    private storageService: LocalStorageService
   ) {
     this.refresh();
   }
@@ -47,7 +46,7 @@ export class InfrasContainer<T extends Infra<T>> {
     this.http.get(this.apiUrl).subscribe((data: any) => {
       const dbInfras = data.map((i: any) => this.factory.fromJson(i));
 
-      const localInfras = this.localStorage.getLocalInfras(this.factory.getType())
+      const localInfras = this.storageService.loadElements(`${INFRA_KEY}_${this.factory.getType()}`)
         .map((i: any) => ({ ...this.factory.fromJson(i), isUserCreated: true }));
 
       this.infras.set([...dbInfras, ...localInfras]);
@@ -84,14 +83,14 @@ export class InfrastruturesService {
     http: HttpClient,
     private modalService: NgbModal,
     private openApiService: OpenApiService,
-    private localStorage: LocalInfraStorageService,
+    private storageService: LocalStorageService,
   ) {
     this.refreshInfraGroups();
 
     const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
     factories.forEach((Factory) => {
       const factory = new Factory();
-      this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory, localStorage));
+      this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory, storageService));
     });
   }
 
@@ -108,14 +107,13 @@ export class InfrastruturesService {
     modalRef.result.then(result => {
       if (!result) return;
 
-      const localInfra = { ...result, id: randomLocalId(), isUserCreated: true };
-      this.localStorage.saveLocalInfra(type, localInfra);
+      const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
       this.infrasContainer.get(type)?.addLocal(localInfra);
     });
   }
 
   deleteLocalInfra(type: string, id: number): void {
-    this.localStorage.deleteLocalInfra(type, id);
+    this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
     this.infrasContainer.get(type)?.removeLocal(id);
   }
 
@@ -170,19 +168,19 @@ export class InfrastruturesService {
   }
 
   refreshInfraGroups() {
-    const groups = this.localStorage.getLocalGroups();
+    const groups = this.storageService.loadElements<InfrastructureGroup>(INFRA_GROUPS_KEY);
     this.localInfraGroups.set(groups);
   }
 
   createInfraGroup(group: InfrastructureGroup) {
-    const newGroup = this.localStorage.saveLocalGroup(group);
+    const newGroup = this.storageService.createElement(INFRA_GROUPS_KEY, group);
     this.localInfraGroups.update(s => [...s, newGroup]);
     this.selectedInfraGroup.set(newGroup);
     return newGroup;
   }
 
   deleteInfraGroup(group: InfrastructureGroup) {
-    this.localStorage.deleteLocalGroup(group.id);
+    this.storageService.deleteElement(INFRA_GROUPS_KEY, group.id);
     this.localInfraGroups.update(s => s.filter(item => item.id !== group.id));
     if (this.selectedInfraGroup()?.id === group.id) {
       this.selectedInfraGroup.set(null);
@@ -216,7 +214,7 @@ export class InfrastruturesService {
   private _persistSelectedGroup() {
     const group = this.selectedInfraGroup();
     if (group)
-      this.localStorage.updateLocalGroup(group);
+      this.storageService.updateElement(INFRA_GROUPS_KEY, group);
   }
 
   private getDefaultInfraGroup(): InfrastructureGroup {
