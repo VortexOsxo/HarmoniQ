@@ -14,3 +14,34 @@ body {
     height: 100%;
     width: 100%;
 }
+
+
+.game-modal .modal-dialog {
+  width: 60vw;
+  max-width: none;
+}
+
+.game-modal .modal-content {
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-modal .modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .game-modal .modal-dialog {
+    width: 90vw;
+    margin: 1rem;
+  }
+  .game-modal .modal-content {
+    height: 80vh;
+  }
+  .game-modal .modal-body {
+    padding: 0.5rem;
+  }
+}
