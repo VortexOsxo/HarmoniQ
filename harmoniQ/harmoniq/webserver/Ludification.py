@@ -159,7 +159,55 @@ questionList = [
     ]
   },
   "answer": 1
-}
+}, {
+    "question": {
+      "questionText": "Quelle est la consommation en électricité d'une ampoule",
+      "options": ["2mW", "4mW", "14mW", "56mW"]
+    },
+    "answer": 3
+  },
+  {
+    "question": {
+      "questionText": "Quelle est la consommation électrique moyenne d'une machine à laver standard au Québec par cycle de lavage ?",
+      "options": ["0,5 kWh", "1,0 kWh", "2,0 kWh", "5,0 kWh"]
+    },
+    "answer": 1
+  },
+  {
+    "question": {
+      "questionText": "Quelle est la consommation électrique moyenne annuelle d'une maison unifamiliale au Québec ?",
+      "options": ["5 000 kWh", "10 000 kWh", "15 000 kWh", "25 000 kWh"]
+    },
+    "answer": 2
+  },
+  {
+    "question": {
+      "questionText": "Quelle est la consommation électrique approximative d'une ampoule LED standard (10 W) laissée allumée 24h par jour pendant un mois entier ?",
+      "options": ["0,7 kWh", "7,2 kWh", "72 kWh", "720 kWh"]
+    },
+    "answer": 1
+  },
+  {
+    "question": {
+      "questionText": "Quel appareil consomme généralement le plus d'électricité dans une maison au Québec ?",
+      "options": ["Le réfrigérateur", "Le chauffage électrique", "La télévision", "Le micro-ondes"]
+    },
+    "answer": 1
+  },
+  {
+    "question": {
+      "questionText": "Quelle est la puissance moyenne d’un chauffe-eau électrique résidentiel ?",
+      "options": ["500 W", "1 200 W", "3 000 W", "6 000 W"]
+    },
+    "answer": 3
+  },
+  {
+    "question": {
+      "questionText": "Combien de kWh consomme environ une sécheuse électrique par cycle ?",
+      "options": ["0,5 kWh", "2 à 3 kWh", "10 kWh", "25 kWh"]
+    },
+    "answer": 1
+  }
     ]
 
 
