@@ -7,7 +7,8 @@
 
 <button class="quizButton" [hidden]="!questionAnswered" (click)="changeQuestion()">Prochaine question</button>
 <button class="quizButton" [hidden]="!quizTerminated" (click)="navigate('')">Retour au menu principal</button>
-<button class="quizButton" [hidden]="!quizTerminated && !restartAvailable" (click)="startNewQuiz()">Commencer un nouveau quiz</button>
+<button class="quizButton" *ngIf="quizTerminated && restartAvailable" (click)="startNewQuiz()"> 
+    Commencer un nouveau quiz </button>
 <h2>{{questionInformation}}</h2>
 
 </div>
