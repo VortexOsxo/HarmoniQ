@@ -21,6 +21,18 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __objRest = (source, exclude) => {
+  var target = {};
+  for (var prop in source)
+    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
+      target[prop] = source[prop];
+  if (source != null && __getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(source)) {
+      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
+        target[prop] = source[prop];
+    }
+  return target;
+};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -165958,136 +165970,145 @@ var environment = {
 // src/app/services/simulation-service.ts
 var Plotly2 = __toESM(require_plotly_min());
 
-// src/app/models/optimism.ts
-var Optimism;
-(function(Optimism2) {
-  Optimism2["Pessimiste"] = "Pessimiste";
-  Optimism2["Moyen"] = "Moyen";
-  Optimism2["Optimiste"] = "Optimiste";
-})(Optimism || (Optimism = {}));
-function optimismFromNumber(value) {
-  switch (value) {
-    case 1:
-      return Optimism.Pessimiste;
-    case 2:
-      return Optimism.Moyen;
-    case 3:
-      return Optimism.Optimiste;
-    default:
-      return Optimism.Moyen;
-  }
-}
-function optimismToNumber(value) {
-  switch (value) {
-    case Optimism.Pessimiste:
-      return 1;
-    case Optimism.Moyen:
-      return 2;
-    case Optimism.Optimiste:
-      return 3;
-    default:
-      return 2;
-  }
-}
-
 // src/app/models/weather.ts
 var Weather;
 (function(Weather2) {
-  Weather2["Hot"] = "Chaude";
-  Weather2["Typical"] = "Typique";
-  Weather2["Cold"] = "Froide";
+  Weather2[Weather2["Hot"] = 1] = "Hot";
+  Weather2[Weather2["Typical"] = 2] = "Typical";
+  Weather2[Weather2["Cold"] = 3] = "Cold";
 })(Weather || (Weather = {}));
-function weatherFromNumber(value) {
-  return value == 1 ? Weather.Hot : value == 2 ? Weather.Typical : Weather.Cold;
-}
-function weatherToNumber(value) {
-  return value == Weather.Hot ? 1 : value == Weather.Typical ? 2 : 3;
-}
+var WeatherLabels = {
+  [Weather.Hot]: "Chaud",
+  [Weather.Typical]: "Typique",
+  [Weather.Cold]: "Froid"
+};
 
 // src/app/models/consumption.ts
 var Consumption;
 (function(Consumption2) {
-  Consumption2["Normal"] = "Normal";
-  Consumption2["Conservative"] = "Conservateur";
+  Consumption2[Consumption2["Normal"] = 1] = "Normal";
+  Consumption2[Consumption2["Conservative"] = 2] = "Conservative";
 })(Consumption || (Consumption = {}));
-function consumptionFromNumber(value) {
-  return value == 1 ? Consumption.Normal : Consumption.Conservative;
-}
-function consumptionToNumber(value) {
-  return value == Consumption.Normal ? 1 : 2;
-}
+var ConsumptionLabels = {
+  [Consumption.Normal]: "Normal",
+  [Consumption.Conservative]: "Conservateur"
+};
 
-// src/app/models/scenario.ts
-function getScenarioFromJson(json) {
-  return {
-    id: json.id,
-    nom: json.nom,
-    description: json.description,
-    date_de_debut: new Date(json.date_de_debut),
-    date_de_fin: new Date(json.date_de_fin),
-    pas_de_temps: json.pas_de_temps,
-    weather: weatherFromNumber(json.weather),
-    consomation: consumptionFromNumber(json.consomation),
-    optimisme_social: optimismFromNumber(json.optimisme_social),
-    optimisme_ecologique: optimismFromNumber(json.optimisme_ecologique)
+// src/app/models/optimism.ts
+var Optimism;
+(function(Optimism2) {
+  Optimism2[Optimism2["Pessimiste"] = 1] = "Pessimiste";
+  Optimism2[Optimism2["Moyen"] = 2] = "Moyen";
+  Optimism2[Optimism2["Optimiste"] = 3] = "Optimiste";
+})(Optimism || (Optimism = {}));
+var OptimismLabels = {
+  [Optimism.Pessimiste]: "Pessimiste",
+  [Optimism.Moyen]: "Moyen",
+  [Optimism.Optimiste]: "Optimiste"
+};
+
+// src/app/services/local-storage-service.ts
+var LocalStorageService = class _LocalStorageService {
+  loadElements(key) {
+    return this.loadObject(key) ?? [];
+  }
+  createElement(key, element) {
+    element.id = this.randomLocalId();
+    this.saveObject(key, [element, ...this.loadElements(key)]);
+    return element;
+  }
+  updateElement(key, element) {
+    let elements = this.loadElements(key);
+    elements = elements.map((e) => e.id == element.id ? element : e);
+    this.saveObject(key, elements);
+  }
+  deleteElement(key, id) {
+    const elements = this.loadElements(key).filter((e) => e.id !== id);
+    this.saveObject(key, elements);
+  }
+  loadObject(key) {
+    const object = localStorage.getItem(key);
+    try {
+      return object ? JSON.parse(object) : void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  saveObject(key, object) {
+    localStorage.setItem(key, JSON.stringify(object));
+  }
+  randomLocalId() {
+    return Math.floor(Math.random() * 999e5) + 1e5;
+  }
+  static \u0275fac = function LocalStorageService_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _LocalStorageService)();
   };
-}
-function scenarioToJson(scenario) {
-  return {
-    nom: scenario.nom,
-    description: scenario.description,
-    date_de_debut: scenario.date_de_debut.toISOString().replace("Z", "+00:00"),
-    date_de_fin: scenario.date_de_fin.toISOString().replace("Z", "+00:00"),
-    pas_de_temps: scenario.pas_de_temps,
-    weather: weatherToNumber(scenario.weather),
-    consomation: consumptionToNumber(scenario.consomation),
-    optimisme_social: optimismToNumber(scenario.optimisme_social),
-    optimisme_ecologique: optimismToNumber(scenario.optimisme_ecologique)
-  };
-}
-function createEmptyScenario() {
-  return {
-    id: 0,
-    nom: "",
-    description: "",
-    date_de_debut: /* @__PURE__ */ new Date(),
-    date_de_fin: /* @__PURE__ */ new Date(),
-    pas_de_temps: "PT1H",
-    weather: Weather.Typical,
-    consomation: Consumption.Normal,
-    optimisme_social: Optimism.Moyen,
-    optimisme_ecologique: Optimism.Moyen
-  };
-}
+  static \u0275prov = /* @__PURE__ */ \u0275\u0275defineInjectable({ token: _LocalStorageService, factory: _LocalStorageService.\u0275fac, providedIn: "root" });
+};
+(() => {
+  (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(LocalStorageService, [{
+    type: Injectable,
+    args: [{
+      providedIn: "root"
+    }]
+  }], null, null);
+})();
 
 // src/app/services/scenarios-service.ts
+var SCENARIOS_KEY = "harmoniq_local_scenarios";
 var ScenariosService = class _ScenariosService {
-  http;
+  storageService;
   scenarios = signal([], ...ngDevMode ? [{ debugName: "scenarios" }] : []);
   selectedScenario = signal(null, ...ngDevMode ? [{ debugName: "selectedScenario" }] : []);
-  constructor(http) {
-    this.http = http;
-    this.refreshScenarios().subscribe();
+  constructor(storageService) {
+    this.storageService = storageService;
+    this.refreshScenarios();
   }
   refreshScenarios() {
-    return this.http.get(environment.apiUrl + "/scenario/", { headers: { "Content-Type": "application/json" } }).pipe(map((data) => data.map((scenario) => getScenarioFromJson(scenario))), tap((scenarios) => this.scenarios.set(scenarios)));
+    const loaded = this.storageService.loadElements(SCENARIOS_KEY);
+    this.scenarios.set([...this.getDefaultScenarios(), ...loaded]);
   }
   createScenario(scenario) {
-    return this.http.post(environment.apiUrl + "/scenario/", scenarioToJson(scenario), { headers: { "Content-Type": "application/json" } }).pipe(map((data) => getScenarioFromJson(data)), tap((newScenario) => {
-      this.scenarios.update((s) => [...s, newScenario]);
-      this.selectedScenario.set(newScenario);
-    }));
+    const createdScenario = this.storageService.createElement(SCENARIOS_KEY, scenario);
+    this.scenarios.update((s) => [...s, createdScenario]);
+    this.selectedScenario.set(createdScenario);
   }
   deleteScenario(scenario) {
-    return this.http.delete(environment.apiUrl + "/scenario/" + scenario.id, { headers: { "Content-Type": "application/json" } }).pipe(tap(() => {
-      this.scenarios.update((s) => s.filter((item) => item.id !== scenario.id));
-      if (this.selectedScenario()?.id === scenario.id) {
-        this.selectedScenario.set(null);
+    this.storageService.deleteElement(SCENARIOS_KEY, scenario.id);
+    this.scenarios.update((s) => s.filter((item) => item.id !== scenario.id));
+    if (this.selectedScenario()?.id === scenario.id)
+      this.selectedScenario.set(null);
+  }
+  getDefaultScenarios() {
+    return [
+      {
+        "id": 1,
+        "nom": "ann\xE9e 2035",
+        "description": "Sc\xE9nario de base pour l'ann\xE9e 2035",
+        "date_de_debut": "2035-01-01T00:00:00",
+        "date_de_fin": "2035-12-31T00:00:00",
+        "pas_de_temps": "PT1H",
+        "weather": Weather.Typical,
+        "consomation": Consumption.Normal,
+        "optimisme_social": Optimism.Moyen,
+        "optimisme_ecologique": Optimism.Moyen
+      },
+      {
+        "id": 2,
+        "nom": "ann\xE9e 2050",
+        "description": "Sc\xE9nario de base pour l'ann\xE9e 2050",
+        "date_de_debut": "2050-01-01T00:00:00",
+        "date_de_fin": "2050-12-31T00:00:00",
+        "pas_de_temps": "PT1H",
+        "weather": Weather.Typical,
+        "consomation": Consumption.Conservative,
+        "optimisme_social": Optimism.Moyen,
+        "optimisme_ecologique": Optimism.Moyen
       }
-    }));
+    ];
   }
   static \u0275fac = function ScenariosService_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _ScenariosService)(\u0275\u0275inject(HttpClient));
+    return new (__ngFactoryType__ || _ScenariosService)(\u0275\u0275inject(LocalStorageService));
   };
   static \u0275prov = /* @__PURE__ */ \u0275\u0275defineInjectable({ token: _ScenariosService, factory: _ScenariosService.\u0275fac, providedIn: "root" });
 };
@@ -166097,34 +166118,8 @@ var ScenariosService = class _ScenariosService {
     args: [{
       providedIn: "root"
     }]
-  }], () => [{ type: HttpClient }], null);
+  }], () => [{ type: LocalStorageService }], null);
 })();
-
-// src/app/models/infrastructure-group.ts
-function stringToArray(value) {
-  return value ? value.split(",").filter((s) => s.length > 0) : [];
-}
-function getInfrastructureGroupFromJson(json) {
-  return {
-    id: json.id,
-    nom: json.nom,
-    parc_eoliens: stringToArray(json.parc_eoliens),
-    parc_solaires: stringToArray(json.parc_solaires),
-    central_hydroelectriques: stringToArray(json.central_hydroelectriques),
-    central_thermique: stringToArray(json.central_thermique),
-    central_nucleaire: stringToArray(json.central_nucleaire)
-  };
-}
-function infrastructureGroupToJson(group) {
-  return {
-    nom: group.nom,
-    parc_eoliens: group.parc_eoliens.join(","),
-    parc_solaires: group.parc_solaires.join(","),
-    central_hydroelectriques: group.central_hydroelectriques.join(","),
-    central_thermique: group.central_thermique.join(","),
-    central_nucleaire: group.central_nucleaire.join(",")
-  };
-}
 
 // node_modules/@angular/core/fesm2022/rxjs-interop.mjs
 function takeUntilDestroyed(destroyRef) {
@@ -171593,6 +171588,7 @@ var Infra = class {
   nom;
   longitude;
   latitude;
+  isUserCreated = false;
 };
 var InfraFactory = class {
 };
@@ -171917,41 +171913,57 @@ var typeKeyMap = {
   "thermique": "central_thermique",
   "nucleaire": "central_nucleaire"
 };
+var INFRA_KEY = "harmoniq_local_infras";
+var INFRA_GROUPS_KEY = "harmoniq_local_infra_groups";
 var InfrasContainer = class {
   http;
   factory;
+  storageService;
   infras = signal([], ...ngDevMode ? [{ debugName: "infras" }] : []);
   get apiUrl() {
     return `${environment.apiUrl}/${this.factory.getType()}`;
   }
-  constructor(http, factory) {
+  constructor(http, factory, storageService) {
     this.http = http;
     this.factory = factory;
+    this.storageService = storageService;
     this.refresh();
   }
   refresh() {
     this.http.get(this.apiUrl).subscribe((data) => {
-      this.infras.set(data.map((i) => this.factory.fromJson(i)));
+      const dbInfras = data.map((i) => this.factory.fromJson(i));
+      const localInfras = this.storageService.loadElements(`${INFRA_KEY}_${this.factory.getType()}`).map((i) => __spreadProps(__spreadValues({}, this.factory.fromJson(i)), { isUserCreated: true }));
+      this.infras.set([...dbInfras, ...localInfras]);
     });
+  }
+  addLocal(raw) {
+    const infra = this.factory.fromJson(raw);
+    infra.isUserCreated = true;
+    this.infras.update((list) => [...list, infra]);
+  }
+  removeLocal(id) {
+    this.infras.update((list) => list.filter((i) => i.id !== id));
   }
 };
 var InfrastruturesService = class _InfrastruturesService {
-  http;
   modalService;
   openApiService;
-  infraGroups = signal([], ...ngDevMode ? [{ debugName: "infraGroups" }] : []);
+  storageService;
   selectedInfraGroup = signal(null, ...ngDevMode ? [{ debugName: "selectedInfraGroup" }] : []);
+  localInfraGroups = signal([], ...ngDevMode ? [{ debugName: "localInfraGroups" }] : []);
+  defaultInfraGroup = computed(() => this.getDefaultInfraGroup(), ...ngDevMode ? [{ debugName: "defaultInfraGroup" }] : []);
+  infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()], ...ngDevMode ? [{ debugName: "infraGroups" }] : []);
   infraToggled = new EventEmitter();
   infrasContainer = /* @__PURE__ */ new Map();
-  constructor(http, modalService, openApiService) {
-    this.http = http;
+  constructor(http, modalService, openApiService, storageService) {
     this.modalService = modalService;
     this.openApiService = openApiService;
-    this.refreshInfraGroups().subscribe();
+    this.storageService = storageService;
+    this.refreshInfraGroups();
     const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
     factories.forEach((Factory) => {
       const factory = new Factory();
-      this.infrasContainer.set(factory.getType(), new InfrasContainer(http, factory));
+      this.infrasContainer.set(factory.getType(), new InfrasContainer(http, factory, storageService));
     });
   }
   createInfra(className, type, lat, lon) {
@@ -171964,8 +171976,13 @@ var InfrastruturesService = class _InfrastruturesService {
     modalRef.result.then((result) => {
       if (!result)
         return;
-      this.http.post(`${environment.apiUrl}/${type}`, result).subscribe((res) => this.refreshService(type));
+      const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, __spreadProps(__spreadValues({}, result), { isUserCreated: true }));
+      this.infrasContainer.get(type)?.addLocal(localInfra);
     });
+  }
+  deleteLocalInfra(type, id) {
+    this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
+    this.infrasContainer.get(type)?.removeLocal(id);
   }
   getInfrasSignalByType(type) {
     const container = this.infrasContainer.get(type);
@@ -171996,7 +172013,8 @@ var InfrastruturesService = class _InfrastruturesService {
       infraGroup[key].push(infraId);
       isActive2 = true;
     }
-    this.selectedInfraGroup.set(infraGroup);
+    this.selectedInfraGroup.set(__spreadValues({}, infraGroup));
+    this._persistSelectedGroup();
     this.infraToggled.emit({ type, id: infraId, isActive: isActive2 });
   }
   setInfrasForType(type, infrasIds) {
@@ -172007,27 +172025,66 @@ var InfrastruturesService = class _InfrastruturesService {
     if (!key)
       return;
     infraGroup[key] = infrasIds;
-    this.selectedInfraGroup.set(infraGroup);
+    this.selectedInfraGroup.set(__spreadValues({}, infraGroup));
+    this._persistSelectedGroup();
   }
   refreshInfraGroups() {
-    return this.http.get(environment.apiUrl + "/listeinfrastructures", { headers: { "Content-Type": "application/json" } }).pipe(map((data) => data.map((group) => getInfrastructureGroupFromJson(group))), tap((groups) => this.infraGroups.set(groups)));
+    const groups = this.storageService.loadElements(INFRA_GROUPS_KEY);
+    this.localInfraGroups.set(groups);
   }
   createInfraGroup(group) {
-    return this.http.post(environment.apiUrl + "/listeinfrastructures", infrastructureGroupToJson(group), { headers: { "Content-Type": "application/json" } }).pipe(map((data) => getInfrastructureGroupFromJson(data)), tap((newGroup) => {
-      this.infraGroups.update((s) => [...s, newGroup]);
-      this.selectedInfraGroup.set(newGroup);
-    }));
+    const newGroup = this.storageService.createElement(INFRA_GROUPS_KEY, group);
+    this.localInfraGroups.update((s) => [...s, newGroup]);
+    this.selectedInfraGroup.set(newGroup);
+    return newGroup;
   }
   deleteInfraGroup(group) {
-    return this.http.delete(environment.apiUrl + "/listeinfrastructures" + group.id, { headers: { "Content-Type": "application/json" } }).pipe(tap(() => {
-      this.infraGroups.update((s) => s.filter((item) => item.id !== group.id));
-      if (this.selectedInfraGroup()?.id === group.id) {
-        this.selectedInfraGroup.set(null);
-      }
-    }));
+    this.storageService.deleteElement(INFRA_GROUPS_KEY, group.id);
+    this.localInfraGroups.update((s) => s.filter((item) => item.id !== group.id));
+    if (this.selectedInfraGroup()?.id === group.id) {
+      this.selectedInfraGroup.set(null);
+    }
+  }
+  buildSimulationPayload() {
+    const group = this.selectedInfraGroup();
+    if (!group)
+      return null;
+    const payload = { nom: group.nom };
+    for (const [type, groupKey] of Object.entries(typeKeyMap)) {
+      const selectedIds = group[groupKey] ?? [];
+      const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
+      const selectedInfras = selectedIds.map((id) => allInfras.find((i) => String(i.id) === id)).filter(Boolean).map((infra) => {
+        const _a = infra, { isUserCreated } = _a, raw = __objRest(_a, ["isUserCreated"]);
+        return raw;
+      });
+      payload[groupKey] = selectedInfras;
+    }
+    return payload;
+  }
+  _persistSelectedGroup() {
+    const group = this.selectedInfraGroup();
+    if (group)
+      this.storageService.updateElement(INFRA_GROUPS_KEY, group);
+  }
+  getDefaultInfraGroup() {
+    let get_default_infra = (type) => {
+      const container = this.infrasContainer.get(type);
+      if (!container)
+        return [];
+      return container.infras().filter((infra) => !infra.isUserCreated).map((infra) => infra.id.toString());
+    };
+    return {
+      id: 1,
+      nom: "Infrastructures qu\xE9b\xE9coises",
+      parc_eoliens: get_default_infra("eolienneparc"),
+      parc_solaires: get_default_infra("solaire"),
+      central_hydroelectriques: get_default_infra("hydro"),
+      central_thermique: get_default_infra("thermique"),
+      central_nucleaire: get_default_infra("nucleaire")
+    };
   }
   static \u0275fac = function InfrastruturesService_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _InfrastruturesService)(\u0275\u0275inject(HttpClient), \u0275\u0275inject(NgbModal), \u0275\u0275inject(OpenApiService));
+    return new (__ngFactoryType__ || _InfrastruturesService)(\u0275\u0275inject(HttpClient), \u0275\u0275inject(NgbModal), \u0275\u0275inject(OpenApiService), \u0275\u0275inject(LocalStorageService));
   };
   static \u0275prov = /* @__PURE__ */ \u0275\u0275defineInjectable({ token: _InfrastruturesService, factory: _InfrastruturesService.\u0275fac, providedIn: "root" });
 };
@@ -172037,7 +172094,7 @@ var InfrastruturesService = class _InfrastruturesService {
     args: [{
       providedIn: "root"
     }]
-  }], () => [{ type: HttpClient }, { type: NgbModal }, { type: OpenApiService }], null);
+  }], () => [{ type: HttpClient }, { type: NgbModal }, { type: OpenApiService }, { type: LocalStorageService }], null);
 })();
 
 // src/app/services/data-services/demande-temporal-data-service.ts
@@ -172048,11 +172105,11 @@ var DemandeTemporalDataService = class _DemandeTemporalDataService {
   constructor(http) {
     this.http = http;
   }
-  fetch(scenarioId) {
-    if (this.cachedData && this.cachedScenarioId == scenarioId) {
+  fetch(scenario) {
+    if (this.cachedData && this.cachedScenarioId == scenario.id) {
       return of(this.cachedData);
     }
-    return this.http.post(`${environment.apiUrl}/demande/temporal/?scenario_id=${scenarioId}`, {}).pipe(map((data) => this.handleData(data, scenarioId)));
+    return this.http.post(`${environment.apiUrl}/demande/temporal/`, scenario).pipe(map((data) => this.handleData(data, scenario.id)));
   }
   handleData(apidata, scenarioId) {
     this.cachedData = apidata;
@@ -172093,8 +172150,17 @@ var SimulationService = class _SimulationService {
     const scenario = this.scenariosService.selectedScenario();
     if (!scenario)
       return;
-    const url = `${environment.apiUrl}/${type}/${infraId}/production?scenario_id=${scenario.id}`;
-    return this.http.post(url, {});
+    const allInfras = this.infrastructuresService.getInfrasSignalByType(type)();
+    const infra = allInfras.find((i) => String(i.id) === String(infraId));
+    if (!infra)
+      return;
+    const _a = infra, { isUserCreated } = _a, infraPayload = __objRest(_a, ["isUserCreated"]);
+    const url = `${environment.apiUrl}/${type}/production`;
+    const payload = {
+      scenario,
+      infra_payload: infraPayload
+    };
+    return this.http.post(url, payload);
   }
   hasSimulationResults() {
     return !!this.cachedSimulationResult;
@@ -172104,10 +172170,14 @@ var SimulationService = class _SimulationService {
     const infraGroup = this.infrastructuresService.selectedInfraGroup();
     if (!scenario || !infraGroup)
       return;
-    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&liste_infra_id=${infraGroup.id}&is_journalier=false`;
+    const payload = {
+      scenario,
+      infra_group: this.infrastructuresService.buildSimulationPayload()
+    };
+    const url = `${environment.apiUrl}/reseau/production/?is_journalier=false`;
     forkJoin({
-      demande: this.demandeTemporalDataService.fetch(scenario.id),
-      production: this.http.post(url, {})
+      demande: this.demandeTemporalDataService.fetch(scenario),
+      production: this.http.post(url, payload)
     }).subscribe((result) => {
       this.cachedDemandeTemporal = result.demande;
       this.cachedSimulationResult = result.production;
@@ -172440,24 +172510,22 @@ var DatePicker = class _DatePicker {
   title = "date";
   minDate = "2010-01-01";
   maxDate = "2050-12-31";
-  startDate = /* @__PURE__ */ new Date();
+  startDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   startDateChange = new EventEmitter();
-  endDate = /* @__PURE__ */ new Date();
+  endDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   endDateChange = new EventEmitter();
-  constructor() {
-  }
   get startDateStr() {
     return this.formatDate(this.startDate);
   }
   set startDateStr(value) {
-    this.startDate = new Date(value);
+    this.startDate = value;
     this.startDateChange.emit(this.startDate);
   }
   get endDateStr() {
     return this.formatDate(this.endDate);
   }
   set endDateStr(value) {
-    this.endDate = new Date(value);
+    this.endDate = value;
     this.endDateChange.emit(this.endDate);
   }
   formatDate(date) {
@@ -172511,7 +172579,7 @@ var DatePicker = class _DatePicker {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(DatePicker, [{
     type: Component,
     args: [{ selector: "app-date-picker", imports: [FormsModule], template: '<label>{{ title }}</label>\n<div class="date-range">\n    <div class="date-field">\n        <label class="field-label" for="start-date">D\xE9but</label>\n        <input type="date" id="start-date" [(ngModel)]="startDateStr" [min]="minDate" [max]="maxDate">\n    </div>\n\n    <div class="date-field">\n        <label class="field-label" for="end-date">Fin</label>\n        <input type="date" id="end-date" [(ngModel)]="endDateStr" [min]="minDate" [max]="maxDate">\n    </div>\n</div>', styles: ["/* src/app/components/commons/date-picker/date-picker.css */\n:host {\n  display: block;\n  margin-bottom: 1rem;\n}\n.date-range {\n  display: flex;\n  gap: 1rem;\n  align-items: flex-end;\n}\n.date-field {\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n  gap: 0.25rem;\n}\n.field-label {\n  font-size: 0.75rem;\n  color: #6b7280;\n  font-weight: 500;\n}\ninput[type=date] {\n  appearance: none;\n  -webkit-appearance: none;\n  background-color: #f9fafb;\n  border: 1px solid #d1d5db;\n  border-radius: 0.5rem;\n  padding: 0.5rem 0.75rem;\n  font-size: 0.875rem;\n  color: #111827;\n  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n  outline: none;\n  width: 100%;\n  cursor: pointer;\n}\ninput[type=date]:hover {\n  border-color: #9ca3af;\n  background-color: #ffffff;\n}\ninput[type=date]:focus {\n  border-color: #3b82f6;\n  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);\n  background-color: #ffffff;\n}\n@media (max-width: 640px) {\n  .date-range {\n    flex-direction: column;\n    align-items: stretch;\n    gap: 0.75rem;\n  }\n}\n/*# sourceMappingURL=date-picker.css.map */\n"] }]
-  }], () => [], { title: [{
+  }], null, { title: [{
     type: Input
   }], startDate: [{
     type: Input
@@ -172527,6 +172595,22 @@ var DatePicker = class _DatePicker {
   (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(DatePicker, { className: "DatePicker", filePath: "src/app/components/commons/date-picker/date-picker.ts", lineNumber: 10 });
 })();
 
+// src/app/models/scenario.ts
+function createEmptyScenario() {
+  return {
+    id: 0,
+    nom: "",
+    description: "",
+    date_de_debut: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+    date_de_fin: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+    pas_de_temps: "PT1H",
+    weather: Weather.Typical,
+    consomation: Consumption.Normal,
+    optimisme_social: Optimism.Moyen,
+    optimisme_ecologique: Optimism.Moyen
+  };
+}
+
 // src/app/components/scenario/scenario-creation-modal/scenario-creation-modal.ts
 var ScenarioCreationModal = class _ScenarioCreationModal {
   activeModal;
@@ -172540,9 +172624,8 @@ var ScenarioCreationModal = class _ScenarioCreationModal {
     this.scenariosService = scenariosService;
   }
   onSubmit() {
-    this.scenariosService.createScenario(this.scenario).subscribe((newScenario) => {
-      this.activeModal.close(newScenario);
-    });
+    const newScenario = this.scenariosService.createScenario(this.scenario);
+    this.activeModal.close(newScenario);
   }
   dismiss() {
     this.activeModal.dismiss();
@@ -172796,6 +172879,7 @@ function ScenarioSelector_div_11_Template(rf, ctx) {
   }
   if (rf & 2) {
     const scenario_r2 = ctx.ngIf;
+    const ctx_r2 = \u0275\u0275nextContext();
     \u0275\u0275advance(3);
     \u0275\u0275textInterpolate1(" ", scenario_r2.description);
     \u0275\u0275advance(4);
@@ -172805,23 +172889,23 @@ function ScenarioSelector_div_11_Template(rf, ctx) {
     \u0275\u0275advance(4);
     \u0275\u0275textInterpolate1(" ", scenario_r2.pas_de_temps, " ");
     \u0275\u0275advance(4);
-    \u0275\u0275textInterpolate1(" ", scenario_r2.consomation);
+    \u0275\u0275textInterpolate1(" ", ctx_r2.ConsumptionLabels[scenario_r2.consomation]);
     \u0275\u0275advance(3);
-    \u0275\u0275textInterpolate1(" ", scenario_r2.weather);
+    \u0275\u0275textInterpolate1(" ", ctx_r2.WeatherLabels[scenario_r2.weather]);
     \u0275\u0275advance(4);
-    \u0275\u0275textInterpolate1(" ", scenario_r2.optimisme_social);
+    \u0275\u0275textInterpolate1(" ", ctx_r2.OptimismLabels[scenario_r2.optimisme_social]);
     \u0275\u0275advance(4);
-    \u0275\u0275textInterpolate1(" ", scenario_r2.optimisme_ecologique);
+    \u0275\u0275textInterpolate1(" ", ctx_r2.OptimismLabels[scenario_r2.optimisme_ecologique]);
   }
 }
 function ScenarioSelector_div_12_Template(rf, ctx) {
   if (rf & 1) {
-    const _r3 = \u0275\u0275getCurrentView();
+    const _r4 = \u0275\u0275getCurrentView();
     \u0275\u0275elementStart(0, "div", 16)(1, "button", 17);
     \u0275\u0275listener("click", function ScenarioSelector_div_12_Template_button_click_1_listener() {
-      const scenario_r4 = \u0275\u0275restoreView(_r3).ngIf;
-      const ctx_r4 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r4.deleteScenario(scenario_r4));
+      const scenario_r5 = \u0275\u0275restoreView(_r4).ngIf;
+      const ctx_r2 = \u0275\u0275nextContext();
+      return \u0275\u0275resetView(ctx_r2.deleteScenario(scenario_r5));
     });
     \u0275\u0275text(2, " Supprimer ");
     \u0275\u0275elementStart(3, "span", 18);
@@ -172829,14 +172913,17 @@ function ScenarioSelector_div_12_Template(rf, ctx) {
     \u0275\u0275elementEnd()()();
   }
   if (rf & 2) {
-    const scenario_r4 = ctx.ngIf;
+    const scenario_r5 = ctx.ngIf;
     \u0275\u0275advance(4);
-    \u0275\u0275textInterpolate1(" ", scenario_r4.nom);
+    \u0275\u0275textInterpolate1(" ", scenario_r5.nom);
   }
 }
 var ScenarioSelector = class _ScenarioSelector {
   scenariosService;
   modalService;
+  WeatherLabels = WeatherLabels;
+  ConsumptionLabels = ConsumptionLabels;
+  OptimismLabels = OptimismLabels;
   get scenarios() {
     return this.scenariosService.scenarios();
   }
@@ -172854,7 +172941,7 @@ var ScenarioSelector = class _ScenarioSelector {
     this.modalService.open(ScenarioCreationModal);
   }
   deleteScenario(scenario) {
-    this.scenariosService.deleteScenario(scenario).subscribe();
+    this.scenariosService.deleteScenario(scenario);
   }
   compareScenarios(s1, s2) {
     return s1 && s2 ? s1.id === s2.id : s1 === s2;
@@ -172928,16 +173015,17 @@ var ScenarioSelector = class _ScenarioSelector {
                 </p>
                 <p>
                     Sc\xE9nario de consomation <span class="fw-bold"> {{
-                        scenario.consomation }}</span> avec une m\xE9t\xE9o
-                    concid\xE9r\xE9 <span class="fw-bold"> {{ scenario.weather }}</span>
+                        ConsumptionLabels[scenario.consomation] }}</span> avec une m\xE9t\xE9o
+                    concid\xE9r\xE9 <span class="fw-bold"> {{ WeatherLabels[scenario.weather] }}</span>
                 </p>
                 <p>
                     Statut social:
-                    <span class="optimisme-social fw-bold"> {{ scenario.optimisme_social }}</span>
+                    <span class="optimisme-social fw-bold"> {{ OptimismLabels[scenario.optimisme_social] }}</span>
                 </p>
                 <p>
                     Statut \xE9cologique:
-                    <span class="optimisme-ecologique fw-bold"> {{ scenario.optimisme_ecologique}}</span>
+                    <span class="optimisme-ecologique fw-bold"> {{ OptimismLabels[scenario.optimisme_ecologique]
+                        }}</span>
                 </p>
             </div>
         </div>
@@ -172953,7 +173041,7 @@ var ScenarioSelector = class _ScenarioSelector {
   }], () => [{ type: ScenariosService }, { type: NgbModal }], null);
 })();
 (() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(ScenarioSelector, { className: "ScenarioSelector", filePath: "src/app/components/scenario/scenario-selector/scenario-selector.ts", lineNumber: 15 });
+  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(ScenarioSelector, { className: "ScenarioSelector", filePath: "src/app/components/scenario/scenario-selector/scenario-selector.ts", lineNumber: 18 });
 })();
 
 // src/app/components/simulation/simulation-single-infra-modal/simulation-single-infra-modal.ts
@@ -173343,6 +173431,23 @@ var MapService = class _MapService {
 
 // src/app/components/infrastructure/infra-list-element/infra-list-element.ts
 var _c05 = (a0) => ({ "list-group-item-secondary": a0 });
+function InfraListElement_span_7_Template(rf, ctx) {
+  if (rf & 1) {
+    \u0275\u0275element(0, "span", 2);
+  }
+}
+function InfraListElement_i_8_Template(rf, ctx) {
+  if (rf & 1) {
+    const _r1 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "i", 6);
+    \u0275\u0275listener("click", function InfraListElement_i_8_Template_i_click_0_listener($event) {
+      \u0275\u0275restoreView(_r1);
+      const ctx_r1 = \u0275\u0275nextContext();
+      return \u0275\u0275resetView(ctx_r1.deleteInfra($event));
+    });
+    \u0275\u0275elementEnd();
+  }
+}
 var InfraListElement = class _InfraListElement {
   infrastructuresService;
   scenarioService;
@@ -173351,6 +173456,7 @@ var InfraListElement = class _InfraListElement {
   nom;
   id;
   type;
+  isUserCreated = false;
   get isSelected() {
     return this.infrastructuresService.isInfraSelected(this.type, this.id);
   }
@@ -173376,10 +173482,14 @@ var InfraListElement = class _InfraListElement {
     event.stopPropagation();
     this.mapService.showMarker(this.type, this.id);
   }
+  deleteInfra(event) {
+    event.stopPropagation();
+    this.infrastructuresService.deleteLocalInfra(this.type, parseInt(this.id));
+  }
   static \u0275fac = function InfraListElement_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _InfraListElement)(\u0275\u0275directiveInject(InfrastruturesService), \u0275\u0275directiveInject(ScenariosService), \u0275\u0275directiveInject(NgbModal), \u0275\u0275directiveInject(MapService));
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _InfraListElement, selectors: [["app-infra-list-element"]], inputs: { nom: "nom", id: "id", type: "type" }, decls: 7, vars: 4, consts: [["role", "button", "title", "Cliquez pour s\xE9lectionner ou d\xE9s\xE9lectionner cette infrastructure", 1, "list-group-item", "d-flex", "justify-content-between", "align-items-center", 2, "display", "flex", "justify-content", "space-between", "align-items", "center", "padding", "10px", "border", "1px solid #ddd", "margin-bottom", "5px", "border-radius", "5px", 3, "click", "ngClass"], ["title", "Simuler cette infrastructure", 1, "fas", "fa-line-chart", 2, "color", "#007bff", "cursor", "pointer", 3, "click"], [1, "mx-1"], ["title", "Afficher les informations de cette infrastructure", 1, "fas", "fa-info-circle", 2, "color", "#007bff", "cursor", "pointer", 3, "click"]], template: function InfraListElement_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _InfraListElement, selectors: [["app-infra-list-element"]], inputs: { nom: "nom", id: "id", type: "type", isUserCreated: "isUserCreated" }, decls: 9, vars: 6, consts: [["role", "button", "title", "Cliquez pour s\xE9lectionner ou d\xE9s\xE9lectionner cette infrastructure", 1, "list-group-item", "d-flex", "justify-content-between", "align-items-center", 2, "display", "flex", "justify-content", "space-between", "align-items", "center", "padding", "10px", "border", "1px solid #ddd", "margin-bottom", "5px", "border-radius", "5px", 3, "click", "ngClass"], ["title", "Simuler cette infrastructure", 1, "fas", "fa-line-chart", 2, "color", "#007bff", "cursor", "pointer", 3, "click"], [1, "mx-1"], ["title", "Afficher les informations de cette infrastructure", 1, "fas", "fa-info-circle", 2, "color", "#007bff", "cursor", "pointer", 3, "click"], ["class", "mx-1", 4, "ngIf"], ["class", "fas fa-trash", "style", "color: #dc3545; cursor: pointer;", "title", "Supprimer cette infrastructure", 3, "click", 4, "ngIf"], ["title", "Supprimer cette infrastructure", 1, "fas", "fa-trash", 2, "color", "#dc3545", "cursor", "pointer", 3, "click"]], template: function InfraListElement_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "li", 0);
       \u0275\u0275listener("click", function InfraListElement_Template_li_click_0_listener() {
@@ -173398,14 +173508,20 @@ var InfraListElement = class _InfraListElement {
       \u0275\u0275listener("click", function InfraListElement_Template_i_click_6_listener($event) {
         return ctx.handleInfoClick($event);
       });
-      \u0275\u0275elementEnd()()();
+      \u0275\u0275elementEnd();
+      \u0275\u0275template(7, InfraListElement_span_7_Template, 1, 0, "span", 4)(8, InfraListElement_i_8_Template, 1, 0, "i", 5);
+      \u0275\u0275elementEnd()();
     }
     if (rf & 2) {
-      \u0275\u0275property("ngClass", \u0275\u0275pureFunction1(2, _c05, ctx.isSelected));
+      \u0275\u0275property("ngClass", \u0275\u0275pureFunction1(4, _c05, ctx.isSelected));
       \u0275\u0275advance(2);
       \u0275\u0275textInterpolate(ctx.nom);
+      \u0275\u0275advance(5);
+      \u0275\u0275property("ngIf", ctx.isUserCreated);
+      \u0275\u0275advance();
+      \u0275\u0275property("ngIf", ctx.isUserCreated);
     }
-  }, dependencies: [CommonModule, NgClass], encapsulation: 2 });
+  }, dependencies: [CommonModule, NgClass, NgIf], encapsulation: 2 });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(InfraListElement, [{
@@ -173421,6 +173537,9 @@ var InfraListElement = class _InfraListElement {
         <span class="mx-1"></span>
         <i class="fas fa-info-circle" style="color: #007bff; cursor: pointer;" (click)="handleInfoClick($event)"
             title="Afficher les informations de cette infrastructure"></i>
+        <span *ngIf="isUserCreated" class="mx-1"></span>
+        <i *ngIf="isUserCreated" class="fas fa-trash" style="color: #dc3545; cursor: pointer;"
+            (click)="deleteInfra($event)" title="Supprimer cette infrastructure"></i>
     </div>
 </li>` }]
   }], () => [{ type: InfrastruturesService }, { type: ScenariosService }, { type: NgbModal }, { type: MapService }], { nom: [{
@@ -173432,6 +173551,8 @@ var InfraListElement = class _InfraListElement {
   }], type: [{
     type: Input,
     args: [{ required: true }]
+  }], isUserCreated: [{
+    type: Input
   }] });
 })();
 (() => {
@@ -173446,7 +173567,7 @@ function InfraListBody_app_infra_list_element_7_Template(rf, ctx) {
   if (rf & 2) {
     const infra_r1 = ctx.$implicit;
     const ctx_r1 = \u0275\u0275nextContext();
-    \u0275\u0275property("nom", infra_r1.nom)("id", infra_r1.id.toString())("type", ctx_r1.type);
+    \u0275\u0275property("nom", infra_r1.nom)("id", infra_r1.id.toString())("type", ctx_r1.type)("isUserCreated", infra_r1.isUserCreated);
   }
 }
 var InfraListBody = class _InfraListBody {
@@ -173465,7 +173586,7 @@ var InfraListBody = class _InfraListBody {
   static \u0275fac = function InfraListBody_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _InfraListBody)(\u0275\u0275directiveInject(InfrastruturesService));
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _InfraListBody, selectors: [["app-infra-list-body"]], inputs: { infras: "infras", type: "type" }, decls: 8, vars: 1, consts: [["id", "list-parc-hydro"], [1, "d-flex", "w-100", "justify-content-center", "my-2"], [1, "btn", "btn-primary", "btn-sm", "select-all", "me-2", 3, "click"], [1, "btn", "btn-primary", "btn-sm", "select-none", 3, "click"], [1, "list-group", 2, "max-height", "300px", "overflow-y", "auto", "overflow-x", "hidden"], [3, "nom", "id", "type", 4, "ngFor", "ngForOf"], [3, "nom", "id", "type"]], template: function InfraListBody_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _InfraListBody, selectors: [["app-infra-list-body"]], inputs: { infras: "infras", type: "type" }, decls: 8, vars: 1, consts: [["id", "list-parc-hydro"], [1, "d-flex", "w-100", "justify-content-center", "my-2"], [1, "btn", "btn-primary", "btn-sm", "select-all", "me-2", 3, "click"], [1, "btn", "btn-primary", "btn-sm", "select-none", 3, "click"], [1, "list-group", 2, "max-height", "300px", "overflow-y", "auto", "overflow-x", "hidden"], [3, "nom", "id", "type", "isUserCreated", 4, "ngFor", "ngForOf"], [3, "nom", "id", "type", "isUserCreated"]], template: function InfraListBody_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "div", 0)(1, "div", 1)(2, "button", 2);
       \u0275\u0275listener("click", function InfraListBody_Template_button_click_2_listener() {
@@ -173480,7 +173601,7 @@ var InfraListBody = class _InfraListBody {
       \u0275\u0275text(5, "Tout d\xE9s\xE9lectionner");
       \u0275\u0275elementEnd()();
       \u0275\u0275elementStart(6, "ul", 4);
-      \u0275\u0275template(7, InfraListBody_app_infra_list_element_7_Template, 1, 3, "app-infra-list-element", 5);
+      \u0275\u0275template(7, InfraListBody_app_infra_list_element_7_Template, 1, 4, "app-infra-list-element", 5);
       \u0275\u0275elementEnd()();
     }
     if (rf & 2) {
@@ -173492,7 +173613,7 @@ var InfraListBody = class _InfraListBody {
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(InfraListBody, [{
     type: Component,
-    args: [{ selector: "app-infra-list-body", imports: [CommonModule, InfraListElement], template: '<div id="list-parc-hydro">\n    <div class="d-flex w-100 justify-content-center my-2">\n        <button class="btn btn-primary btn-sm select-all me-2" (click)="selectAll()">Tout\n            s\xE9lectionner</button>\n        <button class="btn btn-primary btn-sm select-none" (click)="selectNone()">Tout\n            d\xE9s\xE9lectionner</button>\n    </div>\n    <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">\n        <app-infra-list-element *ngFor="let infra of infras" [nom]="infra.nom" [id]="infra.id.toString()"\n            [type]="type" />\n    </ul>\n</div>' }]
+    args: [{ selector: "app-infra-list-body", imports: [CommonModule, InfraListElement], template: '<div id="list-parc-hydro">\n    <div class="d-flex w-100 justify-content-center my-2">\n        <button class="btn btn-primary btn-sm select-all me-2" (click)="selectAll()">Tout\n            s\xE9lectionner</button>\n        <button class="btn btn-primary btn-sm select-none" (click)="selectNone()">Tout\n            d\xE9s\xE9lectionner</button>\n    </div>\n    <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">\n        <app-infra-list-element *ngFor="let infra of infras" [nom]="infra.nom" [id]="infra.id.toString()" [type]="type"\n            [isUserCreated]="infra.isUserCreated" />\n    </ul>\n</div>' }]
   }], () => [{ type: InfrastruturesService }], { infras: [{
     type: Input,
     args: [{ required: true }]
@@ -173528,9 +173649,8 @@ var CreateInfraGroupModal = class _CreateInfraGroupModal {
       central_thermique: this.currentGroup?.central_thermique || [],
       central_nucleaire: this.currentGroup?.central_nucleaire || []
     };
-    this.infrastructuresService.createInfraGroup(newGroup).subscribe(() => {
-      this.activeModal.close("created");
-    });
+    const created = this.infrastructuresService.createInfraGroup(newGroup);
+    this.activeModal.close("created");
   }
   static \u0275fac = function CreateInfraGroupModal_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _CreateInfraGroupModal)(\u0275\u0275directiveInject(NgbActiveModal), \u0275\u0275directiveInject(InfrastruturesService));
@@ -173801,7 +173921,7 @@ var DemandeSankeyGraphService = class _DemandeSankeyGraphService extends BaseGra
   }
   fetchData(scenario) {
     const mrc_id = 1;
-    return this.http.post(`${environment.apiUrl}/demande/sankey/?scenario_id=${scenario.id}&CUID=${mrc_id}`, {}).pipe(map(this.handleData.bind(this)));
+    return this.http.post(`${environment.apiUrl}/demande/sankey/?CUID=${mrc_id}`, scenario).pipe(map(this.handleData.bind(this)));
   }
   handleData(apidata) {
     const sectorLabels = Object.values(apidata.sector);
@@ -173949,7 +174069,7 @@ var DemandeTemporalGraphService = class _DemandeTemporalGraphService extends Bas
     this.demandeTemporalDataService = demandeTemporalDataService;
   }
   fetchData(scenario) {
-    return this.demandeTemporalDataService.fetch(scenario.id).pipe(map(this.handleData.bind(this)));
+    return this.demandeTemporalDataService.fetch(scenario).pipe(map(this.handleData.bind(this)));
   }
   handleData(apidata) {
     const xval = Object.keys(apidata.total_electricity);
@@ -174224,7 +174344,7 @@ var QuebecMap = class _QuebecMap {
       iconEl.addEventListener("dragstart", function(e) {
         let type = e.target.getAttribute("type");
         let route = e.target.getAttribute("route");
-        e.dataTransfer.setData("text/plain", `${type},${route}`);
+        e.dataTransfer.setData("text/plain", `${type}Base,${route}`);
       });
     });
   }
@@ -174236,7 +174356,7 @@ var QuebecMap = class _QuebecMap {
   static \u0275fac = function QuebecMap_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _QuebecMap)(\u0275\u0275directiveInject(MapService), \u0275\u0275directiveInject(ProtectedAreasService));
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _QuebecMap, selectors: [["app-quebec-map"]], decls: 13, vars: 18, consts: [["id", "map", 2, "height", "700px", "width", "100%"], [1, "map-overlay-layers", "card", "p-2", "m-4"], [1, "btn", "btn-sm", 3, "click"], [1, "bi"], [1, "map-overlay", "card", "p-2", "m-4"], ["src", "/icons/barrage.png", "infraNom", "Barrage Hydro-\xC9lectrique", "type", "HydroCreate", "route", "hydro", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/eolienne.png", "infraNom", "Parc \xC9olien", "type", "EolienneParcCreate", "route", "eolienneparc", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/solaire.png", "infraNom", "Parc Solaire", "type", "SolaireCreate", "route", "solaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/thermique.png", "infraNom", "Parc Thermique", "type", "ThermiqueCreate", "route", "thermique", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/nucelaire.png", "infraNom", "Parc Nucl\xE9aire", "type", "NucleaireCreate", "route", "nucleaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"]], template: function QuebecMap_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _QuebecMap, selectors: [["app-quebec-map"]], decls: 13, vars: 18, consts: [["id", "map", 2, "height", "700px", "width", "100%"], [1, "map-overlay-layers", "card", "p-2", "m-4"], [1, "btn", "btn-sm", 3, "click"], [1, "bi"], [1, "map-overlay", "card", "p-2", "m-4"], ["src", "/icons/barrage.png", "infraNom", "Barrage Hydro-\xC9lectrique", "type", "Hydro", "route", "hydro", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/eolienne.png", "infraNom", "Parc \xC9olien", "type", "EolienneParc", "route", "eolienneparc", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/solaire.png", "infraNom", "Parc Solaire", "type", "Solaire", "route", "solaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/thermique.png", "infraNom", "Parc Thermique", "type", "Thermique", "route", "thermique", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/nucelaire.png", "infraNom", "Parc Nucl\xE9aire", "type", "Nucleaire", "route", "nucleaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"]], template: function QuebecMap_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275element(0, "div", 0);
       \u0275\u0275elementStart(1, "div", 1)(2, "button", 2);
@@ -174273,7 +174393,7 @@ var QuebecMap = class _QuebecMap {
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(QuebecMap, [{
     type: Component,
-    args: [{ selector: "app-quebec-map", imports: [NgbTooltipModule], template: '<div id="map" style="height: 700px; width: 100%;"></div>\n\n<div class="map-overlay-layers card p-2 m-4">\n    <button class="btn btn-sm" [class.btn-success]="protectedAreasService.isVisible()"\n        [class.btn-outline-secondary]="!protectedAreasService.isVisible()"\n        (click)="protectedAreasService.toggleVisibility()">\n        <i class="bi" [class.bi-eye]="protectedAreasService.isVisible()"\n            [class.bi-eye-slash]="!protectedAreasService.isVisible()"></i>\n        Aires prot\xE9g\xE9es\n    </button>\n    <!-- \xC0 changer apr\xE8s et rajouter l\xE9gende -->\n</div>\n\n<div class="map-overlay card p-2 m-4">\n    <p>Ajouter infra fictive :</p>\n\n    <img src="/icons/barrage.png" infraNom="Barrage Hydro-\xC9lectrique" class="icon-draggable" type="HydroCreate"\n        route="hydro" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/eolienne.png" infraNom="Parc \xC9olien" class="icon-draggable" type="EolienneParcCreate"\n        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="SolaireCreate" route="solaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="ThermiqueCreate"\n        route="thermique" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/nucelaire.png" infraNom="Parc Nucl\xE9aire" class="icon-draggable" type="NucleaireCreate"\n        route="nucleaire" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n</div>', styles: ["/* src/app/components/quebec-map/quebec-map.css */\n:host {\n  display: block;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\ndiv.map-overlay-layers {\n  position: absolute;\n  top: 10px;\n  left: 50px;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  z-index: 1000;\n}\ndiv.map-overlay-layers button {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  white-space: nowrap;\n}\ndiv.map-overlay {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay p {\n  margin: 0 0.25em;\n}\ndiv.map-overlay img.icon-draggable {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=quebec-map.css.map */\n"] }]
+    args: [{ selector: "app-quebec-map", imports: [NgbTooltipModule], template: '<div id="map" style="height: 700px; width: 100%;"></div>\n\n<div class="map-overlay-layers card p-2 m-4">\n    <button class="btn btn-sm" [class.btn-success]="protectedAreasService.isVisible()"\n        [class.btn-outline-secondary]="!protectedAreasService.isVisible()"\n        (click)="protectedAreasService.toggleVisibility()">\n        <i class="bi" [class.bi-eye]="protectedAreasService.isVisible()"\n            [class.bi-eye-slash]="!protectedAreasService.isVisible()"></i>\n        Aires prot\xE9g\xE9es\n    </button>\n    <!-- \xC0 changer apr\xE8s et rajouter l\xE9gende -->\n</div>\n\n<div class="map-overlay card p-2 m-4">\n    <p>Ajouter infra fictive :</p>\n\n    <img src="/icons/barrage.png" infraNom="Barrage Hydro-\xC9lectrique" class="icon-draggable" type="Hydro" route="hydro"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/eolienne.png" infraNom="Parc \xC9olien" class="icon-draggable" type="EolienneParc"\n        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="Solaire" route="solaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="Thermique" route="thermique"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/nucelaire.png" infraNom="Parc Nucl\xE9aire" class="icon-draggable" type="Nucleaire" route="nucleaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n</div>', styles: ["/* src/app/components/quebec-map/quebec-map.css */\n:host {\n  display: block;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\ndiv.map-overlay-layers {\n  position: absolute;\n  top: 10px;\n  left: 50px;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  z-index: 1000;\n}\ndiv.map-overlay-layers button {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  white-space: nowrap;\n}\ndiv.map-overlay {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay p {\n  margin: 0 0.25em;\n}\ndiv.map-overlay img.icon-draggable {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=quebec-map.css.map */\n"] }]
   }], () => [{ type: MapService }, { type: ProtectedAreasService }], null);
 })();
 (() => {
