@@ -25,16 +25,17 @@
                 </p>
                 <p>
                     Scénario de consomation <span class="fw-bold"> {{
-                        scenario.consomation }}</span> avec une météo
-                    concidéré <span class="fw-bold"> {{ scenario.weather }}</span>
+                        ConsumptionLabels[scenario.consomation] }}</span> avec une météo
+                    concidéré <span class="fw-bold"> {{ WeatherLabels[scenario.weather] }}</span>
                 </p>
                 <p>
                     Statut social:
-                    <span class="optimisme-social fw-bold"> {{ scenario.optimisme_social }}</span>
+                    <span class="optimisme-social fw-bold"> {{ OptimismLabels[scenario.optimisme_social] }}</span>
                 </p>
                 <p>
                     Statut écologique:
-                    <span class="optimisme-ecologique fw-bold"> {{ scenario.optimisme_ecologique}}</span>
+                    <span class="optimisme-ecologique fw-bold"> {{ OptimismLabels[scenario.optimisme_ecologique]
+                        }}</span>
                 </p>
             </div>
         </div>

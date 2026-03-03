@@ -23,7 +23,7 @@ export class DemandeSankeyGraphService extends BaseGraphService {
 
     protected fetchData(scenario: Scenario) {
         const mrc_id = 1; // No idea what it is ngl
-        return this.http.post(`${environment.apiUrl}/demande/sankey/?scenario_id=${scenario.id}&CUID=${mrc_id}`, {})
+        return this.http.post(`${environment.apiUrl}/demande/sankey/?CUID=${mrc_id}`, scenario)
             .pipe(map(this.handleData.bind(this)));
     }
 
