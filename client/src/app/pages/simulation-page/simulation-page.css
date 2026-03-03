@@ -49,8 +49,8 @@ div#main {
 .sources-panel {
     position: absolute;
     top: 0;
-    left: -420px;
-    width: 400px;
+    left: -800px;
+    width: 780px;
     height: 100%;
     z-index: 1200;
     background: #fff;
@@ -97,8 +97,25 @@ div#main {
     overflow-y: auto;
     padding: 12px;
     display: flex;
+    flex-direction: row;
+    gap: 12px;
+}
+
+.panel-column {
+    display: flex;
     flex-direction: column;
     gap: 12px;
+    min-width: 0;
+}
+
+.panel-column-left {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.panel-column-right {
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* ── Full-screen results area ── */
