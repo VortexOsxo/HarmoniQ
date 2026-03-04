@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 from harmoniq.db.engine import engine, get_db
-from harmoniq.db.schemas import SQLBase, EolienneParcCreate, TurbineModel
+from harmoniq.db.schemas import SQLBase, EolienneParcBase, TurbineModel
 from harmoniq.db.CRUD import (
     create_eolienne_parc,
     read_eolienne_parc_by_id,
@@ -20,7 +20,7 @@ def db():
     db.close()
 
 def test_create_eolienne_parc(db: Session):
-    eolienne_parc = EolienneParcCreate(
+    eolienne_parc = EolienneParcBase(
         nom="Parc A",
         latitude=45.5017,
         longitude=-73.5673,
@@ -45,7 +45,7 @@ def test_read_eolienne_parc_by_id(db: Session):
     assert result.id == 1
 
 def test_update_eolienne_parc(db: Session):
-    eolienne_parc = EolienneParcCreate(
+    eolienne_parc = EolienneParcBase(
         nom="Parc Updated",
         latitude=45.5017,
         longitude=-73.5673,

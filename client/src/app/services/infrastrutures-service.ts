@@ -1,10 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { EventEmitter, Injectable } from '@angular/core';
+import { computed, EventEmitter, Injectable } from '@angular/core';
 import { signal } from '@angular/core';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
-import { map, tap } from 'rxjs/operators';
 import { environment } from 'environments/environment';
-import { getInfrastructureGroupFromJson, infrastructureGroupToJson } from '@app/models/infrastructure-group';
 import { OpenApiService } from './open-api-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateInfraModal } from '@app/components/infrastructure/create-infra-modal/create-infra-modal';
@@ -14,6 +12,7 @@ import { WindFarmFactory } from '@app/models/infras/wind-farm';
 import { SolarFarmFactory } from '@app/models/infras/solar-farm';
 import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
+import { LocalStorageService } from './local-storage-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -24,6 +23,9 @@ const typeKeyMap: Record<string, string> = {
   'nucleaire': 'central_nucleaire'
 };
 
+const INFRA_KEY = 'harmoniq_local_infras';
+const INFRA_GROUPS_KEY = 'harmoniq_local_infra_groups';
+
 export class InfrasContainer<T extends Infra<T>> {
 
   infras = signal<T[]>([]);
@@ -32,14 +34,33 @@ export class InfrasContainer<T extends Infra<T>> {
     return `${environment.apiUrl}/${this.factory.getType()}`;
   }
 
-  constructor(private http: HttpClient, private factory: InfraFactory<T>) {
+  constructor(
+    private http: HttpClient,
+    private factory: InfraFactory<T>,
+    private storageService: LocalStorageService
+  ) {
     this.refresh();
   }
 
   refresh() {
     this.http.get(this.apiUrl).subscribe((data: any) => {
-      this.infras.set(data.map((i: any) => this.factory.fromJson(i)));
-    })
+      const dbInfras = data.map((i: any) => this.factory.fromJson(i));
+
+      const localInfras = this.storageService.loadElements(`${INFRA_KEY}_${this.factory.getType()}`)
+        .map((i: any) => ({ ...this.factory.fromJson(i), isUserCreated: true }));
+
+      this.infras.set([...dbInfras, ...localInfras]);
+    });
+  }
+
+  addLocal(raw: any): void {
+    const infra = this.factory.fromJson(raw);
+    infra.isUserCreated = true;
+    this.infras.update(list => [...list, infra]);
+  }
+
+  removeLocal(id: number): void {
+    this.infras.update(list => list.filter(i => i.id !== id));
   }
 }
 
@@ -47,24 +68,29 @@ export class InfrasContainer<T extends Infra<T>> {
   providedIn: 'root',
 })
 export class InfrastruturesService {
-  infraGroups = signal<InfrastructureGroup[]>([]);
+
   selectedInfraGroup = signal<InfrastructureGroup | null>(null);
+
+  private localInfraGroups = signal<InfrastructureGroup[]>([]);
+  private defaultInfraGroup = computed(() => this.getDefaultInfraGroup());
+  infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()])
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
 
   infrasContainer = new Map<string, InfrasContainer<Infra<any>>>();
 
   constructor(
-    private http: HttpClient,
+    http: HttpClient,
     private modalService: NgbModal,
     private openApiService: OpenApiService,
+    private storageService: LocalStorageService,
   ) {
-    this.refreshInfraGroups().subscribe();
+    this.refreshInfraGroups();
 
     const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
     factories.forEach((Factory) => {
       const factory = new Factory();
-      this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory));
+      this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory, storageService));
     });
   }
 
@@ -80,9 +106,15 @@ export class InfrastruturesService {
 
     modalRef.result.then(result => {
       if (!result) return;
-      this.http.post(`${environment.apiUrl}/${type}`, result)
-        .subscribe((res: any) => this.refreshService(type));
+
+      const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
+      this.infrasContainer.get(type)?.addLocal(localInfra);
     });
+  }
+
+  deleteLocalInfra(type: string, id: number): void {
+    this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
+    this.infrasContainer.get(type)?.removeLocal(id);
   }
 
   getInfrasSignalByType(type: string) {
@@ -118,7 +150,8 @@ export class InfrastruturesService {
       isActive = true;
     }
 
-    this.selectedInfraGroup.set(infraGroup);
+    this.selectedInfraGroup.set({ ...infraGroup });
+    this._persistSelectedGroup();
     this.infraToggled.emit({ type, id: infraId, isActive });
   }
 
@@ -130,37 +163,75 @@ export class InfrastruturesService {
     if (!key) return;
     infraGroup[key] = infrasIds;
 
-    this.selectedInfraGroup.set(infraGroup);
+    this.selectedInfraGroup.set({ ...infraGroup });
+    this._persistSelectedGroup();
   }
 
   refreshInfraGroups() {
-    return this.http.get(environment.apiUrl + '/listeinfrastructures', { headers: { 'Content-Type': 'application/json' } })
-      .pipe(
-        map((data: any) => data.map((group: any) => getInfrastructureGroupFromJson(group))),
-        tap((groups: InfrastructureGroup[]) => this.infraGroups.set(groups))
-      );
+    const groups = this.storageService.loadElements<InfrastructureGroup>(INFRA_GROUPS_KEY);
+    this.localInfraGroups.set(groups);
   }
 
   createInfraGroup(group: InfrastructureGroup) {
-    return this.http.post(environment.apiUrl + '/listeinfrastructures', infrastructureGroupToJson(group), { headers: { 'Content-Type': 'application/json' } })
-      .pipe(
-        map((data: any) => getInfrastructureGroupFromJson(data)),
-        tap((newGroup) => {
-          this.infraGroups.update(s => [...s, newGroup]);
-          this.selectedInfraGroup.set(newGroup);
-        })
-      );
+    const newGroup = this.storageService.createElement(INFRA_GROUPS_KEY, group);
+    this.localInfraGroups.update(s => [...s, newGroup]);
+    this.selectedInfraGroup.set(newGroup);
+    return newGroup;
   }
 
   deleteInfraGroup(group: InfrastructureGroup) {
-    return this.http.delete(environment.apiUrl + '/listeinfrastructures' + group.id, { headers: { 'Content-Type': 'application/json' } })
-      .pipe(
-        tap(() => {
-          this.infraGroups.update(s => s.filter(item => item.id !== group.id));
-          if (this.selectedInfraGroup()?.id === group.id) {
-            this.selectedInfraGroup.set(null);
-          }
-        })
-      );
+    this.storageService.deleteElement(INFRA_GROUPS_KEY, group.id);
+    this.localInfraGroups.update(s => s.filter(item => item.id !== group.id));
+    if (this.selectedInfraGroup()?.id === group.id) {
+      this.selectedInfraGroup.set(null);
+    }
+  }
+
+  buildSimulationPayload(): any {
+    const group: any = this.selectedInfraGroup();
+    if (!group) return null;
+
+    const payload: any = { nom: group.nom };
+
+    for (const [type, groupKey] of Object.entries(typeKeyMap)) {
+      const selectedIds: string[] = group[groupKey] ?? [];
+      const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
+
+      const selectedInfras = selectedIds
+        .map(id => allInfras.find((i: any) => String(i.id) === id))
+        .filter(Boolean)
+        .map((infra: any) => {
+          const { isUserCreated, ...raw } = infra;
+          return raw;
+        });
+
+      payload[groupKey] = selectedInfras;
+    }
+
+    return payload;
+  }
+
+  private _persistSelectedGroup() {
+    const group = this.selectedInfraGroup();
+    if (group)
+      this.storageService.updateElement(INFRA_GROUPS_KEY, group);
+  }
+
+  private getDefaultInfraGroup(): InfrastructureGroup {
+    let get_default_infra = (type: string) => {
+      const container = this.infrasContainer.get(type);
+      if (!container) return [];
+      return container.infras().filter((infra) => !infra.isUserCreated).map((infra) => infra.id.toString());
+    };
+
+    return {
+      id: 1,
+      nom: 'Infrastructures québécoises',
+      parc_eoliens: get_default_infra('eolienneparc'),
+      parc_solaires: get_default_infra('solaire'),
+      central_hydroelectriques: get_default_infra('hydro'),
+      central_thermique: get_default_infra('thermique'),
+      central_nucleaire: get_default_infra('nucleaire'),
+    };
   }
 }
