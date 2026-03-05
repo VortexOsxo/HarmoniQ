@@ -1,0 +1,149 @@
+/* ── Panel shell ─────────────────────────────────────────────────────────── */
+.co2-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  padding: 16px 14px;
+  background: #fff;
+  border-left: 1px solid #e8e8e8;
+  overflow-y: auto;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 18px;
+  color: #5c9fd6;
+  margin-top: 2px;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.header-subtitle {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ── Total card ──────────────────────────────────────────────────────────── */
+.total-card {
+  position: relative;
+  background: linear-gradient(135deg, #e25c5c 0%, #c94040 100%);
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 3px 10px rgba(194, 64, 64, 0.3);
+  overflow: hidden;
+}
+
+.total-label {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.total-value {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 4px 0 2px;
+}
+
+.total-unit {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.total-icon {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  font-size: 28px;
+  opacity: 0.2;
+}
+
+/* ── Sources section ─────────────────────────────────────────────────────── */
+.sources-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sources-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #aaa;
+  letter-spacing: 0.6px;
+}
+
+.source-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.source-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.source-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.source-percent {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+}
+
+.source-meta {
+  font-size: 11px;
+  color: #999;
+  margin-left: 16px;
+}
+
+.bar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+  height: 5px;
+  width: 100%;
+  overflow: hidden;
+  margin: 2px 0;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.source-co2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #444;
+  margin-left: 16px;
+}
