@@ -1,0 +1,74 @@
+<div class="sankey-container" #sankeyContainer>
+
+  <!-- SVG ribbon overlay (pointer-events: none so cards remain interactive) -->
+  <svg class="sankey-svg"
+       [attr.width]="svgWidth"
+       [attr.height]="svgHeight"
+       xmlns="http://www.w3.org/2000/svg">
+    <path
+      *ngFor="let flow of computedFlows"
+      [attr.d]="flow.path"
+      [attr.fill]="flow.color"
+      fill-opacity="0.45"
+      stroke="none"
+    />
+  </svg>
+
+  <!-- ── Column 1 : Demande ───────────────────────────────────────────── -->
+  <div class="sankey-column demand-column">
+    <div class="column-header">1. Demande</div>
+    <div class="column-nodes">
+      <div
+        *ngFor="let node of data.demandNodes"
+        #demandNodeEl
+        class="node-card"
+        [style.background-color]="node.color"
+      >
+        <i class="fa-solid {{ node.icon }} node-icon"></i>
+        <div class="node-info">
+          <div class="node-label">{{ node.label }}</div>
+          <div class="node-value">{{ formatMW(node.value) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- gap filled by CSS grid / flex -->
+  <div class="sankey-gap"></div>
+
+  <!-- ── Column 2 : Production ───────────────────────────────────────── -->
+  <div class="sankey-column production-column">
+    <div class="column-header">2. Production</div>
+    <div class="column-nodes">
+      <div
+        *ngFor="let node of data.productionNodes"
+        #prodNodeEl
+        class="node-card"
+        [style.background-color]="node.color"
+      >
+        <i class="fa-solid {{ node.icon }} node-icon"></i>
+        <div class="node-info">
+          <div class="node-label">{{ node.label }}</div>
+          <div class="node-value">{{ formatMW(node.value) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- gap filled by CSS grid / flex -->
+  <div class="sankey-gap"></div>
+
+  <!-- ── Column 3 : Impact CO₂ ──────────────────────────────────────── -->
+  <div class="sankey-column co2-column">
+    <div class="column-header">3. Impact CO<sub>2</sub></div>
+    <div class="column-nodes co2-nodes">
+      <div #co2NodeEl class="co2-total-card">
+        <i class="fa-solid fa-cloud co2-cloud-icon"></i>
+        <div class="co2-label">CO<sub>2</sub> Total Émis</div>
+        <div class="co2-value">{{ totalCo2 | number:'1.0-0' }}</div>
+        <div class="co2-unit">tonnes CO<sub>2</sub>/h</div>
+      </div>
+    </div>
+  </div>
+
+</div>

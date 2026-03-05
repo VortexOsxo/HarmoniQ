@@ -1,0 +1,49 @@
+<div class="co2-panel">
+
+  <!-- Header -->
+  <div class="panel-header">
+    <i class="fa-solid fa-chart-bar header-icon"></i>
+    <div class="header-text">
+      <div class="header-title">Détails CO<sub>2</sub></div>
+      <div class="header-subtitle">Émissions par source de production</div>
+    </div>
+  </div>
+
+  <!-- Total emissions card -->
+  <div class="total-card">
+    <div class="total-label">Total Émissions</div>
+    <div class="total-value">{{ formatCo2(data.totalEmissions) }}</div>
+    <div class="total-unit">tonnes CO<sub>2</sub> / heure</div>
+    <i class="fa-solid fa-cloud total-icon"></i>
+  </div>
+
+  <!-- Per-source breakdown -->
+  <div class="sources-section">
+    <div class="sources-title">CONTRIBUTION PAR SOURCE</div>
+
+    <div *ngFor="let src of data.sources" class="source-row">
+      <!-- Name + meta -->
+      <div class="source-header">
+        <span class="source-dot" [style.background-color]="src.color"></span>
+        <span class="source-name">{{ src.name }}</span>
+        <span class="source-percent">{{ formatPercent(src.percentage) }}</span>
+      </div>
+      <div class="source-meta">
+        {{ src.productionMW | number:'1.0-0' }} MW &middot; {{ src.co2FactorKgMWh }} kg/MWh
+      </div>
+
+      <!-- Progress bar -->
+      <div class="bar-track">
+        <div
+          class="bar-fill"
+          [style.width.%]="src.percentage"
+          [style.background-color]="src.color"
+        ></div>
+      </div>
+
+      <!-- CO₂ value -->
+      <div class="source-co2">{{ formatCo2(src.totalCo2Tph) }} t CO<sub>2</sub>/h</div>
+    </div>
+  </div>
+
+</div>
