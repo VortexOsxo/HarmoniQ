@@ -172983,7 +172983,7 @@ var ScenarioSelector = class _ScenarioSelector {
       \u0275\u0275advance();
       \u0275\u0275property("ngIf", ctx.selectedScenario);
     }
-  }, dependencies: [CommonModule, NgForOf, NgIf, FormsModule, NgSelectOption, \u0275NgSelectMultipleOption, SelectControlValueAccessor, NgControlStatus, NgModel, DatePipe], styles: ["\n\n.container[_ngcontent-%COMP%] {\n  padding: 1em;\n  height: 100%;\n}\n/*# sourceMappingURL=scenario-selector.css.map */"] });
+  }, dependencies: [CommonModule, NgForOf, NgIf, FormsModule, NgSelectOption, \u0275NgSelectMultipleOption, SelectControlValueAccessor, NgControlStatus, NgModel, DatePipe], styles: ["\n\n.container[_ngcontent-%COMP%] {\n  padding: 1em;\n  height: 100%;\n}\nselect.form-select[_ngcontent-%COMP%] {\n  min-width: 140px;\n}\n/*# sourceMappingURL=scenario-selector.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(ScenarioSelector, [{
@@ -173037,7 +173037,7 @@ var ScenarioSelector = class _ScenarioSelector {
         </div>
     </div>
 
-</div>`, styles: ["/* src/app/components/scenario/scenario-selector/scenario-selector.css */\n.container {\n  padding: 1em;\n  height: 100%;\n}\n/*# sourceMappingURL=scenario-selector.css.map */\n"] }]
+</div>`, styles: ["/* src/app/components/scenario/scenario-selector/scenario-selector.css */\n.container {\n  padding: 1em;\n  height: 100%;\n}\nselect.form-select {\n  min-width: 140px;\n}\n/*# sourceMappingURL=scenario-selector.css.map */\n"] }]
   }], () => [{ type: ScenariosService }, { type: NgbModal }], null);
 })();
 (() => {
@@ -174226,12 +174226,12 @@ var ScenarioTemporalDemandGraph = class _ScenarioTemporalDemandGraph {
       \u0275\u0275advance();
       \u0275\u0275property("ngIf", ctx.hasExportableData());
     }
-  }, dependencies: [CommonModule, NgIf], styles: ["\n\n.download-csv-btn[_ngcontent-%COMP%] {\n  top: 10px;\n  right: 10px;\n  z-index: 1000;\n}\n/*# sourceMappingURL=scenario-temporal-demand-graph.css.map */"] });
+  }, dependencies: [CommonModule, NgIf], styles: ["\n\n.download-csv-btn[_ngcontent-%COMP%] {\n  bottom: 40px;\n  left: 10px;\n  z-index: 1000;\n}\n/*# sourceMappingURL=scenario-temporal-demand-graph.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(ScenarioTemporalDemandGraph, [{
     type: Component,
-    args: [{ selector: "app-scenario-temporal-demand-graph", imports: [CommonModule], template: '<p *ngIf=" graphState()===GraphState.Unavailable">Choisis un sc\xE9nario pour voir des donn\xE9es</p>\n<p *ngIf="graphState() === GraphState.Loading">Chargement des donn\xE9es...</p>\n<p *ngIf="graphState() === GraphState.Displayable"> Graphique du scenario: {{selectedScenario()?.nom}}</p>\n\n<div id="{{config.TEMPORAL_DEMANDE_PRODUCTION_ID}}" class="h-100 w-100 position-relative">\n    <button *ngIf="hasExportableData()" class="btn btn-primary position-absolute download-csv-btn"\n        (click)="downloadCSV()" title="T\xE9l\xE9charger les donn\xE9es en CSV">\n        <i class="bi bi-download me-1"></i>\n        T\xE9l\xE9charger CSV\n    </button>\n</div>', styles: ["/* src/app/components/scenario/scenario-temporal-demand-graph/scenario-temporal-demand-graph.css */\n.download-csv-btn {\n  top: 10px;\n  right: 10px;\n  z-index: 1000;\n}\n/*# sourceMappingURL=scenario-temporal-demand-graph.css.map */\n"] }]
+    args: [{ selector: "app-scenario-temporal-demand-graph", imports: [CommonModule], template: '<p *ngIf=" graphState()===GraphState.Unavailable">Choisis un sc\xE9nario pour voir des donn\xE9es</p>\n<p *ngIf="graphState() === GraphState.Loading">Chargement des donn\xE9es...</p>\n<p *ngIf="graphState() === GraphState.Displayable"> Graphique du scenario: {{selectedScenario()?.nom}}</p>\n\n<div id="{{config.TEMPORAL_DEMANDE_PRODUCTION_ID}}" class="h-100 w-100 position-relative">\n    <button *ngIf="hasExportableData()" class="btn btn-primary position-absolute download-csv-btn"\n        (click)="downloadCSV()" title="T\xE9l\xE9charger les donn\xE9es en CSV">\n        <i class="bi bi-download me-1"></i>\n        T\xE9l\xE9charger CSV\n    </button>\n</div>', styles: ["/* src/app/components/scenario/scenario-temporal-demand-graph/scenario-temporal-demand-graph.css */\n.download-csv-btn {\n  bottom: 40px;\n  left: 10px;\n  z-index: 1000;\n}\n/*# sourceMappingURL=scenario-temporal-demand-graph.css.map */\n"] }]
   }], () => [{ type: SimulationService }, { type: DemandeTemporalGraphService }, { type: ScenariosService }], null);
 })();
 (() => {
@@ -174356,28 +174356,17 @@ var QuebecMap = class _QuebecMap {
   static \u0275fac = function QuebecMap_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _QuebecMap)(\u0275\u0275directiveInject(MapService), \u0275\u0275directiveInject(ProtectedAreasService));
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _QuebecMap, selectors: [["app-quebec-map"]], decls: 13, vars: 18, consts: [["id", "map", 2, "height", "700px", "width", "100%"], [1, "map-overlay-layers", "card", "p-2", "m-4"], [1, "btn", "btn-sm", 3, "click"], [1, "bi"], [1, "map-overlay", "card", "p-2", "m-4"], ["src", "/icons/barrage.png", "infraNom", "Barrage Hydro-\xC9lectrique", "type", "Hydro", "route", "hydro", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/eolienne.png", "infraNom", "Parc \xC9olien", "type", "EolienneParc", "route", "eolienneparc", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/solaire.png", "infraNom", "Parc Solaire", "type", "Solaire", "route", "solaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/thermique.png", "infraNom", "Parc Thermique", "type", "Thermique", "route", "thermique", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/nucelaire.png", "infraNom", "Parc Nucl\xE9aire", "type", "Nucleaire", "route", "nucleaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"]], template: function QuebecMap_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _QuebecMap, selectors: [["app-quebec-map"]], decls: 9, vars: 10, consts: [["id", "map", 2, "height", "100%", "width", "100%"], [1, "map-overlay", "card", "p-2", "m-4"], ["src", "/icons/barrage.png", "infraNom", "Barrage Hydro-\xC9lectrique", "type", "Hydro", "route", "hydro", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/eolienne.png", "infraNom", "Parc \xC9olien", "type", "EolienneParc", "route", "eolienneparc", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/solaire.png", "infraNom", "Parc Solaire", "type", "Solaire", "route", "solaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/thermique.png", "infraNom", "Parc Thermique", "type", "Thermique", "route", "thermique", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"], ["src", "/icons/nucelaire.png", "infraNom", "Parc Nucl\xE9aire", "type", "Nucleaire", "route", "nucleaire", "draggable", "true", "placement", "top", 1, "icon-draggable", 3, "ngbTooltip"]], template: function QuebecMap_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275element(0, "div", 0);
-      \u0275\u0275elementStart(1, "div", 1)(2, "button", 2);
-      \u0275\u0275listener("click", function QuebecMap_Template_button_click_2_listener() {
-        return ctx.protectedAreasService.toggleVisibility();
-      });
-      \u0275\u0275element(3, "i", 3);
-      \u0275\u0275text(4, " Aires prot\xE9g\xE9es ");
-      \u0275\u0275elementEnd()();
-      \u0275\u0275elementStart(5, "div", 4)(6, "p");
-      \u0275\u0275text(7, "Ajouter infra fictive :");
+      \u0275\u0275elementStart(1, "div", 1)(2, "p");
+      \u0275\u0275text(3, "Ajouter infrastructure :");
       \u0275\u0275elementEnd();
-      \u0275\u0275element(8, "img", 5)(9, "img", 6)(10, "img", 7)(11, "img", 8)(12, "img", 9);
+      \u0275\u0275element(4, "img", 2)(5, "img", 3)(6, "img", 4)(7, "img", 5)(8, "img", 6);
       \u0275\u0275elementEnd();
     }
     if (rf & 2) {
-      \u0275\u0275advance(2);
-      \u0275\u0275classProp("btn-success", ctx.protectedAreasService.isVisible())("btn-outline-secondary", !ctx.protectedAreasService.isVisible());
-      \u0275\u0275advance();
-      \u0275\u0275classProp("bi-eye", ctx.protectedAreasService.isVisible())("bi-eye-slash", !ctx.protectedAreasService.isVisible());
-      \u0275\u0275advance(5);
+      \u0275\u0275advance(4);
       \u0275\u0275property("ngbTooltip", \u0275\u0275interpolate(ctx.toolTipText));
       \u0275\u0275advance();
       \u0275\u0275property("ngbTooltip", \u0275\u0275interpolate(ctx.toolTipText));
@@ -174388,12 +174377,12 @@ var QuebecMap = class _QuebecMap {
       \u0275\u0275advance();
       \u0275\u0275property("ngbTooltip", \u0275\u0275interpolate(ctx.toolTipText));
     }
-  }, dependencies: [NgbTooltipModule, NgbTooltip], styles: ["\n\n[_nghost-%COMP%] {\n  display: block;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\ndiv.map-overlay-layers[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 10px;\n  left: 50px;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  z-index: 1000;\n}\ndiv.map-overlay-layers[_ngcontent-%COMP%]   button[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  white-space: nowrap;\n}\ndiv.map-overlay[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   p[_ngcontent-%COMP%] {\n  margin: 0 0.25em;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   img.icon-draggable[_ngcontent-%COMP%] {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=quebec-map.css.map */"] });
+  }, dependencies: [NgbTooltipModule, NgbTooltip], styles: ["\n\n[_nghost-%COMP%] {\n  display: block;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n[_nghost-%COMP%]     .leaflet-top.leaflet-left {\n  top: 60px;\n}\n.map-legend[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 20px;\n  left: 16px;\n  z-index: 1000;\n  background: #fff;\n  border-radius: 8px;\n  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);\n  font-size: 0.82rem;\n  min-width: 160px;\n  max-width: 200px;\n}\n.legend-header[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 10px 14px 6px;\n  font-size: 0.9rem;\n}\n.legend-body[_ngcontent-%COMP%] {\n  padding: 4px 14px 12px;\n}\n.legend-section[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n.legend-item[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  color: #444;\n}\n.legend-dot[_ngcontent-%COMP%] {\n  width: 12px;\n  height: 12px;\n  border-radius: 50%;\n  flex-shrink: 0;\n}\n.legend-line[_ngcontent-%COMP%] {\n  width: 22px;\n  height: 3px;\n  border-radius: 2px;\n  flex-shrink: 0;\n}\n.legend-divider[_ngcontent-%COMP%] {\n  margin: 6px 0;\n  border-color: #e0e0e0;\n}\ndiv.map-overlay[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   p[_ngcontent-%COMP%] {\n  margin: 0 0.25em;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   img.icon-draggable[_ngcontent-%COMP%] {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=quebec-map.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(QuebecMap, [{
     type: Component,
-    args: [{ selector: "app-quebec-map", imports: [NgbTooltipModule], template: '<div id="map" style="height: 700px; width: 100%;"></div>\n\n<div class="map-overlay-layers card p-2 m-4">\n    <button class="btn btn-sm" [class.btn-success]="protectedAreasService.isVisible()"\n        [class.btn-outline-secondary]="!protectedAreasService.isVisible()"\n        (click)="protectedAreasService.toggleVisibility()">\n        <i class="bi" [class.bi-eye]="protectedAreasService.isVisible()"\n            [class.bi-eye-slash]="!protectedAreasService.isVisible()"></i>\n        Aires prot\xE9g\xE9es\n    </button>\n    <!-- \xC0 changer apr\xE8s et rajouter l\xE9gende -->\n</div>\n\n<div class="map-overlay card p-2 m-4">\n    <p>Ajouter infra fictive :</p>\n\n    <img src="/icons/barrage.png" infraNom="Barrage Hydro-\xC9lectrique" class="icon-draggable" type="Hydro" route="hydro"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/eolienne.png" infraNom="Parc \xC9olien" class="icon-draggable" type="EolienneParc"\n        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="Solaire" route="solaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="Thermique" route="thermique"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/nucelaire.png" infraNom="Parc Nucl\xE9aire" class="icon-draggable" type="Nucleaire" route="nucleaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n</div>', styles: ["/* src/app/components/quebec-map/quebec-map.css */\n:host {\n  display: block;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\ndiv.map-overlay-layers {\n  position: absolute;\n  top: 10px;\n  left: 50px;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  z-index: 1000;\n}\ndiv.map-overlay-layers button {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  white-space: nowrap;\n}\ndiv.map-overlay {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay p {\n  margin: 0 0.25em;\n}\ndiv.map-overlay img.icon-draggable {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=quebec-map.css.map */\n"] }]
+    args: [{ selector: "app-quebec-map", imports: [NgbTooltipModule], template: '<div id="map" style="height: 100%; width: 100%;"></div>\n\n<!-- Legend (bottom-left)\n<div class="map-legend card">\n    <div class="legend-header">\n        <i class="fa-solid fa-circle-info"></i>\n        <strong>L\xE9gende</strong>\n    </div>\n    <div class="legend-body">\n        <div class="legend-section">\n            <div class="legend-item">\n                <span class="legend-dot" style="background: #3498db;"></span>\n                Hydraulique\n            </div>\n            <div class="legend-item">\n                <span class="legend-dot" style="background: #1abc9c;"></span>\n                \xC9olien\n            </div>\n            <div class="legend-item">\n                <span class="legend-dot" style="background: #f39c12;"></span>\n                Solaire\n            </div>\n            <div class="legend-item">\n                <span class="legend-dot" style="background: #e74c3c;"></span>\n                Thermique\n            </div>\n            <div class="legend-item">\n                <span class="legend-dot" style="background: #9b59b6;"></span>\n                Nucl\xE9aire\n            </div>\n            <div class="legend-item">\n                <span class="legend-dot" style="background: #95a5a6;"></span>\n                Sous-station\n            </div>\n        </div>\n        <hr class="legend-divider">\n        <div class="legend-section">\n            <div class="legend-item">\n                <span class="legend-line" style="background: #e74c3c;"></span>\n                Haute tension\n            </div>\n            <div class="legend-item">\n                <span class="legend-line" style="background: #f39c12;"></span>\n                Moyenne tension\n            </div>\n            <div class="legend-item">\n                <span class="legend-line" style="background: #27ae60;"></span>\n                Basse tension\n            </div>\n        </div>\n    </div>\n</div> -->\n\n<!-- Ajouter infrastructure overlay (bottom-right) -->\n<div class="map-overlay card p-2 m-4">\n    <p>Ajouter infrastructure :</p>\n\n    <img src="/icons/barrage.png" infraNom="Barrage Hydro-\xC9lectrique" class="icon-draggable" type="Hydro" route="hydro"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/eolienne.png" infraNom="Parc \xC9olien" class="icon-draggable" type="EolienneParc"\n        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="Solaire" route="solaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="Thermique" route="thermique"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n\n    <img src="/icons/nucelaire.png" infraNom="Parc Nucl\xE9aire" class="icon-draggable" type="Nucleaire" route="nucleaire"\n        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />\n</div>', styles: ["/* src/app/components/quebec-map/quebec-map.css */\n:host {\n  display: block;\n  width: 100%;\n  height: 100%;\n  position: relative;\n  overflow: hidden;\n}\n:host ::ng-deep .leaflet-top.leaflet-left {\n  top: 60px;\n}\n.map-legend {\n  position: absolute;\n  bottom: 20px;\n  left: 16px;\n  z-index: 1000;\n  background: #fff;\n  border-radius: 8px;\n  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);\n  font-size: 0.82rem;\n  min-width: 160px;\n  max-width: 200px;\n}\n.legend-header {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 10px 14px 6px;\n  font-size: 0.9rem;\n}\n.legend-body {\n  padding: 4px 14px 12px;\n}\n.legend-section {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n.legend-item {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  color: #444;\n}\n.legend-dot {\n  width: 12px;\n  height: 12px;\n  border-radius: 50%;\n  flex-shrink: 0;\n}\n.legend-line {\n  width: 22px;\n  height: 3px;\n  border-radius: 2px;\n  flex-shrink: 0;\n}\n.legend-divider {\n  margin: 6px 0;\n  border-color: #e0e0e0;\n}\ndiv.map-overlay {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay p {\n  margin: 0 0.25em;\n}\ndiv.map-overlay img.icon-draggable {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=quebec-map.css.map */\n"] }]
   }], () => [{ type: MapService }, { type: ProtectedAreasService }], null);
 })();
 (() => {
@@ -174401,138 +174390,264 @@ var QuebecMap = class _QuebecMap {
 })();
 
 // src/app/components/simulation/simulation-results/simulation-results.ts
-function SimulationResults_ng_template_6_Template(rf, ctx) {
+function SimulationResults_div_11_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275element(0, "app-quebec-map", 7);
+    const _r1 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 9)(1, "button", 10);
+    \u0275\u0275listener("click", function SimulationResults_div_11_Template_button_click_1_listener() {
+      \u0275\u0275restoreView(_r1);
+      const ctx_r1 = \u0275\u0275nextContext();
+      return \u0275\u0275resetView(ctx_r1.protectedAreasService.toggleVisibility());
+    });
+    \u0275\u0275element(2, "i", 11);
+    \u0275\u0275text(3, " Aires prot\xE9g\xE9es ");
+    \u0275\u0275elementEnd()();
+  }
+  if (rf & 2) {
+    const ctx_r1 = \u0275\u0275nextContext();
+    \u0275\u0275advance();
+    \u0275\u0275classProp("btn-success", ctx_r1.protectedAreasService.isVisible())("btn-outline-secondary", !ctx_r1.protectedAreasService.isVisible());
+    \u0275\u0275advance();
+    \u0275\u0275classProp("bi-eye", ctx_r1.protectedAreasService.isVisible())("bi-eye-slash", !ctx_r1.protectedAreasService.isVisible());
   }
 }
-function SimulationResults_ng_template_10_Template(rf, ctx) {
+function SimulationResults_div_13_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275element(0, "app-scenario-demand-prod-sankey");
+    \u0275\u0275elementStart(0, "div", 12);
+    \u0275\u0275element(1, "app-quebec-map", 13);
+    \u0275\u0275elementEnd();
   }
 }
-function SimulationResults_ng_template_14_Template(rf, ctx) {
+function SimulationResults_div_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275element(0, "app-scenario-temporal-demand-graph");
+    \u0275\u0275elementStart(0, "div", 12);
+    \u0275\u0275element(1, "app-scenario-demand-prod-sankey");
+    \u0275\u0275elementEnd();
+  }
+}
+function SimulationResults_div_15_Template(rf, ctx) {
+  if (rf & 1) {
+    \u0275\u0275elementStart(0, "div", 12);
+    \u0275\u0275element(1, "app-scenario-temporal-demand-graph");
+    \u0275\u0275elementEnd();
   }
 }
 var SimulationResults = class _SimulationResults {
-  mapService;
+  protectedAreasService;
   activeTab = "map";
-  constructor(mapService) {
-    this.mapService = mapService;
+  constructor(protectedAreasService) {
+    this.protectedAreasService = protectedAreasService;
   }
-  onTabChange(event) {
-    if (event.nextId === "map") {
-      this.mapService.onMapLoaded();
-    }
+  switchTab(tabId) {
+    this.activeTab = tabId;
   }
   static \u0275fac = function SimulationResults_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _SimulationResults)(\u0275\u0275directiveInject(MapService));
+    return new (__ngFactoryType__ || _SimulationResults)(\u0275\u0275directiveInject(ProtectedAreasService));
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SimulationResults, selectors: [["app-simulation-results"]], decls: 16, vars: 5, consts: [["nav", "ngbNav"], ["id", "plots", 1, "d-flex", "flex-column"], ["ngbNav", "", 1, "nav", "nav-tabs", 3, "activeIdChange", "navChange", "activeId"], [3, "ngbNavItem"], ["ngbNavLink", ""], ["ngbNavContent", ""], [1, "flex-grow-1", "w-100", 3, "ngbNavOutlet"], [1, "d-block", "h-100", "w-100"]], template: function SimulationResults_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SimulationResults, selectors: [["app-simulation-results"]], decls: 16, vars: 10, consts: [["id", "plots"], [1, "view-buttons"], [1, "view-btn", 3, "click"], [1, "fa-solid", "fa-map"], [1, "fa-solid", "fa-chart-bar"], [1, "fa-solid", "fa-clock"], ["class", "protected-areas-btn-container", 4, "ngIf"], [1, "view-content"], ["class", "view-pane", 4, "ngIf"], [1, "protected-areas-btn-container"], [1, "btn", "btn-sm", "protected-areas-btn", 3, "click"], [1, "bi"], [1, "view-pane"], [1, "d-block", "h-100", "w-100"]], template: function SimulationResults_Template(rf, ctx) {
     if (rf & 1) {
-      const _r1 = \u0275\u0275getCurrentView();
-      \u0275\u0275elementStart(0, "div", 1)(1, "ul", 2, 0);
-      \u0275\u0275twoWayListener("activeIdChange", function SimulationResults_Template_ul_activeIdChange_1_listener($event) {
-        \u0275\u0275restoreView(_r1);
-        \u0275\u0275twoWayBindingSet(ctx.activeTab, $event) || (ctx.activeTab = $event);
-        return \u0275\u0275resetView($event);
+      \u0275\u0275elementStart(0, "div", 0)(1, "div", 1)(2, "button", 2);
+      \u0275\u0275listener("click", function SimulationResults_Template_button_click_2_listener() {
+        return ctx.switchTab("map");
       });
-      \u0275\u0275listener("navChange", function SimulationResults_Template_ul_navChange_1_listener($event) {
-        \u0275\u0275restoreView(_r1);
-        return \u0275\u0275resetView(ctx.onTabChange($event));
+      \u0275\u0275element(3, "i", 3);
+      \u0275\u0275text(4, " Carte ");
+      \u0275\u0275elementEnd();
+      \u0275\u0275elementStart(5, "button", 2);
+      \u0275\u0275listener("click", function SimulationResults_Template_button_click_5_listener() {
+        return ctx.switchTab("sankey");
       });
-      \u0275\u0275elementStart(3, "li", 3)(4, "button", 4);
-      \u0275\u0275text(5, "Carte");
+      \u0275\u0275element(6, "i", 4);
+      \u0275\u0275text(7, " Production ");
       \u0275\u0275elementEnd();
-      \u0275\u0275template(6, SimulationResults_ng_template_6_Template, 1, 0, "ng-template", 5);
-      \u0275\u0275elementEnd();
-      \u0275\u0275elementStart(7, "li", 3)(8, "button", 4);
-      \u0275\u0275text(9, "Demande / Production");
-      \u0275\u0275elementEnd();
-      \u0275\u0275template(10, SimulationResults_ng_template_10_Template, 1, 0, "ng-template", 5);
-      \u0275\u0275elementEnd();
-      \u0275\u0275elementStart(11, "li", 3)(12, "button", 4);
-      \u0275\u0275text(13, "Donn\xE9es temporelles");
-      \u0275\u0275elementEnd();
-      \u0275\u0275template(14, SimulationResults_ng_template_14_Template, 1, 0, "ng-template", 5);
+      \u0275\u0275elementStart(8, "button", 2);
+      \u0275\u0275listener("click", function SimulationResults_Template_button_click_8_listener() {
+        return ctx.switchTab("temporal");
+      });
+      \u0275\u0275element(9, "i", 5);
+      \u0275\u0275text(10, " Temporel ");
       \u0275\u0275elementEnd()();
-      \u0275\u0275element(15, "div", 6);
-      \u0275\u0275elementEnd();
+      \u0275\u0275template(11, SimulationResults_div_11_Template, 4, 8, "div", 6);
+      \u0275\u0275elementStart(12, "div", 7);
+      \u0275\u0275template(13, SimulationResults_div_13_Template, 2, 0, "div", 8)(14, SimulationResults_div_14_Template, 2, 0, "div", 8)(15, SimulationResults_div_15_Template, 2, 0, "div", 8);
+      \u0275\u0275elementEnd()();
     }
     if (rf & 2) {
-      const nav_r2 = \u0275\u0275reference(2);
-      \u0275\u0275advance();
-      \u0275\u0275twoWayProperty("activeId", ctx.activeTab);
       \u0275\u0275advance(2);
-      \u0275\u0275property("ngbNavItem", "map");
-      \u0275\u0275advance(4);
-      \u0275\u0275property("ngbNavItem", "sankey");
-      \u0275\u0275advance(4);
-      \u0275\u0275property("ngbNavItem", "temporal");
-      \u0275\u0275advance(4);
-      \u0275\u0275property("ngbNavOutlet", nav_r2);
+      \u0275\u0275classProp("active", ctx.activeTab === "map");
+      \u0275\u0275advance(3);
+      \u0275\u0275classProp("active", ctx.activeTab === "sankey");
+      \u0275\u0275advance(3);
+      \u0275\u0275classProp("active", ctx.activeTab === "temporal");
+      \u0275\u0275advance(3);
+      \u0275\u0275property("ngIf", ctx.activeTab === "map");
+      \u0275\u0275advance(2);
+      \u0275\u0275property("ngIf", ctx.activeTab === "map");
+      \u0275\u0275advance();
+      \u0275\u0275property("ngIf", ctx.activeTab === "sankey");
+      \u0275\u0275advance();
+      \u0275\u0275property("ngIf", ctx.activeTab === "temporal");
     }
-  }, dependencies: [NgbNavModule, NgbNavContent, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLinkButton, NgbNavLinkBase, NgbNavOutlet, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap], styles: ["\n\ndiv#plots[_ngcontent-%COMP%] {\n  padding: 0;\n}\ndiv.map-overlay[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   p[_ngcontent-%COMP%] {\n  margin: 0 0.25em;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   img.icon-draggable[_ngcontent-%COMP%] {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=simulation-results.css.map */"] });
+  }, dependencies: [CommonModule, NgIf, NgbNavModule, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap], styles: ["\n\ndiv#plots[_ngcontent-%COMP%] {\n  position: relative;\n  width: 100%;\n  height: 100%;\n  overflow: hidden;\n}\n.view-buttons[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 16px;\n  right: 16px;\n  z-index: 1100;\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  min-width: 140px;\n}\n.view-btn[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 10px 16px;\n  border: 1px solid #ddd;\n  background: #fff;\n  color: #555;\n  font-size: 0.9rem;\n  font-weight: 500;\n  cursor: pointer;\n  transition: all 0.2s ease;\n  border-radius: 6px;\n}\n.view-btn[_ngcontent-%COMP%]:first-child {\n  border-radius: 8px 8px 6px 6px;\n}\n.view-btn[_ngcontent-%COMP%]:last-child {\n  border-radius: 6px 6px 8px 8px;\n}\n.view-btn[_ngcontent-%COMP%]:hover {\n  background: #f5f5f5;\n}\n.view-btn.active[_ngcontent-%COMP%] {\n  background: #27ae60;\n  color: #fff;\n  border-color: #27ae60;\n  font-weight: 600;\n  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);\n}\n.view-btn[_ngcontent-%COMP%]   i[_ngcontent-%COMP%] {\n  width: 18px;\n  text-align: center;\n}\n.protected-areas-btn-container[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 170px;\n  right: 16px;\n  z-index: 1100;\n}\n.protected-areas-btn[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  white-space: nowrap;\n  padding: 10px 16px;\n  border-radius: 6px;\n  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);\n  font-size: 0.9rem;\n  font-weight: 500;\n  background: #fff !important;\n  color: #555 !important;\n  border: 1px solid #ddd !important;\n}\n.protected-areas-btn.btn-success[_ngcontent-%COMP%] {\n  background: #27ae60 !important;\n  color: #fff !important;\n  border-color: #27ae60 !important;\n  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);\n}\n.view-content[_ngcontent-%COMP%] {\n  width: 100%;\n  height: 100%;\n}\n.view-pane[_ngcontent-%COMP%] {\n  width: 100%;\n  height: 100%;\n}\napp-scenario-temporal-demand-graph[_ngcontent-%COMP%], \napp-scenario-demand-prod-sankey[_ngcontent-%COMP%] {\n  display: block;\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n  padding: 10px 180px 10px 220px;\n}\ndiv.map-overlay[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   p[_ngcontent-%COMP%] {\n  margin: 0 0.25em;\n}\ndiv.map-overlay[_ngcontent-%COMP%]   img.icon-draggable[_ngcontent-%COMP%] {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=simulation-results.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(SimulationResults, [{
     type: Component,
-    args: [{ selector: "app-simulation-results", imports: [NgbNavModule, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap], template: `<div id="plots" class="d-flex flex-column">
-    <ul ngbNav #nav="ngbNav" class="nav nav-tabs" [(activeId)]="activeTab" (navChange)="onTabChange($event)">
-        <li [ngbNavItem]="'map'">
-            <button ngbNavLink>Carte</button>
-            <ng-template ngbNavContent>
-                <app-quebec-map class="d-block h-100 w-100" />
-            </ng-template>
-        </li>
+    args: [{ selector: "app-simulation-results", imports: [CommonModule, NgbNavModule, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap], template: `<div id="plots">
+    <!-- Top-right floating view buttons -->
+    <div class="view-buttons">
+        <button class="view-btn" [class.active]="activeTab === 'map'" (click)="switchTab('map')">
+            <i class="fa-solid fa-map"></i>
+            Carte
+        </button>
+        <button class="view-btn" [class.active]="activeTab === 'sankey'" (click)="switchTab('sankey')">
+            <i class="fa-solid fa-chart-bar"></i>
+            Production
+        </button>
+        <button class="view-btn" [class.active]="activeTab === 'temporal'" (click)="switchTab('temporal')">
+            <i class="fa-solid fa-clock"></i>
+            Temporel
+        </button>
+    </div>
 
-        <li [ngbNavItem]="'sankey'">
-            <button ngbNavLink>Demande / Production</button>
-            <ng-template ngbNavContent>
-                <app-scenario-demand-prod-sankey />
-            </ng-template>
-        </li>
+    <!-- Aires prot\xE9g\xE9es button below view buttons -->
+    <div class="protected-areas-btn-container" *ngIf="activeTab === 'map'">
+        <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
+            [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
+            (click)="protectedAreasService.toggleVisibility()">
+            <i class="bi" [class.bi-eye]="protectedAreasService.isVisible()"
+                [class.bi-eye-slash]="!protectedAreasService.isVisible()"></i>
+            Aires prot\xE9g\xE9es
+        </button>
+    </div>
 
-        <li [ngbNavItem]="'temporal'">
-            <button ngbNavLink>Donn\xE9es temporelles</button>
-            <ng-template ngbNavContent>
-                <app-scenario-temporal-demand-graph />
-            </ng-template>
-        </li>
-    </ul>
-
-    <div [ngbNavOutlet]="nav" class="flex-grow-1 w-100"></div>
-</div>`, styles: ["/* src/app/components/simulation/simulation-results/simulation-results.css */\ndiv#plots {\n  padding: 0;\n}\ndiv.map-overlay {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay p {\n  margin: 0 0.25em;\n}\ndiv.map-overlay img.icon-draggable {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=simulation-results.css.map */\n"] }]
-  }], () => [{ type: MapService }], null);
+    <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
+    <div class="view-content">
+        <div *ngIf="activeTab === 'map'" class="view-pane">
+            <app-quebec-map class="d-block h-100 w-100" />
+        </div>
+        <div *ngIf="activeTab === 'sankey'" class="view-pane">
+            <app-scenario-demand-prod-sankey />
+        </div>
+        <div *ngIf="activeTab === 'temporal'" class="view-pane">
+            <app-scenario-temporal-demand-graph />
+        </div>
+    </div>
+</div>`, styles: ["/* src/app/components/simulation/simulation-results/simulation-results.css */\ndiv#plots {\n  position: relative;\n  width: 100%;\n  height: 100%;\n  overflow: hidden;\n}\n.view-buttons {\n  position: absolute;\n  top: 16px;\n  right: 16px;\n  z-index: 1100;\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  min-width: 140px;\n}\n.view-btn {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 10px 16px;\n  border: 1px solid #ddd;\n  background: #fff;\n  color: #555;\n  font-size: 0.9rem;\n  font-weight: 500;\n  cursor: pointer;\n  transition: all 0.2s ease;\n  border-radius: 6px;\n}\n.view-btn:first-child {\n  border-radius: 8px 8px 6px 6px;\n}\n.view-btn:last-child {\n  border-radius: 6px 6px 8px 8px;\n}\n.view-btn:hover {\n  background: #f5f5f5;\n}\n.view-btn.active {\n  background: #27ae60;\n  color: #fff;\n  border-color: #27ae60;\n  font-weight: 600;\n  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);\n}\n.view-btn i {\n  width: 18px;\n  text-align: center;\n}\n.protected-areas-btn-container {\n  position: absolute;\n  top: 170px;\n  right: 16px;\n  z-index: 1100;\n}\n.protected-areas-btn {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  white-space: nowrap;\n  padding: 10px 16px;\n  border-radius: 6px;\n  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);\n  font-size: 0.9rem;\n  font-weight: 500;\n  background: #fff !important;\n  color: #555 !important;\n  border: 1px solid #ddd !important;\n}\n.protected-areas-btn.btn-success {\n  background: #27ae60 !important;\n  color: #fff !important;\n  border-color: #27ae60 !important;\n  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);\n}\n.view-content {\n  width: 100%;\n  height: 100%;\n}\n.view-pane {\n  width: 100%;\n  height: 100%;\n}\napp-scenario-temporal-demand-graph,\napp-scenario-demand-prod-sankey {\n  display: block;\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n  padding: 10px 180px 10px 220px;\n}\ndiv.map-overlay {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  z-index: 1000;\n}\ndiv.map-overlay p {\n  margin: 0 0.25em;\n}\ndiv.map-overlay img.icon-draggable {\n  width: 2.5em;\n  height: 2.5em;\n  cursor: grab;\n}\n/*# sourceMappingURL=simulation-results.css.map */\n"] }]
+  }], () => [{ type: ProtectedAreasService }], null);
 })();
 (() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationResults, { className: "SimulationResults", filePath: "src/app/components/simulation/simulation-results/simulation-results.ts", lineNumber: 14 });
+  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationResults, { className: "SimulationResults", filePath: "src/app/components/simulation/simulation-results/simulation-results.ts", lineNumber: 16 });
 })();
 
 // src/app/pages/simulation-page/simulation-page.ts
+function SimulationPage_div_2_Template(rf, ctx) {
+  if (rf & 1) {
+    const _r1 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 12);
+    \u0275\u0275listener("click", function SimulationPage_div_2_Template_div_click_0_listener() {
+      \u0275\u0275restoreView(_r1);
+      const ctx_r1 = \u0275\u0275nextContext();
+      return \u0275\u0275resetView(ctx_r1.closeSourcesPanel());
+    });
+    \u0275\u0275elementEnd();
+  }
+}
 var SimulationPage = class _SimulationPage {
+  showSourcesPanel = false;
+  toggleSourcesPanel() {
+    this.showSourcesPanel = !this.showSourcesPanel;
+  }
+  closeSourcesPanel() {
+    this.showSourcesPanel = false;
+  }
   static \u0275fac = function SimulationPage_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _SimulationPage)();
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SimulationPage, selectors: [["app-simulation-page"]], decls: 7, vars: 0, consts: [["id", "main"], ["id", "dataModal", "tabindex", "-1", "aria-labelledby", "dataModalLabel", "aria-hidden", "true", 1, "modal", "fade"]], template: function SimulationPage_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SimulationPage, selectors: [["app-simulation-page"]], decls: 21, vars: 5, consts: [["id", "main"], ["class", "sources-backdrop", 3, "click", 4, "ngIf"], [1, "sources-toggle-btn", 3, "click"], [1, "fa-solid", "fa-bolt"], [1, "sources-panel"], [1, "sources-panel-header"], [1, "btn", "btn-sm", "btn-outline-secondary", "sources-close-btn", 3, "click"], [1, "fa-solid", "fa-xmark"], [1, "sources-panel-content"], [1, "panel-column", "panel-column-left"], [1, "panel-column", "panel-column-right"], ["id", "dataModal", "tabindex", "-1", "aria-labelledby", "dataModalLabel", "aria-hidden", "true", 1, "modal", "fade"], [1, "sources-backdrop", 3, "click"]], template: function SimulationPage_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275element(0, "app-navigation-bar");
       \u0275\u0275elementStart(1, "div", 0);
-      \u0275\u0275element(2, "app-simulation-launcher")(3, "app-scenario-selector")(4, "app-infrastructure-selector")(5, "app-simulation-results")(6, "div", 1);
+      \u0275\u0275template(2, SimulationPage_div_2_Template, 1, 0, "div", 1);
+      \u0275\u0275elementStart(3, "button", 2);
+      \u0275\u0275listener("click", function SimulationPage_Template_button_click_3_listener() {
+        return ctx.toggleSourcesPanel();
+      });
+      \u0275\u0275element(4, "i", 3);
+      \u0275\u0275text(5, " Sources d'\xC9nergie ");
+      \u0275\u0275elementEnd();
+      \u0275\u0275elementStart(6, "div", 4)(7, "div", 5)(8, "h5");
+      \u0275\u0275element(9, "i", 3);
+      \u0275\u0275text(10, " Sources d'\xC9nergie");
+      \u0275\u0275elementEnd();
+      \u0275\u0275elementStart(11, "button", 6);
+      \u0275\u0275listener("click", function SimulationPage_Template_button_click_11_listener() {
+        return ctx.closeSourcesPanel();
+      });
+      \u0275\u0275element(12, "i", 7);
+      \u0275\u0275elementEnd()();
+      \u0275\u0275elementStart(13, "div", 8)(14, "div", 9);
+      \u0275\u0275element(15, "app-simulation-launcher")(16, "app-scenario-selector");
+      \u0275\u0275elementEnd();
+      \u0275\u0275elementStart(17, "div", 10);
+      \u0275\u0275element(18, "app-infrastructure-selector");
+      \u0275\u0275elementEnd()()();
+      \u0275\u0275element(19, "app-simulation-results")(20, "div", 11);
       \u0275\u0275elementEnd();
     }
-  }, dependencies: [NavigationBar, SimulationLauncher, ScenarioSelector, InfrastructureSelector, SimulationResults], styles: ['\n\ndiv#main[_ngcontent-%COMP%] {\n  padding: 1em;\n  gap: 1rem;\n  height: calc(100vh - 5em);\n  display: grid;\n  grid-template-areas: "gestion  infra plot" "scenario infra plot";\n  grid-template-columns: 1fr 1fr 2fr;\n  grid-template-rows: auto 1fr;\n  overflow: hidden;\n}\n@media (max-width: 1250px) {\n  div#main[_ngcontent-%COMP%] {\n    grid-template-areas: "gestion     plot" "scenario    plot" "infra       plot" "infra       plot";\n    grid-template-columns: 1fr 1fr;\n    grid-template-rows: auto auto 1fr 2fr;\n  }\n  table#gestion-table[_ngcontent-%COMP%] {\n    display: none;\n  }\n}\n@media (max-width: 768px) {\n  div#main[_ngcontent-%COMP%] {\n    height: auto;\n    overflow: auto;\n    grid-template-areas: "gestion" "scenario" "infra" "choix-infra" "plot";\n    grid-template-columns: 1fr;\n    grid-template-rows: auto auto 1fr auto 1fr;\n  }\n}\napp-simulation-launcher[_ngcontent-%COMP%] {\n  grid-area: gestion;\n}\napp-infrastructure-selector[_ngcontent-%COMP%] {\n  grid-area: infra;\n}\napp-scenario-selector[_ngcontent-%COMP%] {\n  grid-area: scenario;\n}\napp-simulation-results[_ngcontent-%COMP%] {\n  grid-area: plot;\n}\napp-simulation-launcher[_ngcontent-%COMP%], \napp-infrastructure-selector[_ngcontent-%COMP%], \napp-scenario-selector[_ngcontent-%COMP%], \napp-simulation-results[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  min-height: 0;\n}\napp-simulation-launcher[_ngcontent-%COMP%]    > div[_ngcontent-%COMP%], \napp-infrastructure-selector[_ngcontent-%COMP%]    > div[_ngcontent-%COMP%], \napp-scenario-selector[_ngcontent-%COMP%]    > div[_ngcontent-%COMP%] {\n  flex: 1;\n  overflow: hidden;\n}\n/*# sourceMappingURL=simulation-page.css.map */'] });
+    if (rf & 2) {
+      \u0275\u0275advance(2);
+      \u0275\u0275property("ngIf", ctx.showSourcesPanel);
+      \u0275\u0275advance();
+      \u0275\u0275classProp("active", ctx.showSourcesPanel);
+      \u0275\u0275advance(3);
+      \u0275\u0275classProp("open", ctx.showSourcesPanel);
+    }
+  }, dependencies: [CommonModule, NgIf, NavigationBar, SimulationLauncher, ScenarioSelector, InfrastructureSelector, SimulationResults], styles: ["\n\ndiv#main[_ngcontent-%COMP%] {\n  height: calc(100vh - 5em);\n  position: relative;\n  overflow: hidden;\n}\n.sources-toggle-btn[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 16px;\n  left: 16px;\n  z-index: 1100;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 10px 18px;\n  background: #fff;\n  color: #333;\n  border: 1px solid #ddd;\n  border-radius: 8px;\n  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);\n  font-size: 0.95rem;\n  font-weight: 600;\n  cursor: pointer;\n  transition: all 0.2s ease;\n}\n.sources-toggle-btn[_ngcontent-%COMP%]:hover {\n  background: #f5f5f5;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);\n}\n.sources-toggle-btn.active[_ngcontent-%COMP%] {\n  background: #2c3e50;\n  color: #fff;\n  border-color: #2c3e50;\n}\n.sources-backdrop[_ngcontent-%COMP%] {\n  position: absolute;\n  inset: 0;\n  background: rgba(0, 0, 0, 0.3);\n  z-index: 1050;\n  cursor: pointer;\n}\n.sources-panel[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 0;\n  left: -800px;\n  width: 780px;\n  height: 100%;\n  z-index: 1200;\n  background: #fff;\n  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);\n  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n}\n.sources-panel.open[_ngcontent-%COMP%] {\n  left: 0;\n}\n.sources-panel-header[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 16px 20px;\n  background: #2c3e50;\n  color: #fff;\n  flex-shrink: 0;\n}\n.sources-panel-header[_ngcontent-%COMP%]   h5[_ngcontent-%COMP%] {\n  margin: 0;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n.sources-close-btn[_ngcontent-%COMP%] {\n  color: #fff !important;\n  border-color: rgba(255, 255, 255, 0.4) !important;\n}\n.sources-close-btn[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.15) !important;\n}\n.sources-panel-content[_ngcontent-%COMP%] {\n  flex: 1;\n  overflow-y: auto;\n  padding: 12px;\n  display: flex;\n  flex-direction: row;\n  gap: 12px;\n}\n.panel-column[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  gap: 12px;\n  min-width: 0;\n}\n.panel-column-left[_ngcontent-%COMP%] {\n  flex: 1;\n  overflow-y: auto;\n}\n.panel-column-right[_ngcontent-%COMP%] {\n  flex: 1;\n  overflow-y: auto;\n}\napp-simulation-results[_ngcontent-%COMP%] {\n  display: block;\n  width: 100%;\n  height: 100%;\n}\napp-simulation-launcher[_ngcontent-%COMP%], \napp-infrastructure-selector[_ngcontent-%COMP%], \napp-scenario-selector[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  min-height: 0;\n}\napp-infrastructure-selector[_ngcontent-%COMP%] {\n  flex: 1;\n  min-height: 200px;\n}\n@media (max-width: 480px) {\n  .sources-panel[_ngcontent-%COMP%] {\n    width: 100%;\n    left: -100%;\n  }\n}\n/*# sourceMappingURL=simulation-page.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(SimulationPage, [{
     type: Component,
-    args: [{ selector: "app-simulation-page", imports: [NavigationBar, SimulationLauncher, ScenarioSelector, InfrastructureSelector, SimulationResults], template: '<app-navigation-bar />\n<div id="main">\n\n    <app-simulation-launcher />\n\n    <app-scenario-selector />\n\n    <app-infrastructure-selector />\n\n    <app-simulation-results />\n\n    <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">\n\n    </div>', styles: ['/* src/app/pages/simulation-page/simulation-page.css */\ndiv#main {\n  padding: 1em;\n  gap: 1rem;\n  height: calc(100vh - 5em);\n  display: grid;\n  grid-template-areas: "gestion  infra plot" "scenario infra plot";\n  grid-template-columns: 1fr 1fr 2fr;\n  grid-template-rows: auto 1fr;\n  overflow: hidden;\n}\n@media (max-width: 1250px) {\n  div#main {\n    grid-template-areas: "gestion     plot" "scenario    plot" "infra       plot" "infra       plot";\n    grid-template-columns: 1fr 1fr;\n    grid-template-rows: auto auto 1fr 2fr;\n  }\n  table#gestion-table {\n    display: none;\n  }\n}\n@media (max-width: 768px) {\n  div#main {\n    height: auto;\n    overflow: auto;\n    grid-template-areas: "gestion" "scenario" "infra" "choix-infra" "plot";\n    grid-template-columns: 1fr;\n    grid-template-rows: auto auto 1fr auto 1fr;\n  }\n}\napp-simulation-launcher {\n  grid-area: gestion;\n}\napp-infrastructure-selector {\n  grid-area: infra;\n}\napp-scenario-selector {\n  grid-area: scenario;\n}\napp-simulation-results {\n  grid-area: plot;\n}\napp-simulation-launcher,\napp-infrastructure-selector,\napp-scenario-selector,\napp-simulation-results {\n  display: flex;\n  flex-direction: column;\n  min-height: 0;\n}\napp-simulation-launcher > div,\napp-infrastructure-selector > div,\napp-scenario-selector > div {\n  flex: 1;\n  overflow: hidden;\n}\n/*# sourceMappingURL=simulation-page.css.map */\n'] }]
+    args: [{ selector: "app-simulation-page", imports: [CommonModule, NavigationBar, SimulationLauncher, ScenarioSelector, InfrastructureSelector, SimulationResults], template: `<app-navigation-bar />
+<div id="main">
+    <!-- Backdrop overlay when panel is open -->
+    <div class="sources-backdrop" *ngIf="showSourcesPanel" (click)="closeSourcesPanel()"></div>
+
+    <!-- Sources d'\xC9nergie floating button -->
+    <button class="sources-toggle-btn" (click)="toggleSourcesPanel()" [class.active]="showSourcesPanel">
+        <i class="fa-solid fa-bolt"></i>
+        Sources d'\xC9nergie
+    </button>
+
+    <!-- Sources d'\xC9nergie slide-out panel -->
+    <div class="sources-panel" [class.open]="showSourcesPanel">
+        <div class="sources-panel-header">
+            <h5><i class="fa-solid fa-bolt"></i> Sources d'\xC9nergie</h5>
+            <button class="btn btn-sm btn-outline-secondary sources-close-btn" (click)="closeSourcesPanel()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="sources-panel-content">
+            <div class="panel-column panel-column-left">
+                <app-simulation-launcher />
+                <app-scenario-selector />
+            </div>
+            <div class="panel-column panel-column-right">
+                <app-infrastructure-selector />
+            </div>
+        </div>
+    </div>
+
+    <!-- Full-screen simulation results (map / graphs) -->
+    <app-simulation-results />
+
+    <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+    </div>
+</div>`, styles: ["/* src/app/pages/simulation-page/simulation-page.css */\ndiv#main {\n  height: calc(100vh - 5em);\n  position: relative;\n  overflow: hidden;\n}\n.sources-toggle-btn {\n  position: absolute;\n  top: 16px;\n  left: 16px;\n  z-index: 1100;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 10px 18px;\n  background: #fff;\n  color: #333;\n  border: 1px solid #ddd;\n  border-radius: 8px;\n  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);\n  font-size: 0.95rem;\n  font-weight: 600;\n  cursor: pointer;\n  transition: all 0.2s ease;\n}\n.sources-toggle-btn:hover {\n  background: #f5f5f5;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);\n}\n.sources-toggle-btn.active {\n  background: #2c3e50;\n  color: #fff;\n  border-color: #2c3e50;\n}\n.sources-backdrop {\n  position: absolute;\n  inset: 0;\n  background: rgba(0, 0, 0, 0.3);\n  z-index: 1050;\n  cursor: pointer;\n}\n.sources-panel {\n  position: absolute;\n  top: 0;\n  left: -800px;\n  width: 780px;\n  height: 100%;\n  z-index: 1200;\n  background: #fff;\n  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);\n  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n}\n.sources-panel.open {\n  left: 0;\n}\n.sources-panel-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 16px 20px;\n  background: #2c3e50;\n  color: #fff;\n  flex-shrink: 0;\n}\n.sources-panel-header h5 {\n  margin: 0;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n.sources-close-btn {\n  color: #fff !important;\n  border-color: rgba(255, 255, 255, 0.4) !important;\n}\n.sources-close-btn:hover {\n  background: rgba(255, 255, 255, 0.15) !important;\n}\n.sources-panel-content {\n  flex: 1;\n  overflow-y: auto;\n  padding: 12px;\n  display: flex;\n  flex-direction: row;\n  gap: 12px;\n}\n.panel-column {\n  display: flex;\n  flex-direction: column;\n  gap: 12px;\n  min-width: 0;\n}\n.panel-column-left {\n  flex: 1;\n  overflow-y: auto;\n}\n.panel-column-right {\n  flex: 1;\n  overflow-y: auto;\n}\napp-simulation-results {\n  display: block;\n  width: 100%;\n  height: 100%;\n}\napp-simulation-launcher,\napp-infrastructure-selector,\napp-scenario-selector {\n  display: flex;\n  flex-direction: column;\n  min-height: 0;\n}\napp-infrastructure-selector {\n  flex: 1;\n  min-height: 200px;\n}\n@media (max-width: 480px) {\n  .sources-panel {\n    width: 100%;\n    left: -100%;\n  }\n}\n/*# sourceMappingURL=simulation-page.css.map */\n"] }]
   }], null, null);
 })();
 (() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationPage, { className: "SimulationPage", filePath: "src/app/pages/simulation-page/simulation-page.ts", lineNumber: 14 });
+  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationPage, { className: "SimulationPage", filePath: "src/app/pages/simulation-page/simulation-page.ts", lineNumber: 15 });
 })();
 
 // src/app/app.routes.ts
