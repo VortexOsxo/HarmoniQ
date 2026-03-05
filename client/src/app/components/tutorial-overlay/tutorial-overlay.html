@@ -1,0 +1,78 @@
+<!-- Welcome / Restart card -->
+<div class="tutorial-backdrop" *ngIf="state.active && state.showWelcome" (click)="$event.stopPropagation()">
+    <div class="welcome-card">
+        <div class="welcome-icon">
+            <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <h3>Bulles d'Aide Tutoriel</h3>
+        <p class="welcome-desc">
+            Système interactif de guidage utilisateur pour la première utilisation.
+            Cliquez sur le bouton ci-dessous pour démarrer le tutoriel et
+            découvrir toutes les fonctionnalités de HarmoniQ.
+        </p>
+        <div class="welcome-actions">
+            <button class="btn-tutorial-primary" (click)="onStart()">
+                <i class="fa-solid fa-play"></i> Démarrer le Tutoriel
+            </button>
+            <button class="btn-tutorial-secondary" (click)="onSkip()">
+                Passer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Step overlay -->
+<ng-container *ngIf="state.active && !state.showWelcome">
+    <!-- Dark backdrop with cutout -->
+    <div class="tutorial-backdrop step-backdrop" (click)="onSkip()">
+        <!-- Highlight cutout -->
+        <div class="highlight-cutout" *ngIf="highlightRect" [style.top.px]="highlightRect.top - 8"
+            [style.left.px]="highlightRect.left - 8" [style.width.px]="highlightRect.width + 16"
+            [style.height.px]="highlightRect.height + 16" (click)="$event.stopPropagation()">
+        </div>
+    </div>
+
+    <!-- Tooltip bubble -->
+    <div class="tooltip-bubble" [style.top.px]="bubbleTop" [style.left.px]="bubbleLeft"
+        [class.centered]="!highlightRect" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="bubble-header">
+            <div class="bubble-title">
+                <i [class]="currentStep.icon"></i>
+                <span>{{ currentStep.title }}</span>
+            </div>
+            <button class="bubble-close" (click)="onSkip()" title="Fermer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="bubble-progress">
+            <div class="bubble-progress-bar" [style.width.%]="progressPercent"></div>
+        </div>
+        <div class="bubble-step-counter">
+            Étape {{ state.currentStep + 1 }} sur {{ totalSteps }}
+        </div>
+
+        <!-- Description -->
+        <div class="bubble-body">
+            <p>{{ currentStep.description }}</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="bubble-nav">
+            <button class="btn-nav btn-prev" (click)="onPrevious()" [disabled]="state.currentStep === 0">
+                <i class="fa-solid fa-chevron-left"></i> Précédent
+            </button>
+            <button class="btn-nav btn-skip" (click)="onSkip()">
+                Quitter
+            </button>
+            <button class="btn-nav btn-next" (click)="onNext()">
+                {{ isLastStep ? 'Terminer' : 'Suivant' }}
+                <i class="fa-solid fa-chevron-right" *ngIf="!isLastStep"></i>
+                <i class="fa-solid fa-check" *ngIf="isLastStep"></i>
+            </button>
+        </div>
+    </div>
+</ng-container>

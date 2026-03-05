@@ -1,0 +1,310 @@
+/* ── Full-screen backdrop ── */
+.tutorial-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Welcome Card ── */
+.welcome-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 36px 32px;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: cardPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.welcome-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.35);
+}
+
+.welcome-card h3 {
+    margin: 0 0 12px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.welcome-desc {
+    color: #555;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0 0 24px;
+}
+
+.welcome-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ── Buttons ── */
+.btn-tutorial-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+.btn-tutorial-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+}
+
+.btn-tutorial-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-tutorial-secondary:hover {
+    background: #e5e5e5;
+}
+
+/* ── Highlight cutout ── */
+.highlight-cutout {
+    position: fixed;
+    z-index: 10001;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Tooltip bubble ── */
+.tooltip-bubble {
+    position: fixed;
+    z-index: 10002;
+    background: #fff;
+    border-radius: 14px;
+    width: 380px;
+    max-width: 90vw;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: bubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tooltip-bubble.centered {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+}
+
+/* ── Bubble header ── */
+.bubble-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+}
+
+.bubble-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.bubble-title i {
+    font-size: 1.1rem;
+}
+
+.bubble-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.bubble-close:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Progress bar ── */
+.bubble-progress {
+    height: 4px;
+    background: #e0e0e0;
+    width: 100%;
+}
+
+.bubble-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4361ee, #6b83f5);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.35s ease;
+}
+
+.bubble-step-counter {
+    padding: 6px 16px 0;
+    font-size: 0.75rem;
+    color: #888;
+    font-weight: 600;
+}
+
+/* ── Bubble body ── */
+.bubble-body {
+    padding: 10px 16px 14px;
+}
+
+.bubble-body p {
+    margin: 0;
+    color: #444;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+/* ── Navigation ── */
+.bubble-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 14px;
+    gap: 8px;
+}
+
+.btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-prev {
+    background: transparent;
+    color: #666;
+}
+
+.btn-prev:hover:not(:disabled) {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-prev:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.btn-skip {
+    background: transparent;
+    color: #888;
+}
+
+.btn-skip:hover {
+    color: #333;
+    background: #f0f0f0;
+}
+
+.btn-next {
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.25);
+}
+
+.btn-next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(67, 97, 238, 0.35);
+}
+
+/* ── Floating re-launch button ── */
+.tutorial-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1100;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.4);
+    transition: all 0.25s ease;
+}
+
+.tutorial-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 24px rgba(67, 97, 238, 0.55);
+}
+
+/* ── Animations ── */
+@keyframes cardPop {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes bubbleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

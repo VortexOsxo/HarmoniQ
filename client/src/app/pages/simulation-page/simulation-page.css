@@ -152,3 +152,29 @@ app-infrastructure-selector {
         left: -100%;
     }
 }
+
+/* ── Tutorial re-launch floating button ── */
+.tutorial-relaunch-fab {
+    position: absolute;
+    bottom: 90px;
+    right: 24px;
+    z-index: 1100;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.4);
+    transition: all 0.25s ease;
+}
+
+.tutorial-relaunch-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 24px rgba(67, 97, 238, 0.55);
+}
