@@ -1,4 +1,5 @@
 import argparse
+import os
 import uvicorn
 
 
@@ -41,6 +42,8 @@ def main():
     )
 
     args = parser.parse_args()
+    os.environ.setdefault("LOG_LEVEL", "DEBUG" if args.debug else "WARNING")
+
     if args.profile:
         from harmoniq.profiler import Initializer
 
