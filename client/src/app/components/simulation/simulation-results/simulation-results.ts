@@ -16,21 +16,9 @@ import { CommonModule } from '@angular/common';
 export class SimulationResults {
   activeTab = 'map';
 
-  constructor(
-    private mapService: MapService,
-    public protectedAreasService: ProtectedAreasService,
-  ) { }
+  constructor(public protectedAreasService: ProtectedAreasService) { }
 
   switchTab(tabId: string) {
     this.activeTab = tabId;
-    if (tabId === 'map') {
-      setTimeout(() => this.mapService.onMapLoaded(), 50);
-    }
-  }
-
-  onTabChange(event: any) {
-    if (event.nextId === 'map') {
-      this.mapService.onMapLoaded();
-    }
   }
 }
