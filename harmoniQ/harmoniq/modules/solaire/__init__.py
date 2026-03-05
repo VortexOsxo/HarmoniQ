@@ -1,16 +1,10 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ScenarioBase, SolaireBase
 from harmoniq.modules.solaire.calculs_production_solaire import (
     calculate_energy_solar_plants,
-    calculate_regional_residential_solar,
-    calculate_installation_cost,
-    co2_emissions_solar,
     cost_solar_powerplant,
-    calculate_lifetime,
 )
 
 
-from typing import List
 import pandas as pd
 import logging
 
@@ -18,25 +12,11 @@ logger = logging.getLogger("Solaire")
 
 
 class InfraSolaire(Infrastructure):
-    def __init__(self, donnees: SolaireBase):
-
-        super().__init__(donnees)
-        self.donnees:SolaireBase = donnees
-        self.production: pd.DataFrame = None
-
-    def charger_scenario(self, scenario):
-        self.scenario: ScenarioBase = scenario
-        self.production = None
-
-    @necessite_scenario
-    def calculer_production(self) -> pd.DataFrame:
-        if self.production is not None:
-            return self.production
-        
+    def calculer_production_interne(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
 
-        self.production = calculate_energy_solar_plants(
+        return calculate_energy_solar_plants(
             nom=self.donnees.nom,
             latitude=self.donnees.latitude,
             longitude=self.donnees.longitude,
@@ -47,7 +27,6 @@ class InfraSolaire(Infrastructure):
             date_start=self.scenario.date_de_debut,
             date_end=self.scenario.date_de_fin + pd.DateOffset(days=1),
         )
-        return self.production
     
     @necessite_scenario
     def calculer_cout_construction(self):

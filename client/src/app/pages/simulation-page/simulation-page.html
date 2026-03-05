@@ -1,14 +1,36 @@
 <app-navigation-bar />
 <div id="main">
+    <!-- Backdrop overlay when panel is open -->
+    <div class="sources-backdrop" *ngIf="showSourcesPanel" (click)="closeSourcesPanel()"></div>
 
-    <app-simulation-launcher />
+    <!-- Sources d'Énergie floating button -->
+    <button class="sources-toggle-btn" (click)="toggleSourcesPanel()" [class.active]="showSourcesPanel">
+        <i class="fa-solid fa-bolt"></i>
+        Sources d'Énergie
+    </button>
 
-    <app-scenario-selector />
+    <!-- Sources d'Énergie slide-out panel -->
+    <div class="sources-panel" [class.open]="showSourcesPanel">
+        <div class="sources-panel-header">
+            <h5><i class="fa-solid fa-bolt"></i> Sources d'Énergie</h5>
+            <button class="btn btn-sm btn-outline-secondary sources-close-btn" (click)="closeSourcesPanel()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="sources-panel-content">
+            <div class="panel-column panel-column-left">
+                <app-simulation-launcher />
+                <app-scenario-selector />
+            </div>
+            <div class="panel-column panel-column-right">
+                <app-infrastructure-selector />
+            </div>
+        </div>
+    </div>
 
-    <app-infrastructure-selector />
-
+    <!-- Full-screen simulation results (map / graphs) -->
     <app-simulation-results />
 
     <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
-
     </div>
+</div>

@@ -20,10 +20,8 @@ from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.nucleaire import InfraNucleaire
 from harmoniq.db.engine import get_db
 from harmoniq.db.demande import read_demande_data
-from harmoniq.db.schemas import EolienneParc, Solaire, Hydro, Nucleaire, Thermique, Scenario, BusType
-from harmoniq.db.CRUD import (read_all_bus_async, read_all_line_async, read_all_line_type_async,
-                              read_all_eolienne_parc, read_all_solaire, read_all_hydro,
-                              read_all_nucleaire, read_all_thermique, read_multiple_by_id, read_all_data)
+from harmoniq.db.schemas import Scenario, EolienneParc, Hydro, Thermique, Nucleaire, Solaire, BusType
+from harmoniq.db.CRUD import read_all_data, read_all_line_async, read_all_bus_async, read_all_line_type_async, hydrate_model
 
 
 CURRENT_DIR = Path(__file__).parent
@@ -69,31 +67,36 @@ class NetworkDataLoader:
         if not self.data_dir.exists():
             raise DataLoadError(f"Le répertoire {self.data_dir} n'existe pas")
         
-        self.eolienne_ids = None
-        self.solaire_ids = None
-        self.hydro_ids = None
-        self.thermique_ids = None
-        self.nucleaire_ids = None
+        self.eolienne_data = None
+        self.solaire_data = None
+        self.hydro_data = None
+        self.thermique_data = None
+        self.nucleaire_data = None
         self.timers = {}
 
-    def set_infrastructure_ids(self, liste_infra):
+
+
+    def set_infras(self, liste_infra):
         """
-        Configure les IDs des infrastructures à charger.
+        Configure les infrastructures à charger à partir des objets fournis.
         
         Args:
-            liste_infra: Objet ListeInfrastructures contenant les IDs
+            liste_infra: Objet SimulationInfraGroup contenant les infrastructures
         """
-        if liste_infra.parc_eoliens:
-            self.eolienne_ids = [int(id) for id in liste_infra.parc_eoliens.split(',')]
-        
-        if liste_infra.parc_solaires:
-            self.solaire_ids = [int(id) for id in liste_infra.parc_solaires.split(',')]
-        
-        if liste_infra.central_hydroelectriques:
-            self.hydro_ids = [int(id) for id in liste_infra.central_hydroelectriques.split(',')]
-        
-        if liste_infra.central_thermique:
-            self.thermique_ids = [int(id) for id in liste_infra.central_thermique.split(',')]
+        if getattr(liste_infra, 'parc_eoliens', None) is not None:
+            self.eolienne_data = liste_infra.parc_eoliens
+            
+        if getattr(liste_infra, 'parc_solaires', None) is not None:
+            self.solaire_data = liste_infra.parc_solaires
+            
+        if getattr(liste_infra, 'central_hydroelectriques', None) is not None:
+            self.hydro_data = liste_infra.central_hydroelectriques
+            
+        if getattr(liste_infra, 'central_thermique', None) is not None:
+            self.thermique_data = liste_infra.central_thermique
+
+        if getattr(liste_infra, 'central_nucleaire', None) is not None:
+            self.nucleaire_data = liste_infra.central_nucleaire
 
     async def load_network_data(self) -> pypsa.Network:
         """
@@ -273,8 +276,8 @@ class NetworkDataLoader:
         
         # Sélection des données selon le type de source
         if source_type == "eolienne":
-            if self.eolienne_ids:
-                centrales = await read_multiple_by_id(db, EolienneParc, self.eolienne_ids)
+            if self.eolienne_data is not None:
+                centrales = [hydrate_model(EolienneParc, c) for c in self.eolienne_data]
             else:
                 centrales = await read_all_data(db, EolienneParc)
             df = pd.DataFrame([c.__dict__ for c in centrales])
@@ -285,8 +288,8 @@ class NetworkDataLoader:
                 df['carrier'] = 'eolien'
 
         elif source_type == "solaire":
-            if self.solaire_ids:
-                centrales = await read_multiple_by_id(db, Solaire, self.solaire_ids)
+            if self.solaire_data is not None:
+                centrales = [hydrate_model(Solaire, c) for c in self.solaire_data]
             else:
                 centrales = await read_all_data(db, Solaire)
             df = pd.DataFrame([c.__dict__ for c in centrales])
@@ -297,8 +300,8 @@ class NetworkDataLoader:
                 df['carrier'] = 'solaire'
 
         elif source_type == "hydro_fil":
-            if self.hydro_ids:
-                centrales = await read_multiple_by_id(db, Hydro, self.hydro_ids)
+            if self.hydro_data is not None:
+                centrales = [hydrate_model(Hydro, c) for c in self.hydro_data]
             else:
                 centrales = await read_all_data(db, Hydro)
             df = pd.DataFrame([c.__dict__ for c in centrales])
@@ -309,13 +312,13 @@ class NetworkDataLoader:
                 df['carrier'] = 'hydro_fil'
 
         elif source_type == "nucleaire":
-            if self.nucleaire_ids:
-                centrales = await read_multiple_by_id(db, Nucleaire, self.nucleaire_ids)
+            if self.nucleaire_data is not None:
+                centrales = [hydrate_model(Nucleaire, c) for c in self.nucleaire_data]
             else:
                 centrales = await read_all_data(db, Nucleaire)
             df = pd.DataFrame([c.__dict__ for c in centrales])
             if not df.empty:
-                df['name'] = df['centrale_nucleaire_nom']
+                df['name'] = df['nom']
                 df['p_nom'] = df['puissance_nominal'] * 1e-3  # MW
                 df['carrier'] = 'nucléaire'
         else:
@@ -377,8 +380,8 @@ class NetworkDataLoader:
         geo_utils = GeoUtils()
         
         if source_type == "hydro_reservoir":
-            if self.hydro_ids:
-                centrales = await read_multiple_by_id(db, Hydro, self.hydro_ids)
+            if self.hydro_data is not None:
+                centrales = [hydrate_model(Hydro, c) for c in self.hydro_data]
             else:
                 centrales = await read_all_data(db, Hydro)
             df = pd.DataFrame([c.__dict__ for c in centrales])
@@ -389,8 +392,8 @@ class NetworkDataLoader:
                 df['carrier'] = 'hydro_reservoir'
 
         elif source_type == "thermique":
-            if self.thermique_ids:
-                centrales = await read_multiple_by_id(db, Thermique, self.thermique_ids)
+            if self.thermique_data is not None:
+                centrales = [hydrate_model(Thermique, c) for c in self.thermique_data]
             else:
                 centrales = await read_all_data(db, Thermique)
             df = pd.DataFrame([c.__dict__ for c in centrales])
@@ -470,8 +473,8 @@ class NetworkDataLoader:
         
         
         # Génération pour les parcs solaires
-        if self.solaire_ids:
-            solaires = await read_multiple_by_id(db, Solaire, self.solaire_ids)
+        if self.solaire_data is not None:
+            solaires = [hydrate_model(Solaire, c) for c in self.solaire_data]
             
             for idx, parc in enumerate(solaires):
                 infraSolaire = InfraSolaire(parc)
@@ -496,8 +499,8 @@ class NetworkDataLoader:
                             p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.1)  # Remplacer NaN par 0
         
         # Génération pour les centrales nucléaires
-        if self.nucleaire_ids:
-            nucleaires = await read_multiple_by_id(db, Nucleaire, self.nucleaire_ids)
+        if self.nucleaire_data is not None:
+            nucleaires = [hydrate_model(Nucleaire, c) for c in self.nucleaire_data]
             
             for idx, centrale in enumerate(nucleaires):
                 infraNucleaire = InfraNucleaire(centrale)
@@ -505,7 +508,7 @@ class NetworkDataLoader:
                 production_df = infraNucleaire.calculer_production()
                 
                 if production_df is not None:
-                    nom = centrale.centrale_nucleaire_nom
+                    nom = centrale.nom
                     if nom in network.generators.index:
                         # Vérifier si on a des données horaires
                         if 'production_horaire_wh' in production_df.columns:
@@ -523,14 +526,14 @@ class NetworkDataLoader:
                             p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.85)
 
         # Génération pour les parcs éoliens en parallele
-        if self.eolienne_ids:
-            eoliennes = await read_multiple_by_id(db, EolienneParc, self.eolienne_ids)
+        if self.eolienne_data is not None:
+            eoliennes = [hydrate_model(EolienneParc, c) for c in self.eolienne_data]
             
             async def process_eolienne(parc):
                 """Process a single wind farm and return (name, p_max_pu_series) or None."""
                 try:
                     infraEolienne = InfraParcEolienne(parc)
-                    await infraEolienne.charger_scenario(scenario)
+                    infraEolienne.charger_scenario(scenario)
                     production_iteration = infraEolienne.calculer_production()
                     
                     if production_iteration is not None and not production_iteration.empty:
@@ -615,8 +618,8 @@ class NetworkDataLoader:
         # Dead code ?
         # EXTRA: Afficher spécifiquement les colonnes des éoliennes
         eolienne_names = []
-        if self.eolienne_ids:
-            eoliennes = await read_multiple_by_id(db, EolienneParc, self.eolienne_ids)
+        if self.eolienne_data is not None:
+            eoliennes = [hydrate_model(EolienneParc, c) for c in self.eolienne_data]
             eolienne_names = [parc.nom for parc in eoliennes]   
         # ?      
         return p_max_pu_df, marginal_cost_df

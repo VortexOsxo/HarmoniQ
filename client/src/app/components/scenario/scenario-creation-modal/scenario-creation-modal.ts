@@ -24,9 +24,8 @@ export class ScenarioCreationModal {
   constructor(public activeModal: NgbActiveModal, private scenariosService: ScenariosService) { }
 
   onSubmit() {
-    this.scenariosService.createScenario(this.scenario).subscribe((newScenario) => {
-      this.activeModal.close(newScenario);
-    });
+    const newScenario = this.scenariosService.createScenario(this.scenario);
+    this.activeModal.close(newScenario);
   }
 
   dismiss() {

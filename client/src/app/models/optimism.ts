@@ -1,23 +1,11 @@
 export enum Optimism {
-    Pessimiste = "Pessimiste",
-    Moyen = "Moyen",
-    Optimiste = "Optimiste",
+    Pessimiste = 1,
+    Moyen = 2,
+    Optimiste = 3,
 }
 
-export function optimismFromNumber(value: number): Optimism {
-    switch (value) {
-        case 1: return Optimism.Pessimiste;
-        case 2: return Optimism.Moyen;
-        case 3: return Optimism.Optimiste;
-        default: return Optimism.Moyen; // fallback
-    }
-}
-
-export function optimismToNumber(value: Optimism): number {
-    switch (value) {
-        case Optimism.Pessimiste: return 1;
-        case Optimism.Moyen: return 2;
-        case Optimism.Optimiste: return 3;
-        default: return 2; // fallback
-    }
-}
+export const OptimismLabels: Record<number, string> = {
+    [Optimism.Pessimiste]: 'Pessimiste',
+    [Optimism.Moyen]: 'Moyen',
+    [Optimism.Optimiste]: 'Optimiste',
+};

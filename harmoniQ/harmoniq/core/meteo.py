@@ -69,10 +69,6 @@ class Meteo:
         responses = self.openmeteo.weather_api(url, params=params)
         response = responses[0]
         hourly = response.Hourly()
-        hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
-        hourly_wind_speed_100m = hourly.Variables(13).ValuesAsNumpy()
-        hourly_wind_direction_100m = hourly.Variables(15).ValuesAsNumpy()
-        hourly_surface_pressure = hourly.Variables(19).ValuesAsNumpy()
 
         hourly_data = {
             "date": pd.date_range(
@@ -80,12 +76,12 @@ class Meteo:
                 end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
                 freq=pd.Timedelta(seconds=hourly.Interval()),
                 inclusive="left"
-            )
+            ),
+            "temperature_C" : hourly.Variables(0).ValuesAsNumpy(),
+            "vitesse_vent_kmh" : hourly.Variables(13).ValuesAsNumpy() * 3.6,
+            "direction_vent" : hourly.Variables(15).ValuesAsNumpy(),
+            "pression" : hourly.Variables(19).ValuesAsNumpy() / 10,
         }
-        hourly_data["temperature_C"] = hourly_temperature_2m
-        hourly_data["vitesse_vent_kmh"] = hourly_wind_speed_100m * 3.6
-        hourly_data["direction_vent"] = hourly_wind_direction_100m
-        hourly_data["pression"] = hourly_surface_pressure / 10
 
         df = pd.DataFrame(data=hourly_data)
         df["date"] = df["date"] - pd.Timedelta(hours=4)

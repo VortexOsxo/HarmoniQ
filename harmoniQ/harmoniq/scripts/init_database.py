@@ -322,35 +322,7 @@ def create_initial_scenarios():
         print(f"Scénario {scenario_2050.nom} ajouté à la base de données")
 
 
-def create_initial_groupe_infra():
-    # Get all infrastructures
-    db = next(get_db())
 
-    eoliennes = CRUD.read_all_eolienne_parc(db)
-    hydro = CRUD.read_all_hydro(db)
-    thermique = CRUD.read_all_thermique(db)
-    solaire = CRUD.read_all_solaire(db)
-
-    to_string = lambda x: ",".join([str(y.id) for y in x])
-
-    chaque_infra = schemas.ListeInfrastructuresCreate(
-        nom="Chaque infrastructure",
-        parc_eoliens=to_string(eoliennes),
-        central_hydroelectriques=to_string(hydro),
-        central_thermique=to_string(thermique),
-        parc_solaires=to_string(solaire),
-    )
-
-    existing = (
-        db.query(schemas.ListeInfrastructures)
-        .filter(schemas.ListeInfrastructures.nom == chaque_infra.nom)
-        .first()
-    )
-    if existing:
-        print(f"Groupe d'infrastructure {chaque_infra.nom} existe déjà")
-    else:
-        CRUD.create_liste_infrastructures(db, chaque_infra)
-        print(f"Groupe d'infrastructure {chaque_infra.nom} ajouté à la base de données")
 
 
 def check_if_empty():
@@ -404,8 +376,7 @@ def populate_db():
     print("Création des scénarios de base")
     create_initial_scenarios()
 
-    print("Création des groupes d'infrastructure")
-    create_initial_groupe_infra()
+
 
 
 def main():
