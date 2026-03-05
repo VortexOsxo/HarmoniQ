@@ -5,7 +5,6 @@ import { SimulationSingleInfraModal } from '@app/components/simulation/simulatio
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { MapService } from '@app/services/map-service';
-import { UiService } from '@app/services/ui-service';
 
 @Component({
   selector: 'app-infra-list-element',
@@ -27,7 +26,6 @@ export class InfraListElement {
     private scenarioService: ScenariosService,
     private modalService: NgbModal,
     private mapService: MapService,
-    private uiService: UiService,
   ) { }
 
   toggleInfra() {
@@ -38,8 +36,6 @@ export class InfraListElement {
     event.stopPropagation();
     if (!this.scenarioService.selectedScenario())
       return;
-
-    this.uiService.requestCloseSourcesPanel();
 
     const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl' });
 
