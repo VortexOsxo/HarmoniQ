@@ -19,6 +19,7 @@ import { Subscription } from 'rxjs';
 export class SimulationPage implements OnDestroy, AfterViewInit {
   showSourcesPanel = false;
   private closePanelSub: Subscription;
+  private tutorialSub: Subscription;
 
   constructor(
     private uiService: UiService,
@@ -26,6 +27,11 @@ export class SimulationPage implements OnDestroy, AfterViewInit {
   ) {
     this.closePanelSub = this.uiService.closeSourcesPanel$.subscribe(() => {
       this.closeSourcesPanel();
+    });
+    this.tutorialSub = this.tutorialService.tutorialState$.subscribe((s) => {
+      if (s.active && s.showWelcome) {
+        this.closeSourcesPanel();
+      }
     });
   }
 
@@ -36,6 +42,7 @@ export class SimulationPage implements OnDestroy, AfterViewInit {
 
   ngOnDestroy() {
     this.closePanelSub.unsubscribe();
+    this.tutorialSub.unsubscribe();
   }
 
   toggleSourcesPanel() {

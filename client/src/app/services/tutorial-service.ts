@@ -7,6 +7,9 @@ export interface TutorialStep {
     description: string;
     targetSelector: string | null;
     position: 'top' | 'bottom' | 'left' | 'right' | 'center';
+    requireAction?: boolean;
+    bubbleOffsetX?: number;
+    disableSelectors?: string[];
 }
 
 export interface TutorialState {
@@ -22,13 +25,6 @@ export class TutorialService {
     private readonly STORAGE_KEY = 'harmoniq_tutorial_completed';
 
     readonly steps: TutorialStep[] = [
-        {
-            title: 'Sources d\'Énergie',
-            icon: 'fa-solid fa-bolt',
-            description: 'Cliquez ici pour ouvrir le panneau des sources d\'énergie. Vous y trouverez les scénarios, groupes d\'infrastructures et le bouton de lancement de simulation.',
-            targetSelector: '.sources-toggle-btn',
-            position: 'bottom',
-        },
         {
             title: 'Ajouter des Infrastructures',
             icon: 'fa-solid fa-plus-circle',
@@ -63,6 +59,74 @@ export class TutorialService {
             description: 'Naviguez entre les différentes sections de l\'application : À Propos, Documentation, Flux d\'Énergie et Simulation.',
             targetSelector: 'app-navigation-bar',
             position: 'bottom',
+        },
+        {
+            title: 'Sources d\'Énergie',
+            icon: 'fa-solid fa-bolt',
+            description: 'Cliquez sur ce bouton pour ouvrir le panneau des sources d\'énergie. C\'est ici que tout se configure !',
+            targetSelector: '.sources-toggle-btn',
+            position: 'bottom',
+            requireAction: true,
+        },
+        {
+            title: 'Paramètres du Scénario',
+            icon: 'fa-solid fa-sliders',
+            description: 'Le scénario détermine la durée de la simulation, le pas de temps, les conditions météorologiques et d\'autres paramètres socio-économiques comme l\'optimisme.',
+            targetSelector: 'app-scenario-selector',
+            position: 'right',
+        },
+        {
+            title: 'Créer un Scénario',
+            icon: 'fa-solid fa-plus',
+            description: 'Cliquez sur ce bouton pour créer un nouveau scénario et découvrir la configuration possible.',
+            targetSelector: '#tutorial-create-scenario-btn',
+            position: 'bottom',
+            requireAction: true,
+        },
+        {
+            title: 'Identité du Scénario',
+            icon: 'fa-solid fa-file-lines',
+            description: 'Donnez un nom, une description et sélectionnez les dates de début et de fin de votre simulation.',
+            targetSelector: '#scenario-identity-group',
+            position: 'right',
+        },
+        {
+            title: 'Pas de Temps',
+            icon: 'fa-solid fa-stopwatch',
+            description: 'Le pas de temps définit la précision de la simulation (ex: toutes les heures, tous les jours).',
+            targetSelector: '#scenario-pas_de_temps',
+            position: 'right',
+        },
+        {
+            title: 'Conditions et Optimisme',
+            icon: 'fa-solid fa-cloud-sun',
+            description: 'Configurez la météo, le modèle de consommation, ainsi que l\'optimisme social et écologique pour votre scénario.',
+            targetSelector: '#scenario-conditions-group',
+            position: 'right',
+        },
+        {
+            title: 'Fermer le Formulaire',
+            icon: 'fa-solid fa-xmark',
+            description: 'C\'est un tutoriel, donc on ne crée rien pour le moment. Cliquez sur « Fermer » pour revenir au panneau principal.',
+            targetSelector: '#tutorial-close-scenario',
+            position: 'top',
+            requireAction: true,
+            bubbleOffsetX: 200,
+            disableSelectors: ['#tutorial-submit-scenario'],
+        },
+        {
+            title: 'Groupes d\'Infrastructures',
+            icon: 'fa-solid fa-city',
+            description: 'Sélectionnez un groupe d\'infrastructures prédéfini. Vos installations de base y sont enregistrées.',
+            targetSelector: 'app-infrastructure-selector',
+            position: 'left',
+        },
+        {
+            title: 'Lancement',
+            icon: 'fa-solid fa-play',
+            description: 'Vérifiez le scénario et le groupe actifs, puis lancez la simulation depuis ce panneau pour voir les résultats.',
+            targetSelector: 'app-simulation-launcher',
+            position: 'right',
         },
         {
             title: 'Tutoriel Terminé !',

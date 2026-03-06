@@ -26,3 +26,8 @@ ngb-modal-backdrop.modal-backdrop {
 ngb-modal-window.modal {
     z-index: 1310 !important;
 }
+
+/* Disable the "shake" animation on static backdrop click */
+ngb-modal-window.modal.modal-static .modal-dialog {
+    transform: none !important;
+}

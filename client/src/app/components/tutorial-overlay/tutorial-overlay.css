@@ -107,10 +107,43 @@
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+::ng-deep .tutorial-interactive-target {
+    z-index: 10005 !important;
+    pointer-events: auto !important;
+    position: relative;
+    animation: targetPulse 2s infinite;
+}
+
+.action-required-nav {
+    justify-content: space-between !important;
+}
+
+.action-pulse {
+    color: #4361ee;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulseText 1.5s infinite;
+}
+
+@keyframes pulseText {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes targetPulse {
+    0% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(67, 97, 238, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0); }
+}
+
 /* ── Tooltip bubble ── */
 .tooltip-bubble {
     position: fixed;
-    z-index: 10002;
+    z-index: 10006;
     background: #fff;
     border-radius: 14px;
     width: 380px;

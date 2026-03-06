@@ -4,6 +4,8 @@ import {
     OnDestroy,
     HostListener,
     ChangeDetectorRef,
+    ViewChild,
+    ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -22,9 +24,15 @@ export class TutorialOverlay implements OnInit, OnDestroy {
     bubbleTop = 0;
     bubbleLeft = 0;
 
+    @ViewChild('nextButton') nextButton?: ElementRef<HTMLButtonElement>;
+
     private sub!: Subscription;
     private readonly BUBBLE_WIDTH = 380;
     private readonly GAP = 16;
+    private activeTarget: HTMLElement | null = null;
+    private activeTargetClickHandler: ((e: Event) => void) | null = null;
+    private boostedAncestors: { el: HTMLElement; originalZIndex: string }[] = [];
+    private disabledElements: HTMLElement[] = [];
 
     constructor(
         public tutorialService: TutorialService,
@@ -49,16 +57,25 @@ export class TutorialOverlay implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.sub = this.tutorialService.tutorialState$.subscribe((s) => {
+            if (!s.active || s.showWelcome) {
+                this.cleanupActiveTarget();
+            }
             this.state = s;
             if (s.active && !s.showWelcome) {
                 // Allow DOM to render before positioning
-                setTimeout(() => this.positionBubble(), 60);
+                setTimeout(() => {
+                    this.positionBubble();
+                    if (!this.currentStep.requireAction && this.nextButton?.nativeElement) {
+                        this.nextButton.nativeElement.focus();
+                    }
+                }, 350);
             }
             this.cd.markForCheck();
         });
     }
 
     ngOnDestroy(): void {
+        this.cleanupActiveTarget();
         this.sub?.unsubscribe();
     }
 
@@ -82,11 +99,51 @@ export class TutorialOverlay implements OnInit, OnDestroy {
     }
 
     onSkip(): void {
+        this.cleanupActiveTarget();
         this.tutorialService.skipTutorial();
+    }
+
+    focusNext(event?: Event): void {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (!this.currentStep.requireAction && this.nextButton?.nativeElement) {
+            this.nextButton.nativeElement.focus();
+        }
+    }
+
+    private cleanupActiveTarget(): void {
+        if (this.activeTarget) {
+            this.activeTarget.classList.remove('tutorial-interactive-target');
+            if (this.activeTargetClickHandler) {
+                this.activeTarget.removeEventListener('click', this.activeTargetClickHandler);
+            }
+            this.activeTargetClickHandler = null;
+            this.activeTarget = null;
+        }
+        // Restore any ancestors whose z-index we boosted
+        for (const { el, originalZIndex } of this.boostedAncestors) {
+            if (originalZIndex) {
+                el.style.setProperty('z-index', originalZIndex);
+            } else {
+                el.style.removeProperty('z-index');
+            }
+        }
+        this.boostedAncestors = [];
+        // Re-enable any elements we disabled
+        for (const el of this.disabledElements) {
+            (el as HTMLButtonElement | HTMLInputElement).disabled = false;
+            el.style.removeProperty('opacity');
+            el.style.removeProperty('pointer-events');
+        }
+        this.disabledElements = [];
     }
 
     private positionBubble(): void {
         const step = this.currentStep;
+        
+        this.cleanupActiveTarget();
 
         if (!step.targetSelector) {
             this.highlightRect = null;
@@ -100,10 +157,48 @@ export class TutorialOverlay implements OnInit, OnDestroy {
             return;
         }
 
-        // Scroll into view
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const htmlEl = el as HTMLElement;
+        this.activeTarget = htmlEl;
 
-        const rect = el.getBoundingClientRect();
+        if (step.requireAction) {
+            htmlEl.classList.add('tutorial-interactive-target');
+            this.activeTargetClickHandler = (e: Event) => {
+                // We advance the tutorial, native click still happens
+                this.tutorialService.nextStep();
+            };
+            htmlEl.addEventListener('click', this.activeTargetClickHandler);
+
+            // Walk up ancestors and boost z-index of any that create a stacking context
+            let ancestor = htmlEl.parentElement;
+            while (ancestor && ancestor !== document.body) {
+                const style = window.getComputedStyle(ancestor);
+                const pos = style.position;
+                const zi = style.zIndex;
+                if (pos !== 'static' && zi !== 'auto') {
+                    this.boostedAncestors.push({ el: ancestor, originalZIndex: ancestor.style.getPropertyValue('z-index') });
+                    ancestor.style.setProperty('z-index', '10004', 'important');
+                }
+                ancestor = ancestor.parentElement;
+            }
+        }
+
+        // Disable any elements specified by the step
+        if (step.disableSelectors) {
+            for (const sel of step.disableSelectors) {
+                const disableEl = document.querySelector(sel) as HTMLElement;
+                if (disableEl) {
+                    (disableEl as HTMLButtonElement | HTMLInputElement).disabled = true;
+                    disableEl.style.opacity = '0.4';
+                    disableEl.style.pointerEvents = 'none';
+                    this.disabledElements.push(disableEl);
+                }
+            }
+        }
+
+        // Scroll into view
+        htmlEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        const rect = htmlEl.getBoundingClientRect();
         this.highlightRect = rect;
 
         // Position the bubble relative to the target
@@ -161,6 +256,14 @@ export class TutorialOverlay implements OnInit, OnDestroy {
             default: // center
                 this.highlightRect = null;
                 break;
+        }
+
+        // Apply optional horizontal offset
+        if (step.bubbleOffsetX) {
+            this.bubbleLeft = Math.max(
+                this.GAP,
+                Math.min(this.bubbleLeft + step.bubbleOffsetX, vw - this.BUBBLE_WIDTH - this.GAP),
+            );
         }
 
         this.cd.detectChanges();
