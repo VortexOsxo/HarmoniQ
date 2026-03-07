@@ -73,8 +73,8 @@
         </div>
         <ng-template #actionRequiredTpl>
             <div class="bubble-nav action-required-nav">
-                <span class="action-pulse"><i class="fa-solid fa-hand-pointer"></i> Sélectionnez l'élément en
-                    surbrillance</span>
+                <span class="action-pulse"><i class="fa-solid fa-hand-pointer"></i> {{ currentStep.actionHint ||
+                    'Sélectionnez l\'élément en surbrillance' }}</span>
                 <button class="btn-nav btn-skip" (click)="onSkip()">
                     Quitter
                 </button>

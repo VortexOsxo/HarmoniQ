@@ -8,6 +8,7 @@ export interface TutorialStep {
     targetSelector: string | null;
     position: 'top' | 'bottom' | 'left' | 'right' | 'center';
     requireAction?: boolean;
+    actionHint?: string;
     bubbleOffsetX?: number;
     disableSelectors?: string[];
 }
@@ -67,6 +68,7 @@ export class TutorialService {
             targetSelector: '.sources-toggle-btn',
             position: 'bottom',
             requireAction: true,
+            actionHint: 'Cliquez sur « Sources d\'Énergie »',
         },
         {
             title: 'Paramètres du Scénario',
@@ -82,6 +84,7 @@ export class TutorialService {
             targetSelector: '#tutorial-create-scenario-btn',
             position: 'bottom',
             requireAction: true,
+            actionHint: 'Cliquez sur « + » pour créer un scénario',
         },
         {
             title: 'Identité du Scénario',
@@ -111,6 +114,7 @@ export class TutorialService {
             targetSelector: '#tutorial-close-scenario',
             position: 'top',
             requireAction: true,
+            actionHint: 'Cliquez sur le bouton « Fermer »',
             bubbleOffsetX: 200,
             disableSelectors: ['#tutorial-submit-scenario'],
         },
