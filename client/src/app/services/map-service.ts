@@ -53,7 +53,7 @@ export class MapService {
 
     const map = L.map('map', {
       zoomControl: true,
-      attributionControl: true,
+      attributionControl: false,
       maxZoom: 12,
       minZoom: 5
     }).setView([52.9399, -67], 4);
