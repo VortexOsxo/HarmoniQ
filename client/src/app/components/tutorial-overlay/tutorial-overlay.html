@@ -62,9 +62,6 @@
 
         <!-- Navigation -->
         <div class="bubble-nav" *ngIf="!currentStep.requireAction; else actionRequiredTpl">
-            <button class="btn-nav btn-prev" (click)="onPrevious()" [disabled]="state.currentStep === 0">
-                <i class="fa-solid fa-chevron-left"></i> Précédent
-            </button>
             <button class="btn-nav btn-skip" (click)="onSkip()">
                 Quitter
             </button>
