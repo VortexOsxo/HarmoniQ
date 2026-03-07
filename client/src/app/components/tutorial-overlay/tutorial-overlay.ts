@@ -68,7 +68,7 @@ export class TutorialOverlay implements OnInit, OnDestroy {
                     if (!this.currentStep.requireAction && this.nextButton?.nativeElement) {
                         this.nextButton.nativeElement.focus();
                     }
-                }, 350);
+                }, this.currentStep?.delayBeforePosition ?? 10);
             }
             this.cd.markForCheck();
         });
@@ -142,7 +142,7 @@ export class TutorialOverlay implements OnInit, OnDestroy {
 
     private positionBubble(): void {
         const step = this.currentStep;
-        
+
         this.cleanupActiveTarget();
 
         if (!step.targetSelector) {

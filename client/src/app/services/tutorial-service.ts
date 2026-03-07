@@ -11,6 +11,7 @@ export interface TutorialStep {
     actionHint?: string;
     bubbleOffsetX?: number;
     disableSelectors?: string[];
+    delayBeforePosition?: number;
 }
 
 export interface TutorialState {
@@ -76,6 +77,7 @@ export class TutorialService {
             description: 'Le scénario détermine la durée de la simulation, le pas de temps, les conditions météorologiques et d\'autres paramètres socio-économiques comme l\'optimisme.',
             targetSelector: 'app-scenario-selector',
             position: 'right',
+            delayBeforePosition: 350,
         },
         {
             title: 'Créer un Scénario',
@@ -92,6 +94,7 @@ export class TutorialService {
             description: 'Donnez un nom, une description et sélectionnez les dates de début et de fin de votre simulation.',
             targetSelector: '#scenario-identity-group',
             position: 'right',
+            delayBeforePosition: 200,
         },
         {
             title: 'Pas de Temps',
@@ -124,6 +127,7 @@ export class TutorialService {
             description: 'Sélectionnez un groupe d\'infrastructures prédéfini. Vos installations de base y sont enregistrées.',
             targetSelector: 'app-infrastructure-selector',
             position: 'left',
+            delayBeforePosition: 200,
         },
         {
             title: 'Lancement',
