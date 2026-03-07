@@ -226,6 +226,10 @@ class EolienneParcBase(BaseModel):
     )
 
 
+class EolienneParcCreate(EolienneParcBase):
+    pass
+
+
 class EolienneParcResponse(EolienneParcBase):
     id: int
 

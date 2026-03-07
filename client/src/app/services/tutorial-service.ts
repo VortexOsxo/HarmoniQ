@@ -167,8 +167,16 @@ export class TutorialService {
         this.state$.next({ active: true, currentStep: 0, showWelcome: false });
     }
 
-    nextStep(): void {
+    nextStep(fromAction = false): void {
         const s = this.state$.value;
+        if (!s.active) return;
+
+        // Block advancing past requireAction steps unless triggered by the action click
+        const currentStep = this.steps[s.currentStep];
+        if (currentStep?.requireAction && !fromAction) {
+            return;
+        }
+
         if (s.currentStep < this.steps.length - 1) {
             this.state$.next({ ...s, currentStep: s.currentStep + 1 });
         } else {
