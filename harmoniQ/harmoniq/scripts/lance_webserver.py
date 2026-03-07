@@ -1,5 +1,27 @@
 import argparse
+import subprocess
+import sys
+from pathlib import Path
+
 import uvicorn
+
+def build_client():
+    """Run npm run build in the client directory."""
+    client_dir = Path(__file__).resolve().parents[3] / "client"
+    if not (client_dir / "package.json").exists():
+        print(f"[launch-app] Client directory not found at {client_dir}, skipping build.")
+        return
+
+    print(f"[launch-app] Building client ({client_dir})...")
+    result = subprocess.run(
+        ["npm", "run", "build"],
+        cwd=str(client_dir),
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("[launch-app] Client build failed!", file=sys.stderr)
+        sys.exit(result.returncode)
+    print("[launch-app] Client build complete.")
 
 
 def main():
@@ -39,8 +61,16 @@ def main():
         default=1,
         help="Nombre de processus de travail",
     )
+    parser.add_argument(
+        "--skip-build",
+        action="store_true",
+        help="Ne pas reconstruire le client avant de lancer le serveur",
+    )
 
     args = parser.parse_args()
+
+    if not args.skip_build:
+        build_client()
     if args.profile:
         from harmoniq.profiler import Initializer
 
