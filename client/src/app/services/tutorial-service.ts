@@ -135,7 +135,7 @@ export class TutorialService {
         {
             title: 'Tutoriel Terminé !',
             icon: 'fa-solid fa-circle-check',
-            description: 'Vous êtes prêt à explorer HarmoniQ ! N\'hésitez pas à relancer le tutoriel à tout moment via le bouton flottant en bas à droite de l\'écran.',
+            description: 'Vous êtes prêt à explorer HarmoniQ ! N\'hésitez pas à relancer le tutoriel à tout moment via le bouton Aide dans la barre de navigation.',
             targetSelector: null,
             position: 'center',
         },
