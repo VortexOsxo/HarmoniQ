@@ -29,10 +29,13 @@
               "node_modules/bootswatch/dist/flatly/bootstrap.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.css",
               "node_modules/leaflet/dist/leaflet.css",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "src/styles.css"
             ],
             "allowedCommonJsDependencies": [
               "leaflet",
+              "leaflet.markercluster",
               "plotly.js-dist-min"
             ]
           },
