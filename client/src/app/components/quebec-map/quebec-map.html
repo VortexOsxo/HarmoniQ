@@ -1,5 +1,49 @@
 <div id="map" style="height: 100%; width: 100%;"></div>
 
+<button class="pa-legend-reopen" *ngIf="protectedAreasService.isVisible() && !protectedAreasService.legendOpen()"
+    (click)="protectedAreasService.legendOpen.set(true)">
+    <i class="fa-solid fa-layer-group"></i>
+</button>
+
+<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()">
+    <div class="pa-legend-header">
+        <i class="fa-solid fa-layer-group"></i>
+        <strong>Aires protégées</strong>
+        <button class="pa-legend-close" (click)="protectedAreasService.legendOpen.set(false)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="pa-legend-controls">
+        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.selectAll()">Tout
+            sélectionner</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.deselectAll()">Tout
+            désélectionner</button>
+    </div>
+
+    <div class="pa-legend-body">
+        <ng-container *ngFor="let node of protectedAreasService.layerTree">
+            <ng-container *ngTemplateOutlet="layerNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
+        </ng-container>
+    </div>
+</div>
+
+<ng-template #layerNodeTpl let-node let-depth="depth">
+    <div class="pa-layer-item" [class.pa-group-parent]="node.children" [style.padding-left.px]="depth * 20">
+        <label class="pa-checkbox-label">
+            <input type="checkbox" [checked]="protectedAreasService.isGroupFullySelected(node)"
+                (change)="protectedAreasService.toggleNode(node)">
+            <span class="pa-layer-name">{{ node.name }}</span>
+        </label>
+    </div>
+    <ng-container *ngIf="node.children">
+        <ng-container *ngFor="let child of node.children">
+            <ng-container
+                *ngTemplateOutlet="layerNodeTpl; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+        </ng-container>
+    </ng-container>
+</ng-template>
+
 <div class="map-overlay card p-2 m-2">
     <p>Ajouter une infrastructure :</p>
 

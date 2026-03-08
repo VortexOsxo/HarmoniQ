@@ -3,6 +3,7 @@ import * as L from 'leaflet';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
 import { InfrastruturesService } from './infrastrutures-service';
 import { MapLineService } from './map-line-service';
+import { ProtectedAreasService } from './protected-areas-service';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 
@@ -24,7 +25,8 @@ export class MapService {
 
   constructor(
     private infrasService: InfrastruturesService,
-    private mapLineService: MapLineService
+    private mapLineService: MapLineService,
+    private protectedAreasService: ProtectedAreasService
   ) {
     effect(() => {
       // reload markers when selected infra group changes
@@ -181,6 +183,13 @@ export class MapService {
     const marker = L.marker([data.latitude, data.longitude], { icon: icon })
       .addTo(this.map)
       .bindPopup(popupContent);
+
+    this.protectedAreasService.checkProtectedArea(data.latitude, data.longitude).then(areaName => {
+      if (areaName) {
+        const warning = `<div style="margin-top:8px;padding:6px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:0.82rem;color:#856404;"><b>Aire protégée</b><br>${areaName}</div>`;
+        marker.setPopupContent(popupContent + warning);
+      }
+    });
 
     this.markers[type][data.id] = marker;
   }

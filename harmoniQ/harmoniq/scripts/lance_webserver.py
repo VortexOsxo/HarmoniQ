@@ -5,12 +5,21 @@ from pathlib import Path
 
 import uvicorn
 
+from harmoniq.scripts.ensure_node import ensure_node_installed
+
+
+def get_client_dir() -> Path:
+    return Path(__file__).resolve().parents[3] / "client"
+
+
 def build_client():
-    """Run npm run build in the client directory."""
-    client_dir = Path(__file__).resolve().parents[3] / "client"
+    """Run npm run build in the client directory and install node if needed."""
+    client_dir = get_client_dir()
     if not (client_dir / "package.json").exists():
         print(f"[launch-app] Client directory not found at {client_dir}, skipping build.")
         return
+
+    ensure_node_installed()
 
     print(f"[launch-app] Building client ({client_dir})...")
     result = subprocess.run(
@@ -22,6 +31,23 @@ def build_client():
         print("[launch-app] Client build failed!", file=sys.stderr)
         sys.exit(result.returncode)
     print("[launch-app] Client build complete.")
+
+
+def start_ng_serve():
+    """Start Angular dev server with proxy config for hot reloading."""
+    client_dir = get_client_dir()
+    if not (client_dir / "package.json").exists():
+        print(f"[launch-app] Client directory not found at {client_dir}, skipping ng serve.")
+        return None
+
+    ensure_node_installed()
+
+    proc = subprocess.Popen(
+        ["npx", "ng", "serve", "--proxy-config", "proxy.conf.json"],
+        cwd=str(client_dir),
+        shell=True,
+    )
+    return proc
 
 
 def main():
@@ -69,8 +95,13 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.skip_build:
+    ng_proc = None
+
+    if args.debug:
+        ng_proc = start_ng_serve()
+    elif not args.skip_build:
         build_client()
+
     if args.profile:
         from harmoniq.profiler import Initializer
 
@@ -101,6 +132,10 @@ def main():
                 workers=1,
             )
     finally:
+        if ng_proc:
+            print("[launch-app] Stopping Angular dev server...")
+            ng_proc.terminate()
+            ng_proc.wait()
         if args.profile:
             from harmoniq.profiler import Profiler
             Profiler.report()
