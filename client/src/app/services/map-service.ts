@@ -100,7 +100,7 @@ export class MapService {
     this._map = map;
 
     this.clusterGroup = L.markerClusterGroup({
-      maxClusterRadius: 60,
+      maxClusterRadius: 70,
       disableClusteringAtZoom: 8,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
