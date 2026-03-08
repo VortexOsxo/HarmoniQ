@@ -141,10 +141,6 @@ class ScenarioBase(BaseModel):
         return value
 
 
-class ScenarioCreate(ScenarioBase):
-    pass
-
-
 class ScenarioResponse(ScenarioBase):
     id: int
 
