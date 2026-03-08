@@ -1,12 +1,10 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { NavigationBar } from '@app/components/navigation-bar/navigation-bar';
 import { SimulationLauncher } from '@app/components/simulation/simulation-launcher/simulation-launcher';
 import { ScenarioSelector } from '@app/components/scenario/scenario-selector/scenario-selector';
 import { InfrastructureSelector } from '@app/components/infrastructure/infrastructure-selector/infrastructure-selector';
 import { SimulationResults } from '@app/components/simulation/simulation-results/simulation-results';
 import { CommonModule } from '@angular/common';
-import { UiService } from '@app/services/ui-service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-page',
@@ -14,19 +12,8 @@ import { Subscription } from 'rxjs';
   templateUrl: './simulation-page.html',
   styleUrl: './simulation-page.css',
 })
-export class SimulationPage implements OnDestroy {
+export class SimulationPage {
   showSourcesPanel = false;
-  private closePanelSub: Subscription;
-
-  constructor(private uiService: UiService) {
-    this.closePanelSub = this.uiService.closeSourcesPanel$.subscribe(() => {
-      this.closeSourcesPanel();
-    });
-  }
-
-  ngOnDestroy() {
-    this.closePanelSub.unsubscribe();
-  }
 
   toggleSourcesPanel() {
     this.showSourcesPanel = !this.showSourcesPanel;
