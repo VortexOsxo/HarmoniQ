@@ -174540,25 +174540,6 @@ var SimulationResults = class _SimulationResults {
   (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationResults, { className: "SimulationResults", filePath: "src/app/components/simulation/simulation-results/simulation-results.ts", lineNumber: 16 });
 })();
 
-// src/app/services/ui-service.ts
-var UiService = class _UiService {
-  closeSourcesPanelSubject = new Subject();
-  closeSourcesPanel$ = this.closeSourcesPanelSubject.asObservable();
-  requestCloseSourcesPanel() {
-    this.closeSourcesPanelSubject.next();
-  }
-  static \u0275fac = function UiService_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _UiService)();
-  };
-  static \u0275prov = /* @__PURE__ */ \u0275\u0275defineInjectable({ token: _UiService, factory: _UiService.\u0275fac, providedIn: "root" });
-};
-(() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(UiService, [{
-    type: Injectable,
-    args: [{ providedIn: "root" }]
-  }], null, null);
-})();
-
 // src/app/pages/simulation-page/simulation-page.ts
 function SimulationPage_div_2_Template(rf, ctx) {
   if (rf & 1) {
@@ -174573,18 +174554,7 @@ function SimulationPage_div_2_Template(rf, ctx) {
   }
 }
 var SimulationPage = class _SimulationPage {
-  uiService;
   showSourcesPanel = false;
-  closePanelSub;
-  constructor(uiService) {
-    this.uiService = uiService;
-    this.closePanelSub = this.uiService.closeSourcesPanel$.subscribe(() => {
-      this.closeSourcesPanel();
-    });
-  }
-  ngOnDestroy() {
-    this.closePanelSub.unsubscribe();
-  }
   toggleSourcesPanel() {
     this.showSourcesPanel = !this.showSourcesPanel;
   }
@@ -174592,7 +174562,7 @@ var SimulationPage = class _SimulationPage {
     this.showSourcesPanel = false;
   }
   static \u0275fac = function SimulationPage_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _SimulationPage)(\u0275\u0275directiveInject(UiService));
+    return new (__ngFactoryType__ || _SimulationPage)();
   };
   static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SimulationPage, selectors: [["app-simulation-page"]], decls: 21, vars: 5, consts: [["id", "main"], ["class", "sources-backdrop", 3, "click", 4, "ngIf"], [1, "sources-toggle-btn", 3, "click"], [1, "fa-solid", "fa-bolt"], [1, "sources-panel"], [1, "sources-panel-header"], [1, "btn", "btn-sm", "btn-outline-secondary", "sources-close-btn", 3, "click"], [1, "fa-solid", "fa-xmark"], [1, "sources-panel-content"], [1, "panel-column", "panel-column-left"], [1, "panel-column", "panel-column-right"], ["id", "dataModal", "tabindex", "-1", "aria-labelledby", "dataModalLabel", "aria-hidden", "true", 1, "modal", "fade"], [1, "sources-backdrop", 3, "click"]], template: function SimulationPage_Template(rf, ctx) {
     if (rf & 1) {
@@ -174674,10 +174644,10 @@ var SimulationPage = class _SimulationPage {
     <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
     </div>
 </div>`, styles: ["/* src/app/pages/simulation-page/simulation-page.css */\n:host {\n  display: flex;\n  flex-direction: column;\n  height: 100vh;\n  overflow: hidden;\n}\ndiv#main {\n  flex: 1;\n  position: relative;\n  overflow: hidden;\n}\n.sources-toggle-btn {\n  position: absolute;\n  top: 16px;\n  left: 16px;\n  z-index: 1100;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 10px 18px;\n  background: #fff;\n  color: #333;\n  border: 1px solid #ddd;\n  border-radius: 8px;\n  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);\n  font-size: 0.95rem;\n  font-weight: 600;\n  cursor: pointer;\n  transition: all 0.2s ease;\n}\n.sources-toggle-btn:hover {\n  background: #f5f5f5;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);\n}\n.sources-toggle-btn.active {\n  background: #2c3e50;\n  color: #fff;\n  border-color: #2c3e50;\n}\n.sources-backdrop {\n  position: absolute;\n  inset: 0;\n  background: rgba(0, 0, 0, 0.3);\n  z-index: 1050;\n  cursor: pointer;\n}\n.sources-panel {\n  position: absolute;\n  top: 0;\n  left: -800px;\n  width: 780px;\n  height: 100%;\n  z-index: 1200;\n  background: #fff;\n  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);\n  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n}\n.sources-panel.open {\n  left: 0;\n}\n.sources-panel-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 16px 20px;\n  background: #2c3e50;\n  color: #fff;\n  flex-shrink: 0;\n}\n.sources-panel-header h5 {\n  margin: 0;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n.sources-close-btn {\n  color: #fff !important;\n  border-color: rgba(255, 255, 255, 0.4) !important;\n}\n.sources-close-btn:hover {\n  background: rgba(255, 255, 255, 0.15) !important;\n}\n.sources-panel-content {\n  flex: 1;\n  overflow-y: auto;\n  padding: 12px;\n  display: flex;\n  flex-direction: row;\n  gap: 12px;\n}\n.panel-column {\n  display: flex;\n  flex-direction: column;\n  gap: 12px;\n  min-width: 0;\n}\n.panel-column-left {\n  flex: 1;\n  overflow-y: auto;\n}\n.panel-column-right {\n  flex: 1;\n  overflow-y: auto;\n}\napp-simulation-results {\n  display: block;\n  width: 100%;\n  height: 100%;\n}\napp-simulation-launcher,\napp-infrastructure-selector,\napp-scenario-selector {\n  display: flex;\n  flex-direction: column;\n  min-height: 0;\n}\napp-infrastructure-selector {\n  flex: 1;\n  min-height: 200px;\n}\n@media (max-width: 480px) {\n  .sources-panel {\n    width: 100%;\n    left: -100%;\n  }\n}\n/*# sourceMappingURL=simulation-page.css.map */\n"] }]
-  }], () => [{ type: UiService }], null);
+  }], null, null);
 })();
 (() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationPage, { className: "SimulationPage", filePath: "src/app/pages/simulation-page/simulation-page.ts", lineNumber: 17 });
+  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(SimulationPage, { className: "SimulationPage", filePath: "src/app/pages/simulation-page/simulation-page.ts", lineNumber: 15 });
 })();
 
 // src/app/app.routes.ts
