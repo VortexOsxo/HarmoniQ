@@ -12,7 +12,7 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DemandNode, ProductionNode, SankeyData } from '../sankey-data.types';
+import { SankeyData } from '../sankey-data.types';
 
 interface NodeRect {
   top: number;
@@ -25,6 +25,13 @@ interface NodeRect {
 interface ComputedFlow {
   path: string;
   color: string;
+  type: 'demand-prod' | 'prod-co2';
+  fromLabel: string;
+  toLabel: string;
+  valueMW: number;
+  co2Tph: number;
+  demandIndex: number; // -1 for prod-co2 flows
+  prodIndex: number;
 }
 
 @Component({
@@ -46,14 +53,17 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
   svgWidth = 0;
   svgHeight = 0;
 
+  hoveredFlowIndex: number | null = null;
+  hoveredNodeKey: string | null = null;
+
+  tooltip: { x: number; y: number; lines: string[]; color: string } | null = null;
+
   private resizeObserver?: ResizeObserver;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
-    // Let layout settle before measuring
     setTimeout(() => this.updateFlows(), 0);
-
     this.resizeObserver = new ResizeObserver(() => {
       this.updateFlows();
       this.cdr.detectChanges();
@@ -82,6 +92,75 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     );
   }
 
+  // ── Hover: flows ──────────────────────────────────────────────────────────
+
+  flowOpacity(i: number): number {
+    const anyHover = this.hoveredFlowIndex !== null || this.hoveredNodeKey !== null;
+    if (!anyHover) return 0.45;
+    return this.isFlowHighlighted(i) ? 0.75 : 0.1;
+  }
+
+  private isFlowHighlighted(i: number): boolean {
+    const flow = this.computedFlows[i];
+    if (this.hoveredFlowIndex !== null) return i === this.hoveredFlowIndex;
+    if (this.hoveredNodeKey !== null) {
+      const [type, idxStr] = this.hoveredNodeKey.split('-');
+      const idx = parseInt(idxStr ?? '0', 10);
+      if (type === 'demand') return flow.demandIndex === idx;
+      if (type === 'prod')   return flow.prodIndex === idx;
+      if (type === 'co2')    return flow.type === 'prod-co2';
+    }
+    return false;
+  }
+
+  onFlowMouseEnter(i: number, event: MouseEvent): void {
+    this.hoveredFlowIndex = i;
+    this.updateTooltip(event, i);
+  }
+
+  onFlowMouseMove(event: MouseEvent, i: number): void {
+    this.updateTooltip(event, i);
+  }
+
+  onFlowMouseLeave(): void {
+    this.hoveredFlowIndex = null;
+    this.tooltip = null;
+  }
+
+  private updateTooltip(event: MouseEvent, i: number): void {
+    const rect = this.sankeyContainer.nativeElement.getBoundingClientRect();
+    const flow = this.computedFlows[i];
+    const lines: string[] =
+      flow.type === 'demand-prod'
+        ? [
+            `${flow.fromLabel} → ${flow.toLabel}`,
+            `${Math.round(flow.valueMW).toLocaleString('fr-FR')} MW`,
+          ]
+        : [
+            `${flow.fromLabel} → CO\u2082`,
+            `${Math.round(flow.co2Tph).toLocaleString('fr-FR')} t CO\u2082/h`,
+          ];
+
+    this.tooltip = {
+      x: event.clientX - rect.left + 14,
+      y: event.clientY - rect.top - 40,
+      lines,
+      color: flow.color,
+    };
+  }
+
+  // ── Hover: node cards ─────────────────────────────────────────────────────
+
+  onNodeMouseEnter(key: string): void {
+    this.hoveredNodeKey = key;
+  }
+
+  onNodeMouseLeave(): void {
+    this.hoveredNodeKey = null;
+  }
+
+  // ── Flow computation ──────────────────────────────────────────────────────
+
   private updateFlows(): void {
     if (!this.sankeyContainer || !this.co2NodeEl) return;
 
@@ -98,8 +177,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     if (prodEls.length !== this.data.productionNodes.length) return;
 
     const demandRects = demandEls.map(el => this.relativeRect(el.nativeElement, containerRect));
-    const prodRects = prodEls.map(el => this.relativeRect(el.nativeElement, containerRect));
-    const co2Rect = this.relativeRect(this.co2NodeEl.nativeElement, containerRect);
+    const prodRects   = prodEls.map(el => this.relativeRect(el.nativeElement, containerRect));
+    const co2Rect     = this.relativeRect(this.co2NodeEl.nativeElement, containerRect);
 
     this.computedFlows = [
       ...this.computeDemandToProdFlows(demandRects, prodRects),
@@ -109,18 +188,13 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     this.cdr.detectChanges();
   }
 
-  /** Ribbon flows from demand column → production column */
   private computeDemandToProdFlows(demandRects: NodeRect[], prodRects: NodeRect[]): ComputedFlow[] {
     const D = this.data.demandNodes;
     const P = this.data.productionNodes;
     const totalDemand = D.reduce((s, n) => s + n.value, 0);
 
-    // flowValues[i][j] = flow from demand[i] to prod[j] (proportional mixing)
-    const flowValues = D.map(dem =>
-      P.map(prod => (dem.value / totalDemand) * prod.value),
-    );
+    const flowValues = D.map(dem => P.map(prod => (dem.value / totalDemand) * prod.value));
 
-    // Cumulative y-offset at each demand node's right edge, per prod index
     const cumAtDemand = D.map((dem, i) => {
       const cums: number[] = [];
       let acc = 0;
@@ -131,7 +205,6 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
       return cums;
     });
 
-    // Cumulative y-offset at each prod node's left edge, per demand index
     const cumAtProd = P.map((prod, j) => {
       const cums: number[] = [];
       let acc = 0;
@@ -146,15 +219,15 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
 
     for (let i = 0; i < D.length; i++) {
       for (let j = 0; j < P.length; j++) {
-        const fVal = flowValues[i][j];
+        const fVal  = flowValues[i][j];
         const dRect = demandRects[i];
         const pRect = prodRects[j];
 
         const hAtD = (fVal / D[i].value) * dRect.height;
         const hAtP = (fVal / P[j].value) * pRect.height;
 
-        const x1 = dRect.right;
-        const x2 = pRect.left;
+        const x1   = dRect.right;
+        const x2   = pRect.left;
         const midX = (x1 + x2) / 2;
 
         const topY1 = dRect.top + cumAtDemand[i][j];
@@ -165,6 +238,13 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         flows.push({
           path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
           color: P[j].color,
+          type: 'demand-prod',
+          fromLabel: D[i].label,
+          toLabel: P[j].label,
+          valueMW: fVal,
+          co2Tph: 0,
+          demandIndex: i,
+          prodIndex: j,
         });
       }
     }
@@ -172,21 +252,20 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     return flows;
   }
 
-  /** Ribbon flows from production column → CO₂ node */
   private computeProdToCo2Flows(prodRects: NodeRect[], co2Rect: NodeRect): ComputedFlow[] {
-    const P = this.data.productionNodes;
+    const P        = this.data.productionNodes;
     const co2Values = P.map(p => (p.value * p.co2FactorKgMWh) / 1000);
-    const totalCo2 = co2Values.reduce((s, v) => s + v, 0);
+    const totalCo2  = co2Values.reduce((s, v) => s + v, 0);
 
     const flows: ComputedFlow[] = [];
     let co2Cum = 0;
 
     for (let j = 0; j < P.length; j++) {
-      const pRect = prodRects[j];
+      const pRect   = prodRects[j];
       const co2Frac = co2Values[j] / totalCo2;
 
-      const x1 = pRect.right;
-      const x2 = co2Rect.left;
+      const x1   = pRect.right;
+      const x2   = co2Rect.left;
       const midX = (x1 + x2) / 2;
 
       const topY1 = pRect.top;
@@ -197,6 +276,13 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
       flows.push({
         path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
         color: P[j].color,
+        type: 'prod-co2',
+        fromLabel: P[j].label,
+        toLabel: 'CO\u2082',
+        valueMW: P[j].value,
+        co2Tph: co2Values[j],
+        demandIndex: -1,
+        prodIndex: j,
       });
 
       co2Cum += co2Frac * co2Rect.height;
@@ -208,16 +294,15 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
   private relativeRect(el: HTMLElement, containerRect: DOMRect): NodeRect {
     const r = el.getBoundingClientRect();
     return {
-      top: r.top - containerRect.top,
+      top:    r.top    - containerRect.top,
       bottom: r.bottom - containerRect.top,
-      left: r.left - containerRect.left,
-      right: r.right - containerRect.left,
+      left:   r.left   - containerRect.left,
+      right:  r.right  - containerRect.left,
       height: r.height,
     };
   }
 }
 
-/** Build a cubic-bezier ribbon SVG path between two vertical edges. */
 function ribbon(
   x1: number, topY1: number, botY1: number,
   midX: number,
