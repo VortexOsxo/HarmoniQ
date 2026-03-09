@@ -192,15 +192,17 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     const D = this.data.demandNodes;
     const P = this.data.productionNodes;
     const totalDemand = D.reduce((s, n) => s + n.value, 0);
+    const R = 10;
 
     const flowValues = D.map(dem => P.map(prod => (dem.value / totalDemand) * prod.value));
 
     const cumAtDemand = D.map((dem, i) => {
       const cums: number[] = [];
       let acc = 0;
+      const innerH = demandRects[i].height - 2 * R;
       for (let j = 0; j < P.length; j++) {
         cums.push(acc);
-        acc += (flowValues[i][j] / dem.value) * demandRects[i].height;
+        acc += (flowValues[i][j] / dem.value) * innerH;
       }
       return cums;
     });
@@ -208,9 +210,10 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     const cumAtProd = P.map((prod, j) => {
       const cums: number[] = [];
       let acc = 0;
+      const innerH = prodRects[j].height - 2 * R;
       for (let i = 0; i < D.length; i++) {
         cums.push(acc);
-        acc += (flowValues[i][j] / prod.value) * prodRects[j].height;
+        acc += (flowValues[i][j] / prod.value) * innerH;
       }
       return cums;
     });
@@ -223,16 +226,16 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const dRect = demandRects[i];
         const pRect = prodRects[j];
 
-        const hAtD = (fVal / D[i].value) * dRect.height;
-        const hAtP = (fVal / P[j].value) * pRect.height;
+        const hAtD = (fVal / D[i].value) * (dRect.height - 2 * R);
+        const hAtP = (fVal / P[j].value) * (pRect.height - 2 * R);
 
         const x1   = dRect.right;
         const x2   = pRect.left;
         const midX = (x1 + x2) / 2;
 
-        const topY1 = dRect.top + cumAtDemand[i][j];
+        const topY1 = dRect.top + R + cumAtDemand[i][j];
         const botY1 = topY1 + hAtD;
-        const topY2 = pRect.top + cumAtProd[j][i];
+        const topY2 = pRect.top + R + cumAtProd[j][i];
         const botY2 = topY2 + hAtP;
 
         flows.push({
@@ -256,9 +259,11 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     const P        = this.data.productionNodes;
     const co2Values = P.map(p => (p.value * p.co2FactorKgMWh) / 1000);
     const totalCo2  = co2Values.reduce((s, v) => s + v, 0);
+    const R = 10; // card border-radius
 
     const flows: ComputedFlow[] = [];
     let co2Cum = 0;
+    const co2InnerH = co2Rect.height - 2 * R;
 
     for (let j = 0; j < P.length; j++) {
       const pRect   = prodRects[j];
@@ -268,10 +273,10 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
       const x2   = co2Rect.left;
       const midX = (x1 + x2) / 2;
 
-      const topY1 = pRect.top;
-      const botY1 = pRect.bottom;
-      const topY2 = co2Rect.top + co2Cum;
-      const botY2 = topY2 + co2Frac * co2Rect.height;
+      const topY1 = pRect.top + R;
+      const botY1 = pRect.bottom - R;
+      const topY2 = co2Rect.top + R + co2Cum;
+      const botY2 = topY2 + co2Frac * co2InnerH;
 
       flows.push({
         path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
@@ -285,7 +290,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         prodIndex: j,
       });
 
-      co2Cum += co2Frac * co2Rect.height;
+      co2Cum += co2Frac * co2InnerH;
     }
 
     return flows;
