@@ -12,6 +12,10 @@ import { Co2DetailsData } from '../sankey-data.types';
 export class Co2DetailsPanelComponent {
   @Input() data!: Co2DetailsData;
 
+  get sortedSources() {
+    return [...this.data.sources].sort((a, b) => b.percentage - a.percentage);
+  }
+
   formatCo2(value: number): string {
     return Math.round(value).toLocaleString('fr-FR');
   }
