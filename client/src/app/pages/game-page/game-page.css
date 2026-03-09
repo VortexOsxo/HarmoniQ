@@ -1,3 +1,20 @@
 .dialogPanel .mat-mdc-dialog-panel {
   border-radius: 12px;
 }
+
+
+.game-modal .modal-dialog {
+  width: 60vw;
+  max-width: none;
+}
+
+.game-modal .modal-content {
+  height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-modal .modal-body {
+  flex: 1;
+  overflow: auto;
+}

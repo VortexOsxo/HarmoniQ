@@ -24,6 +24,8 @@ export type Quiz = {
 export class GameService {
   private _currentQuestion = new BehaviorSubject<number>(-1);
   public currentQuestion$ = this._currentQuestion.asObservable();
+  private answeredQuestions: [number] = [-1];
+  private goodAnswers: number = 0;
   private quiz: Quiz = 
     {
       questions:[{
@@ -35,7 +37,6 @@ export class GameService {
       }],
       answeredQuestionList: [-1]
     };
-  private answeredQuestions: [number] = [-1];
 
   constructor(private http: HttpClient) {
     this.getQuiz();
@@ -47,26 +48,32 @@ export class GameService {
         this.quiz.questions = quiz.questions;
         this.answeredQuestions = quiz.answeredQuestionList;
         this._currentQuestion.next(0);
+        this.goodAnswers = 0;
       })
   }
 
-  getQuestion(): Question /*Question*/ {
-    console.log(this.quiz.questions);
+  getQuestion(): Question {
     return this.quiz.questions[this._currentQuestion.value].question;
   }
 
   nextQuestion(): void{
-    console.log(this.questionIndex);
     this._currentQuestion.value < this.quiz.questions.length-1 ? 
       this._currentQuestion.next(this.questionIndex + 1) : this._currentQuestion.next(-2)
   }
 
   restartAvailable():boolean {
-    return this.quiz.answeredQuestionList[0] == -2 ? false:true;
+    if (this.answeredQuestions[0] == -2) return false;
+    return true;
   }
 
   checkAnswer(selectedOption: number /* if we want to send info about the answers for statistics */): number {
-      return this.quiz.questions[this._currentQuestion.value].answer;
+    if (selectedOption == this.quiz.questions[this._currentQuestion.value].answer)
+      this.goodAnswers ++;
+    return this.quiz.questions[this._currentQuestion.value].answer;
+  }
+
+  getGoodAnswerNumber(): number {
+    return this.goodAnswers;
   }
 
   get questionIndex(): number {

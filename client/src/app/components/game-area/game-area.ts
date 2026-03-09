@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
-import { GameService, Question } from '@app/services/game-service';
+import { GameService } from '@app/services/game-service';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 @Component({
@@ -13,16 +12,15 @@ import { Router } from '@angular/router';
 })
 export class GameArea {
 
-  gameService : GameService;
-  questionText: string = "aaaaa";
+  questionText: string = "Le quiz est en cours de chargement";
   questionAnswered: boolean = false;
   questionInformation: string = "";
   quizTerminated: boolean = false;
   restartAvailable: boolean = false;
 
 
-  constructor(private cdr: ChangeDetectorRef, private http: HttpClient, private router: Router) {
-    this.gameService = new GameService(this.http);    
+  constructor(private cdr: ChangeDetectorRef, private router: Router, 
+    private gameService: GameService) {  
   }
 
   ngOnInit() {
@@ -86,23 +84,24 @@ export class GameArea {
     this.cdr.detectChanges();
   }
 
-  changeQuestion(){
-    this.gameService.nextQuestion();
-    this.questionAnswered = false;
-    this.cdr.detectChanges();
+changeQuestion() {
+  this.gameService.nextQuestion();
+  this.questionAnswered = false;
 
-    //Manage end of quizzes
-    if (this.gameService.questionIndex == -2)
-    {
-      this.quizTerminated = true;
-      this.cdr.detectChanges();
-      this.questionText = "Le quiz est terminé. Vous avez obtenu .../10."
-    }
+  if (this.gameService.questionIndex == -2) {
+    this.quizTerminated = true;
+    this.questionText = `Le quiz est terminé!!\n Vous avez obtenu ${this.gameService.getGoodAnswerNumber()}
+    réponses sur 10`;
+    this.restartAvailable = this.gameService.restartAvailable();
   }
+}
 
-  startNewQuiz(){
-    this.restartAvailable = this.gameService.restartAvailable() ? false:true;
-  }
+startNewQuiz() {
+  this.quizTerminated = false;
+  this.restartAvailable = false;
+  this.questionAnswered = false;
+  this.gameService.getQuiz();
+}
 
   navigate(path: string) {
     this.router.navigate([path]);
