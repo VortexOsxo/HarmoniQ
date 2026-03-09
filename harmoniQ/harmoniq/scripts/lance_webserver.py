@@ -1,4 +1,6 @@
 import argparse
+import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -116,6 +118,10 @@ def main():
     )
 
     args = parser.parse_args()
+    log_level = "DEBUG" if args.debug else "WARNING"
+    os.environ.setdefault("LOG_LEVEL", log_level)
+    logging.basicConfig(level=getattr(logging, log_level))
+    logging.getLogger().setLevel(getattr(logging, log_level))
 
     ng_proc = None
 

@@ -575,40 +575,45 @@ class NetworkDataLoader:
             'import': 0.5          # Coût moyen - priorité intermédiaire
         }
         
-        # Appliquer les coûts marginaux par défaut 
+        # Appliquer les coûts marginaux par défaut (vectorisé)
+        new_marginal_cols = {}
+        new_p_max_pu_cols = {}
+
         for gen_name, gen in network.generators.iterrows():
             carrier = gen.carrier if 'carrier' in gen.index else 'unknown'
 
             if carrier in marginal_cost_defaults:
                 default_cost = marginal_cost_defaults[carrier]
-                network.generators.at[gen_name, 'marginal_cost'] = default_cost            
-            # Pour le coût marginal temporel
-            if carrier in marginal_cost_defaults:
-                # Pour les réservoirs, on utilise un modèle complexe plus tard
-                marginal_cost_df[gen_name] = marginal_cost_defaults[carrier]
+                network.generators.at[gen_name, 'marginal_cost'] = default_cost
+                new_marginal_cols[gen_name] = default_cost
             else:
-                marginal_cost_df[gen_name] = gen.marginal_cost if hasattr(gen, 'marginal_cost') else 10.0
-            
+                new_marginal_cols[gen_name] = gen.marginal_cost if hasattr(gen, 'marginal_cost') else 10.0
+
             if gen_name not in p_max_pu_df.columns:
-                # Générer des séries temporelles adaptées au type d'énergie
-                    
                 if carrier == 'hydro_fil':
                     seasonal = 0.7 + 0.3 * np.sin(np.pi * (month_indices - 3) / 6)
                     noise = 0.1 * np.random.normal(0, 1, len(timestamps))
-                    profile = np.clip(seasonal + noise, 0.5, 1.0)
-                    p_max_pu_df[gen_name] = profile
-                    
+                    new_p_max_pu_cols[gen_name] = np.clip(seasonal + noise, 0.5, 1.0)
+
                 elif carrier == 'hydro_reservoir':
-                    p_max_pu_df[gen_name] = 0.95 + 0.05 * np.random.random(len(timestamps))
-                    
+                    new_p_max_pu_cols[gen_name] = 0.95 + 0.05 * np.random.random(len(timestamps))
+
                 elif carrier == 'thermique':
-                    p_max_pu_df[gen_name] = 0.90 + 0.05 * np.random.random(len(timestamps))
-                    
-                    
+                    new_p_max_pu_cols[gen_name] = 0.90 + 0.05 * np.random.random(len(timestamps))
+
                 else:
-                    # Valeur par défaut pour les autres types
-                    p_max_pu_df[gen_name] = 1.0
-        
+                    new_p_max_pu_cols[gen_name] = 1.0
+
+        if new_marginal_cols:
+            marginal_cost_df = pd.concat(
+                [marginal_cost_df, pd.DataFrame(new_marginal_cols, index=timestamps)], axis=1
+            )
+
+        if new_p_max_pu_cols:
+            p_max_pu_df = pd.concat(
+                [p_max_pu_df, pd.DataFrame(new_p_max_pu_cols, index=timestamps)], axis=1
+            )
+
         p_max_pu_df = p_max_pu_df.astype('float64')
         marginal_cost_df = marginal_cost_df.astype('float64')
         
