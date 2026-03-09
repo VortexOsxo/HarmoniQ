@@ -1,4 +1,6 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -6,7 +8,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-quebec-map',
-  imports: [NgbTooltipModule],
+  imports: [CommonModule, FormsModule, NgbTooltipModule],
   templateUrl: './quebec-map.html',
   styleUrl: './quebec-map.css',
 })

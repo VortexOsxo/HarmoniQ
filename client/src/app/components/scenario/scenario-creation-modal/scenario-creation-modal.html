@@ -16,23 +16,26 @@
                         <textarea class="form-control" id="scenario-description" name="description"
                             [(ngModel)]="scenario.description" rows="3"></textarea>
 
-                        <app-date-picker id="scenario-dates" title="Étendue de temps" [(startDate)]="scenario.date_de_debut"
-                            [(endDate)]="scenario.date_de_fin" />
+                        <app-date-picker id="scenario-dates" title="Étendue de temps"
+                            [(startDate)]="scenario.date_de_debut" [(endDate)]="scenario.date_de_fin" />
                     </div>
 
-                    <label for="scenario-pas_de_temps">Pas de temps</label>
-                    <select class="form-control" id="scenario-pas_de_temps" name="pas_de_temps"
-                        [(ngModel)]="scenario.pas_de_temps">
-                        <option value="PT15M" disabled>15 minutes</option>
-                        <option value="PT1H">1 heure</option>
-                        <option value="PT4H" disabled>4 heures</option>
-                        <option value="P1D" disabled>1 jour</option>
-                        <option value="P7D" disabled>7 jours</option>
-                    </select>
+                    <div id="scenario-pas-de-temps-group">
+                        <label for="scenario-pas_de_temps">Pas de temps</label>
+                        <select class="form-control" id="scenario-pas_de_temps" name="pas_de_temps"
+                            [(ngModel)]="scenario.pas_de_temps">
+                            <option value="PT15M" disabled>15 minutes</option>
+                            <option value="PT1H">1 heure</option>
+                            <option value="PT4H" disabled>4 heures</option>
+                            <option value="P1D" disabled>1 jour</option>
+                            <option value="P7D" disabled>7 jours</option>
+                        </select>
+                    </div>
 
                     <div id="scenario-conditions-group">
                         <label for="scenario-weather">Meteo (consomation)</label>
-                        <select class="form-control" id="scenario-weather" name="weather" [(ngModel)]="scenario.weather">
+                        <select class="form-control" id="scenario-weather" name="weather"
+                            [(ngModel)]="scenario.weather">
                             <option [value]="Weather.Cold">Froid</option>
                             <option [value]="Weather.Typical">Typique</option>
                             <option [value]="Weather.Hot">Chaud</option>
@@ -64,7 +67,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="tutorial-close-scenario" type="button" class="btn btn-secondary" (click)="dismiss()">Fermer</button>
+                <button id="tutorial-close-scenario" type="button" class="btn btn-secondary"
+                    (click)="dismiss()">Fermer</button>
                 <input id="tutorial-submit-scenario" type="submit" class="btn btn-primary" value="Créer">
             </div>
         </div>

@@ -51,7 +51,7 @@ export class TutorialService {
         {
             title: 'Aires Protégées',
             icon: 'fa-solid fa-shield-halved',
-            description: 'Activez ou désactivez l\'affichage des aires protégées sur la carte pour planifier vos installations en tenant compte des contraintes environnementales.',
+            description: 'Activez ou désactivez l\'affichage des aires protégées sur la carte. Vous pouvez ouvrir la légende pour filtrer les types de zones à afficher.',
             targetSelector: '.protected-areas-btn-container',
             position: 'bottom',
         },
@@ -100,7 +100,7 @@ export class TutorialService {
             title: 'Pas de Temps',
             icon: 'fa-solid fa-stopwatch',
             description: 'Le pas de temps définit la précision de la simulation (ex: toutes les heures, tous les jours).',
-            targetSelector: '#scenario-pas_de_temps',
+            targetSelector: '#scenario-pas-de-temps-group',
             position: 'right',
         },
         {

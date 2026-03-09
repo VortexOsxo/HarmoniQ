@@ -17,6 +17,7 @@ __pycache__/
 
 # Remove build files
 build/
+dist/
 
 # remove the data cache
 cache/

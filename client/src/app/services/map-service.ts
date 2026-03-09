@@ -1,8 +1,11 @@
 import { Injectable, effect } from '@angular/core';
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
+import { createClusterIcon } from '@app/utils/cluster-icon';
 import { InfrastruturesService } from './infrastrutures-service';
 import { MapLineService } from './map-line-service';
+import { ProtectedAreasService } from './protected-areas-service';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 
@@ -13,6 +16,7 @@ export class MapService {
   get map() { return this._map; }
 
   private _map?: L.Map;
+  private clusterGroup?: L.MarkerClusterGroup;
 
   private markers: any = {
     eolienneparc: {},
@@ -24,7 +28,8 @@ export class MapService {
 
   constructor(
     private infrasService: InfrastruturesService,
-    private mapLineService: MapLineService
+    private mapLineService: MapLineService,
+    private protectedAreasService: ProtectedAreasService
   ) {
     effect(() => {
       // reload markers when selected infra group changes
@@ -53,7 +58,7 @@ export class MapService {
 
     const map = L.map('map', {
       zoomControl: true,
-      attributionControl: true,
+      attributionControl: false,
       maxZoom: 12,
       minZoom: 5
     }).setView([52.9399, -67], 4);
@@ -93,6 +98,16 @@ export class MapService {
     this.mapLineService.addLinesToMap(map);
 
     this._map = map;
+
+    this.clusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 70,
+      disableClusteringAtZoom: 8,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      iconCreateFunction: (cluster) => createClusterIcon(cluster),
+    });
+    map.addLayer(this.clusterGroup);
+
     return map;
   }
 
@@ -102,6 +117,7 @@ export class MapService {
 
     this.map.remove();
     this._map = undefined;
+    this.clusterGroup = undefined;
   }
 
   initMarkers() {
@@ -126,7 +142,11 @@ export class MapService {
   removeMarkers(type: string) {
     const markers = this.markers[type];
     for (const marker of Object.values(markers)) {
-      (marker as L.Marker).remove();
+      const m = marker as L.Marker;
+      if (this.clusterGroup) {
+        this.clusterGroup.removeLayer(m);
+      }
+      m.remove();
     }
     this.markers[type] = {};
   }
@@ -178,9 +198,26 @@ export class MapService {
         `;
     }
 
-    const marker = L.marker([data.latitude, data.longitude], { icon: icon })
-      .addTo(this.map)
-      .bindPopup(popupContent);
+    const marker = L.marker([data.latitude, data.longitude], {
+      icon: icon,
+      infraType: type,
+      infraActive: isActive,
+    } as any);
+
+    marker.bindPopup(popupContent);
+
+    this.protectedAreasService.checkProtectedArea(data.latitude, data.longitude).then(areaName => {
+      if (areaName) {
+        const warning = `<div style="margin-top:8px;padding:6px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:0.82rem;color:#856404;"><b>Aire protégée</b><br>${areaName}</div>`;
+        marker.setPopupContent(popupContent + warning);
+      }
+    });
+
+    if (this.clusterGroup) {
+      this.clusterGroup.addLayer(marker);
+    } else {
+      marker.addTo(this.map);
+    }
 
     this.markers[type][data.id] = marker;
   }
@@ -190,7 +227,11 @@ export class MapService {
     const dict = this.markers[type];
     const marker = dict[infraId];
 
-    if (marker && this.map) {
+    if (marker && this.map && this.clusterGroup) {
+      this.clusterGroup.zoomToShowLayer(marker, () => {
+        marker.openPopup();
+      });
+    } else if (marker && this.map) {
       this.map.setView(marker.getLatLng(), 8);
       marker.openPopup();
     }
@@ -202,5 +243,10 @@ export class MapService {
 
     if (!marker) return;
     marker.setIcon(!isActive ? map_icons[`${type}gris`] : map_icons[type]);
+    (marker.options as any).infraActive = isActive;
+
+    if (this.clusterGroup) {
+      this.clusterGroup.refreshClusters();
+    }
   }
 }
