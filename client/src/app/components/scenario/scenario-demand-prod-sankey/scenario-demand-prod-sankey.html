@@ -3,12 +3,15 @@
 } @else if (graphState() === GraphState.Loading) {
   <p>Chargement des données...</p>
 } @else if (graphState() === GraphState.Displayable) {
-  <div class="sankey-view">
-    <div class="sankey-diagram-wrapper">
-      <app-sankey-diagram [data]="sankeyData" />
-    </div>
-    <div class="co2-panel-wrapper">
-      <app-co2-details-panel [data]="co2Data" />
+  <div class="sankey-wrapper">
+    <h2 class="sankey-title">Détails de l'impact CO<sub>2</sub> de la production au Québec.</h2>
+    <div class="sankey-view">
+      <div class="sankey-diagram-wrapper">
+        <app-sankey-diagram [data]="sankeyData" />
+      </div>
+      <div class="co2-panel-wrapper">
+        <app-co2-details-panel [data]="co2Data" />
+      </div>
     </div>
   </div>
 }
