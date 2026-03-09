@@ -21,6 +21,17 @@ def build_client():
 
     ensure_node_installed()
 
+    print(f"[launch-app] Installing client dependencies ({client_dir})...")
+    result = subprocess.run(
+        ["npm", "install"],
+        cwd=str(client_dir),
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("[launch-app] npm install failed!", file=sys.stderr)
+        sys.exit(result.returncode)
+    print("[launch-app] Dependencies installed.")
+
     print(f"[launch-app] Building client ({client_dir})...")
     result = subprocess.run(
         ["npm", "run", "build"],
@@ -41,6 +52,17 @@ def start_ng_serve():
         return None
 
     ensure_node_installed()
+
+    print(f"[launch-app] Installing client dependencies ({client_dir})...")
+    result = subprocess.run(
+        ["npm", "install"],
+        cwd=str(client_dir),
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("[launch-app] npm install failed!", file=sys.stderr)
+        sys.exit(result.returncode)
+    print("[launch-app] Dependencies installed.")
 
     proc = subprocess.Popen(
         ["npx", "ng", "serve", "--proxy-config", "proxy.conf.json"],
