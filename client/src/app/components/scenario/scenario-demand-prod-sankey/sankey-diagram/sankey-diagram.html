@@ -12,7 +12,7 @@
       [attr.fill]="flow.color"
       [attr.fill-opacity]="flowOpacity(i)"
       stroke="none"
-      style="pointer-events:fill; cursor:crosshair; transition: fill-opacity 0.18s ease"
+      style="pointer-events:fill; cursor:default; transition: fill-opacity 0.18s ease"
       (mouseenter)="onFlowMouseEnter(i, $event)"
       (mousemove)="onFlowMouseMove($event, i)"
       (mouseleave)="onFlowMouseLeave()"

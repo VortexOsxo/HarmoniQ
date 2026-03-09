@@ -13,7 +13,7 @@ export const PLACEHOLDER_SANKEY_DATA: SankeyData = {
   productionNodes: [
     { id: 'hydraulique', label: 'Hydraulique',  value: 37000, color: '#4a9dd4', icon: 'fa-droplet',              co2FactorKgMWh: 24  },
     { id: 'eolien',      label: 'Éolien',       value: 4200,  color: '#6abbc4', icon: 'fa-wind',                 co2FactorKgMWh: 12  },
-    { id: 'gaz',         label: 'Gaz naturel',  value: 300,   color: '#4abb8a', icon: 'fa-fire-flame-curved',    co2FactorKgMWh: 490 },
+    { id: 'gaz',         label: 'Gaz naturel',  value: 300,   color: '#E8924A', icon: 'fa-fire-flame-curved',    co2FactorKgMWh: 490 },
     { id: 'thermique',   label: 'Thermique',    value: 200,   color: '#e25c5c', icon: 'fa-bolt',                 co2FactorKgMWh: 820 },
     { id: 'solaire',     label: 'Solaire',      value: 250,   color: '#e8c53c', icon: 'fa-sun',                  co2FactorKgMWh: 48  },
     { id: 'biomasse',    label: 'Biomasse',     value: 50,    color: '#5db85d', icon: 'fa-seedling',             co2FactorKgMWh: 230 },
