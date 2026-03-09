@@ -14,7 +14,7 @@ div#plots {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    min-width: 140px;
+    min-width: 160px;
 }
 
 .view-btn {
@@ -60,7 +60,7 @@ div#plots {
 /* ── Protected areas button ── */
 .protected-areas-btn-container {
     position: absolute;
-    top: 170px;
+    top: 159px;
     right: 16px;
     z-index: 1100;
 }

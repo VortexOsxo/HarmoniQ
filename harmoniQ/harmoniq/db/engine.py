@@ -44,7 +44,6 @@ def _get_sql_tables(schemas_module) -> Dict[type, Dict[str, type]]:
             "create": create_class,
             "response": response_class,
         }
-        print(cls)
     return sql_tables
 
 #In this there are four types of classes , base ones (from pydantic), create ones (for creating new objects) and response ones (for returning the data)

@@ -23,3 +23,4 @@ export class SimulationPage {
     this.showSourcesPanel = false;
   }
 }
+
