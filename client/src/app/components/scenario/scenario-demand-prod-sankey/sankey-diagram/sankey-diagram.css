@@ -16,7 +16,6 @@
   position: absolute;
   top: 0;
   left: 0;
-  pointer-events: none;
   overflow: visible;
 }
 
@@ -73,6 +72,16 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: default;
   user-select: none;
+  transition: opacity 0.18s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.node-card:hover {
+  transform: translateX(2px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.node-card--dimmed {
+  opacity: 0.3;
 }
 
 .node-icon {
@@ -118,6 +127,13 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  cursor: default;
+  transition: opacity 0.18s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.co2-total-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 5px 16px rgba(194, 64, 64, 0.45);
 }
 
 .co2-cloud-icon {
@@ -143,4 +159,45 @@
 .co2-unit {
   font-size: 11px;
   opacity: 0.85;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+.flow-tooltip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20, 20, 30, 0.88);
+  color: #fff;
+  border-radius: 8px;
+  padding: 7px 12px;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.tooltip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltip-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tooltip-line-main {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.tooltip-line-value {
+  font-size: 11px;
+  opacity: 0.75;
 }
