@@ -17,10 +17,7 @@ import { GraphState } from '@app/services/graph-services/base-graph-service';
 export class ScenarioDemandProdSankey {
   GraphState = GraphState;
 
-  // ── Data ────────────────────────────────────────────────────────────────
-  // Replace these with real API data when ready.
-  // Both properties are derived from a single SankeyData object so that
-  // swapping in a live API response only requires updating `sankeyData`.
+  // ── Placeholder Data ────────────────────────────────────────────────────────────────
   sankeyData: SankeyData = PLACEHOLDER_SANKEY_DATA;
   co2Data: Co2DetailsData = buildCo2Details(PLACEHOLDER_SANKEY_DATA);
 
