@@ -1,59 +1,51 @@
 <div id="map" style="height: 100%; width: 100%;"></div>
 
-<!-- Legend (bottom-left)
-<div class="map-legend card">
-    <div class="legend-header">
-        <i class="fa-solid fa-circle-info"></i>
-        <strong>Légende</strong>
-    </div>
-    <div class="legend-body">
-        <div class="legend-section">
-            <div class="legend-item">
-                <span class="legend-dot" style="background: #3498db;"></span>
-                Hydraulique
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot" style="background: #1abc9c;"></span>
-                Éolien
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot" style="background: #f39c12;"></span>
-                Solaire
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot" style="background: #e74c3c;"></span>
-                Thermique
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot" style="background: #9b59b6;"></span>
-                Nucléaire
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot" style="background: #95a5a6;"></span>
-                Sous-station
-            </div>
-        </div>
-        <hr class="legend-divider">
-        <div class="legend-section">
-            <div class="legend-item">
-                <span class="legend-line" style="background: #e74c3c;"></span>
-                Haute tension
-            </div>
-            <div class="legend-item">
-                <span class="legend-line" style="background: #f39c12;"></span>
-                Moyenne tension
-            </div>
-            <div class="legend-item">
-                <span class="legend-line" style="background: #27ae60;"></span>
-                Basse tension
-            </div>
-        </div>
-    </div>
-</div> -->
+<button class="pa-legend-reopen" *ngIf="protectedAreasService.isVisible() && !protectedAreasService.legendOpen()"
+    (click)="protectedAreasService.legendOpen.set(true)">
+    <i class="fa-solid fa-layer-group"></i>
+</button>
 
-<!-- Ajouter infrastructure overlay (bottom-right) -->
-<div class="map-overlay card p-2 m-4">
-    <p>Ajouter infrastructure :</p>
+<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()">
+    <div class="pa-legend-header">
+        <i class="fa-solid fa-layer-group"></i>
+        <strong>Aires protégées</strong>
+        <button class="pa-legend-close" (click)="protectedAreasService.legendOpen.set(false)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="pa-legend-controls">
+        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.selectAll()">Tout
+            sélectionner</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.deselectAll()">Tout
+            désélectionner</button>
+    </div>
+
+    <div class="pa-legend-body">
+        <ng-container *ngFor="let node of protectedAreasService.layerTree">
+            <ng-container *ngTemplateOutlet="layerNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
+        </ng-container>
+    </div>
+</div>
+
+<ng-template #layerNodeTpl let-node let-depth="depth">
+    <div class="pa-layer-item" [class.pa-group-parent]="node.children" [style.padding-left.px]="depth * 20">
+        <label class="pa-checkbox-label">
+            <input type="checkbox" [checked]="protectedAreasService.isGroupFullySelected(node)"
+                (change)="protectedAreasService.toggleNode(node)">
+            <span class="pa-layer-name">{{ node.name }}</span>
+        </label>
+    </div>
+    <ng-container *ngIf="node.children">
+        <ng-container *ngFor="let child of node.children">
+            <ng-container
+                *ngTemplateOutlet="layerNodeTpl; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+        </ng-container>
+    </ng-container>
+</ng-template>
+
+<div class="map-overlay card p-2 m-2">
+    <p>Ajouter une infrastructure :</p>
 
     <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" type="Hydro" route="hydro"
         draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />

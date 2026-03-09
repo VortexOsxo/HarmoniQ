@@ -35,7 +35,7 @@ def fill_thermique():
     for _, row in df.iterrows():
         CRUD.create_thermique(
             db,
-            schemas.ThermiqueCreate(
+            schemas.ThermiqueBase(
                 nom=row["nom"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
@@ -57,7 +57,7 @@ def fill_solaire():
     for _, row in df.iterrows():
         CRUD.create_solaire(
             db,
-            schemas.SolaireCreate(
+            schemas.SolaireBase(
                 nom=row["nom"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
@@ -98,7 +98,7 @@ def fill_parc_eoliennes():
                         row["Hub Height (m)"], hub_height
                     )
 
-            eolienne_parc = schemas.EolienneParcCreate(
+            eolienne_parc = schemas.EolienneParcBase(
                 nom=project_name,
                 latitude=average_lat,
                 longitude=average_lon,
@@ -134,7 +134,7 @@ def fill_hydro():
             print(f"Barrage {row['Nom']} existe déjà")
             continue
 
-        db_hydro = schemas.HydroCreate(
+        db_hydro = schemas.HydroBase(
             nom=row["Nom"],
             puissance_nominal=row["Puissance_Installee_MW"],
             type_barrage=row["Type"],
@@ -172,7 +172,7 @@ def fill_line_types():
             print(f"Type de ligne {row['name']} existe déjà")
             continue
 
-        db_line_type = schemas.LineTypeCreate(
+        db_line_type = schemas.LineTypeBase(
             name=row["name"],
             f_nom=int(row["f_nom"]),
             r_per_length=float(row["r_per_length"]),
@@ -280,51 +280,6 @@ def fill_lines():
     print(f"{count} lignes ajoutées à la base de données")
 
 
-def create_initial_scenarios():
-    scenario_2035 = schemas.ScenarioCreate(
-        nom="année 2035",
-        description="Scénario de base pour l'année 2035",
-        date_de_debut="2035-01-01",
-        date_de_fin="2035-12-31",
-        pas_de_temps="PT1H",
-    )
-
-    db = next(get_db())
-    existing = (
-        db.query(schemas.Scenario)
-        .filter(schemas.Scenario.nom == scenario_2035.nom)
-        .first()
-    )
-    if existing:
-        print(f"Scénario {scenario_2035.nom} existe déjà")
-    else:
-        CRUD.create_scenario(db, scenario_2035)
-        print(f"Scénario {scenario_2035.nom} ajouté à la base de données")
-
-    scenario_2050 = schemas.ScenarioCreate(
-        nom="année 2050",
-        description="Scénario de base pour l'année 2050",
-        date_de_debut="2050-01-01",
-        date_de_fin="2050-12-31",
-        pas_de_temps="PT1H",
-    )
-
-    existing = (
-        db.query(schemas.Scenario)
-        .filter(schemas.Scenario.nom == scenario_2050.nom)
-        .first()
-    )
-
-    if existing:
-        print(f"Scénario {scenario_2050.nom} existe déjà")
-    else:
-        CRUD.create_scenario(db, scenario_2050)
-        print(f"Scénario {scenario_2050.nom} ajouté à la base de données")
-
-
-
-
-
 def check_if_empty():
     db = next(get_db())
     tables = [
@@ -335,7 +290,6 @@ def check_if_empty():
         schemas.LineType,
         schemas.Thermique,
         schemas.Solaire,
-        schemas.Scenario,
     ]
 
     for table in tables:
@@ -372,11 +326,6 @@ def populate_db():
 
     print("Collecte des centrales solaires")
     fill_solaire()
-
-    print("Création des scénarios de base")
-    create_initial_scenarios()
-
-
 
 
 def main():

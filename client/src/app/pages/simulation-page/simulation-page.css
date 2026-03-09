@@ -1,5 +1,12 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
 div#main {
-    height: calc(100vh - 5em);
+    flex: 1;
     position: relative;
     overflow: hidden;
 }
@@ -145,3 +152,4 @@ app-infrastructure-selector {
         left: -100%;
     }
 }
+

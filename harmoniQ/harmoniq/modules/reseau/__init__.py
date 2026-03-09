@@ -268,43 +268,58 @@ class InfraReseau(Infrastructure):
                 Pmax = self.Pmax
         
         t_prep_start = time.time()
-        
-        # Réechantillonner à une fréquence journalière si demandé
+
+        # b1a: Réechantillonner à une fréquence journalière si demandé
+        t_b1a = time.time()
         if is_journalier:
             logger.info("Passage en mode journalier (pas de temps = 24h)")
             self.network = EnergyUtils.reechantillonner_reseau_journalier(self.network)
-        
+        self.timers['b1a_resampling'] = time.time() - t_b1a
+
         barrages_reservoir = self.network.generators[
             self.network.generators.carrier == 'hydro_reservoir'
         ].index.tolist()
-        
+
         if not barrages_reservoir:
             logger.warning("Aucun barrage à réservoir trouvé dans le réseau")
             return self.network, {}
-        
-        # Générer des niveaux de réservoir simulés
+
+        # b1b: Générer des niveaux de réservoir simulés
+        t_b1b = time.time()
         niveaux_reservoirs = EnergyUtils.generer_faux_niveaux_reservoirs(
             self.network.snapshots, barrages_reservoir
         )
-        
+        self.timers['b1b_generer_niveaux'] = time.time() - t_b1b
+
+        # b1c: Calcul des coûts marginaux
+        t_b1c = time.time()
         marginal_costs = niveaux_reservoirs.apply(
             lambda col: EnergyUtils.calcul_cout_reservoir_vectorized(col.values)
         )
-        
-        # Ajouter les coûts marginaux au réseau
+        self.timers['b1c_calcul_couts'] = time.time() - t_b1c
+
+        # b1d: Ajouter les coûts marginaux au réseau
+        t_b1d = time.time()
         if not hasattr(self.network, 'generators_t'):
             self.network.generators_t = {}
         if 'marginal_cost' not in self.network.generators_t:
             self.network.generators_t['marginal_cost'] = pd.DataFrame(index=self.network.snapshots)
-        
+
         for barrage in barrages_reservoir:
             self.network.generators_t['marginal_cost'][barrage] = marginal_costs[barrage]
+        self.timers['b1d_ajouter_couts'] = time.time() - t_b1d
 
-        # Ajouter l'interconnexion et vérifier la connectivité
+        # b1e: Ajouter l'interconnexion
+        t_b1e = time.time()
         bus_frontiere = EnergyUtils.obtenir_bus_frontiere(self.network, "Interconnexion")
         self.network = EnergyUtils.ajouter_interconnexion_import_export(self.network, Pmax)
-        self.network = EnergyUtils.ensure_network_solvability(self.network)
-        
+        self.timers['b1e_interconnexion'] = time.time() - t_b1e
+
+        # b1f: Vérifier la solvabilité du réseau
+        t_b1f = time.time()
+        self.network = EnergyUtils.ensure_network_solvability(self.network, timers=self.timers)
+        self.timers['b1f_solvabilite'] = time.time() - t_b1f
+
         self.timers['b1_preparation'] = time.time() - t_prep_start
         
         t_opt_start = time.time()

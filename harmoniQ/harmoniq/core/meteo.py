@@ -45,7 +45,7 @@ class Meteo:
             self.existing_df = pd.read_csv(METEO_DATA_PATH)
             self.existing_df["date"] = pd.to_datetime(self.existing_df["date"])
         except Exception as e:
-            print(f"⚠️ Impossible de charger data.csv : {e}")
+            logger.warning("Impossible de charger data.csv : %s", e)
             self.existing_df = None
 
     def haversine(self, lat1, lon1, lat2, lon2):
@@ -88,10 +88,10 @@ class Meteo:
         return (df)
 
     def get_weather_or_nearest(self, Latitude, Longitude, start_date, end_date):
-        print(f"🌍 Recherche météo pour {Latitude}, {Longitude} de {start_date} à {end_date}")
+        logger.debug("Recherche météo pour %s, %s de %s à %s", Latitude, Longitude, start_date, end_date)
 
         if self.existing_df is None:
-            print("❌ Pas de base de données locale, appel à l’API...")
+            logger.info("Pas de base de données locale, appel à l’API")
             start_str = start_date.strftime("%Y-%m-%d")
             end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
             return self.get_weather_data(Latitude, Longitude, start_str, end_str)
@@ -104,12 +104,12 @@ class Meteo:
         nearest = unique_coords.sort_values("distance").iloc[0]
 
         if nearest["distance"] > 50:
-            print(f"ℹ️ Station la plus proche à {nearest['distance']:.1f} km — appel API")
+            logger.info("Station la plus proche à %.1f km — appel API", nearest["distance"])
             start_str = start_date.strftime("%Y-%m-%d")
             end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
             return self.get_weather_data(Latitude, Longitude, start_str, end_str)
-        
-        print(f"✅ Utilisation de la station à {nearest['distance']:.1f} km")
+
+        logger.debug("Utilisation de la station à %.1f km", nearest["distance"])
 
         # Conversion des dates en UTC avec seulement 00h00 inclus pour la date de fin
         start = pd.to_datetime(start_date).tz_localize("UTC") if pd.to_datetime(start_date).tzinfo is None else pd.to_datetime(start_date)
