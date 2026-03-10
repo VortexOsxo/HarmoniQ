@@ -11,7 +11,17 @@ import { CommonModule } from '@angular/common';
   standalone: true,
 })
 export class NavigationBar {
+  isCollapsed = true;
+
   constructor(public tutorialService: TutorialService, public router: Router) { }
+
+  toggleNavbar() {
+    this.isCollapsed = !this.isCollapsed;
+  }
+
+  collapseNavbar() {
+    this.isCollapsed = true;
+  }
 
   startHelp() {
     this.tutorialService.resetTutorial();
