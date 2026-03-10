@@ -1,14 +1,30 @@
 <div id="game-area">
 
-<h2 id="questionText">{{questionText}}</h2>
+    <div id="questionContainer">
+        <div id="questionCounter" *ngIf="!quizTerminated">Question {{currentQuestionIndex + 1}} / {{totalQuestions}}
+        </div>
+        <pre id="questionText">{{questionText}}</pre>
+    </div>
 
 
-<div id="optionBox" [hidden]="quizTerminated"></div>
+    <div id="optionBox" [hidden]="quizTerminated"></div>
+    <div id="resultsContainer" [hidden]="!quizTerminated">
+        <img [hidden]="!goodGradeImage" src="/icons/checkMark.png">
+        <img [hidden]="goodGradeImage" src="/icons/warningMark.png">
 
-<button class="quizButton" [hidden]="!questionAnswered" (click)="changeQuestion()">Prochaine question</button>
-<button class="quizButton" [hidden]="!quizTerminated" (click)="navigate('')">Retour au menu principal</button>
-<button class="quizButton" *ngIf="quizTerminated && restartAvailable" (click)="startNewQuiz()"> 
-    Commencer un nouveau quiz </button>
-<h2>{{questionInformation}}</h2>
+        <pre [hidden]="goodGradeImage">Attention, il se peut que certains concepts ne soient pas bien compris. Vous pouvez
+            toutefois aller lire la documentation si certains concepts n'ont pas bien été compris.
+        </pre>
+        <pre [hidden]="!goodGradeImage">Félicitations! Vous avez obtenu une excellente note!</pre>
+    </div>
+    <pre id="completionMessage" [hidden]="!(quizTerminated && !questionsLeftAvailable)">Vous avez répondu à toutes les questions disponibles.
+Si jamais vous recommencez, les questions seront les mêmes que celles qui vous ont étées posées précédemment.
+    </pre>
+
+    <button class="quizButton" [hidden]="!questionAnswered" (click)="changeQuestion()">Prochaine question</button>
+    <button class="quizButton" *ngIf="quizTerminated" (click)="startNewQuiz()">
+        Commencer un nouveau quiz </button>
+    <button class="quizButton" [hidden]="!quizTerminated" (click)="close()">Terminer</button>
+    <h2>{{questionInformation}}</h2>
 
 </div>

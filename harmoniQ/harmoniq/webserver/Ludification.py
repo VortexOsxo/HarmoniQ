@@ -210,21 +210,22 @@ questionList = [
   }
     ]
 
-
+#This function selects a random question from the question bank
+#and sends it back to the user.
 def selectQuestion(answeredQuestionList: List[int]):
     fullQuestionList = []
-    allQuestionsAnswered = False
-    quizMade = len(answeredQuestionList) // 10
-    while (len(fullQuestionList)-1)//10 <= quizMade*10 and not allQuestionsAnswered:
-        candidateQuestion = random.randint(0, len(questionList)-1)
-        if candidateQuestion not in answeredQuestionList:
-            if len(answeredQuestionList)-1 >= (len(questionList) - (len(questionList) % 10)):
-                print("end")
-                answeredQuestionList = [-2]
-                allQuestionsAnswered = True
-            else:
-                answeredQuestionList.append(candidateQuestion)
-                fullQuestionList.append(questionList[candidateQuestion])
-                print(answeredQuestionList)
-    print(answeredQuestionList)
+    QUESTIONS_PER_QUIZ = 10
+    NO_MORE_QUESTION_FLAG = -2
+    
+    while len(fullQuestionList) < QUESTIONS_PER_QUIZ:
+        candidate = random.randint(0, len(questionList) - 1)
+        
+        if candidate not in answeredQuestionList:
+            answeredQuestionList.append(candidate)
+            fullQuestionList.append(questionList[candidate])
+    #If the user can't do a new quiz with the questions remaining
+    #the answer list is cleared and we send a message to the client
+    if len(answeredQuestionList) + QUESTIONS_PER_QUIZ > len(questionList):
+        return fullQuestionList, [NO_MORE_QUESTION_FLAG]
+            
     return fullQuestionList, answeredQuestionList

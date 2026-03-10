@@ -385,7 +385,7 @@ game_router = APIRouter(
 
 @game_router.get("/quiz")
 async def fetch_question(
-    answeredQuestionList: List[int] = Query(...)
+    answeredQuestionList: List[int] = Query(default=[])
 ):
     print(answeredQuestionList)
 
