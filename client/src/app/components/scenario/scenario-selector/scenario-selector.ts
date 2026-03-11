@@ -5,6 +5,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from '@app/components/scenario/scenario-creation-modal/scenario-creation-modal';
+import { WeatherLabels } from '@app/models/weather';
+import { ConsumptionLabels } from '@app/models/consumption';
+import { OptimismLabels } from '@app/models/optimism';
 
 @Component({
   selector: 'app-scenario-selector',
@@ -13,6 +16,10 @@ import { ScenarioCreationModal } from '@app/components/scenario/scenario-creatio
   styleUrl: './scenario-selector.css',
 })
 export class ScenarioSelector {
+  public WeatherLabels = WeatherLabels;
+  public ConsumptionLabels = ConsumptionLabels;
+  public OptimismLabels = OptimismLabels;
+
   get scenarios(): Scenario[] {
     return this.scenariosService.scenarios();
   }
@@ -32,7 +39,7 @@ export class ScenarioSelector {
   }
 
   deleteScenario(scenario: Scenario) {
-    this.scenariosService.deleteScenario(scenario).subscribe();
+    this.scenariosService.deleteScenario(scenario);
   }
 
   compareScenarios(s1: Scenario, s2: Scenario): boolean {

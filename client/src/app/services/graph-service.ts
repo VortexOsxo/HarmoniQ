@@ -31,8 +31,8 @@ export class GraphService {
             yval = Object.values(data.production_mwh);
         } else if (type === "solaire") {
             unit = "W";
-            xval = Object.keys(data.production_horaire_wh);
-            yval = Object.values(data.production_horaire_wh);
+            xval = Object.keys(data.production);
+            yval = Object.values(data.production);
         }
 
         const layout = {

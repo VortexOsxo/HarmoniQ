@@ -31,8 +31,7 @@ export class CreateInfraGroupModal {
             central_nucleaire: this.currentGroup?.central_nucleaire || []
         };
 
-        this.infrastructuresService.createInfraGroup(newGroup).subscribe(() => {
-            this.activeModal.close('created');
-        });
+        const created = this.infrastructuresService.createInfraGroup(newGroup);
+        this.activeModal.close('created');
     }
 }

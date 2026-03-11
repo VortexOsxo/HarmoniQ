@@ -1,0 +1,45 @@
+name: Build Angular Client
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Commit Client
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build (development)
+        working-directory: client
+        run: npm run build -- --configuration=development
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: rebuild Angular client [skip ci]"
+          branch: chore/rebuild-client
+          delete-branch: true
+          title: "chore: rebuild Angular client"
+          body: "This is an automated PR to update the built Angular client files."
+          add-paths: |
+            client/dist/

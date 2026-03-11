@@ -20,7 +20,7 @@ export class DemandeTemporalGraphService extends BaseGraphService {
     }
 
     protected fetchData(scenario: Scenario) {
-        return this.demandeTemporalDataService.fetch(scenario.id)
+        return this.demandeTemporalDataService.fetch(scenario)
             .pipe(map(this.handleData.bind(this)));
     }
 

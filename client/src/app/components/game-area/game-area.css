@@ -7,9 +7,17 @@
   gap: 5rem;
 }
 
-h2{
+pre {
   max-width: 45vw;
-  max-height: 15vh;
+  max-height: 30vh;
+  font-size: 1.7rem;
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  color: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-family: inherit;
 }
 
 #optionBox {
@@ -22,30 +30,30 @@ h2{
 }
 
 button {
-    padding: 0.75em 1.5em;
-    background: none;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: 2px solid grey;
-    color: white;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    min-width: 140px;
-    
+  padding: 0.75em 1.5em;
+  background: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: 2px solid grey;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-width: 140px;
+
 }
 
 ::ng-deep .optionButton {
   padding: 0.75em 1.5em;
-    background: none;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: 2px solid grey;
-    color: grey;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    min-width: 140px;
+  background: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: 2px solid grey;
+  color: grey;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-width: 140px;
 }
 
 ::ng-deep .rightAnswerButtonColor {
@@ -57,8 +65,8 @@ button {
 }
 
 ::ng-deep button:not(.answered):hover {
-    background-color: black;
-    color: white;
+  background-color: black;
+  color: white;
 }
 
 .quizButton {
@@ -77,8 +85,40 @@ button {
   text-align: center;
 }
 
+#questionContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 80vw;
+}
+
+#questionCounter {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: black;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
 #questionText {
-  width: 70vw;
-  height: auto;
+  width: 55vw;
+  height: 6rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#resultsContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+#completionMessage {
   text-align: center;
 }
+

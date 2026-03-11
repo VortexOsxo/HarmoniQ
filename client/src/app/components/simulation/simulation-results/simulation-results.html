@@ -1,26 +1,41 @@
-<div id="plots" class="d-flex flex-column">
-    <ul ngbNav #nav="ngbNav" class="nav nav-tabs" [(activeId)]="activeTab" (navChange)="onTabChange($event)">
-        <li [ngbNavItem]="'map'">
-            <button ngbNavLink>Carte</button>
-            <ng-template ngbNavContent>
-                <app-quebec-map class="d-block h-100 w-100" />
-            </ng-template>
-        </li>
+<div id="plots">
+    <!-- Top-right floating view buttons -->
+    <div class="view-buttons">
+        <button class="view-btn" [class.active]="activeTab === 'map'" (click)="switchTab('map')">
+            <i class="fa-solid fa-map"></i>
+            Carte
+        </button>
+        <button class="view-btn" [class.active]="activeTab === 'sankey'" (click)="switchTab('sankey')">
+            <i class="fa-solid fa-chart-bar"></i>
+            Production
+        </button>
+        <button class="view-btn" [class.active]="activeTab === 'temporal'" (click)="switchTab('temporal')">
+            <i class="fa-solid fa-clock"></i>
+            Temporel
+        </button>
+    </div>
 
-        <li [ngbNavItem]="'sankey'">
-            <button ngbNavLink>Demande / Production</button>
-            <ng-template ngbNavContent>
-                <app-scenario-demand-prod-sankey />
-            </ng-template>
-        </li>
+    <!-- Aires protégées button below view buttons -->
+    <div class="protected-areas-btn-container" *ngIf="activeTab === 'map'">
+        <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
+            [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
+            (click)="protectedAreasService.toggleVisibility()">
+            <i class="bi" [class.bi-eye]="protectedAreasService.isVisible()"
+                [class.bi-eye-slash]="!protectedAreasService.isVisible()"></i>
+            Aires protégées
+        </button>
+    </div>
 
-        <li [ngbNavItem]="'temporal'">
-            <button ngbNavLink>Données temporelles</button>
-            <ng-template ngbNavContent>
-                <app-scenario-temporal-demand-graph />
-            </ng-template>
-        </li>
-    </ul>
-
-    <div [ngbNavOutlet]="nav" class="flex-grow-1 w-100"></div>
+    <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
+    <div class="view-content">
+        <div *ngIf="activeTab === 'map'" class="view-pane">
+            <app-quebec-map class="d-block h-100 w-100" />
+        </div>
+        <div *ngIf="activeTab === 'sankey'" class="view-pane">
+            <app-scenario-demand-prod-sankey />
+        </div>
+        <div *ngIf="activeTab === 'temporal'" class="view-pane">
+            <app-scenario-temporal-demand-graph />
+        </div>
+    </div>
 </div>

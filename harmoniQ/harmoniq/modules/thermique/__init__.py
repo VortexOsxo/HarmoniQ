@@ -1,5 +1,4 @@
-from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ThermiqueBase, ScenarioBase
+from harmoniq.core.base import Infrastructure
 from harmoniq.modules.thermique.calculs_production_thermique import (
     calculate_thermique_production,
 )
@@ -11,34 +10,17 @@ logger = logging.getLogger("Thermique")
 
 
 class InfraThermique(Infrastructure):
-    def __init__(self, donnees: ThermiqueBase):
-
-        super().__init__(donnees)
-        self.donnees:ThermiqueBase = donnees
-        self.production: pd.DataFrame = None
-
-    def charger_scenario(self, scenario: ScenarioBase):
-        self.scenario: ScenarioBase = scenario
-        self.production = None
-
-    @necessite_scenario
-    def calculer_production(self) -> pd.DataFrame:
-        if self.production is not None:
-            return self.production
-
+    def calculer_production_interne(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
 
 
-        self.production = calculate_thermique_production(
+        return calculate_thermique_production(
             power_mw=self.donnees.puissance_nominal,
             maintenance_week=self.donnees.semaine_maintenance,
             date_start=self.scenario.date_de_debut,
             date_end=self.scenario.date_de_fin,
         )
-        return self.production
-
-
 
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_all_thermique, read_all_scenario

@@ -3,6 +3,9 @@ import { GameService } from '@app/services/game-service';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
+const NO_MORE_QUESTIONS_FLAG: number = -2;
 
 @Component({
   selector: 'app-game-area',
@@ -14,69 +17,72 @@ export class GameArea {
 
   questionText: string = "Le quiz est en cours de chargement";
   questionAnswered: boolean = false;
-  questionInformation: string = "";
-  quizTerminated: boolean = false;
-  restartAvailable: boolean = false;
+  questionInformation: string = ""; //to display information regarding the answer
+  quizTerminated: boolean = false; //if quiz if finished
+  questionsLeftAvailable: boolean = false; //to display the no more new question message
+  goodGradeImage: boolean = false; //used to display the image at the end of the quiz
 
 
-  constructor(private cdr: ChangeDetectorRef, private router: Router, 
-    private gameService: GameService) {  
+  constructor(private cdr: ChangeDetectorRef, private router: Router,
+    private gameService: GameService, private activeModal: NgbActiveModal) {
   }
 
   ngOnInit() {
-  this.gameService.currentQuestion$.subscribe(question => {
-    if (question < 0) return;
-
-    const optionBox = document.getElementById("optionBox");
-    if (!optionBox) return;
-    optionBox.innerHTML = '';
-
-    this.gameService.getQuestion().options.forEach((option, index) => {
-      const button = document.createElement('button');
-      button.textContent = option;
-      button.addEventListener('click', () => this.answerSelected(index));
-      button.classList.add("optionButton");
-      optionBox.appendChild(button);
-    });
-
-    this.questionText = this.gameService.getQuestion().questionText;
-
-    this.cdr.detectChanges();
-  });
-}
-
-
-  answerSelected(selectedAnswer: number){
-    console.log(selectedAnswer)
-
-    let answer: number = this.gameService.checkAnswer(selectedAnswer);
-
-    if(!answer)
-      {console.error("an error has happened while fetching the correct answer.");
-      return;}
-
-    const optionButtons = document.getElementById("optionBox")?.children;
-    if(!optionButtons)
-      {console.error("an error has happend with the choices");
-      return;
-    }
-
-    if(selectedAnswer == answer)
-    {
-      if(optionButtons)
-        optionButtons[selectedAnswer].classList.add("rightAnswerButtonColor");
-    } else {
-      
-      if(optionButtons)
-      {
-        optionButtons[selectedAnswer].classList.add("wrongAnswerButtonColor");
-        optionButtons[answer].classList.add("rightAnswerButtonColor");
+    this.gameService.currentQuestion$.subscribe(question => {
+      if (question == NO_MORE_QUESTIONS_FLAG) {
+        this.showFinalResults();
+        return;
       }
+      if (question < 0) return;
+
+      const optionBox = document.getElementById("optionBox");
+      if (!optionBox) return;
+      optionBox.innerHTML = '';
+
+      const currentQuestion = this.gameService.getQuestion();
+      currentQuestion.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.addEventListener('click', () => this.answerSelected(index));
+        button.classList.add("optionButton");
+        optionBox.appendChild(button);
+      });
+
+      this.questionText = currentQuestion.questionText;
+
+      // Restore state answered if the question has already been answered
+      if (this.gameService.isCurrentAnswered) {
+        this.questionAnswered = true;
+        setTimeout(() => {
+          const answer = this.gameService.checkAnswer(this.gameService.userSelection);
+          this.applyVisualFeedback(this.gameService.userSelection, answer);
+        }, 0);
+      }
+
+      this.cdr.detectChanges();
+    });
+  }
+
+
+  answerSelected(selectedAnswer: number) {
+    let answer: number = this.gameService.checkAnswer(selectedAnswer);
+    this.applyVisualFeedback(selectedAnswer, answer);
+  }
+
+  applyVisualFeedback(selectedAnswer: number, correctAnswer: number) {
+    const optionButtons = document.getElementById("optionBox")?.children;
+    if (!optionButtons) return;
+
+    if (selectedAnswer == correctAnswer) {
+      optionButtons[selectedAnswer].classList.add("rightAnswerButtonColor");
+    } else {
+      optionButtons[selectedAnswer].classList.add("wrongAnswerButtonColor");
+      optionButtons[correctAnswer].classList.add("rightAnswerButtonColor");
     }
 
     this.questionAnswered = true;
 
-    for (const button of optionButtons as HTMLCollectionOf<HTMLButtonElement>){
+    for (const button of optionButtons as HTMLCollectionOf<HTMLButtonElement>) {
       button.disabled = true;
       button.classList.add('answered');
     }
@@ -84,26 +90,42 @@ export class GameArea {
     this.cdr.detectChanges();
   }
 
-changeQuestion() {
-  this.gameService.nextQuestion();
-  this.questionAnswered = false;
+  changeQuestion() {
+    this.gameService.nextQuestion();
+    this.questionAnswered = false;
 
-  if (this.gameService.questionIndex == -2) {
-    this.quizTerminated = true;
-    this.questionText = `Le quiz est terminé!!\n Vous avez obtenu ${this.gameService.getGoodAnswerNumber()}
-    réponses sur 10`;
-    this.restartAvailable = this.gameService.restartAvailable();
+    if (this.gameService.questionIndex == NO_MORE_QUESTIONS_FLAG) {
+      this.showFinalResults();
+    }
   }
-}
 
-startNewQuiz() {
-  this.quizTerminated = false;
-  this.restartAvailable = false;
-  this.questionAnswered = false;
-  this.gameService.getQuiz();
-}
+  showFinalResults() {
+    this.quizTerminated = true;
+    this.goodGradeImage = this.gameService.getGoodAnswerNumber() > 7 ? true : false;
+    this.questionText = `Le quiz est terminé!! \n Vous avez obtenu une note de ${this.gameService.getGoodAnswerNumber() * 10}%`;
+    this.questionsLeftAvailable = this.gameService.restartAvailable();
+    this.cdr.detectChanges();
+  }
 
-  navigate(path: string) {
-    this.router.navigate([path]);
+  startNewQuiz() {
+    if (!this.questionsLeftAvailable)
+      this.gameService.restartQuestions();
+
+    this.quizTerminated = false;
+    this.questionsLeftAvailable = false;
+    this.questionAnswered = false;
+    this.gameService.getQuiz();
+  }
+
+  close() {
+    this.activeModal.close();
+  }
+
+  get currentQuestionIndex(): number {
+    return this.gameService.questionIndex;
+  }
+
+  get totalQuestions(): number {
+    return this.gameService.totalQuestions;
   }
 }

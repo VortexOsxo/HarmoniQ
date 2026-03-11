@@ -15,6 +15,7 @@ export class InfraListElement {
   @Input({ required: true }) nom!: string;
   @Input({ required: true }) id!: string;
   @Input({ required: true }) type!: string;
+  @Input() isUserCreated: boolean = false;
 
   get isSelected(): boolean {
     return this.infrastructuresService.isInfraSelected(this.type, this.id);
@@ -46,5 +47,10 @@ export class InfraListElement {
   handleInfoClick(event: any) {
     event.stopPropagation();
     this.mapService.showMarker(this.type, this.id);
+  }
+
+  deleteInfra(event: any) {
+    event.stopPropagation();
+    this.infrastructuresService.deleteLocalInfra(this.type, parseInt(this.id));
   }
 }

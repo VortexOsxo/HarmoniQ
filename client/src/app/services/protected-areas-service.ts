@@ -9,7 +9,6 @@ export class ProtectedAreasService {
     private readonly MAP_SERVER_URL = 'https://geo.environnement.gouv.qc.ca/donnees/rest/services/Biodiversite/Aires_protegees/MapServer';
 
     isVisible = signal(false);
-    isLoading = signal(false);
 
     private tiledLayer?: L.TileLayer;
     private map?: L.Map;
@@ -40,13 +39,6 @@ export class ProtectedAreasService {
                 `bboxSR=3857&imageSR=3857&` +
                 `size=${tileSize},${tileSize}&f=image`;
         };
-
-        this.tiledLayer.on('loading', () => this.isLoading.set(true));
-        this.tiledLayer.on('load', () => this.isLoading.set(false));
-        this.tiledLayer.on('tileerror', (e) => {
-            console.error('Tile error:', e);
-            this.isLoading.set(false);
-        });
     }
 
     private latLngToWebMercator(latlng: L.LatLng): { x: number; y: number } {
@@ -93,6 +85,5 @@ export class ProtectedAreasService {
         this.tiledLayer = undefined;
         this.map = undefined;
         this.isVisible.set(false);
-        this.isLoading.set(false);
     }
 }

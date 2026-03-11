@@ -1,6 +1,5 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.core.meteo import Granularity
-from harmoniq.db.schemas import HydroBase, ScenarioBase
+from harmoniq.db.schemas import HydroBase
 from harmoniq.modules.hydro.calcule import (
     get_run_of_river_dam_power,
     estimation_cout_barrage,
@@ -24,17 +23,12 @@ APPORT_DIR = CURRENT_DIR / "apport_naturel"
 class InfraHydro(Infrastructure):
 
     def __init__(self, donnees: List[HydroBase]):
-        # super().__init__(donnees)
-        self.donnees = donnees
+        super().__init__(donnees)
         self.debit = None
         self.apport = None
         self.cout = None
         self.qualite_ecosysteme = None
         self.daly = None
-        self.production = None
-
-    def charger_scenario(self, scenario):
-        self.scenario: ScenarioBase = scenario
 
     @necessite_scenario
     def charger_debit(self):  # Seulement pour les barrages au fil de l'Eau
@@ -106,8 +100,7 @@ class InfraHydro(Infrastructure):
             (apport["time"] >= start_date) & (apport["time"] <= end_date)
         ]
 
-    def calculer_production(self) -> pd.DataFrame:  # Fonctionne
-
+    def calculer_production_interne(self) -> pd.DataFrame:  # Fonctionne
         if self.donnees.type_barrage == "Fil de l'eau":
             self.charger_debit()
             return get_run_of_river_dam_power(self)
