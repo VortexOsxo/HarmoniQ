@@ -27,6 +27,9 @@ export class MapService {
     nucleaire: {},
   }
 
+  private previousSelectedType: string | null = null;
+  private previousSelectedId: string | null = null;
+
   constructor(
     private infrasService: InfrastruturesService,
     private mapLineService: MapLineService,
@@ -48,6 +51,40 @@ export class MapService {
         this.infrasService.getInfrasSignalByType(type)();
         this.reloadMarkers();
       });
+    });
+
+    // Watch for selected infra changes to highlight the marker in blue
+    effect(() => {
+      const selected = this.infraDetailService.selectedInfra();
+
+      // Restore previously selected marker to its normal icon
+      if (this.previousSelectedType && this.previousSelectedId) {
+        const prevMarker = this.markers[this.previousSelectedType]?.[parseInt(this.previousSelectedId)];
+        if (prevMarker) {
+          const isActive = this.infrasService.isInfraSelected(this.previousSelectedType, this.previousSelectedId);
+          const iconName = !isActive ? `${this.previousSelectedType}gris` : this.previousSelectedType;
+          prevMarker.setIcon(map_icons[iconName]);
+          (prevMarker.options as any).infraActive = isActive;
+          if (this.clusterGroup) {
+            this.clusterGroup.refreshClusters();
+          }
+        }
+        this.previousSelectedType = null;
+        this.previousSelectedId = null;
+      }
+
+      // Highlight the newly selected marker in blue
+      if (selected) {
+        const marker = this.markers[selected.type]?.[parseInt(selected.id)];
+        if (marker) {
+          marker.setIcon(map_icons[`${selected.type}bleu`]);
+          if (this.clusterGroup) {
+            this.clusterGroup.refreshClusters();
+          }
+          this.previousSelectedType = selected.type;
+          this.previousSelectedId = selected.id;
+        }
+      }
     });
   }
 
