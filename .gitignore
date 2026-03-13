@@ -28,3 +28,5 @@ cache/
 
 # Profiler Logs
 profile_logs
+
+**/harmoniq.sql
