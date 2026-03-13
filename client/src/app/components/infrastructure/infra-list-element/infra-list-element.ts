@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { SimulationSingleInfraModal } from '@app/components/simulation/simulation-single-infra-modal/simulation-single-infra-modal';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
-import { MapService } from '@app/services/map-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
 
 @Component({
   selector: 'app-infra-list-element',
@@ -25,7 +25,7 @@ export class InfraListElement {
     private infrastructuresService: InfrastruturesService,
     private scenarioService: ScenariosService,
     private modalService: NgbModal,
-    private mapService: MapService,
+    private infraDetailService: InfraDetailService,
   ) { }
 
   toggleInfra() {
@@ -46,7 +46,7 @@ export class InfraListElement {
 
   handleInfoClick(event: any) {
     event.stopPropagation();
-    this.mapService.showMarker(this.type, this.id);
+    this.infraDetailService.openDetail(this.type, this.id);
   }
 
   deleteInfra(event: any) {
@@ -54,3 +54,4 @@ export class InfraListElement {
     this.infrastructuresService.deleteLocalInfra(this.type, parseInt(this.id));
   }
 }
+

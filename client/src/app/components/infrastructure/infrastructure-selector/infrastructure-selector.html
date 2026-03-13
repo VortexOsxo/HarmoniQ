@@ -1,22 +1,22 @@
-<div id="infrastructures" class="bg-light card container">
-    <div class="d-flex w-100 justify-content-space-between align-items-center my-3">
-        <label style="white-space: nowrap;">
-            <h5>Groupe infras actif: </h5>
-        </label>
-        <span class="mx-1"></span>
-        <select class="form-select" [(ngModel)]="selectedInfrastructureGroup" [compareWith]="compareInfraGroups">
-            <option *ngFor="let infraGroup of infrastructureGroups" [ngValue]="infraGroup">
-                {{ infraGroup.nom }}
-            </option>
-        </select>
-        <span class="mx-1"></span>
-        <button class="btn btn-primary" id="add-infra-liste" title="Créer un nouveau groupe d'infrastructure"
-            (click)="openCreateModal()">
-            <i class="fa-solid fa-plus"></i>
-        </button>
+<div id="infrastructures">
+    <!-- Group selector header -->
+    <div class="group-selector-header">
+        <span class="group-label">Groupe infras actif</span>
+        <div class="group-selector-row">
+            <select class="group-select" [(ngModel)]="selectedInfrastructureGroup" [compareWith]="compareInfraGroups">
+                <option *ngFor="let infraGroup of infrastructureGroups" [ngValue]="infraGroup">
+                    {{ infraGroup.nom }}
+                </option>
+            </select>
+            <button class="group-add-btn" title="Créer un nouveau groupe d'infrastructure"
+                (click)="openCreateModal()">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
     </div>
-    <div ngbAccordion class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden;">
 
+    <!-- Infrastructure accordions -->
+    <div ngbAccordion class="infra-accordion">
         <div ngbAccordionItem *ngFor="let infra of infras">
             <h2 ngbAccordionHeader>
                 <button ngbAccordionButton>{{ infra.name }}</button>
