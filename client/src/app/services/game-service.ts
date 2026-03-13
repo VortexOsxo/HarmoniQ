@@ -14,6 +14,7 @@ export type Question = {
 export type ImportedQuestion = {
   question: Question;
   answer: number;
+  message: string;
 }
 
 export type Quiz = {
@@ -36,7 +37,8 @@ export class GameService {
           questionText: "",
           options: [""]
         },
-        answer: 0
+        answer: 0,
+        message: ""
       }],
       answeredQuestionList: [EMPTY]
     };
@@ -97,6 +99,11 @@ export class GameService {
 
   getGoodAnswerNumber(): number {
     return this.goodAnswers;
+  }
+
+  getMessage(): string {
+    console.log(this.quiz.questions[this._currentQuestion.value].message)
+    return this.quiz.questions[this._currentQuestion.value].message;
   }
 
   get questionIndex(): number {

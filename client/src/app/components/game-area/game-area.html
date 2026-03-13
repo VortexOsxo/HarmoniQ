@@ -1,30 +1,42 @@
 <div id="game-area">
 
     <div id="questionContainer">
-        <div id="questionCounter" *ngIf="!quizTerminated">Question {{currentQuestionIndex + 1}} / {{totalQuestions}}
-        </div>
+        <div id="questionCounter" *ngIf="!quizTerminated"><h1>Question {{currentQuestionIndex + 1}} / {{totalQuestions}}
+        </h1></div>
         <pre id="questionText">{{questionText}}</pre>
     </div>
 
+    <div id="optionBox" *ngIf="!quizTerminated"></div>
+    <div id="questonInformation" *ngIf="!quizTerminated"><h1>{{questionInformation}}</h1></div>
 
-    <div id="optionBox" [hidden]="quizTerminated"></div>
-    <div id="resultsContainer" [hidden]="!quizTerminated">
-        <img [hidden]="!goodGradeImage" src="/icons/checkMark.png">
-        <img [hidden]="goodGradeImage" src="/icons/warningMark.png">
+    <div id="resultsContainer" *ngIf="quizTerminated">
 
-        <pre [hidden]="goodGradeImage">Attention, il se peut que certains concepts ne soient pas bien compris. Vous pouvez
-            toutefois aller lire la documentation si certains concepts n'ont pas bien été compris.
-        </pre>
-        <pre [hidden]="!goodGradeImage">Félicitations! Vous avez obtenu une excellente note!</pre>
-    </div>
-    <pre id="completionMessage" [hidden]="!(quizTerminated && !questionsLeftAvailable)">Vous avez répondu à toutes les questions disponibles.
-Si jamais vous recommencez, les questions seront les mêmes que celles qui vous ont étées posées précédemment.
-    </pre>
+    <img *ngIf="goodGradeImage" src="/icons/checkMark.png">
+    <img *ngIf="!goodGradeImage" src="/icons/warningMark.png">
 
-    <button class="quizButton" [hidden]="!questionAnswered" (click)="changeQuestion()">Prochaine question</button>
+    <h1 *ngIf="!goodGradeImage">
+        Attention, il se peut que certains concepts ne soient pas bien compris. 
+        Vous pouvez toutefois aller lire la documentation si certains concepts 
+        n'ont pas bien été compris.
+    </h1>
+
+    <h1 *ngIf="goodGradeImage">
+        Félicitations! Vous avez obtenu une excellente note!
+    </h1>
+
+    <h1 id="completionMessage" *ngIf="quizTerminated && !questionsLeftAvailable">
+        Vous avez répondu à toutes les questions disponibles.
+        Si jamais vous recommencez, les questions seront les mêmes que celles 
+        qui vous ont étées posées précédemment.
+    </h1>
+
+</div>
+
+    <div id="quizButtons">
+    <button class="quizButton" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
     <button class="quizButton" *ngIf="quizTerminated" (click)="startNewQuiz()">
         Commencer un nouveau quiz </button>
-    <button class="quizButton" [hidden]="!quizTerminated" (click)="close()">Terminer</button>
-    <h2>{{questionInformation}}</h2>
+    <button class="quizButton" *ngIf="quizTerminated" (click)="close()">Terminer</button>
+    </div>
 
 </div>

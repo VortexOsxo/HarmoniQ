@@ -4,7 +4,7 @@
   justify-content: center;
   align-items: center;
   height: 100%;
-  gap: 5rem;
+  gap: 2rem;
 }
 
 pre {
@@ -20,13 +20,26 @@ pre {
   font-family: inherit;
 }
 
+h1 {
+  max-width: 45vw;
+  max-height: 15vh;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  color: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-family: inherit;
+}
+
 #optionBox {
-  height: 40vh;
+  height: 35vh;
   width: 45vw;
 
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(22vw, 1fr));
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 button {
@@ -90,7 +103,7 @@ button {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: 0.5rem;
   width: 80vw;
 }
 
@@ -121,4 +134,11 @@ button {
 #completionMessage {
   text-align: center;
 }
-
+
+#quizButtons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}

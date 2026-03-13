@@ -21,6 +21,7 @@ export class GameArea {
   quizTerminated: boolean = false; //if quiz if finished
   questionsLeftAvailable: boolean = false; //to display the no more new question message
   goodGradeImage: boolean = false; //used to display the image at the end of the quiz
+  nextQuestionButtonText: string = "Prochaine question"
 
 
   constructor(private cdr: ChangeDetectorRef, private router: Router,
@@ -87,12 +88,18 @@ export class GameArea {
       button.classList.add('answered');
     }
 
+    this.questionInformation = this.gameService.getMessage();
+
+    if ((this.currentQuestionIndex + 1) == this.totalQuestions)
+      this.nextQuestionButtonText = "Voir les résultats"
+
     this.cdr.detectChanges();
   }
 
   changeQuestion() {
     this.gameService.nextQuestion();
     this.questionAnswered = false;
+    this.questionInformation = "";
 
     if (this.gameService.questionIndex == NO_MORE_QUESTIONS_FLAG) {
       this.showFinalResults();
@@ -114,6 +121,7 @@ export class GameArea {
     this.quizTerminated = false;
     this.questionsLeftAvailable = false;
     this.questionAnswered = false;
+    this.nextQuestionButtonText = "Prochaine question"
     this.gameService.getQuiz();
   }
 
