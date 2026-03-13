@@ -23,6 +23,16 @@ export class NavigationBar {
       windowClass: 'game-modal'
     });
       }
+  isCollapsed = true;
+
+  toggleNavbar() {
+    this.isCollapsed = !this.isCollapsed;
+  }
+
+  collapseNavbar() {
+    this.isCollapsed = true;
+  }
+
   startHelp() {
     this.tutorialService.resetTutorial();
   }

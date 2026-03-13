@@ -1,0 +1,58 @@
+<div class="infra-detail-panel" [class.open]="isOpen()">
+    <!-- Header -->
+    <div class="detail-header">
+        <div class="detail-header-left">
+            <img *ngIf="infra()" [src]="getIconForType(infra()!.type)" class="detail-header-icon" alt="" />
+            <div>
+                <h5 class="detail-title">{{ infra()?.data?.nom }}</h5>
+                <span class="detail-subtitle">{{ infra()?.categoryName }}</span>
+            </div>
+        </div>
+        <button class="detail-close-btn" (click)="close()" title="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="detail-tabs">
+        <button class="detail-tab" [class.active]="activeTab === 'informations'" (click)="switchTab('informations')">
+            Informations
+        </button>
+        <button class="detail-tab" [class.active]="activeTab === 'impacts'" (click)="switchTab('impacts')">
+            Impacts environnementaux
+        </button>
+    </div>
+
+    <!-- Tab content -->
+    <div class="detail-body">
+        <!-- Informations tab -->
+        <div *ngIf="activeTab === 'informations'" class="detail-tab-content">
+            <div class="info-card">
+                <h6 class="info-card-title">{{ infra()?.data?.nom }}</h6>
+                <div class="info-field" *ngFor="let field of getInfoFields()">
+                    <i [class]="field.icon" class="info-field-icon"></i>
+                    <span class="info-field-text">
+                        {{ field.label }} : <strong>{{ field.value }}</strong>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impacts environnementaux tab -->
+        <div *ngIf="activeTab === 'impacts'" class="detail-tab-content">
+            <div class="impacts-section">
+                <div class="impacts-header">
+                    <i class="fa-solid fa-leaf impacts-header-icon"></i>
+                    <div>
+                        <h6 class="impacts-title">Impact Environnemental</h6>
+                        <span class="impacts-subtitle">{{ infra()?.categoryName }}</span>
+                    </div>
+                </div>
+                <div class="impacts-divider"></div>
+                <p class="impacts-placeholder">
+                    Les données d'impacts environnementaux ne sont pas encore disponibles pour cette infrastructure.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

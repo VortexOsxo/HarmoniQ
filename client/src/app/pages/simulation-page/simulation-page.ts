@@ -7,6 +7,7 @@ import { SimulationResults } from '@app/components/simulation/simulation-results
 import { TutorialOverlay } from '@app/components/tutorial-overlay/tutorial-overlay';
 import { CommonModule } from '@angular/common';
 import { TutorialService } from '@app/services/tutorial-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -21,6 +22,7 @@ export class SimulationPage implements OnDestroy, AfterViewInit {
 
   constructor(
     public tutorialService: TutorialService,
+    private infraDetailService: InfraDetailService,
   ) {
     this.tutorialSub = this.tutorialService.tutorialState$.subscribe((s) => {
       if (s.active && s.showWelcome) {
@@ -36,6 +38,7 @@ export class SimulationPage implements OnDestroy, AfterViewInit {
 
   ngOnDestroy() {
     this.tutorialSub.unsubscribe();
+    this.infraDetailService.closeDetail();
   }
 
   toggleSourcesPanel() {
@@ -46,4 +49,5 @@ export class SimulationPage implements OnDestroy, AfterViewInit {
     this.showSourcesPanel = false;
   }
 }
+
 

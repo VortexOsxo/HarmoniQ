@@ -1,6 +1,6 @@
 <div id="plots">
     <!-- Top-right floating view buttons -->
-    <div class="view-buttons">
+    <div class="view-buttons" [class.detail-open]="isDetailOpen">
         <button class="view-btn" [class.active]="activeTab === 'map'" (click)="switchTab('map')">
             <i class="fa-solid fa-map"></i>
             Carte
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Aires protégées button below view buttons -->
-    <div class="protected-areas-btn-container" *ngIf="activeTab === 'map'">
+    <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen" *ngIf="activeTab === 'map'">
         <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
             [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
             (click)="protectedAreasService.toggleVisibility()">
@@ -24,6 +24,9 @@
             Aires protégées
         </button>
     </div>
+
+    <!-- Infrastructure detail side panel -->
+    <app-infra-detail-modal />
 
     <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
     <div class="view-content">

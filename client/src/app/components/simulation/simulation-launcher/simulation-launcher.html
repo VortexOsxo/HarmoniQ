@@ -1,29 +1,30 @@
-<div class="bg-light card container">
-    <div class="table-responsive">
-        <table class="table table-bordered table-sm text-center" id="gestion-table">
-            <thead>
-                <tr>
-                    <th>Scénario Actif</th>
-                    <th>Groupe Infrastructure Actif</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td id="active-scenario-title" class="text-muted">
-                        {{ selectedScenario()?.nom ?? 'N/A' }}
-                    </td>
-                    <td id="active-groupe-title" class="text-muted">
-                        {{ selectedInfrastructure()?.nom ?? 'N/A' }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+<div id="simulation-launcher">
+    <!-- Active selections summary -->
+    <div class="status-section">
+        <span class="status-label">CONFIGURATION ACTIVE</span>
+        <div class="status-items">
+            <div class="status-item">
+                <i class="fa-solid fa-flask status-icon"></i>
+                <div class="status-item-content">
+                    <span class="status-item-label">Scénario</span>
+                    <span class="status-item-value">{{ selectedScenario()?.nom ?? 'Aucun' }}</span>
+                </div>
+            </div>
+            <div class="status-item">
+                <i class="fa-solid fa-layer-group status-icon"></i>
+                <div class="status-item-content">
+                    <span class="status-item-label">Groupe infra.</span>
+                    <span class="status-item-value">{{ selectedInfrastructure()?.nom ?? 'Aucun' }}</span>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="text-center mb-3">
-        <button id="run" class="btn btn-primary" [disabled]="!canLaunch() || isLaunching()"
-            (click)="launchSimulation()">
-            <span *ngIf="isLaunching()" class="spinner-border spinner-border-sm me-1"></span>
-            {{ isLaunching() ? 'Lancement...' : 'Lancer Simulation' }}
-        </button>
-    </div>
+
+    <!-- Launch button -->
+    <button id="run" class="launch-btn" [disabled]="!canLaunch() || isLaunching()"
+        (click)="launchSimulation()">
+        <span *ngIf="isLaunching()" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!isLaunching()" class="fa-solid fa-play me-2"></i>
+        {{ isLaunching() ? 'Lancement...' : 'Lancer Simulation' }}
+    </button>
 </div>

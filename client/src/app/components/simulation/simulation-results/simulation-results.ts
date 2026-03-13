@@ -6,12 +6,14 @@ import { QuebecMap } from '@app/components/quebec-map/quebec-map';
 import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { TutorialService } from '@app/services/tutorial-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
+import { InfraDetailModal } from '@app/components/infra-detail-modal/infra-detail-modal';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-results',
-  imports: [CommonModule, NgbNavModule, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap],
+  imports: [CommonModule, NgbNavModule, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap, InfraDetailModal],
   templateUrl: './simulation-results.html',
   styleUrl: './simulation-results.css',
 })
@@ -19,9 +21,14 @@ export class SimulationResults implements OnInit, OnDestroy {
   activeTab = 'map';
   private tutorialSub?: Subscription;
 
+  get isDetailOpen() {
+    return this.infraDetailService.isOpen();
+  }
+
   constructor(
     public protectedAreasService: ProtectedAreasService,
     private tutorialService: TutorialService,
+    private infraDetailService: InfraDetailService,
   ) { }
 
   ngOnInit(): void {
@@ -39,5 +46,6 @@ export class SimulationResults implements OnInit, OnDestroy {
 
   switchTab(tabId: string) {
     this.activeTab = tabId;
+    this.infraDetailService.closeDetail();
   }
 }
