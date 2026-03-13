@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { GameService } from '@app/services/game-service';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 const NO_MORE_QUESTIONS_FLAG: number = -2;
@@ -24,12 +23,13 @@ export class GameArea {
   nextQuestionButtonText: string = "Prochaine question"
 
 
-  constructor(private cdr: ChangeDetectorRef, private router: Router,
+  constructor(private cdr: ChangeDetectorRef,
     private gameService: GameService, private activeModal: NgbActiveModal) {
   }
 
   ngOnInit() {
     this.gameService.currentQuestion$.subscribe(question => {
+      console.log(question);
       if (question == NO_MORE_QUESTIONS_FLAG) {
         this.showFinalResults();
         return;
