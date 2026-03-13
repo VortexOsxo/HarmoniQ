@@ -29,6 +29,11 @@ export class ScenarioSelector {
     return this.scenariosService.selectedScenario();
   }
 
+  get canDeleteSelected(): boolean {
+    const id = this.scenariosService.selectedScenario()?.id;
+    return !!id && id !== 1 && id !== 2;
+  }
+
   set selectedScenario(scenario: Scenario | null) {
     this.scenariosService.selectedScenario.set(scenario);
   }
