@@ -223,6 +223,36 @@
     text-align: center;
 }
 
+/* ── Action buttons ── */
+.delete-btn-container {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.delete-infra-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.delete-infra-btn:hover {
+    background-color: #c0392b;
+}
+
+.delete-infra-btn:active {
+    transform: scale(0.98);
+}
+
 /* ── Responsive ── */
 @media (max-width: 480px) {
     .infra-detail-panel {

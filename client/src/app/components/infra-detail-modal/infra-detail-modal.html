@@ -54,5 +54,11 @@
                 </p>
             </div>
         </div>
+        <!-- Delete Button -->
+        <div class="delete-btn-container" *ngIf="infra()?.data?.isUserCreated">
+            <button class="delete-infra-btn" (click)="deleteInfra()" title="Supprimer l'infrastructure">
+                <i class="fa-solid fa-trash"></i> Supprimer
+            </button>
+        </div>
     </div>
 </div>
