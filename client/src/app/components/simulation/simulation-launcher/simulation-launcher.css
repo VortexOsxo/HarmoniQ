@@ -1,3 +1,99 @@
-.container {
-    padding: 1em;
+/* ── Simulation launcher container ── */
+#simulation-launcher {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Status section ── */
+.status-section {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.status-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.status-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.status-icon {
+    width: 20px;
+    text-align: center;
+    color: #3498db;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.status-item-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.status-item-label {
+    font-size: 0.72rem;
+    color: #95a5a6;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.status-item-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Launch button ── */
+.launch-btn {
+    margin: 0 16px 14px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.25);
+}
+
+.launch-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #219a52, #27ae60);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.35);
+    transform: translateY(-1px);
+}
+
+.launch-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    box-shadow: none;
 }

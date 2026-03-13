@@ -44,7 +44,7 @@
     </ng-container>
 </ng-template>
 
-<div class="map-overlay card p-2 m-2">
+<div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
     <p>Ajouter une infrastructure :</p>
 
     <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" type="Hydro" route="hydro"
