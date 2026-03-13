@@ -5,7 +5,6 @@ import { DocsPage } from './pages/docs-page/docs-page';
 import { NotFoundPage } from './pages/not-found-page/not-found-page';
 import { EnergyFlowPage } from './pages/energy-flow-page/energy-flow-page';
 import { SimulationPage } from './pages/simulation-page/simulation-page';
-import { GamePage } from './pages/game-page/game-page';
 
 export const routes: Routes = [
     { path: '', component: HomePage },
@@ -13,6 +12,5 @@ export const routes: Routes = [
     { path: 'documentation', component: DocsPage },
     { path: 'flux-d-energie', component: EnergyFlowPage },
     { path: 'simulation', component: SimulationPage },
-    { path: 'game', component: GamePage},
     { path: '**', component: NotFoundPage },
 ];

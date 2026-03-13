@@ -1,4 +1,14 @@
-<div id="game-area">
+<div id="start-area" *ngIf="!quizStarted">
+    <pre>Ce petit module vous permettra de tester vos connaissances à travers une série de 10 questions concernant l'énergie au Québec.
+    </pre>
+
+    <img [src]="currentImage" class="energyImage" [class.fade-out]="fade">
+    
+    <button (click)="start()" class="quizButton">Commencer</button>
+</div>
+
+
+<div id="game-area" [hidden]="!quizStarted">
 
     <div id="questionContainer">
         <div id="questionCounter" *ngIf="!quizTerminated"><h1>Question {{currentQuestionIndex + 1}} / {{totalQuestions}}

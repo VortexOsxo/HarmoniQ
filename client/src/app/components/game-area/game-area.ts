@@ -13,7 +13,7 @@ const NO_MORE_QUESTIONS_FLAG: number = -2;
   styleUrl: './game-area.css',
 })
 export class GameArea {
-
+  quizStarted: boolean = false;
   questionText: string = "Le quiz est en cours de chargement";
   questionAnswered: boolean = false;
   questionInformation: string = ""; //to display information regarding the answer
@@ -21,6 +21,16 @@ export class GameArea {
   questionsLeftAvailable: boolean = false; //to display the no more new question message
   goodGradeImage: boolean = false; //used to display the image at the end of the quiz
   nextQuestionButtonText: string = "Prochaine question"
+  images: string[] = [ //for the images
+    '/icons/hydraulic_barrage.jpg',
+    '/icons/solar_powerPlant.jpg',
+    '/icons/thermal_powerPlant.jpg',
+    '/icons/windTurbine.jpg'
+  ];
+  currentImage: string = this.images[0];
+  index = 0;
+  private interval!: ReturnType<typeof setInterval>;
+  fade: boolean = false;
 
 
   constructor(private cdr: ChangeDetectorRef,
@@ -28,6 +38,7 @@ export class GameArea {
   }
 
   ngOnInit() {
+    this.quizStarted = this.gameService.isQuizStarted();
     this.gameService.currentQuestion$.subscribe(question => {
       if (question == NO_MORE_QUESTIONS_FLAG) {
         this.showFinalResults();
@@ -62,6 +73,24 @@ export class GameArea {
       this.cdr.detectChanges();
     });
   }
+
+  ngAfterViewInit() {
+  this.interval = setInterval(() => {
+    this.fadeOutNextImage();
+  }, 5000);
+}
+
+fadeOutNextImage() {
+  this.fade = true;
+  this.cdr.detectChanges();
+
+  setTimeout(() => {
+    this.index = (this.index + 1) % this.images.length;
+    this.currentImage = this.images[this.index];
+    this.fade = false;
+    this.cdr.detectChanges();
+  }, 800);
+}
 
 
   answerSelected(selectedAnswer: number) {
@@ -124,6 +153,11 @@ export class GameArea {
     this.gameService.getQuiz();
   }
 
+  start(): void {
+    this.quizStarted = true;
+    this.gameService.setQuizStarted();
+  }
+
   close() {
     this.activeModal.close();
   }
@@ -135,4 +169,8 @@ export class GameArea {
   get totalQuestions(): number {
     return this.gameService.totalQuestions;
   }
+
+  ngOnDestroy() {
+  clearInterval(this.interval);
+}
 }

@@ -44,6 +44,7 @@ export class GameService {
     };
   public isCurrentAnswered: boolean = false;
   public userSelection: number = EMPTY;
+  private quizStarted: boolean = false;
 
   constructor(private http: HttpClient) {
     this.getQuiz();
@@ -101,6 +102,14 @@ export class GameService {
 
   getMessage(): string {
     return this.quiz.questions[this._currentQuestion.value].message;
+  }
+
+  isQuizStarted(): boolean {
+    return this.quizStarted;
+  }
+
+  setQuizStarted(): void {
+    this.quizStarted = true;
   }
 
   get questionIndex(): number {

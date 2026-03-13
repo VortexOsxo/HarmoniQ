@@ -7,6 +7,26 @@
   gap: 2rem;
 }
 
+#start-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
+  gap: 6rem;
+  margin-top: 3rem;
+}
+
+.energyImage {
+  width: 30vw;
+  transition: opacity 0.8s ease-in-out;
+  opacity: 1; /* fully visible by default */
+}
+
+.energyImage.fade-out {
+  opacity: 0;
+}
+
 pre {
   max-width: 45vw;
   max-height: 30vh;
