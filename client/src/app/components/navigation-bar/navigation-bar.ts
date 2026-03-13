@@ -1,18 +1,21 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GameArea } from '../game-area/game-area';
+import { Router, RouterModule } from '@angular/router';
+import { TutorialService } from '../../services/tutorial-service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-navigation-bar',
-  imports: [RouterModule],
+  imports: [RouterModule, CommonModule],
   templateUrl: './navigation-bar.html',
   styleUrl: './navigation-bar.css',
   standalone: true,
 })
 export class NavigationBar {
-
-  constructor(private bootstrap: NgbModal) { }
+  constructor(public tutorialService: TutorialService, public router: Router
+    , private bootstrap: NgbModal
+  ) { }
 
   openQuiz(){
       this.bootstrap.open(GameArea, {
@@ -20,4 +23,7 @@ export class NavigationBar {
       windowClass: 'game-modal'
     });
       }
+  startHelp() {
+    this.tutorialService.resetTutorial();
+  }
 }

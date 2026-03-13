@@ -387,10 +387,7 @@ game_router = APIRouter(
 async def fetch_question(
     answeredQuestionList: List[int] = Query(default=[])
 ):
-    print(answeredQuestionList)
-
     quiz, answeredQuestionList = selectQuestion(answeredQuestionList)
-    print(answeredQuestionList)
 
     return {       
         "questions": quiz,

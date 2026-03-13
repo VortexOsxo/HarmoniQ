@@ -40,6 +40,8 @@
             <li class="nav-item">
                 <a class="nav-link text-white" (click)="openQuiz()"
                     routerLinkActive="fw-bold disabled">Testez vos connaissances</a>
+            <li class="nav-item" *ngIf="router.url === '/simulation'">
+                <a class="nav-link text-white" style="cursor: pointer;" (click)="startHelp()">Aide</a>
             </li>
         </ul>
     </div>

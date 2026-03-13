@@ -1,4 +1,5 @@
 @import 'leaflet/dist/leaflet.css';
+@import './app/utils/cluster-icon.css';
 
 /* You can add global styles to this file, and also import other style files */
 /* Base styles */
@@ -43,5 +44,21 @@ body {
   }
   .game-modal .modal-body {
     padding: 0.5rem;
-  }
+    overflow: hidden;}
+}
+
+/* ── ng-bootstrap modal overrides ──
+   Ensure modals appear above the Sources d'Énergie panel (z-index 1200) */
+ngb-modal-backdrop.modal-backdrop {
+    z-index: 1300 !important;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+ngb-modal-window.modal {
+    z-index: 1310 !important;
+}
+
+/* Disable the "shake" animation on static backdrop click */
+ngb-modal-window.modal.modal-static .modal-dialog {
+    transform: none !important;
 }

@@ -63,8 +63,6 @@ export class GameService {
       this.goodAnswers = 0;
       this.isCurrentAnswered = false;
       this.userSelection = -1;
-
-      console.log(this.answeredQuestions);
     });
   }
 
@@ -102,7 +100,6 @@ export class GameService {
   }
 
   getMessage(): string {
-    console.log(this.quiz.questions[this._currentQuestion.value].message)
     return this.quiz.questions[this._currentQuestion.value].message;
   }
 

@@ -29,7 +29,6 @@ export class GameArea {
 
   ngOnInit() {
     this.gameService.currentQuestion$.subscribe(question => {
-      console.log(question);
       if (question == NO_MORE_QUESTIONS_FLAG) {
         this.showFinalResults();
         return;
