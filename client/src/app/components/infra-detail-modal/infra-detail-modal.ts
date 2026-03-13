@@ -1,6 +1,7 @@
 import { Component, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 @Component({
   selector: 'app-infra-detail-modal',
@@ -14,7 +15,18 @@ export class InfraDetailModal {
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
 
-  constructor(public infraDetailService: InfraDetailService) {}
+  constructor(
+    public infraDetailService: InfraDetailService,
+    private infrasService: InfrastruturesService
+  ) {}
+
+  deleteInfra() {
+    const infra = this.infra();
+    if (infra && infra.data.isUserCreated) {
+      this.infrasService.deleteLocalInfra(infra.type, infra.data.id);
+      this.close();
+    }
+  }
 
   close() {
     this.infraDetailService.closeDetail();
