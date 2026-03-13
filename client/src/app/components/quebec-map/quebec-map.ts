@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 
@@ -21,7 +22,8 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
 
   constructor(
     private mapService: MapService,
-    public protectedAreasService: ProtectedAreasService
+    public protectedAreasService: ProtectedAreasService,
+    public infraDetailService: InfraDetailService
   ) { }
 
   ngAfterViewInit(): void {
