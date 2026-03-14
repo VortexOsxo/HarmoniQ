@@ -10,7 +10,7 @@ logger = logging.getLogger("Thermique")
 
 
 class InfraThermique(Infrastructure):
-    def calculer_production_interne(self) -> pd.DataFrame:
+    def calculer_production(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
 

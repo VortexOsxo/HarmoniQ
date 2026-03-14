@@ -427,7 +427,7 @@ class InfraReseau(Infrastructure):
         logger.info("Workflow d'optimisation terminé")
         return network, statistics
     
-    async def calculer_production_interne(self, liste_infra, is_journalier=False) -> pd.DataFrame:
+    async def calculer_production(self, liste_infra, is_journalier=False) -> pd.DataFrame:
         """
         Calcule la production optimisée par type d'énergie.
         """

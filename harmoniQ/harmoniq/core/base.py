@@ -19,28 +19,20 @@ class Infrastructure(ABC):
     def __init__(self, donnees: BaseModel):
         self.donnees = donnees
         self.scenario = None
-        self.cached_production = None
 
     def __repr__(self):
         return f"<Infrastructure {self.donnees.nom} de type {type(self.donnees)}>"
 
     def charger_scenario(self, scenario: ScenarioBase) -> None:
         self.scenario = scenario
-        self.cached_production = None
 
     @property
     def scenario_charger(self) -> bool:
         return self.scenario is not None
 
+    @abstractmethod
     @necessite_scenario
     def calculer_production(self, *args, **kwargs) -> np.ndarray:
-        """Calcul de la production avec caching"""
-        if self.cached_production is None:
-            self.cached_production = self.calculer_production_interne(*args, **kwargs)
-        return self.cached_production
-    
-    @abstractmethod
-    def calculer_production_interne(self, *args, **kwargs) -> np.ndarray:
         """Placeholder pour le calcul de la production"""
         raise NotImplementedError
 
