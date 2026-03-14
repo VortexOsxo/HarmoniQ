@@ -120,17 +120,17 @@ class NetworkDataLoader:
         if not buses_df.empty:
             buses_df = buses_df.drop(columns=['_sa_instance_state'], errors='ignore')
             buses_df = buses_df.set_index('name')
-            
-            for idx, row in buses_df.iterrows():
-                network.add("Bus", name=idx, **row.to_dict())
-                # Création des charges pour les bus de type "conso"
-                if row.get('type') == 'conso':
-                    network.add("Load", 
-                              name=f"load_{idx}",
-                              bus=idx,
-                              p_set=0,  
-                              q_set=0
-                    )
+
+            network.add("Bus", name=buses_df.index, **buses_df.to_dict(orient='list'))
+
+            conso_buses = buses_df[buses_df['type'] == 'conso'].index            
+            if not conso_buses.empty:
+                network.add("Load", 
+                          [f"load_{idx}" for idx in conso_buses],
+                          bus=conso_buses,
+                          p_set=0,
+                          q_set=0
+                )
         
         # Chargement des types de lignes
         line_types = await read_all_line_type_async(db)
@@ -139,8 +139,7 @@ class NetworkDataLoader:
             line_types_df = line_types_df.drop(columns=['_sa_instance_state'], errors='ignore')
             line_types_df = line_types_df.set_index('name')
             
-            for idx, row in line_types_df.iterrows():
-                network.add("LineType", name=idx, **row.to_dict())
+            network.add("LineType", line_types_df.index, **line_types_df.to_dict(orient='list'))
         
         # Chargement des lignes
         lines = await read_all_line_async(db)
@@ -149,14 +148,12 @@ class NetworkDataLoader:
             lines_df = lines_df.drop(columns=['_sa_instance_state'], errors='ignore')
             lines_df = lines_df.set_index('name')
             
-            for idx, row in lines_df.iterrows():
-                network.add("Line", name=idx, **row.to_dict())
+            network.add("Line", name=lines_df.index, **lines_df.to_dict(orient='list'))
 
         # Chargement des carriers
         carriers_df = pd.read_csv(self.data_dir / "topology" / "centrales" / "carriers.csv")
         carriers_df = carriers_df.set_index('name')
-        for idx, row in carriers_df.iterrows():
-            network.add("Carrier", name=idx, **row.to_dict())
+        network.add("Carrier", carriers_df.index, **carriers_df.to_dict(orient='list'))
 
         # Chargement des générateurs par type
         network = await self.fill_non_pilotable(network, "eolienne")
@@ -170,8 +167,7 @@ class NetworkDataLoader:
         global_constraints_df = pd.read_csv(
             self.data_dir / "topology" / "constraints" / "global_constraints.csv"
         ).set_index('name')
-        for idx, row in global_constraints_df.iterrows():
-            network.add("GlobalConstraint", name=idx, **row.to_dict())
+        network.add("GlobalConstraint", global_constraints_df.index, **global_constraints_df.to_dict(orient='list'))
             
         return network
 
@@ -352,16 +348,17 @@ class NetworkDataLoader:
                             network.buses.at[nearest_bus, 'type'] = BusType.prod
             
             # Ajouter les générateurs au réseau
-            for _, row in generators_df.iterrows():
-                network.add("Generator", 
-                           name=row['name'],
-                           bus=row['bus'],
-                           type=row['type'],
-                           p_nom=row['p_nom'],
-                           p_nom_extendable=row['p_nom_extendable'],
-                           p_nom_min=row['p_nom_min'],
-                           carrier=row['carrier'],
-                           marginal_cost=row['marginal_cost'])
+            generators_df = generators_df.set_index('name')               
+            network.add("Generator",
+                generators_df.index,
+                bus=generators_df['bus'],
+                type=generators_df['type'],
+                p_nom=generators_df['p_nom'],
+                p_nom_extendable=generators_df['p_nom_extendable'],
+                p_nom_min=generators_df['p_nom_min'],
+                carrier=generators_df['carrier'],
+                marginal_cost=generators_df['marginal_cost']
+            )
         
         return network
         
@@ -433,17 +430,18 @@ class NetworkDataLoader:
                             network.buses.at[nearest_bus, 'type'] = BusType.prod
             
             # Ajouter les générateurs au réseau
-            for _, row in generators_df.iterrows():
-                network.add("Generator", 
-                           name=row['name'],
-                           bus=row['bus'],
-                           type=row['type'],
-                           p_nom=row['p_nom'],
-                           p_nom_extendable=row['p_nom_extendable'],
-                           p_nom_min=row['p_nom_min'],
-                           p_nom_max=row['p_nom_max'],
-                           p_max_pu=row['p_max_pu'],
-                           carrier=row['carrier'])
+            generators_df = generators_df.set_index('name')
+            network.add("Generator",
+                generators_df.index,
+                bus=generators_df['bus'],
+                type=generators_df['type'],
+                p_nom=generators_df['p_nom'],
+                p_nom_extendable=generators_df['p_nom_extendable'],
+                p_nom_min=generators_df['p_nom_min'],
+                p_nom_max=generators_df['p_nom_max'],
+                p_max_pu=generators_df['p_max_pu'],
+                carrier=generators_df['carrier']
+            )
         
         return network
         
