@@ -123,6 +123,26 @@ class InfraHydro(Infrastructure):
     def emission(self, energie, facteur_charge):  # Fonctionne
         return calculer_emissions_et_ressources(self, energie, facteur_charge)
 
+    def calculer_cout_annuel(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        CAPACITY_FACTOR = 0.50
+        OPEX_PER_MWH = 20
+
+        HOURS_PER_YEAR = 8760
+
+        availability = 1 - (
+            self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines
+        )
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+            * availability
+        )
+
+        return annual_energy * OPEX_PER_MWH
+
 
 if __name__ == "__main__":
 

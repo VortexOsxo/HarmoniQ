@@ -22,6 +22,27 @@ class InfraThermique(Infrastructure):
             date_end=self.scenario.date_de_fin,
         )
 
+    def calculer_cout_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        COST_PER_MW = 1_200_000  # CAD par MW
+        return self.donnees.puissance_nominal * COST_PER_MW
+
+    def calculer_cout_annuel(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        CAPACITY_FACTOR = 0.60
+        OPEX_PER_MWH = 70
+
+        HOURS_PER_YEAR = 8760
+        MAINTENANCE_HOURS = 7 * 24
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * (HOURS_PER_YEAR - MAINTENANCE_HOURS)
+            * CAPACITY_FACTOR
+        )
+
+        return annual_energy * OPEX_PER_MWH
+
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_all_thermique, read_all_scenario
     from harmoniq.db.engine import get_db

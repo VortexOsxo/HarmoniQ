@@ -33,7 +33,26 @@ class InfraSolaire(Infrastructure):
         self.couts  = cost_solar_powerplant(puissance_mw=self.donnees.puissance_nominal)
         return self.couts
     
-    
+    def calculer_cout_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        COST_PER_MW = 1_300_000  # CAD par MW
+        return self.donnees.puissance_nominal * COST_PER_MW
+
+
+    def calculer_cout_annuel(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        CAPACITY_FACTOR = 0.15
+        OPEX_PER_MWH = 15
+
+        HOURS_PER_YEAR = 8760
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+        )
+
+        return annual_energy * OPEX_PER_MWH
 
 
 if __name__ == "__main__":

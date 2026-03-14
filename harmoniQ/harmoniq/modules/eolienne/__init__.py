@@ -40,9 +40,20 @@ class InfraParcEolienne(Infrastructure):
     def calculer_production(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
-        parc_data = get_parc_power(self.donnees, self.meteo)
+        return get_parc_power(self.donnees, self.meteo)
 
-        return parc_data
+    def calculer_cout_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        COST_PER_MW = 1_600_000  # CAD par MW
+        return self.donnes.capacite_total * COST_PER_MW
+
+    def calculer_cout_annuel(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        CAPACITY_FACTOR = 0.35
+        OPEX_PER_MWH = 30
+
+        annual_energy = parc.capacite_total * 8760 * CAPACITY_FACTOR
+        return annual_energy * OPEX_PER_MWH
 
 
 if __name__ == "__main__":
