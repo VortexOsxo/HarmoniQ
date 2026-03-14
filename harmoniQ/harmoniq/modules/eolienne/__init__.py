@@ -37,7 +37,7 @@ class InfraParcEolienne(Infrastructure):
         super().charger_scenario(scenario)
         self.meteo: pd.DataFrame = self._charger_meteo(scenario)
 
-    def calculer_production_interne(self) -> pd.DataFrame:
+    def calculer_production(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
         parc_data = get_parc_power(self.donnees, self.meteo)

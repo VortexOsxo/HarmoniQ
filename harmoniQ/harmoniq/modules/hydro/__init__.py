@@ -100,7 +100,7 @@ class InfraHydro(Infrastructure):
             (apport["time"] >= start_date) & (apport["time"] <= end_date)
         ]
 
-    def calculer_production_interne(self) -> pd.DataFrame:  # Fonctionne
+    def calculer_production(self) -> pd.DataFrame:  # Fonctionne
         if self.donnees.type_barrage == "Fil de l'eau":
             self.charger_debit()
             return get_run_of_river_dam_power(self)
