@@ -1,0 +1,6 @@
+{
+    "skip_privates": false,
+    "min_duration": 0.001,
+    "output": "console",
+    "output_time": "instant"
+}
