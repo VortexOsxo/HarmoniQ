@@ -4,6 +4,7 @@ from harmoniq.db.schemas import ScenarioBase, PositionBase
 from harmoniq.modules.eolienne.calcule import get_parc_power
 
 import pandas as pd
+import numpy as np
 import logging
 
 logger = logging.getLogger("EolienneParc")
