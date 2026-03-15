@@ -14,6 +14,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List
+from fastapi import HTTPException
 
 CURRENT_DIR = Path(__file__).parent
 DEBIT_DIR = CURRENT_DIR / "debits"
@@ -104,6 +105,10 @@ class InfraHydro(Infrastructure):
         if self.donnees.type_barrage == "Fil de l'eau":
             self.charger_debit()
             return get_run_of_river_dam_power(self)
+
+        raise HTTPException(
+                status_code=400, detail="Production calculation is only available for run-of-river dams"
+            )
   
     def calculer_energie(self, production):
         return get_energy(production)

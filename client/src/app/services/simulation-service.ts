@@ -36,7 +36,7 @@ export class SimulationService {
 
     const { isUserCreated, ...infraPayload } = infra as any;
 
-    const url = `${environment.apiUrl}/${type}/production`;
+    const url = `${environment.apiUrl}/production/${type}`;
     const payload = {
       scenario: scenario,
       infra_payload: infraPayload
