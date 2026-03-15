@@ -23,25 +23,25 @@ class InfraNucleaire(Infrastructure):
             date_end=self.scenario.date_de_fin,
         )
 
-def calculer_cout_construction(self) -> np.ndarray:
-    return cost_nuclear_powerplant(self.donnees.puissance_nominal)
+    def calculer_cout_construction(self) -> np.ndarray:
+        return cost_nuclear_powerplant(self.donnees.puissance_nominal)
 
 
-def calculer_cout_annuel(self) -> np.ndarray:
-    # Really rought estimate, need to be improved
-    CAPACITY_FACTOR = 0.90
-    OPEX_PER_MWH = 100
+    def calculer_cout_annuel(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        CAPACITY_FACTOR = 0.90
+        OPEX_PER_MWH = 100
 
-    HOURS_PER_YEAR = 8760
-    MAINTENANCE_HOURS = 7 * 24
+        HOURS_PER_YEAR = 8760
+        MAINTENANCE_HOURS = 7 * 24
 
-    annual_energy = (
-        self.donnees.puissance_nominal
-        * (HOURS_PER_YEAR - MAINTENANCE_HOURS)
-        * CAPACITY_FACTOR
-    )
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * (HOURS_PER_YEAR - MAINTENANCE_HOURS)
+            * CAPACITY_FACTOR
+        )
 
-    return annual_energy * OPEX_PER_MWH
+        return annual_energy * OPEX_PER_MWH
 
 
 if __name__ == "__main__":

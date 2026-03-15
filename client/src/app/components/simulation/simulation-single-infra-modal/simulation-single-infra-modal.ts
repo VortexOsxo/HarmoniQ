@@ -4,6 +4,7 @@ import { SimulationService } from '@app/services/simulation-service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { GraphService, graphServiceConfig } from '@app/services/graph-service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-single-infra-modal',
@@ -20,9 +21,10 @@ export class SimulationSingleInfraModal implements OnInit {
   isLoading = true;
 
   config = graphServiceConfig;
+  costs?: any;
 
   get label() {
-    return `Production d'énergie de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
+    return `Simulation de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
   }
 
   constructor(
@@ -34,6 +36,11 @@ export class SimulationSingleInfraModal implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.initProduction();
+    this.initCosts();
+  }
+
+  private initProduction() {
     const obs = this.simulationService.launchSimulationSingleInfra(this.type, this.id);
     if (!obs) return;
 
@@ -49,5 +56,13 @@ export class SimulationSingleInfraModal implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private initCosts() {
+    this.simulationService.getInfraCost(this.type, this.id)?.
+      subscribe((result) => {
+        this.costs = result;
+        this.cdr.detectChanges();
+      });
   }
 }
