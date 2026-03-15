@@ -9,7 +9,7 @@ import glob
 from typing import List, Optional
 from datetime import datetime, timedelta
 import pandas as pd
-import time
+
 
 from harmoniq.db import schemas, engine, CRUD
 from harmoniq.db.CRUD import (
@@ -315,53 +315,26 @@ reseau_router = APIRouter(
 )
 
 @reseau_router.post("/production")
-async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, is_journalier: bool = False):
-    timers = {}
-    total_start = time.time()
-    
+async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, is_journalier: bool = False):    
     scenario = payload.scenario
     infra_group = payload.infra_group
     
-    init_start = time.time()
     infra_reseau = InfraReseau(infra_group)
     infra_reseau.charger_scenario(scenario)
-    timers['2_infra_reseau_init'] = time.time() - init_start
-    
-    calc_start = time.time()
+
     production = await infra_reseau.calculer_production(infra_group, is_journalier)
-    timers['3_calculer_production_total'] = time.time() - calc_start
-    
-    if hasattr(infra_reseau, 'timers'):
-        for key, value in infra_reseau.timers.items():
-            timers[f'  3.{key}'] = value
-    
     if production.empty:
         raise HTTPException(status_code=500, detail="Calcul de production échoué")
     
-    format_start = time.time()
     production_json = production.reset_index().rename(columns={'index': 'timestamp'})
-    
     if 'timestamp' in production_json.columns:
         production_json['timestamp'] = production_json['timestamp'].astype(str)
-    timers['4_response_formatting'] = time.time() - format_start
-    
-    total_time = time.time() - total_start
-    timers['TOTAL'] = total_time
-    
-    print("\n" + "="*60)
-    print("TIMING BREAKDOWN - /reseau/production")
-    print("="*60)
-    for key, value in sorted(timers.items()):
-        pct = (value / total_time * 100) if total_time > 0 else 0
-        print(f"{key:40s} : {value:8.3f}s ({pct:5.1f}%)")
-    print("="*60 + "\n")
     
     response = {
         "metadata": {
             "scenario_id": payload.scenario.id,
             "infra_group_nom": infra_group.nom,
             "is_journalier": is_journalier,
-            "execution_time_seconds": total_time,
             "timestamps": len(production)
         },
         "production": production_json.to_dict(orient='records')
