@@ -5,7 +5,6 @@ Ce module gère le chargement des données statiques et temporelles
 du réseau électrique d'Hydro-Québec pour la configuration du réseau 
 et les séries temporelles de production/consommation.
 """
-import time
 import pypsa
 import pandas as pd
 from pathlib import Path
@@ -72,8 +71,6 @@ class NetworkDataLoader:
         self.hydro_data = None
         self.thermique_data = None
         self.nucleaire_data = None
-        self.timers = {}
-
 
 
     def set_infras(self, liste_infra):
@@ -207,9 +204,7 @@ class NetworkDataLoader:
         )
         network.set_snapshots(snapshots)
         
-        t_start = time.time()
         p_max_pu_df, marginal_cost_df = await self.generate_timeseries(network, scenario)
-        self.timers['iia_generate_timeseries'] = time.time() - t_start
         
         p_max_pu_df = p_max_pu_df.astype('float64')
         marginal_cost_df = marginal_cost_df.astype('float64')
@@ -241,10 +236,8 @@ class NetworkDataLoader:
                 marginal_cost_df[gen] = float(default_cost)
                 
         network.generators_t.marginal_cost = marginal_cost_df
-        
-        t_start = time.time()
+
         load_demand_df = await self.load_demand_data(network, scenario, start_date, end_date)
-        self.timers['iib_load_demand_data'] = time.time() - t_start
         
         if not load_demand_df.empty:
             # Convertir l'index en DatetimeIndex si nécessaire
@@ -810,28 +803,3 @@ class NetworkDataLoader:
                 logger.warning(f"Erreur lors de la sauvegarde du cache de demande: {e}")
         
         return load_demand_df
-
-
-if __name__ == "__main__":
-    from harmoniq.db.CRUD import read_data_by_id, read_all_scenario
-    from harmoniq.db.engine import get_db
-    from harmoniq.db.schemas import ListeInfrastructures
-    import asyncio
-    import time
-    
-    print("Testing load_demand_data functionality...")
-    
-    db = next(get_db())
-    liste_infrastructures = asyncio.run(read_data_by_id(db, ListeInfrastructures, 1))
-    scenario = read_all_scenario(db)[0]
-    
-    print(f"Using scenario: {scenario.nom} ({scenario.date_de_debut} to {scenario.date_de_fin})")
-    
-    loader = NetworkDataLoader()
-    if hasattr(liste_infrastructures, 'parc_eoliens'):
-        loader.set_infrastructure_ids(liste_infrastructures)
-    network = asyncio.run(loader.load_network_data())
-    print(f"Network has {len(network.buses)} buses, {len(network.loads)} loads")
-    print("Generating randomized demand data...")
-    start_time = time.time()
-    load_demand_df = loader.load_demand_data(network, scenario)
