@@ -6,11 +6,19 @@ from abc import ABC, abstractmethod
 # Base class for all infrastructures
 
 def necessite_scenario(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not args[0].scenario_charger:
-            raise ValueError("Scenario pas chargé")
-        return func(*args, **kwargs)
+    import inspect
+    if inspect.iscoroutinefunction(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            if not args[0].scenario_charger:
+                raise ValueError("Scenario pas chargé")
+            return await func(*args, **kwargs)
+    else:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not args[0].scenario_charger:
+                raise ValueError("Scenario pas chargé")
+            return func(*args, **kwargs)
 
     return wrapper
 

@@ -1,4 +1,5 @@
 from enum import Enum
+from .utils import load_config
 
 class LogType(Enum):
     Init = 'Init'
@@ -15,17 +16,25 @@ class Log:
 
     def __str__(self):
         depth = self.kwargs.get('depth', 0)
-        base = f'{depth*"  "}[{self.type.value}]   [{self.func_id}]'
+        indent = depth * "  "
+        
         if self.type in [LogType.Init, LogType.Call]:
-            return base + '\n'
+            return f'{indent}[{self.type.value}]   [{self.func_id}]\n'
+        
         elif self.type in [LogType.Exit, LogType.Exec]:
-            duration = self.kwargs.get("duration", -1)
-            return f'{base}  {duration}\n'
+            duration = self.kwargs.get("duration", 0)
+            percentage = self.kwargs.get("percentage", 100.0)
+            
+            duration_fmt = f"{duration:.3f}"
+            percentage_fmt = f"({percentage:.2f}%)"
+            
+            return f'{indent}{duration_fmt} {percentage_fmt} [{self.type.value}]   [{self.func_id}]\n'
 
 class LogContainer():
     def __init__(self):
         self.logs = []
         self.depth = 0
+        self.config = load_config()
     
     def log_call(self, func_id):
         log = Log(LogType.Call, func_id, depth=self.depth)
@@ -40,17 +49,38 @@ class LogContainer():
     def log_init(self, func_id):
         log = Log(LogType.Init, func_id)
         self.logs.append(log)
+    
+    def is_complete(self):
+        return self.depth == 0
 
     def get_logs(self):
         reduced_logs = []
         exits = {}
+        durations_at_depth = {}
+        min_duration = self.config.get('min_duration', 0.0)
+        
         for log in reversed(self.logs):
             if log.type == LogType.Exit:
-                exits[(log.func_id, log.kwargs['depth'])] = log.kwargs['duration']
+                depth = log.kwargs['depth']
+                duration = log.kwargs['duration']
+                exits[(log.func_id, depth)] = duration
+                durations_at_depth[depth] = duration
             elif log.type == LogType.Call:
-                duration = exits[(log.func_id, log.kwargs['depth'])]
-                reduced_logs.append(Log(LogType.Exec, log.func_id, depth=log.kwargs['depth'], duration=duration))
+                depth = log.kwargs['depth']
+                duration = exits[(log.func_id, depth)]
+                
+                if duration < min_duration:
+                    continue
+                    
+                parent_duration = durations_at_depth.get(depth - 1)
+                if parent_duration and parent_duration > 0:
+                    percentage = (duration / parent_duration) * 100
+                else:
+                    percentage = 100.0
+                    
+                reduced_logs.append(Log(LogType.Exec, log.func_id, depth=depth, duration=duration, percentage=percentage))
             elif log.type == LogType.Init:
                 reduced_logs.append(log)
+        
         reduced_logs.reverse()
         return reduced_logs
