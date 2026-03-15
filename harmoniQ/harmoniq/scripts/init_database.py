@@ -33,6 +33,11 @@ def fill_thermique():
     db = next(get_db())
 
     for _, row in df.iterrows():
+        existing = db.query(schemas.Thermique).filter(schemas.Thermique.nom == row["nom"]).first()
+        if existing:
+            print(f"Centrale thermique {row['nom']} existe déjà")
+            continue
+            
         CRUD.create_thermique(
             db,
             schemas.ThermiqueBase(
@@ -55,6 +60,11 @@ def fill_solaire():
     db = next(get_db())
 
     for _, row in df.iterrows():
+        existing = db.query(schemas.Solaire).filter(schemas.Solaire.nom == row["nom"]).first()
+        if existing:
+            print(f"Centrale solaire {row['nom']} existe déjà")
+            continue
+            
         CRUD.create_solaire(
             db,
             schemas.SolaireBase(
@@ -79,6 +89,11 @@ def fill_parc_eoliennes():
     # Get unique "Project Name"
     project_names = station_df["Project Name"].unique()
     for project_name in project_names:
+        existing = db.query(schemas.EolienneParc).filter(schemas.EolienneParc.nom == project_name).first()
+        if existing:
+            print(f"Projet éolien {project_name} existe déjà")
+            continue
+            
         try:
             project_df = station_df[station_df["Project Name"] == project_name]
             average_lat = project_df["Latitude"].mean()
@@ -365,5 +380,4 @@ def main():
 
 
 if __name__ == "__main__":
-    populate_db()
-    init_db()
+    main()
