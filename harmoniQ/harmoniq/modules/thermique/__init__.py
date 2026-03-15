@@ -4,6 +4,7 @@ from harmoniq.modules.thermique.calculs_production_thermique import (
 )
 
 import pandas as pd
+import numpy as np
 import logging
 
 logger = logging.getLogger("Thermique")

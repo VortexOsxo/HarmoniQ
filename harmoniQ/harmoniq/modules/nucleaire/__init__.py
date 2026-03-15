@@ -5,6 +5,7 @@ from harmoniq.modules.nucleaire.calculs_production_nucleaire import (
 )
 
 import pandas as pd
+import numpy as np
 import logging
 
 logger = logging.getLogger("Nucleaire")

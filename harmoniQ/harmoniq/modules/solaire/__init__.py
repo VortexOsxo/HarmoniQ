@@ -6,6 +6,7 @@ from harmoniq.modules.solaire.calculs_production_solaire import (
 
 
 import pandas as pd
+import numpy as np
 import logging
 
 logger = logging.getLogger("Solaire")
