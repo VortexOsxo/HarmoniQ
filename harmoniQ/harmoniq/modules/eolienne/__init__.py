@@ -48,13 +48,19 @@ class InfraParcEolienne(Infrastructure):
         COST_PER_MW = 1_600_000  # CAD par MW
         return self.donnees.capacite_total * COST_PER_MW
 
-    def calculer_cout_annuel(self) -> np.ndarray:
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
         # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
         CAPACITY_FACTOR = 0.35
         OPEX_PER_MWH = 30
+        HOURS_PER_YEAR = 8760
 
-        annual_energy = self.donnees.capacite_total * 8760 * CAPACITY_FACTOR
-        return annual_energy * OPEX_PER_MWH
+        annual_energy = self.donnees.capacite_total * HOURS_PER_YEAR * CAPACITY_FACTOR
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
 
 
 if __name__ == "__main__":

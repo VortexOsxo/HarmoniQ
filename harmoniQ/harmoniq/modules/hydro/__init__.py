@@ -116,8 +116,8 @@ class InfraHydro(Infrastructure):
     def calculer_facteur_charge(self, production):  # Fonctionne
         return get_facteur_de_charge(self, production)
 
-    def calculer_cout_construction(puissance):  # Fonctionne
-        return estimation_cout_barrage(puissance)
+    def calculer_cout_construction(self) -> np.ndarray:  # Fonctionne
+        return estimation_cout_barrage(self)
 
     def PDF_environnement(self, facteur_charge):  # Fonctionne
         return estimer_qualite_ecosysteme_futur(facteur_charge)
@@ -128,8 +128,11 @@ class InfraHydro(Infrastructure):
     def emission(self, energie, facteur_charge):  # Fonctionne
         return calculer_emissions_et_ressources(self, energie, facteur_charge)
 
-    def calculer_cout_annuel(self) -> np.ndarray:
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
         # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
         CAPACITY_FACTOR = 0.50
         OPEX_PER_MWH = 20
 
@@ -146,7 +149,9 @@ class InfraHydro(Infrastructure):
             * availability
         )
 
-        return annual_energy * OPEX_PER_MWH
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
 
 
 if __name__ == "__main__":

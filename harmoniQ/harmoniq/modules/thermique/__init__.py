@@ -28,8 +28,11 @@ class InfraThermique(Infrastructure):
         COST_PER_MW = 1_200_000  # CAD par MW
         return self.donnees.puissance_nominal * COST_PER_MW
 
-    def calculer_cout_annuel(self) -> np.ndarray:
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
         # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
         CAPACITY_FACTOR = 0.60
         OPEX_PER_MWH = 70
 
@@ -42,7 +45,9 @@ class InfraThermique(Infrastructure):
             * CAPACITY_FACTOR
         )
 
-        return annual_energy * OPEX_PER_MWH
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
 
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_all_thermique, read_all_scenario

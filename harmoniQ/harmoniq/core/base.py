@@ -42,12 +42,7 @@ class Infrastructure(ABC):
         raise NotImplementedError
 
     @necessite_scenario
-    def calculer_cout_annuel(self) -> np.ndarray:
-        """Placeholder pour le calcul du coût annuel"""
-        raise NotImplementedError
-
-    @necessite_scenario
-    def calculer_cout_pas_de_temps(self) -> np.ndarray:
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
         """Placeholder pour le calcul du coût par pas de temps"""
         raise NotImplementedError
 

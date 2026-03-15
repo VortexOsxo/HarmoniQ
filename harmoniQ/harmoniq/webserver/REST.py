@@ -7,7 +7,7 @@ import os
 import glob
 
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import time
 
@@ -282,7 +282,7 @@ async def calculer_cout(
     infra = get_infra_object(infra_type, payload)
     infra.charger_scenario(scenario)
     results = {
-        'cout_annuel': infra.calculer_cout_annuel(),
+        'cout_annuel': infra.calculer_cout_pas_de_temps(timedelta(days=365)),
         'cout_construction': infra.calculer_cout_construction(),
     }
     return results
