@@ -239,7 +239,7 @@ def get_meteo_data(
 
 router.include_router(meteo_router)
 
-#-----#-----#-----#-----#-----#  Production  #-----#-----#-----#-----#-----#
+#-----#-----#-----#-----#-----#  Infra Specific  #-----#-----#-----#-----#-----#
 
 PRODUCTION_MAPPING = {
     "eolienneparc": (InfraParcEolienne, schemas.EolienneParc),
@@ -259,7 +259,7 @@ def get_infra_object(infra_type, payload):
     return infra_class(sql_model_instance)
 
 @router.post("/production/{infra_type}")
-async def calculer_production_generique(
+async def calculer_production(
     infra_type: str, 
     payload: schemas.InfraSimulationPayload
 ):
@@ -272,6 +272,20 @@ async def calculer_production_generique(
         return []
 
     return json.loads(production.fillna(0).to_json(date_format='iso'))
+
+@router.post("/cout/{infra_type}")
+async def calculer_cout(
+    infra_type: str, 
+    payload: schemas.InfraSimulationPayload
+):
+    scenario = hydrate_model(schemas.Scenario, payload.scenario)
+    infra = get_infra_object(infra_type, payload)
+    infra.charger_scenario(scenario)
+    results = {
+        'cout_annuel': infra.calculer_cout_annuel(),
+        'cout_construction': infra.calculer_cout_construction(),
+    }
+    return results
 
 
 #-----#-----#-----#-----#-----#  Fake Data  #-----#-----#-----#-----#-----#

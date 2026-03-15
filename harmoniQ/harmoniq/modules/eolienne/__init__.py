@@ -46,14 +46,14 @@ class InfraParcEolienne(Infrastructure):
     def calculer_cout_construction(self) -> np.ndarray:
         # Really rought estimate, need to be improved
         COST_PER_MW = 1_600_000  # CAD par MW
-        return self.donnes.capacite_total * COST_PER_MW
+        return self.donnees.capacite_total * COST_PER_MW
 
     def calculer_cout_annuel(self) -> np.ndarray:
         # Really rought estimate, need to be improved
         CAPACITY_FACTOR = 0.35
         OPEX_PER_MWH = 30
 
-        annual_energy = parc.capacite_total * 8760 * CAPACITY_FACTOR
+        annual_energy = self.donnees.capacite_total * 8760 * CAPACITY_FACTOR
         return annual_energy * OPEX_PER_MWH
 
 
