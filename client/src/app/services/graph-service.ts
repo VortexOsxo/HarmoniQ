@@ -58,21 +58,6 @@ export class GraphService {
         Plotly.newPlot(graphServiceConfig.PRODUCTION_SINGLE_INFRA_ID, [trace], layout as any);
     }
 
-    public generateEnergyProdConsSankeyGraph(data: any): void {
-        const layout = {
-            title: {
-                text: "Flux de Production et de Consommation d'Énergie",
-                font: { size: 22, family: "Arial", color: "#333" }
-            },
-            font: { size: 14, family: "Helvetica" },
-            margin: { l: 20, r: 20, t: 60, b: 20 },
-            paper_bgcolor: "#f8f9fa",
-            plot_bgcolor: "#f8f9fa",
-        };
-
-        Plotly.react(graphServiceConfig.ENERGY_PROD_CONS_SANKEY_ID, [data], layout);
-    }
-
     public downloadGraph(graphId: string) {
         Plotly.downloadImage(graphId, {
             format: "png",

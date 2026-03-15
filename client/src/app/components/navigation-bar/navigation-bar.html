@@ -26,10 +26,6 @@
                 routerLinkActive="fw-bold disabled">Documentation</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-white" routerLink="/flux-d-energie" routerLinkActive="fw-bold disabled">Flux
-                Énergie</a>
-        </li>
-        <li class="nav-item">
             <a class="nav-link text-white" routerLink="/simulation" routerLinkActive="fw-bold disabled">Simulation</a>
         </li>
         <li class="nav-item" *ngIf="router.url === '/simulation'">
@@ -52,10 +48,6 @@
                 <a class="nav-popup-link" routerLink="/documentation" routerLinkActive="active"
                     (click)="collapseNavbar()">
                     <i class="fas fa-book"></i> Documentation
-                </a>
-                <a class="nav-popup-link" routerLink="/flux-d-energie" routerLinkActive="active"
-                    (click)="collapseNavbar()">
-                    <i class="fas fa-bolt"></i> Flux Énergie
                 </a>
                 <a class="nav-popup-link" routerLink="/simulation" routerLinkActive="active" (click)="collapseNavbar()">
                     <i class="fas fa-play-circle"></i> Simulation
