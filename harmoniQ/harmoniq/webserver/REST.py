@@ -19,6 +19,7 @@ from harmoniq.db.CRUD import (
     read_data_by_id,
     update_data,
     delete_data,
+    hydrate_model
 )
 from harmoniq.db.demande import (
     read_demande_data, 
@@ -35,8 +36,7 @@ from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
 from harmoniq.modules.hydro import InfraHydro
-
-from .utils import response_production
+import json
 
 #Appel des modules de production énergétique, ainsi que d'autres modules, et crée des routes web pour chaque fonction CRUD et autre!
 
@@ -239,55 +239,39 @@ def get_meteo_data(
 
 router.include_router(meteo_router)
 
-#-----#-----#-----#-----#-----#  Production : Eolien  #-----#-----#-----#-----#-----#
+#-----#-----#-----#-----#-----#  Production  #-----#-----#-----#-----#-----#
 
-parc_eolien_router = api_routers["eolienneparc"]
+PRODUCTION_MAPPING = {
+    "eolienneparc": (InfraParcEolienne, schemas.EolienneParc),
+    "solaire": (InfraSolaire, schemas.Solaire),
+    "thermique": (InfraThermique, schemas.Thermique),
+    "nucleaire": (InfraNucleaire, schemas.Nucleaire),
+    "hydro": (InfraHydro, schemas.Hydro),
+}
 
-@parc_eolien_router.post("/production")
-async def calculer_production_parc_eolien(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraParcEolienne, schemas.EolienneParc
-    )
+def get_infra_object(infra_type, payload):
+    if infra_type not in PRODUCTION_MAPPING:
+        raise HTTPException(400, f"Unsupported infra: '{infra_type}'")
 
-#-----#-----#-----#-----#-----#  Production : Solaire  #-----#-----#-----#-----#-----#
+    infra_class, infra_schema = PRODUCTION_MAPPING[infra_type]
 
-solaire_router = api_routers["solaire"]
+    sql_model_instance = hydrate_model(infra_schema, payload.infra_payload)
+    return infra_class(sql_model_instance)
 
-@solaire_router.post("/production")
-async def calculer_production_solaire(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraSolaire, schemas.Solaire
-    )
+@router.post("/production/{infra_type}")
+async def calculer_production_generique(
+    infra_type: str, 
+    payload: schemas.InfraSimulationPayload
+):
+    scenario = hydrate_model(schemas.Scenario, payload.scenario)
+    infra = get_infra_object(infra_type, payload)
+    infra.charger_scenario(scenario)
 
-#-----#-----#-----#-----#-----#  Production : Thermique  #-----#-----#-----#-----#-----#
+    production: pd.DataFrame = infra.calculer_production()
+    if production is None or production.empty:
+        return []
 
-thermique_router = api_routers["thermique"]
-@thermique_router.post("/production")
-async def calculer_production_thermique(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraThermique, schemas.Thermique
-    )
-
-#-----#-----#-----#-----#-----#  Production : Nucleaire  #-----#-----#-----#-----#-----#
-
-nucleaire_router = api_routers["nucleaire"]
-
-@nucleaire_router.post("/production")
-async def calculer_production_nucleaire(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraNucleaire, schemas.Nucleaire
-    )
-
-
-#-----#-----#-----#-----#-----#  Production : Hydro  #-----#-----#-----#-----#-----#
-
-hydro_router = api_routers["hydro"]
-
-@hydro_router.post("/production")
-async def calculer_production_hydro(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraHydro, schemas.Hydro
-    )
+    return json.loads(production.fillna(0).to_json(date_format='iso'))
 
 
 #-----#-----#-----#-----#-----#  Fake Data  #-----#-----#-----#-----#-----#
