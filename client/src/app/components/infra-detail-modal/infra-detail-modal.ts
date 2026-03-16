@@ -14,7 +14,6 @@ import { ConfirmationModal } from '@app/components/commons/confirmation-modal/co
   styleUrl: './infra-detail-modal.css',
 })
 export class InfraDetailModal {
-  activeTab: 'informations' | 'impacts' = 'informations';
   showCycleVieModal: boolean = false;
   showImageOverlay: boolean = false;
 
@@ -55,13 +54,8 @@ export class InfraDetailModal {
 
   close() {
     this.infraDetailService.closeDetail();
-    this.activeTab = 'informations';
     this.showCycleVieModal = false;
     this.showImageOverlay = false;
-  }
-
-  switchTab(tab: 'informations' | 'impacts') {
-    this.activeTab = tab;
   }
 
   getHQImageUrl(): string | null {
@@ -134,6 +128,25 @@ export class InfraDetailModal {
     const infra = this.infra();
     if (!infra) return null;
     return CYCLE_DE_VIE_DATA[infra.type] || null;
+  }
+
+  getPluralCategoryName(): string {
+    const infra = this.infra();
+    if (!infra) return '';
+    const type = infra.type;
+    switch (type) {
+      case 'hydro': return 'barrages hydroélectriques';
+      case 'eolienneparc': return 'parcs éoliens';
+      case 'solaire': return 'parcs solaires';
+      case 'thermique': return 'centrales thermiques';
+      case 'nucleaire': return 'centrales nucléaires';
+      default: return infra.categoryName.toLowerCase() + 's';
+    }
+  }
+
+  getCapitalizedPluralCategoryName(): string {
+    const name = this.getPluralCategoryName();
+    return name ? name.charAt(0).toUpperCase() + name.slice(1) : '';
   }
 
   getImpactsData(): ImpactItem[] {
