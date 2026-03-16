@@ -46,7 +46,8 @@ dependencies = [
     "fastparquet",
     "openmeteo-requests",
     "requests-cache",
-    "retry-requests"
+    "retry-requests",
+    "psycopg2"
 ]
 
 [project.scripts]
