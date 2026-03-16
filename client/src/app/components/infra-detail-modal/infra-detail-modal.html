@@ -48,6 +48,14 @@
                     Cliquez ici pour en apprendre plus sur le cycle de vie des {{ infra()?.categoryName | lowercase }}s
                 </p>
             </div>
+
+            <!-- Voir image btn -->
+            <div class="view-image-container" *ngIf="getHQImageUrl()">
+                <button class="view-image-btn" (click)="showImageOverlay = true">
+                    <i class="fa-solid fa-image"></i>
+                    Voir l'infrastructure
+                </button>
+            </div>
         </div>
 
         <!-- Impacts environnementaux tab -->
@@ -109,6 +117,16 @@
                     peuvent ne pas être exactes.
                 </p>
             </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Overlay -->
+    <div class="image-viewer-overlay" *ngIf="showImageOverlay" (click)="showImageOverlay = false">
+        <div class="image-viewer-content" (click)="$event.stopPropagation()">
+            <button class="close-image-btn" (click)="showImageOverlay = false" title="Fermer l'image">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img [src]="getHQImageUrl()" alt="Image de l'infrastructure" />
         </div>
     </div>
 </div>

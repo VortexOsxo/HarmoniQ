@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
+import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 
@@ -15,6 +16,7 @@ import { ConfirmationModal } from '@app/components/commons/confirmation-modal/co
 export class InfraDetailModal {
   activeTab: 'informations' | 'impacts' = 'informations';
   showCycleVieModal: boolean = false;
+  showImageOverlay: boolean = false;
 
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
@@ -29,6 +31,7 @@ export class InfraDetailModal {
       const currentInfra = this.infra();
       untracked(() => {
         this.showCycleVieModal = false;
+        this.showImageOverlay = false;
       });
     });
   }
@@ -54,10 +57,30 @@ export class InfraDetailModal {
     this.infraDetailService.closeDetail();
     this.activeTab = 'informations';
     this.showCycleVieModal = false;
+    this.showImageOverlay = false;
   }
 
   switchTab(tab: 'informations' | 'impacts') {
     this.activeTab = tab;
+  }
+
+  getFormattedName(nom: string | undefined): string {
+    if (!nom) return '';
+    return nom
+      .normalize('NFD') // Remove accents
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
+      .replace(/^-+|-+$/g, ''); // Trim hyphens
+  }
+
+  getHQImageUrl(): string | null {
+    const infra = this.infra();
+    if (!infra || !infra.data || !infra.data.nom) return null;
+    const formattedName = this.getFormattedName(infra.data.nom);
+    const expectedMatch = `/images/centrales/${formattedName}`;
+    const found = HQ_IMAGE_URLS.find(url => url.includes(expectedMatch));
+    return found || null;
   }
 
   getIconForType(type: string): string {
