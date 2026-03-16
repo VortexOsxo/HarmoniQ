@@ -37,17 +37,20 @@ class Profiler:
 
     @classmethod
     def _report_taks_container(cls, name, container):
+        logs = container.get_logs()
+        if len(logs) == 0: return
+
+        content = ''.join([str(log) for log in logs])
+        
         output_mode = ProfilerConfig.output
         if output_mode in ["file", "both"]:
             with open(os.path.join(cls.LOGS_PATH, 'call.txt'), 'w') as f:
                 f.write(f'\n\nTask: {name}\n')
-                for log in container.get_logs():
-                    f.write(str(log))
+                f.write(content)
         
         if output_mode in ["console", "both"]:
             print(f'\n\nTask: {name}')
-            for log in container.get_logs():
-                print(str(log), end='')
+            print(content, end='')
 
     @classmethod
     def _report_init_container(cls):

@@ -34,16 +34,27 @@ class LogContainer():
     def __init__(self):
         self.logs = []
         self.depth = 0
-    
+        self.found_target = ProfilerConfig.target == ""
+
     def log_call(self, func_id):
+        self.found_target = self.found_target or func_id == ProfilerConfig.target
+
+        if not self.found_target:
+            return
+
         log = Log(LogType.Call, func_id, depth=self.depth)
         self.logs.append(log)
         self.depth += 1
 
     def log_exit(self, func_id, duration):
+        if not self.found_target:
+            return
+
         self.depth -= 1
         log = Log(LogType.Exit, func_id, depth=self.depth, duration=duration)
         self.logs.append(log)
+
+        self.found_target = self.found_target and func_id != ProfilerConfig.target
     
     def log_init(self, func_id):
         log = Log(LogType.Init, func_id)
