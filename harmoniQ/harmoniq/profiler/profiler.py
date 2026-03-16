@@ -1,14 +1,13 @@
 import os
 import asyncio
 
-from harmoniq.profiler import LogContainer, load_config
+from harmoniq.profiler import LogContainer, ProfilerConfig
 
 class Profiler:
 
     LOGS_PATH = 'profile_logs/'
 
     logs_container = {}
-    config = load_config()
 
     @classmethod
     def log_call(cls, func_id):
@@ -19,7 +18,7 @@ class Profiler:
         container = cls._get_container()
         container.log_exit(func_id, duration)
 
-        if container.is_complete() and cls.config.get("output_time") == "instant":
+        if container.is_complete() and ProfilerConfig.output_time == "instant":
             name = cls._get_name()
             cls._report_taks_container(name, container)
             cls._remove_container(name)
@@ -38,7 +37,7 @@ class Profiler:
 
     @classmethod
     def _report_taks_container(cls, name, container):
-        output_mode = cls.config.get("output", "file")
+        output_mode = ProfilerConfig.output
         if output_mode in ["file", "both"]:
             with open(os.path.join(cls.LOGS_PATH, 'call.txt'), 'w') as f:
                 f.write(f'\n\nTask: {name}\n')
