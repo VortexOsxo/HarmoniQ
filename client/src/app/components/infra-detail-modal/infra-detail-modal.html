@@ -89,8 +89,8 @@
     </div>
 
     <!-- Cycle de vie Modal Inner -->
-    <div class="cycle-vie-overlay" *ngIf="showCycleVieModal">
-        <div class="cycle-vie-modal">
+    <div class="cycle-vie-overlay" *ngIf="showCycleVieModal" (click)="closeCycleVie()">
+        <div class="cycle-vie-modal" (click)="$event.stopPropagation()">
             <div class="cv-header">
                 <h5>Cycle de vie : {{ infra()?.categoryName }}</h5>
                 <button class="cv-close" (click)="closeCycleVie()"><i class="fa-solid fa-xmark"></i></button>
