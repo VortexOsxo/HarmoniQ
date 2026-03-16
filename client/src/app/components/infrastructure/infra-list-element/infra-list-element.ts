@@ -4,7 +4,8 @@ import { CommonModule } from '@angular/common';
 import { SimulationSingleInfraModal } from '@app/components/simulation/simulation-single-infra-modal/simulation-single-infra-modal';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
-import { MapService } from '@app/services/map-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
+import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 
 @Component({
   selector: 'app-infra-list-element',
@@ -25,7 +26,7 @@ export class InfraListElement {
     private infrastructuresService: InfrastruturesService,
     private scenarioService: ScenariosService,
     private modalService: NgbModal,
-    private mapService: MapService,
+    private infraDetailService: InfraDetailService,
   ) { }
 
   toggleInfra() {
@@ -46,11 +47,21 @@ export class InfraListElement {
 
   handleInfoClick(event: any) {
     event.stopPropagation();
-    this.mapService.showMarker(this.type, this.id);
+    this.infraDetailService.openDetail(this.type, this.id);
   }
 
   deleteInfra(event: any) {
     event.stopPropagation();
-    this.infrastructuresService.deleteLocalInfra(this.type, parseInt(this.id));
+
+    const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
+    modalRef.componentInstance.title = 'Supprimer l\'infrastructure';
+    modalRef.componentInstance.message = 'Êtes-vous sûr de vouloir supprimer cette infrastructure? L\'action est irréversible.';
+    modalRef.componentInstance.confirmText = 'Supprimer';
+
+    modalRef.result.then((confirmed) => {
+      if (confirmed) {
+        this.infrastructuresService.deleteLocalInfra(this.type, parseInt(this.id));
+      }
+    }).catch(() => { });
   }
 }

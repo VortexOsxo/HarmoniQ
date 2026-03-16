@@ -588,3 +588,6 @@ weather_schema = pa.DataFrameSchema(
     index=pa.Index(pa.DateTime, name="datetemps"),
     strict=True,
 )
+
+InfraPayload.update_forward_refs()
+SimulationInfraGroup.update_forward_refs()

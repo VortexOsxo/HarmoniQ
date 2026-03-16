@@ -15,6 +15,11 @@ div#plots {
     flex-direction: column;
     gap: 4px;
     min-width: 160px;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view-buttons.detail-open {
+    right: 416px;
 }
 
 .view-btn {
@@ -63,6 +68,11 @@ div#plots {
     top: 159px;
     right: 16px;
     z-index: 1100;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.protected-areas-btn-container.detail-open {
+    right: 416px;
 }
 
 .protected-areas-btn {

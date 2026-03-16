@@ -7,9 +7,9 @@ import os
 import glob
 
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
-import time
+
 
 from harmoniq.db import schemas, engine, CRUD
 from harmoniq.db.CRUD import (
@@ -19,6 +19,7 @@ from harmoniq.db.CRUD import (
     read_data_by_id,
     update_data,
     delete_data,
+    hydrate_model
 )
 from harmoniq.db.demande import (
     read_demande_data, 
@@ -35,8 +36,7 @@ from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
 from harmoniq.modules.hydro import InfraHydro
-
-from .utils import response_production
+import json
 
 #Appel des modules de production énergétique, ainsi que d'autres modules, et crée des routes web pour chaque fonction CRUD et autre!
 
@@ -56,16 +56,10 @@ async def ping():
 # Création des méthodes CRUD sur FastAPI
 api_routers = {}
 
-read_only_tables = ['eolienneparc', 'solaire', 'hydro', 'thermique', 'nucleaire']
-
 for sql_class, pydantic_classes in engine.sql_tables.items():
     table_name = sql_class.__name__
     table_name_lower = table_name.lower()
-    table_name_plural = table_name_lower + "s"
-    table_cap_plural = table_name + "s"
 
-    base_class = pydantic_classes["base"]
-    create_class = pydantic_classes["create"]
     response_class = pydantic_classes["response"]
 
     class_router = APIRouter(
@@ -75,44 +69,14 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
     api_routers[table_name_lower] = class_router
 
     # Define the endpoints within a closure
-    def create_endpoints(
-        sql_class, base_class, create_class, response_class, table_name_lower
-    ):
-        if table_name_lower not in read_only_tables:
-            @class_router.post(
-                "/", response_model=response_class, summary=f"Create a {table_name}"
-            )
-            async def create(item: create_class, db: Session = Depends(get_db)):
-                result = await create_data(db, sql_class, item)
-                if result is None:
-                    raise HTTPException(
-                        status_code=404, detail=f"{table_name_lower} not found"
-                    )
-                return result
-
+    def create_endpoints(sql_class, response_class, table_name_lower):
         @class_router.get(
-            "/",
+            "",
             response_model=List[response_class],
-            summary=f"Read all {table_name_plural}",
+            summary=f"Read all {table_name_lower}s",
         )
         async def read_all(db: Session = Depends(get_db)):
             result = await read_all_data(db, sql_class)
-            return result
-
-        @class_router.get(
-            "/multiple/{ids}",
-            response_model=List[response_class],
-            summary=f"Read multiple {table_name_plural} by id",
-        )
-        async def read_multiple(ids: str, db: Session = Depends(get_db)):
-            id_list = [int(i) for i in ids.split(",")]
-            result = await read_multiple_by_id(db, sql_class, id_list)
-            if len(result) != len(id_list):
-                missing_ids = set(id_list) - {item.id for item in result}
-                raise HTTPException(
-                    status_code=200,
-                    detail=f"The following IDs were not found: {', '.join(map(str, missing_ids))}",
-                )
             return result
 
         @class_router.get(
@@ -128,35 +92,8 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
                 )
             return result
 
-        if table_name_lower not in read_only_tables:
-            @class_router.put(
-                "/{item_id}",
-                response_model=response_class,
-                summary=f"Update a {table_name} by id",
-            )
-            async def update(
-                item_id: int, item: create_class, db: Session = Depends(get_db)
-            ):
-                result = await update_data(db, sql_class, item_id, item)
-                if result is None:
-                    raise HTTPException(
-                        status_code=404, detail=f"{table_name_lower} {item_id} not found"
-                    )
-                return result
-
-            @class_router.delete("/{item_id}", summary=f"Delete a {table_name} by id")
-            async def delete(item_id: int, db: Session = Depends(get_db)):
-                result = await delete_data(db, sql_class, item_id)
-                if result is None:
-                    raise HTTPException(
-                        status_code=404, detail=f"{table_name_lower} {item_id} not found"
-                    )
-                return result
-
     # Call the closure to define the endpoints
-    create_endpoints(
-        sql_class, base_class, create_class, response_class, table_name_lower
-    )
+    create_endpoints(sql_class, response_class, table_name_lower)
 
 #-----#-----#-----#-----#-----#  Demande d'energie  #-----#-----#-----#-----#-----#
 
@@ -239,55 +176,53 @@ def get_meteo_data(
 
 router.include_router(meteo_router)
 
-#-----#-----#-----#-----#-----#  Production : Eolien  #-----#-----#-----#-----#-----#
+#-----#-----#-----#-----#-----#  Infra Specific  #-----#-----#-----#-----#-----#
 
-parc_eolien_router = api_routers["eolienneparc"]
+PRODUCTION_MAPPING = {
+    "eolienneparc": (InfraParcEolienne, schemas.EolienneParc),
+    "solaire": (InfraSolaire, schemas.Solaire),
+    "thermique": (InfraThermique, schemas.Thermique),
+    "nucleaire": (InfraNucleaire, schemas.Nucleaire),
+    "hydro": (InfraHydro, schemas.Hydro),
+}
 
-@parc_eolien_router.post("/production")
-async def calculer_production_parc_eolien(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraParcEolienne, schemas.EolienneParc
-    )
+def get_infra_object(infra_type, payload):
+    if infra_type not in PRODUCTION_MAPPING:
+        raise HTTPException(400, f"Unsupported infra: '{infra_type}'")
 
-#-----#-----#-----#-----#-----#  Production : Solaire  #-----#-----#-----#-----#-----#
+    infra_class, infra_schema = PRODUCTION_MAPPING[infra_type]
 
-solaire_router = api_routers["solaire"]
+    sql_model_instance = hydrate_model(infra_schema, payload.infra_payload)
+    return infra_class(sql_model_instance)
 
-@solaire_router.post("/production")
-async def calculer_production_solaire(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraSolaire, schemas.Solaire
-    )
+@router.post("/production/{infra_type}")
+async def calculer_production(
+    infra_type: str, 
+    payload: schemas.InfraSimulationPayload
+):
+    scenario = hydrate_model(schemas.Scenario, payload.scenario)
+    infra = get_infra_object(infra_type, payload)
+    infra.charger_scenario(scenario)
 
-#-----#-----#-----#-----#-----#  Production : Thermique  #-----#-----#-----#-----#-----#
+    production: pd.DataFrame = infra.calculer_production()
+    if production is None or production.empty:
+        return []
 
-thermique_router = api_routers["thermique"]
-@thermique_router.post("/production")
-async def calculer_production_thermique(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraThermique, schemas.Thermique
-    )
+    return json.loads(production.fillna(0).to_json(date_format='iso'))
 
-#-----#-----#-----#-----#-----#  Production : Nucleaire  #-----#-----#-----#-----#-----#
-
-nucleaire_router = api_routers["nucleaire"]
-
-@nucleaire_router.post("/production")
-async def calculer_production_nucleaire(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraNucleaire, schemas.Nucleaire
-    )
-
-
-#-----#-----#-----#-----#-----#  Production : Hydro  #-----#-----#-----#-----#-----#
-
-hydro_router = api_routers["hydro"]
-
-@hydro_router.post("/production")
-async def calculer_production_hydro(payload: schemas.InfraSimulationPayload):
-    return await response_production(
-        payload.scenario, payload.infra_payload, InfraHydro, schemas.Hydro
-    )
+@router.post("/cout/{infra_type}")
+async def calculer_cout(
+    infra_type: str, 
+    payload: schemas.InfraSimulationPayload
+):
+    scenario = hydrate_model(schemas.Scenario, payload.scenario)
+    infra = get_infra_object(infra_type, payload)
+    infra.charger_scenario(scenario)
+    results = {
+        'cout_annuel': infra.calculer_cout_pas_de_temps(timedelta(days=365)),
+        'cout_construction': infra.calculer_cout_construction(),
+    }
+    return results
 
 
 #-----#-----#-----#-----#-----#  Fake Data  #-----#-----#-----#-----#-----#
@@ -317,53 +252,26 @@ reseau_router = APIRouter(
 )
 
 @reseau_router.post("/production")
-async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, is_journalier: bool = False):
-    timers = {}
-    total_start = time.time()
-    
+async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, is_journalier: bool = False):    
     scenario = payload.scenario
     infra_group = payload.infra_group
     
-    init_start = time.time()
     infra_reseau = InfraReseau(infra_group)
     infra_reseau.charger_scenario(scenario)
-    timers['2_infra_reseau_init'] = time.time() - init_start
-    
-    calc_start = time.time()
+
     production = await infra_reseau.calculer_production(infra_group, is_journalier)
-    timers['3_calculer_production_total'] = time.time() - calc_start
-    
-    if hasattr(infra_reseau, 'timers'):
-        for key, value in infra_reseau.timers.items():
-            timers[f'  3.{key}'] = value
-    
     if production.empty:
         raise HTTPException(status_code=500, detail="Calcul de production échoué")
     
-    format_start = time.time()
     production_json = production.reset_index().rename(columns={'index': 'timestamp'})
-    
     if 'timestamp' in production_json.columns:
         production_json['timestamp'] = production_json['timestamp'].astype(str)
-    timers['4_response_formatting'] = time.time() - format_start
-    
-    total_time = time.time() - total_start
-    timers['TOTAL'] = total_time
-    
-    print("\n" + "="*60)
-    print("TIMING BREAKDOWN - /reseau/production")
-    print("="*60)
-    for key, value in sorted(timers.items()):
-        pct = (value / total_time * 100) if total_time > 0 else 0
-        print(f"{key:40s} : {value:8.3f}s ({pct:5.1f}%)")
-    print("="*60 + "\n")
     
     response = {
         "metadata": {
             "scenario_id": payload.scenario.id,
             "infra_group_nom": infra_group.nom,
             "is_journalier": is_journalier,
-            "execution_time_seconds": total_time,
             "timestamps": len(production)
         },
         "production": production_json.to_dict(orient='records')

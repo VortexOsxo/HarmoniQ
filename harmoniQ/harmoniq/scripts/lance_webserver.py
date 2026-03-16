@@ -1,4 +1,6 @@
 import argparse
+import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -21,6 +23,17 @@ def build_client():
 
     ensure_node_installed()
 
+    print(f"[launch-app] Installing client dependencies ({client_dir})...")
+    result = subprocess.run(
+        ["npm", "install"],
+        cwd=str(client_dir),
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("[launch-app] npm install failed!", file=sys.stderr)
+        sys.exit(result.returncode)
+    print("[launch-app] Dependencies installed.")
+
     print(f"[launch-app] Building client ({client_dir})...")
     result = subprocess.run(
         ["npm", "run", "build"],
@@ -41,6 +54,17 @@ def start_ng_serve():
         return None
 
     ensure_node_installed()
+
+    print(f"[launch-app] Installing client dependencies ({client_dir})...")
+    result = subprocess.run(
+        ["npm", "install"],
+        cwd=str(client_dir),
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("[launch-app] npm install failed!", file=sys.stderr)
+        sys.exit(result.returncode)
+    print("[launch-app] Dependencies installed.")
 
     proc = subprocess.Popen(
         ["npx", "ng", "serve", "--proxy-config", "proxy.conf.json"],
@@ -67,11 +91,6 @@ def main():
         help="Activer le mode profiler",
     )
     parser.add_argument(
-        "--skip-privates",
-        action="store_true",
-        help="Ignorer les méthodes privées dans le profilage",
-    )
-    parser.add_argument(
         "--host",
         default="0.0.0.0",
         help="Adresse IP du serveur",
@@ -94,6 +113,10 @@ def main():
     )
 
     args = parser.parse_args()
+    log_level = "DEBUG" if args.debug else "WARNING"
+    os.environ.setdefault("LOG_LEVEL", log_level)
+    logging.basicConfig(level=getattr(logging, log_level))
+    logging.getLogger().setLevel(getattr(logging, log_level))
 
     ng_proc = None
 
@@ -104,9 +127,6 @@ def main():
 
     if args.profile:
         from harmoniq.profiler import Initializer
-
-        if args.skip_privates:
-            Initializer.skip_privates = True
 
         import harmoniq.modules
         Initializer.init_module(harmoniq.modules)

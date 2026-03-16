@@ -26,21 +26,30 @@ export class SimulationService {
     private http: HttpClient
   ) { }
 
-  launchSimulationSingleInfra(type: string, infraId: number) {
+  private getInfraScenarioPayload(type: string, infraId: number) {
     const scenario = this.scenariosService.selectedScenario();
-    if (!scenario) return;
+    if (!scenario) return undefined;
 
     const allInfras = this.infrastructuresService.getInfrasSignalByType(type)();
     const infra = allInfras.find((i: any) => String(i.id) === String(infraId));
-    if (!infra) return;
+    if (!infra) return undefined;
 
     const { isUserCreated, ...infraPayload } = infra as any;
+    return { scenario: scenario, infra_payload: infraPayload };
+  }
 
-    const url = `${environment.apiUrl}/${type}/production`;
-    const payload = {
-      scenario: scenario,
-      infra_payload: infraPayload
-    };
+  launchSimulationSingleInfra(type: string, infraId: number) {
+    const url = `${environment.apiUrl}/production/${type}`;
+    const payload = this.getInfraScenarioPayload(type, infraId);
+    if (!payload) return;
+
+    return this.http.post(url, payload);
+  }
+
+  getInfraCost(type: string, infraId: number) {
+    const url = `${environment.apiUrl}/cout/${type}`;
+    const payload = this.getInfraScenarioPayload(type, infraId);
+    if (!payload) return;
     return this.http.post(url, payload);
   }
 
@@ -59,7 +68,7 @@ export class SimulationService {
       infra_group: this.infrastructuresService.buildSimulationPayload()
     }
 
-    const url = `${environment.apiUrl}/reseau/production/?is_journalier=false`;
+    const url = `${environment.apiUrl}/reseau/production?is_journalier=false`;
 
     forkJoin({
       demande: this.demandeTemporalDataService.fetch(scenario),

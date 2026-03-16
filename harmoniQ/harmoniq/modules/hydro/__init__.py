@@ -14,6 +14,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List
+from fastapi import HTTPException
 
 CURRENT_DIR = Path(__file__).parent
 DEBIT_DIR = CURRENT_DIR / "debits"
@@ -100,10 +101,14 @@ class InfraHydro(Infrastructure):
             (apport["time"] >= start_date) & (apport["time"] <= end_date)
         ]
 
-    def calculer_production_interne(self) -> pd.DataFrame:  # Fonctionne
+    def calculer_production(self) -> pd.DataFrame:  # Fonctionne
         if self.donnees.type_barrage == "Fil de l'eau":
             self.charger_debit()
             return get_run_of_river_dam_power(self)
+
+        raise HTTPException(
+                status_code=400, detail="Production calculation is only available for run-of-river dams"
+            )
   
     def calculer_energie(self, production):
         return get_energy(production)
@@ -111,8 +116,8 @@ class InfraHydro(Infrastructure):
     def calculer_facteur_charge(self, production):  # Fonctionne
         return get_facteur_de_charge(self, production)
 
-    def calculer_cout_construction(puissance):  # Fonctionne
-        return estimation_cout_barrage(puissance)
+    def calculer_cout_construction(self) -> np.ndarray:  # Fonctionne
+        return estimation_cout_barrage(self)
 
     def PDF_environnement(self, facteur_charge):  # Fonctionne
         return estimer_qualite_ecosysteme_futur(facteur_charge)
@@ -122,6 +127,31 @@ class InfraHydro(Infrastructure):
 
     def emission(self, energie, facteur_charge):  # Fonctionne
         return calculer_emissions_et_ressources(self, energie, facteur_charge)
+
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        CAPACITY_FACTOR = 0.50
+        OPEX_PER_MWH = 20
+
+        HOURS_PER_YEAR = 8760
+
+        availability = 1 - (
+            self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines
+        )
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+            * availability
+        )
+
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
 
 
 if __name__ == "__main__":
