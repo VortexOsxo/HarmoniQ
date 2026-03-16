@@ -28,7 +28,7 @@ class Log:
             duration_fmt = f"{duration:.3f}"
             percentage_fmt = f"({percentage:.2f}%)"
             
-            return f'{indent}{duration_fmt} {percentage_fmt} [{self.type.value}]   [{self.func_id}]\n'
+            return f'{indent}{duration_fmt}s {percentage_fmt} [{self.type.value}]   [{self.func_id}]\n'
 
 class LogContainer():
     def __init__(self):
