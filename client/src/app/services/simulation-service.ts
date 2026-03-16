@@ -68,7 +68,7 @@ export class SimulationService {
       infra_group: this.infrastructuresService.buildSimulationPayload()
     }
 
-    const url = `${environment.apiUrl}/reseau/production/?is_journalier=false`;
+    const url = `${environment.apiUrl}/reseau/production?is_journalier=false`;
 
     forkJoin({
       demande: this.demandeTemporalDataService.fetch(scenario),

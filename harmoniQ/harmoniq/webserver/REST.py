@@ -56,16 +56,10 @@ async def ping():
 # Création des méthodes CRUD sur FastAPI
 api_routers = {}
 
-read_only_tables = ['eolienneparc', 'solaire', 'hydro', 'thermique', 'nucleaire']
-
 for sql_class, pydantic_classes in engine.sql_tables.items():
     table_name = sql_class.__name__
     table_name_lower = table_name.lower()
-    table_name_plural = table_name_lower + "s"
-    table_cap_plural = table_name + "s"
 
-    base_class = pydantic_classes["base"]
-    create_class = pydantic_classes["create"]
     response_class = pydantic_classes["response"]
 
     class_router = APIRouter(
@@ -75,44 +69,14 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
     api_routers[table_name_lower] = class_router
 
     # Define the endpoints within a closure
-    def create_endpoints(
-        sql_class, base_class, create_class, response_class, table_name_lower
-    ):
-        if table_name_lower not in read_only_tables:
-            @class_router.post(
-                "/", response_model=response_class, summary=f"Create a {table_name}"
-            )
-            async def create(item: create_class, db: Session = Depends(get_db)):
-                result = await create_data(db, sql_class, item)
-                if result is None:
-                    raise HTTPException(
-                        status_code=404, detail=f"{table_name_lower} not found"
-                    )
-                return result
-
+    def create_endpoints(sql_class, response_class, table_name_lower):
         @class_router.get(
-            "/",
+            "",
             response_model=List[response_class],
-            summary=f"Read all {table_name_plural}",
+            summary=f"Read all {table_name_lower}s",
         )
         async def read_all(db: Session = Depends(get_db)):
             result = await read_all_data(db, sql_class)
-            return result
-
-        @class_router.get(
-            "/multiple/{ids}",
-            response_model=List[response_class],
-            summary=f"Read multiple {table_name_plural} by id",
-        )
-        async def read_multiple(ids: str, db: Session = Depends(get_db)):
-            id_list = [int(i) for i in ids.split(",")]
-            result = await read_multiple_by_id(db, sql_class, id_list)
-            if len(result) != len(id_list):
-                missing_ids = set(id_list) - {item.id for item in result}
-                raise HTTPException(
-                    status_code=200,
-                    detail=f"The following IDs were not found: {', '.join(map(str, missing_ids))}",
-                )
             return result
 
         @class_router.get(
@@ -128,35 +92,8 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
                 )
             return result
 
-        if table_name_lower not in read_only_tables:
-            @class_router.put(
-                "/{item_id}",
-                response_model=response_class,
-                summary=f"Update a {table_name} by id",
-            )
-            async def update(
-                item_id: int, item: create_class, db: Session = Depends(get_db)
-            ):
-                result = await update_data(db, sql_class, item_id, item)
-                if result is None:
-                    raise HTTPException(
-                        status_code=404, detail=f"{table_name_lower} {item_id} not found"
-                    )
-                return result
-
-            @class_router.delete("/{item_id}", summary=f"Delete a {table_name} by id")
-            async def delete(item_id: int, db: Session = Depends(get_db)):
-                result = await delete_data(db, sql_class, item_id)
-                if result is None:
-                    raise HTTPException(
-                        status_code=404, detail=f"{table_name_lower} {item_id} not found"
-                    )
-                return result
-
     # Call the closure to define the endpoints
-    create_endpoints(
-        sql_class, base_class, create_class, response_class, table_name_lower
-    )
+    create_endpoints(sql_class, response_class, table_name_lower)
 
 #-----#-----#-----#-----#-----#  Demande d'energie  #-----#-----#-----#-----#-----#
 
