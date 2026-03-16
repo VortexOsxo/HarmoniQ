@@ -1,7 +1,11 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
+import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 
 @Component({
   selector: 'app-infra-detail-modal',
@@ -10,31 +14,95 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
   styleUrl: './infra-detail-modal.css',
 })
 export class InfraDetailModal {
-  activeTab: 'informations' | 'impacts' = 'informations';
+  showCycleVieModal: boolean = false;
+  showImageOverlay: boolean = false;
 
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
 
   constructor(
     public infraDetailService: InfraDetailService,
-    private infrasService: InfrastruturesService
-  ) {}
+    private infrasService: InfrastruturesService,
+    private modalService: NgbModal
+  ) {
+    effect(() => {
+      // Déclencheur sur le changement d'infrastructure
+      const currentInfra = this.infra();
+      untracked(() => {
+        this.showCycleVieModal = false;
+        this.showImageOverlay = false;
+      });
+    });
+  }
 
   deleteInfra() {
     const infra = this.infra();
     if (infra && infra.data.isUserCreated) {
-      this.infrasService.deleteLocalInfra(infra.type, infra.data.id);
-      this.close();
+      const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
+      modalRef.componentInstance.title = 'Supprimer l\'infrastructure';
+      modalRef.componentInstance.message = 'Êtes-vous sûr de vouloir supprimer cette infrastructure? L\'action est irréversible.';
+      modalRef.componentInstance.confirmText = 'Supprimer';
+
+      modalRef.result.then((confirmed) => {
+        if (confirmed) {
+          this.infrasService.deleteLocalInfra(infra.type, infra.data.id);
+          this.close();
+        }
+      }).catch(() => { }); // Dismissal ignored
     }
   }
 
   close() {
     this.infraDetailService.closeDetail();
-    this.activeTab = 'informations';
+    this.showCycleVieModal = false;
+    this.showImageOverlay = false;
   }
 
-  switchTab(tab: 'informations' | 'impacts') {
-    this.activeTab = tab;
+  getHQImageUrl(): string | null {
+    const infra = this.infra();
+    if (!infra || !infra.data || !infra.data.nom) return null;
+
+    // Base normalization: remove accents, lowercase
+    const baseNom = infra.data.nom
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    // Generate variants to map to HQ URLs
+    const variants: string[] = [];
+
+    // 1. Direct hyphenated: "les-cedres", "laforge-1"
+    variants.push(baseNom.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+
+    // 2. Direct without hyphens: "lescedres", "laforge1"
+    variants.push(baseNom.replace(/[^a-z0-9]+/g, ''));
+
+    // 3. Remove articles ("les ", "le ", "la ", "l'") and hyphenate: "cedres"
+    const noArticle = baseNom.replace(/^(le\s|la\s|les\s|l['’]\s*)/, '');
+    variants.push(noArticle.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+
+    // 4. Remove articles without hyphens
+    variants.push(noArticle.replace(/[^a-z0-9]+/g, ''));
+
+    for (const variant of variants) {
+      if (!variant) continue;
+
+      // Try exact suffixes
+      for (const suffix of ['-01.jpg', '-1.jpg', '-03.jpg', '.jpg', '1-01.jpg', '2-01.jpg', '2A-01.jpg']) {
+        const expectedMatch = `/images/centrales/${variant}${suffix}`;
+        const found = HQ_IMAGE_URLS.find(url => url.includes(expectedMatch));
+        if (found) return found;
+      }
+
+      // Fuzzy prefix search
+      const foundFuzzy = HQ_IMAGE_URLS.find(url => {
+        const filename = url.split('/').pop() || '';
+        return filename.startsWith(variant + '-') || filename === (variant + '.jpg');
+      });
+      if (foundFuzzy) return foundFuzzy;
+    }
+
+    return null;
   }
 
   getIconForType(type: string): string {
@@ -48,12 +116,51 @@ export class InfraDetailModal {
     return icons[type] || '';
   }
 
-  getInfoFields(): { icon: string; label: string; value: string }[] {
+  openCycleVie() {
+    this.showCycleVieModal = true;
+  }
+
+  closeCycleVie() {
+    this.showCycleVieModal = false;
+  }
+
+  getCycleVieData(): CycleDeVieData | null {
+    const infra = this.infra();
+    if (!infra) return null;
+    return CYCLE_DE_VIE_DATA[infra.type] || null;
+  }
+
+  getPluralCategoryName(): string {
+    const infra = this.infra();
+    if (!infra) return '';
+    const type = infra.type;
+    switch (type) {
+      case 'hydro': return 'barrages hydroélectriques';
+      case 'eolienneparc': return 'parcs éoliens';
+      case 'solaire': return 'parcs solaires';
+      case 'thermique': return 'centrales thermiques';
+      case 'nucleaire': return 'centrales nucléaires';
+      default: return infra.categoryName.toLowerCase() + 's';
+    }
+  }
+
+  getCapitalizedPluralCategoryName(): string {
+    const name = this.getPluralCategoryName();
+    return name ? name.charAt(0).toUpperCase() + name.slice(1) : '';
+  }
+
+  getImpactsData(): ImpactItem[] {
+    const infra = this.infra();
+    if (!infra) return [];
+    return IMPACTS_ENVIRONNEMENTAUX_DATA[infra.type] || [];
+  }
+
+  getInfoFields(): { icon: string; label: string; value: string; isVulgarisation?: boolean }[] {
     const infra = this.infra();
     if (!infra) return [];
 
     const d = infra.data;
-    const fields: { icon: string; label: string; value: string }[] = [];
+    const fields: { icon: string; label: string; value: string; isVulgarisation?: boolean }[] = [];
 
     fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
 
@@ -75,7 +182,40 @@ export class InfraDetailModal {
       fields.push({ icon: 'fa-solid fa-fire', label: "Type d'intrant", value: d.type_intrant || 'N/A' });
     }
 
+    // Vulgarisation (Comparaison)
+    if (d.puissance_nominal) {
+      const puissanceMW = parseFloat(d.puissance_nominal);
+      if (!isNaN(puissanceMW) && puissanceMW > 0) {
+        const telephones = (puissanceMW * 1000000) / 20;
+        // User's formula: Puissance x 365 x 24 x 60 x 10^9 divisé par 20 000
+        const foyers = (puissanceMW * 365 * 24 * 60 * 1000000000) / 20000;
+
+        const millionsTelephones = (telephones / 1000000).toFixed(1);
+        const foyersFormatted = this.formatBigNumber(foyers);
+
+        fields.push({
+          icon: 'fa-solid fa-mobile-screen-button',
+          label: 'Comparaison globale',
+          value: `Pourrait recharger ${millionsTelephones} millions de téléphones simultanément.`,
+          isVulgarisation: true
+        });
+        fields.push({
+          icon: 'fa-solid fa-house',
+          label: 'Foyers alimentés',
+          value: `${foyersFormatted} foyers théoriquement.`,
+          isVulgarisation: true
+        });
+      }
+    }
+
     return fields;
+  }
+
+  private formatBigNumber(num: number): string {
+    if (num >= 1e12) return `${(num / 1e12).toFixed(1)} billions`;
+    if (num >= 1e9) return `${(num / 1e9).toFixed(1)} milliards`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(1)} millions`;
+    return Math.floor(num).toLocaleString('fr-FR');
   }
 
   private formatVolume(vol: number | null | undefined): string {
