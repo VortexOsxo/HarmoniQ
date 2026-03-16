@@ -64,23 +64,51 @@ export class InfraDetailModal {
     this.activeTab = tab;
   }
 
-  getFormattedName(nom: string | undefined): string {
-    if (!nom) return '';
-    return nom
-      .normalize('NFD') // Remove accents
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
-      .replace(/^-+|-+$/g, ''); // Trim hyphens
-  }
-
   getHQImageUrl(): string | null {
     const infra = this.infra();
     if (!infra || !infra.data || !infra.data.nom) return null;
-    const formattedName = this.getFormattedName(infra.data.nom);
-    const expectedMatch = `/images/centrales/${formattedName}`;
-    const found = HQ_IMAGE_URLS.find(url => url.includes(expectedMatch));
-    return found || null;
+
+    // Base normalization: remove accents, lowercase
+    const baseNom = infra.data.nom
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    // Generate variants to map to HQ URLs
+    const variants: string[] = [];
+
+    // 1. Direct hyphenated: "les-cedres", "laforge-1"
+    variants.push(baseNom.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+
+    // 2. Direct without hyphens: "lescedres", "laforge1"
+    variants.push(baseNom.replace(/[^a-z0-9]+/g, ''));
+
+    // 3. Remove articles ("les ", "le ", "la ", "l'") and hyphenate: "cedres"
+    const noArticle = baseNom.replace(/^(le\s|la\s|les\s|l['’]\s*)/, '');
+    variants.push(noArticle.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+
+    // 4. Remove articles without hyphens
+    variants.push(noArticle.replace(/[^a-z0-9]+/g, ''));
+
+    for (const variant of variants) {
+      if (!variant) continue;
+
+      // Try exact suffixes
+      for (const suffix of ['-01.jpg', '-1.jpg', '-03.jpg', '.jpg', '1-01.jpg', '2-01.jpg', '2A-01.jpg']) {
+        const expectedMatch = `/images/centrales/${variant}${suffix}`;
+        const found = HQ_IMAGE_URLS.find(url => url.includes(expectedMatch));
+        if (found) return found;
+      }
+
+      // Fuzzy prefix search
+      const foundFuzzy = HQ_IMAGE_URLS.find(url => {
+        const filename = url.split('/').pop() || '';
+        return filename.startsWith(variant + '-') || filename === (variant + '.jpg');
+      });
+      if (foundFuzzy) return foundFuzzy;
+    }
+
+    return null;
   }
 
   getIconForType(type: string): string {
