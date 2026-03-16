@@ -1,13 +1,7 @@
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Optional
 import logging
-from harmoniq.db.engine import get_db
-from harmoniq.db.CRUD import read_all_hydro
-from harmoniq.modules.hydro.calcule import reservoir_infill
-from pathlib import Path
 import pypsa
-import networkx as nx
 
 logger = logging.getLogger("EnergyUtils")
 
@@ -20,16 +14,12 @@ class EnergyUtils:
     """
     
     @staticmethod
-    def obtenir_energie_historique(annee: str, donnees_historiques=None) -> float:
+    def obtenir_energie_historique(annee: str) -> float:
         """
         Récupère l'énergie historique produite.
         
-        Args:
-            annee: Année des données historiques
-            donnees_historiques: Données historiques optionnelles
-            
-        Returns:
-            float: Énergie historique en MWh
+        Args: annee: Année des données historiques   
+        Returns: float: Énergie historique en MWh
         """
         energie_historique = {
             "2022": 210.8e6,  # TWh en MWh
@@ -41,20 +31,7 @@ class EnergyUtils:
             return energie_historique[annee]
         
         return sum(energie_historique.values()) / len(energie_historique)
-    
-    @staticmethod
-    def identifier_nouvelles_centrales(reseau, donnees_historiques=None) -> List:
-        """
-        Identifie les nouvelles centrales ajoutées.
-        
-        Args:
-            reseau: Réseau PyPSA
-            donnees_historiques: Données historiques optionnelles
-            
-        Returns:
-            List: Nouvelles centrales identifiées
-        """
-        return []  # Simplifié pour l'instant
+
     
     @staticmethod
     def estimer_production_annuelle(centrale) -> float:
@@ -99,89 +76,7 @@ class EnergyUtils:
         
         logger.warning(f"Bus {bus_interconnexion} non trouvé, utilisation du premier bus disponible")
         return reseau.buses.index[0]
-    
-    @staticmethod
-    def get_niveau_reservoir(productions: pd.DataFrame, niveaux_actuels: dict, timestamp) -> pd.DataFrame:
-        """
-        Calcule les nouveaux niveaux de réservoir.
-        
-        Args:
-            productions: DataFrame contenant les productions pour chaque réservoir
-            niveaux_actuels: Niveaux actuels de chaque réservoir (0-1)
-            timestamp: Horodatage actuel
-            
-        Returns:
-            pd.DataFrame: Nouveaux niveaux des réservoirs
-        """
-        db = next(get_db())
-        barrages = read_all_hydro(db)
-        
-        CURRENT_DIR = Path(__file__).parent.parent.parent.parent / "modules" / "hydro"
-        APPORT_DIR = CURRENT_DIR / "apport_naturel"
-        
-        date_jour = pd.Timestamp(timestamp.date())
-        apport_naturel = pd.DataFrame(index=[timestamp])
-        
-        for barrage in barrages:
-            if barrage.type_barrage == "Reservoir" and barrage.nom in productions.columns:
-                try:
-                    id_hq = str(barrage.id_HQ)
-                    fichier_apport = APPORT_DIR / f"{id_hq}.csv"
-                    
-                    if fichier_apport.exists():
-                        data_apport = pd.read_csv(fichier_apport)
-                        data_apport["time"] = pd.to_datetime(data_apport["time"])
-                        
-                        jour_exact = data_apport[data_apport["time"].dt.date == date_jour.date()]
-                        
-                        if not jour_exact.empty:
-                            apport_naturel[barrage.nom] = jour_exact["streamflow"].values[0]
-                        else:
-                            data_apport["diff"] = abs(data_apport["time"] - date_jour)
-                            jour_proche = data_apport.loc[data_apport["diff"].idxmin()]
-                            apport_naturel[barrage.nom] = jour_proche["streamflow"]
-                    else:
-                        apport_naturel[barrage.nom] = 15  # Valeur par défaut
-                except Exception as e:
-                    logger.error(f"Erreur chargement apports pour {barrage.nom}: {e}")
-                    apport_naturel[barrage.nom] = 15
 
-        niveaux_actuels_df = niveaux_actuels if isinstance(niveaux_actuels, pd.DataFrame) else pd.DataFrame([niveaux_actuels])
-        
-        return reservoir_infill(
-            besoin_puissance=productions,
-            pourcentage_reservoir=niveaux_actuels_df,
-            apport_naturel=apport_naturel,
-            timestamp=timestamp
-        )
-    
-    @staticmethod
-    def calcul_cout_reservoir(niveau: float) -> float:
-        """
-        Calcule le coût marginal en fonction du niveau du réservoir.
-        
-        Args:
-            niveau: Niveau du réservoir (0-1)
-            
-        Returns:
-            float: Coût marginal calculé
-        """
-        cout_minimum = 5     # Coût quand le réservoir est plein
-        cout_maximum = 35    # Coût quand le réservoir est presque vide (modifié de 150 à 35)
-        niveau_critique = 0.25
-        
-        niveau = max(0, min(1, niveau))
-        
-        if niveau < niveau_critique:
-            # Croissance exponentielle en dessous du seuil critique
-            facteur = (niveau_critique - niveau) / niveau_critique
-            cout = cout_minimum + (cout_maximum - cout_minimum) * np.exp(2 * facteur) # Exponentielle plus douce
-        else:
-            # Décroissance linéaire au-dessus du seuil critique
-            facteur = (1 - niveau) / (1 - niveau_critique)
-            cout = cout_minimum + (cout_maximum/4 - cout_minimum) * facteur
-        
-        return round(cout, 2)
     
     @staticmethod
     def calcul_cout_reservoir_vectorized(niveaux: np.ndarray) -> np.ndarray:
@@ -608,150 +503,19 @@ class EnergyUtils:
     def calculate_energy_from_power(network, power_data, is_journalier=None):
         """
         Calcule correctement l'énergie à partir des valeurs de puissance en tenant compte 
-        de la durée des snapshots.
-        
-        Args:
-            network: Réseau PyPSA contenant les snapshots
-            power_data: DataFrame ou Series contenant des valeurs de puissance en MW
-            is_journalier: Si True, force le mode journalier (override de la détection auto)
-            
-        Returns:
-            Même structure que power_data, mais avec des valeurs en MWh
+        de la durée réelle des snapshots.
         """
-        # Déterminer si nous sommes en mode journalier
-        daily_snapshots = False
-        
-        if is_journalier is not None:
-            daily_snapshots = is_journalier
+        if is_journalier:
+            duration_hours = 24.0
         elif len(network.snapshots) > 1:
-            time_diff = network.snapshots[1] - network.snapshots[0]
-            if time_diff >= pd.Timedelta(hours=23):
-                daily_snapshots = True
+            duration_hours = (network.snapshots[1] - network.snapshots[0]).total_seconds() / 3600
+        else:
+            duration_hours = 1.0 # Par défaut 1h
         
-        # Vérifier si les données sont déjà en énergie
+        # Vérifier si les données sont déjà marquées comme étant en énergie
         data_is_energy = getattr(power_data, '_energy_not_power', False)
         
-        if isinstance(power_data, pd.DataFrame):
-            energy_data = power_data.copy()
+        if data_is_energy:
+            return power_data
             
-            if daily_snapshots and not data_is_energy:
-                logger.info(f"Mode journalier: Conversion puissance (MW) → énergie (MWh/jour)")
-                energy_data = energy_data * 24
-            
-        elif isinstance(power_data, pd.Series):
-            energy_data = power_data.copy()
-            
-            if daily_snapshots and not data_is_energy:
-                energy_data = energy_data * 24
-        
-        else:
-            energy_data = power_data
-            if daily_snapshots and not data_is_energy:
-                energy_data = energy_data * 24
-        
-        return energy_data
-
-    @staticmethod
-    def debug_network_energy_allocation(network, period='auto', is_journalier=None):
-        """
-        Affiche des informations détaillées sur l'allocation d'énergie dans le réseau.
-        
-        Args:
-            network: Le réseau PyPSA à analyser
-            period: 'daily', 'hourly', ou 'auto' pour détection automatique
-            is_journalier: Si True, force le mode journalier (override du paramètre period)
-        """
-        logger = logging.getLogger("EnergyUtils")
-        
-        # Déterminer le mode (journalier/horaire)
-        hours_per_snapshot = 1  # Par défaut: horaire
-        
-        if is_journalier is not None:
-            # Utiliser la valeur explicite si fournie
-            if is_journalier:
-                hours_per_snapshot = 24
-                period = 'daily'
-            else:
-                hours_per_snapshot = 1
-                period = 'hourly'
-            logger.info(f"Mode {'journalier' if is_journalier else 'horaire'} spécifié explicitement")
-        elif period == 'auto':
-            # Détection automatique basée sur l'écart entre snapshots
-            if len(network.snapshots) > 1:
-                time_diff = network.snapshots[1] - network.snapshots[0]
-                if time_diff >= pd.Timedelta(hours=23):
-                    hours_per_snapshot = 24
-                    period = 'daily'
-                    logger.info(f"Mode journalier détecté automatiquement (écart: {time_diff})")
-                else:
-                    hours_per_snapshot = 1
-                    period = 'hourly'
-                    logger.info(f"Mode horaire détecté automatiquement (écart: {time_diff})")
-        else:
-            # Utiliser directement la valeur spécifiée
-            hours_per_snapshot = 24 if period == 'daily' else 1
-        
-        # Facteur de conversion puissance → énergie
-        hours_per_snapshot = 24 if period == 'daily' else 1
-        
-        # Analyser par type d'énergie
-        carriers = network.generators.carrier.unique()
-        
-        total_power = network.generators_t['p'].sum().sum()
-        total_energy = total_power * hours_per_snapshot
-        
-        logger.info(f"Analyse détaillée de l'allocation d'énergie:")
-        logger.info(f"Snapshots: {len(network.snapshots)} ({period})")
-        
-        if period == 'daily':
-            logger.info(f"Puissance moyenne journalière: {total_power/len(network.snapshots):.2f} MW")
-            logger.info(f"Puissance totale cumulée: {total_power:.2f} MW")
-            logger.info(f"Énergie journalière moyenne: {total_energy/len(network.snapshots):.2f} MWh/jour")
-            logger.info(f"Énergie totale: {total_energy:.2f} MWh ({total_energy/1e6:.2f} TWh)")
-        else:
-            logger.info(f"Puissance moyenne: {total_power/len(network.snapshots):.2f} MW")  
-            logger.info(f"Puissance totale cumulée: {total_power:.2f} MW")
-            logger.info(f"Énergie totale: {total_energy:.2f} MWh ({total_energy/1e6:.2f} TWh)")
-        
-        for carrier in carriers:
-            carrier_gens = network.generators[network.generators.carrier == carrier].index
-            if len(carrier_gens) > 0:
-                # Capacité installée
-                capacity = network.generators[network.generators.carrier == carrier].p_nom.sum()
-                
-                # Production totale
-                carrier_power = network.generators_t['p'][carrier_gens].sum().sum()
-                carrier_energy = carrier_power * hours_per_snapshot
-                
-                # Facteur de capacité moyen
-                if capacity > 0:
-                    capacity_factor = carrier_power / (capacity * len(network.snapshots))
-                else:
-                    capacity_factor = 0
-                
-                # Pourcentage du mix
-                percentage = 100 * carrier_power / total_power if total_power > 0 else 0
-                
-                logger.info(f"  {carrier}:")
-                logger.info(f"    - Capacité installée: {capacity:.2f} MW")
-                logger.info(f"    - Puissance produite: {carrier_power:.2f} MW ({percentage:.1f}%)")
-                logger.info(f"    - Énergie produite: {carrier_energy:.2f} MWh")
-                logger.info(f"    - Facteur de capacité: {capacity_factor*100:.1f}%")
-                
-                # Contrainte d'accès aux données?
-                if carrier_power == 0 and capacity > 0:
-                    logger.warning(f"    ⚠️ {carrier} a une capacité de {capacity:.2f} MW mais produit 0 MW")
-                    
-                    # Vérifier si les générateurs ont des données p_max_pu disponibles
-                    if hasattr(network.generators_t, 'p_max_pu'):
-                        p_max_pu_available = sum(1 for gen in carrier_gens if gen in network.generators_t.p_max_pu.columns)
-                        if p_max_pu_available < len(carrier_gens):
-                            logger.warning(f"    ⚠️ Seulement {p_max_pu_available}/{len(carrier_gens)} générateurs ont des données p_max_pu")
-                    
-                    # Vérifier les coûts marginaux
-                    if hasattr(network.generators_t, 'marginal_cost'):
-                        for gen in carrier_gens:
-                            if gen in network.generators_t.marginal_cost.columns:
-                                cost_min = network.generators_t.marginal_cost[gen].min()
-                                cost_max = network.generators_t.marginal_cost[gen].max()
-                                logger.info(f"    - Coût marginal pour {gen}: {cost_min:.2f}-{cost_max:.2f}")
+        return power_data * duration_hours
