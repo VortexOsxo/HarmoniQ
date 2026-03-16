@@ -9,11 +9,12 @@ const NO_MORE_QUESTIONS_FLAG: number = -2;
 export type Question = {
   questionText: string;
   options: string[];
+  questionType: string;
 }
 
 export type ImportedQuestion = {
   question: Question;
-  answer: number;
+  answer: number | number[];
   message: string;
 }
 
@@ -35,7 +36,8 @@ export class GameService {
       questions: [{
         question: {
           questionText: "",
-          options: [""]
+          options: [""],
+          questionType:""
         },
         answer: 0,
         message: ""
@@ -43,7 +45,7 @@ export class GameService {
       answeredQuestionList: [EMPTY]
     };
   public isCurrentAnswered: boolean = false;
-  public userSelection: number = EMPTY;
+  public userSelection: number[] = [EMPTY];
   private quizStarted: boolean = false;
 
   constructor(private http: HttpClient) {
@@ -63,7 +65,7 @@ export class GameService {
       this._currentQuestion.next(0);
       this.goodAnswers = 0;
       this.isCurrentAnswered = false;
-      this.userSelection = -1;
+      this.userSelection = [-1];
     });
   }
 
@@ -73,7 +75,7 @@ export class GameService {
 
   nextQuestion(): void {
     this.isCurrentAnswered = false;
-    this.userSelection = -1;
+    this.userSelection = [-1];
     this._currentQuestion.value < this.quiz.questions.length - 1 ?
       this._currentQuestion.next(this.questionIndex + 1) : this._currentQuestion.next(NO_MORE_QUESTIONS_FLAG)
   }
@@ -87,14 +89,41 @@ export class GameService {
     this.answeredQuestions = [EMPTY];
   }
 
-  checkAnswer(selectedOption: number): number {
+checkAnswer(selectedOption: number[]): number[] {
     const isFirstTime = !this.isCurrentAnswered;
+    const currentQ = this.quiz.questions[this._currentQuestion.value];
+    const correctAnswer = currentQ.answer;
+    
     this.isCurrentAnswered = true;
     this.userSelection = selectedOption;
-    if (isFirstTime && selectedOption == this.quiz.questions[this._currentQuestion.value].answer)
-      this.goodAnswers++;
-    return this.quiz.questions[this._currentQuestion.value].answer;
-  }
+
+    if (typeof correctAnswer === 'number') {
+        if (isFirstTime && selectedOption[0] === correctAnswer) {
+            this.goodAnswers++;
+        }
+        return [correctAnswer];
+    }
+
+    if (Array.isArray(correctAnswer)) {
+        let isCorrect = true;
+        if (selectedOption.length !== correctAnswer.length) {
+            isCorrect = false;
+        } else {
+            for (let i = 0; i < selectedOption.length; i++) {
+                if (selectedOption[i] !== correctAnswer[i]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+        }
+
+        if (isFirstTime && isCorrect) {
+            this.goodAnswers++;
+        }
+        return correctAnswer;
+    }
+    return [];
+}
 
   getGoodAnswerNumber(): number {
     return this.goodAnswers;

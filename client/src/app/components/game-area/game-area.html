@@ -17,7 +17,9 @@
     </div>
 
     <div id="optionBox" [hidden]="quizTerminated"></div>
-    <div id="questonInformation" *ngIf="!quizTerminated"><h1>{{questionInformation}}</h1></div>
+    <div id="questonInformation" *ngIf="!quizTerminated && questionInformation">
+    <h1>{{questionInformation}}</h1>
+</div>
 
     <div id="resultsContainer" *ngIf="quizTerminated">
 
