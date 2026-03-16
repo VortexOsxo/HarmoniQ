@@ -49,124 +49,187 @@ export const CYCLE_DE_VIE_DATA: Record<string, CycleDeVieData> = {
 export const IMPACTS_ENVIRONNEMENTAUX_DATA: Record<string, ImpactItem[]> = {
     hydro: [
         {
-            icon: 'fa-solid fa-wind',
-            title: 'Émissions de CO₂',
-            value: '18 000 tonnes',
+            icon: 'fa-solid fa-cloud',
+            title: 'Émissions moyennes',
+            value: 'Faibles à modérées',
             colorClass: 'impact-blue',
-            description: 'La construction génère des GES (béton, acier). Équivalent aux émissions annuelles d\'environ 3900 voitures.'
+            description: 'Les émissions (dont méthane et CO₂) proviennent surtout de la décomposition végétale initiale et de la machinerie de construction.'
         },
         {
-            icon: 'fa-solid fa-tree',
-            title: 'Habitats naturels',
-            value: '12 km² inondés',
+            icon: 'fa-solid fa-map-location-dot',
+            title: 'Impact sur le territoire',
+            value: 'Majeur',
+            colorClass: 'impact-orange',
+            description: 'Inondation de vastes étendues de terres pour créer le réservoir, modifiant complètement et durablement le paysage local.'
+        },
+        {
+            icon: 'fa-solid fa-fish',
+            title: 'Impact sur la faune',
+            value: 'Obstacles migratoires',
+            colorClass: 'impact-teal',
+            description: 'Les barrages bloquent la migration des poissons (ex: saumons) et inondent les habitats terrestres de nombreux animaux.'
+        },
+        {
+            icon: 'fa-solid fa-leaf',
+            title: 'Impact sur la flore',
+            value: 'Immersion',
             colorClass: 'impact-green',
-            description: 'Submerge une surface importante, affectant la faune locale et les migrations (poissons, nidification).'
+            description: 'Destruction de la végétation terrestre locale par noyade lors de la mise en eau initiale du réservoir.'
         },
         {
             icon: 'fa-solid fa-water',
-            title: 'Qualité de l\'eau',
-            value: 'Changements en aval',
-            colorClass: 'impact-teal',
-            description: 'L\'eau peut être moins oxygénée (-30%) ou plus chaude, altérant les sédiments naturels.'
-        },
-        {
-            icon: 'fa-solid fa-mountain',
-            title: 'Impact sur les terres',
-            value: 'Définitif',
-            colorClass: 'impact-orange',
-            description: 'Les zones riveraines perdent de nombreux nutriments naturels à cause de l\'érosion et l\'immersion.'
+            title: 'Qualité des eaux et sols',
+            value: 'Altération',
+            colorClass: 'impact-blue',
+            description: 'Modification de la température et baisse de l\'oxygénation de l\'eau. La rétention des sédiments appauvrit les sols en aval.'
         }
     ],
     eolienneparc: [
         {
-            icon: 'fa-solid fa-wind',
-            title: 'Émissions de CO₂',
-            value: 'Faibles en opération',
+            icon: 'fa-solid fa-cloud',
+            title: 'Émissions moyennes',
+            value: 'Très faibles',
             colorClass: 'impact-blue',
-            description: 'La fabrication et le transport demandent de l\'énergie, mais l\'opération évite d\'énormes quantités de GES.'
+            description: 'Presque nulles en opération. Les émissions sont associées à la fabrication (acier, béton) et au transport.'
+        },
+        {
+            icon: 'fa-solid fa-map-location-dot',
+            title: 'Impact sur le territoire',
+            value: 'Emprise visuelle',
+            colorClass: 'impact-orange',
+            description: 'Modification importante du paysage visuel, bien que l\'emprise réelle affectant le sol par éolienne soit relativement faible.'
         },
         {
             icon: 'fa-solid fa-crow',
-            title: 'Faune volante',
+            title: 'Impact sur la faune',
             value: 'Risque de collisions',
-            colorClass: 'impact-orange',
-            description: 'Impact potentiel sur les oiseaux et chauves-souris. Choix du site crucial pour minimiser ce risque.'
+            colorClass: 'impact-teal',
+            description: 'Mortalité possible chez les oiseaux et les chauves-souris. Effet potentiellement d\'effarouchement sur certaines espèces terrestres.'
         },
         {
-            icon: 'fa-solid fa-volume-high',
-            title: 'Nuisances sonores et visuelles',
-            value: 'Modérées',
-            colorClass: 'impact-teal',
-            description: 'Le souffle des pales crée un léger bruit continu et l\'installation modifie le paysage visible.'
+            icon: 'fa-solid fa-leaf',
+            title: 'Impact sur la flore',
+            value: 'Très localisé',
+            colorClass: 'impact-green',
+            description: 'Déboisement et altération mineure de la végétation limités à l\'aménagement des chemins d\'accès et des fondations.'
+        },
+        {
+            icon: 'fa-solid fa-water',
+            title: 'Qualité des eaux et sols',
+            value: 'Négligeable',
+            colorClass: 'impact-blue',
+            description: 'Aucun impact sur l\'eau en opération. Risque minime pour les sols lié d\'éventuelles petites fuites de lubrifiants.'
         }
     ],
     nucleaire: [
         {
-            icon: 'fa-solid fa-wind',
-            title: 'Émissions de CO₂',
+            icon: 'fa-solid fa-cloud',
+            title: 'Émissions moyennes',
             value: 'Très faibles',
             colorClass: 'impact-blue',
-            description: 'Émissions proches de celles des renouvelables sur l\'ensemble du cycle de vie.'
+            description: 'Émissions de GES extrêmement faibles en opération, comparables à celles des énergies renouvelables sur le cycle de vie.'
         },
         {
-            icon: 'fa-solid fa-radiation',
-            title: 'Déchets radioactifs',
-            value: 'Longue vie',
+            icon: 'fa-solid fa-map-location-dot',
+            title: 'Impact sur le territoire',
+            value: 'Gestion des sites',
             colorClass: 'impact-orange',
-            description: 'Production de déchets dangereux nécessitant un enfouissement ou confinement complexe sur des millénaires.'
+            description: 'Peu d\'espace pour l\'usine même, mais l\'enfouissement des déchets demande des structures géologiques adaptées à long terme.'
         },
         {
-            icon: 'fa-solid fa-temperature-arrow-up',
-            title: 'Impact thermique',
-            value: 'Rejets d\'eau chaude',
+            icon: 'fa-solid fa-fish',
+            title: 'Impact sur la faune',
+            value: 'Milieu aquatique',
             colorClass: 'impact-teal',
-            description: 'Les eaux de refroidissement rejetées réchauffent localement les rivières ou mers environnantes.'
+            description: 'Aspiration potentielle d\'organismes (poissons, plancton) par les systèmes de pompage d\'eau de refroidissement.'
+        },
+        {
+            icon: 'fa-solid fa-leaf',
+            title: 'Impact sur la flore',
+            value: 'Stress thermique',
+            colorClass: 'impact-green',
+            description: 'Le réchauffement local des cours d\'eau peut altérer les herbiers aquatiques. Impact terrestre direct très minime.'
+        },
+        {
+            icon: 'fa-solid fa-water',
+            title: 'Qualité des eaux et sols',
+            value: 'Rejets thermiques',
+            colorClass: 'impact-blue',
+            description: 'Réchauffement des eaux de surface. Les sols et eaux souterraines peuvent être contaminés gravement en cas d\'accident radiologique.'
         }
     ],
     solaire: [
         {
-            icon: 'fa-solid fa-industry',
-            title: 'Extraction minière',
-            value: 'Forte',
-            colorClass: 'impact-orange',
-            description: 'Extraction énergivore de terres rares, silicium, avec possibles pollutions chimiques aux sites miniers.'
-        },
-        {
-            icon: 'fa-solid fa-solar-panel',
-            title: 'Artificialisation des sols',
-            value: 'Importante',
-            colorClass: 'impact-green',
-            description: 'Les grands parcs solaires utilisent d\'énormes surfaces au sol, parfois au détriment de l\'agriculture.'
-        },
-        {
-            icon: 'fa-solid fa-wind',
-            title: 'Émissions de CO₂',
-            value: 'Dette remboursée',
+            icon: 'fa-solid fa-cloud',
+            title: 'Émissions moyennes',
+            value: 'Faibles',
             colorClass: 'impact-blue',
-            description: 'Malgré les GES de fabrication (silicium), la "dette carbone" est remboursée en 1 à 2 ans.'
+            description: 'Aucune émission directe en opération. La dette carbone liée à la fabrication (extraction du silicium) est remboursée en 1 à 3 ans.'
+        },
+        {
+            icon: 'fa-solid fa-map-location-dot',
+            title: 'Impact sur le territoire',
+            value: 'Artificialisation',
+            colorClass: 'impact-orange',
+            description: 'Les parcs utilitaires requièrent d\'immenses surfaces au sol, créant des conflits d\'usage avec l\'agriculture (agrivoltaïsme).'
+        },
+        {
+            icon: 'fa-solid fa-bug',
+            title: 'Impact sur la faune',
+            value: 'Perte d\'habitat',
+            colorClass: 'impact-teal',
+            description: 'Déplacement de la faune terrestre et modification de ses parcours migratoires à cause des clôtures de sécurité du parc.'
+        },
+        {
+            icon: 'fa-solid fa-leaf',
+            title: 'Impact sur la flore',
+            value: 'Ombrage',
+            colorClass: 'impact-green',
+            description: 'L\'ombre continuelle créée par les panneaux modifie le microclimat et restreint la croissance de la flore spécifique au site.'
+        },
+        {
+            icon: 'fa-solid fa-water',
+            title: 'Qualité des eaux et sols',
+            value: 'Risques miniers',
+            colorClass: 'impact-blue',
+            description: 'Pas d\'impact aqueux local. La pollution chimique des sols et des eaux se situe surtout en amont, lors de l\'extraction minière des métaux.'
         }
     ],
     thermique: [
         {
             icon: 'fa-solid fa-smog',
-            title: 'Émissions de CO₂',
-            value: 'Massives',
+            title: 'Émissions moyennes',
+            value: 'Extrêmement élevées',
             colorClass: 'impact-orange',
-            description: 'La plus grande source de gaz à effet de serre par MWh produit au monde (gaz, fioul, charbon).'
+            description: 'Source massive de gaz à effet de serre (CO₂, dioxyde de soufre, oxydes d\'azote) responsable des changements climatiques.'
         },
         {
-            icon: 'fa-solid fa-mask-ventilator',
-            title: 'Polluants de l\'air',
-            value: 'NOx, SOx, PM',
+            icon: 'fa-solid fa-map-location-dot',
+            title: 'Impact sur le territoire',
+            value: 'Destructeur',
+            colorClass: 'impact-orange',
+            description: 'Modification sévère du paysage initial pour l\'extraction du combustible (ex: mines de charbon, bassins de sables bitumineux).'
+        },
+        {
+            icon: 'fa-solid fa-crow',
+            title: 'Impact sur la faune',
+            value: 'Pollution toxique',
             colorClass: 'impact-teal',
-            description: 'Rejets importants de dioxyde de soufre, oxydes d\'azote et particules fines, lourd impact sur la santé.'
+            description: 'Perte d\'habitats en amont (mines) et potentielle intoxication par les gaz et métaux lourds (mercure) relâchés dans l\'air.'
         },
         {
-            icon: 'fa-solid fa-hill-rockslide',
-            title: 'Impacts extractifs',
-            value: 'Élevés',
+            icon: 'fa-solid fa-leaf',
+            title: 'Impact sur la flore',
+            value: 'Pluies acides',
+            colorClass: 'impact-green',
+            description: 'Les rejets atmosphériques polluants engendrent des pluies acides qui détériorent directement le feuillage et les forêts mondiales.'
+        },
+        {
+            icon: 'fa-solid fa-water',
+            title: 'Qualité des eaux et sols',
+            value: 'Contaminations multiples',
             colorClass: 'impact-blue',
-            description: 'L\'extraction (mines de charbon, forage gazier) dévaste des écosystèmes entiers (forages, marées noires).'
+            description: 'Acidification des lacs, contamination des nappes (exploitation par fracturation, bassins cendres) avec d\'importantes pollutions des sols.'
         }
     ]
 };

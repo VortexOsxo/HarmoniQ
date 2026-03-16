@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 
 @Component({
   selector: 'app-infra-detail-modal',
@@ -19,7 +21,8 @@ export class InfraDetailModal {
 
   constructor(
     public infraDetailService: InfraDetailService,
-    private infrasService: InfrastruturesService
+    private infrasService: InfrastruturesService,
+    private modalService: NgbModal
   ) {
     effect(() => {
       // Déclencheur sur le changement d'infrastructure
@@ -33,8 +36,17 @@ export class InfraDetailModal {
   deleteInfra() {
     const infra = this.infra();
     if (infra && infra.data.isUserCreated) {
-      this.infrasService.deleteLocalInfra(infra.type, infra.data.id);
-      this.close();
+      const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
+      modalRef.componentInstance.title = 'Supprimer l\'infrastructure';
+      modalRef.componentInstance.message = 'Êtes-vous sûr de vouloir supprimer cette infrastructure? L\'action est irréversible.';
+      modalRef.componentInstance.confirmText = 'Supprimer';
+
+      modalRef.result.then((confirmed) => {
+        if (confirmed) {
+          this.infrasService.deleteLocalInfra(infra.type, infra.data.id);
+          this.close();
+        }
+      }).catch(() => { }); // Dismissal ignored
     }
   }
 
@@ -108,28 +120,28 @@ export class InfraDetailModal {
 
     // Vulgarisation (Comparaison)
     if (d.puissance_nominal) {
-        const puissanceMW = parseFloat(d.puissance_nominal);
-        if (!isNaN(puissanceMW) && puissanceMW > 0) {
-           const telephones = (puissanceMW * 1000000) / 20;
-           // User's formula: Puissance x 365 x 24 x 60 x 10^9 divisé par 20 000
-           const foyers = (puissanceMW * 365 * 24 * 60 * 1000000000) / 20000;
-           
-           const millionsTelephones = (telephones / 1000000).toFixed(1);
-           const foyersFormatted = this.formatBigNumber(foyers);
-           
-           fields.push({
-               icon: 'fa-solid fa-mobile-screen-button',
-               label: 'Comparaison globale',
-               value: `Pourrait recharger ${millionsTelephones} millions de téléphones simultanément.`,
-               isVulgarisation: true
-           });
-           fields.push({
-               icon: 'fa-solid fa-house',
-               label: 'Foyers alimentés',
-               value: `${foyersFormatted} foyers théoriquement.`,
-               isVulgarisation: true
-           });
-        }
+      const puissanceMW = parseFloat(d.puissance_nominal);
+      if (!isNaN(puissanceMW) && puissanceMW > 0) {
+        const telephones = (puissanceMW * 1000000) / 20;
+        // User's formula: Puissance x 365 x 24 x 60 x 10^9 divisé par 20 000
+        const foyers = (puissanceMW * 365 * 24 * 60 * 1000000000) / 20000;
+
+        const millionsTelephones = (telephones / 1000000).toFixed(1);
+        const foyersFormatted = this.formatBigNumber(foyers);
+
+        fields.push({
+          icon: 'fa-solid fa-mobile-screen-button',
+          label: 'Comparaison globale',
+          value: `Pourrait recharger ${millionsTelephones} millions de téléphones simultanément.`,
+          isVulgarisation: true
+        });
+        fields.push({
+          icon: 'fa-solid fa-house',
+          label: 'Foyers alimentés',
+          value: `${foyersFormatted} foyers théoriquement.`,
+          isVulgarisation: true
+        });
+      }
     }
 
     return fields;
