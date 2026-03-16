@@ -29,29 +29,47 @@
         <div *ngIf="activeTab === 'informations'" class="detail-tab-content">
             <div class="info-card">
                 <h6 class="info-card-title">{{ infra()?.data?.nom }}</h6>
-                <div class="info-field" *ngFor="let field of getInfoFields()">
+                <div class="info-field" *ngFor="let field of getInfoFields()"
+                    [class.vulgarisation-field]="field.isVulgarisation">
                     <i [class]="field.icon" class="info-field-icon"></i>
-                    <span class="info-field-text">
+                    <span class="info-field-text" *ngIf="!field.isVulgarisation">
                         {{ field.label }} : <strong>{{ field.value }}</strong>
                     </span>
+                    <span class="info-field-text" *ngIf="field.isVulgarisation">
+                        <strong>{{ field.label }}</strong> : {{ field.value }}
+                    </span>
                 </div>
+            </div>
+
+            <!-- Cycle de vie link -->
+            <div class="cycle-vie-link-container" *ngIf="getCycleVieData()">
+                <p class="cycle-vie-link" (click)="openCycleVie()">
+                    <i class="fa-solid fa-recycle"></i>
+                    Cliquez ici pour en apprendre plus sur le cycle de vie des {{ infra()?.categoryName | lowercase }}s
+                </p>
             </div>
         </div>
 
         <!-- Impacts environnementaux tab -->
         <div *ngIf="activeTab === 'impacts'" class="detail-tab-content">
             <div class="impacts-section">
-                <div class="impacts-header">
-                    <i class="fa-solid fa-leaf impacts-header-icon"></i>
-                    <div>
-                        <h6 class="impacts-title">Impact Environnemental</h6>
-                        <span class="impacts-subtitle">{{ infra()?.categoryName }}</span>
+                <div *ngIf="getImpactsData().length > 0; else noImpacts">
+                    <div class="impact-card" *ngFor="let impact of getImpactsData()" [ngClass]="impact.colorClass">
+                        <div class="impact-card-header">
+                            <i [class]="impact.icon"></i>
+                            <span class="impact-card-title">{{ impact.title }} : <strong>{{ impact.value
+                                    }}</strong></span>
+                        </div>
+                        <p class="impact-card-desc">{{ impact.description }}</p>
                     </div>
                 </div>
-                <div class="impacts-divider"></div>
-                <p class="impacts-placeholder">
-                    Les données d'impacts environnementaux ne sont pas encore disponibles pour cette infrastructure.
-                </p>
+                <ng-template #noImpacts>
+                    <p class="impacts-placeholder">
+                        Les données d'impacts environnementaux ne sont pas encore disponibles pour cette infrastructure.
+                    </p>
+                </ng-template>
+                <p class="disclaimer-text">* Les données sur les impacts environnementaux sont à titre indicatif et
+                    peuvent ne pas être exactes.</p>
             </div>
         </div>
         <!-- Delete Button -->
@@ -59,6 +77,38 @@
             <button class="delete-infra-btn" (click)="deleteInfra()" title="Supprimer l'infrastructure">
                 <i class="fa-solid fa-trash"></i> Supprimer
             </button>
+        </div>
+    </div>
+
+    <!-- Cycle de vie Modal Inner -->
+    <div class="cycle-vie-overlay" *ngIf="showCycleVieModal">
+        <div class="cycle-vie-modal">
+            <div class="cv-header">
+                <h5>Cycle de vie : {{ infra()?.categoryName }}</h5>
+                <button class="cv-close" (click)="closeCycleVie()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="cv-body" *ngIf="getCycleVieData() as cv">
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-lightbulb"></i> Conception</h6>
+                    <p>{{ cv.conception }}</p>
+                </div>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-hammer"></i> Construction</h6>
+                    <p>{{ cv.construction }}</p>
+                </div>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-gears"></i> Exploitation</h6>
+                    <p>{{ cv.exploitation }}</p>
+                </div>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-trash-arrow-up"></i> Démantèlement / Fin de vie</h6>
+                    <p>{{ cv.demantelement }}</p>
+                </div>
+
+                <p class="disclaimer-text">* Les explications détaillées de ces cycles de vie sont à titre indicatif et
+                    peuvent ne pas être exactes.
+                </p>
+            </div>
         </div>
     </div>
 </div>

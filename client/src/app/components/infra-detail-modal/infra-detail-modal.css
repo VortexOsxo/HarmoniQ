@@ -174,6 +174,37 @@
     font-weight: 600;
 }
 
+.info-field.vulgarisation-field {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    border: 1px dashed #ced4da;
+}
+
+.cycle-vie-link-container {
+    margin-top: 16px;
+    padding: 12px;
+    background: #eef2f5;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cycle-vie-link-container:hover {
+    background: #e1e8ed;
+}
+
+.cycle-vie-link {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #2980b9;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* ── Impacts environnementaux ── */
 .impacts-section {
     background: #fff;
@@ -183,37 +214,6 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.impacts-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.impacts-header-icon {
-    font-size: 1.3rem;
-    color: #27ae60;
-}
-
-.impacts-title {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #2c3e50;
-}
-
-.impacts-subtitle {
-    font-size: 0.78rem;
-    color: #7f8c8d;
-}
-
-.impacts-divider {
-    height: 3px;
-    background: #2c3e50;
-    border-radius: 2px;
-    margin-bottom: 14px;
-}
-
 .impacts-placeholder {
     font-size: 0.85rem;
     color: #95a5a6;
@@ -221,6 +221,72 @@
     margin: 0;
     padding: 20px 0;
     text-align: center;
+}
+
+.impact-card {
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 4px solid transparent;
+}
+
+.impact-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.impact-card-header i {
+    font-size: 1.1rem;
+}
+
+.impact-card-title {
+    font-size: 0.85rem;
+    color: #2c3e50;
+}
+
+.impact-card-desc {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #555;
+    line-height: 1.4;
+}
+
+.impact-blue {
+    background: #f0f8ff;
+    border-left-color: #3498db;
+}
+.impact-blue .impact-card-header i { color: #3498db; }
+.impact-blue .impact-card-title strong { color: #2980b9; }
+
+.impact-green {
+    background: #f4fdf4;
+    border-left-color: #2ecc71;
+}
+.impact-green .impact-card-header i { color: #2ecc71; }
+.impact-green .impact-card-title strong { color: #27ae60; }
+
+.impact-teal {
+    background: #f0fcfc;
+    border-left-color: #1abc9c;
+}
+.impact-teal .impact-card-header i { color: #1abc9c; }
+.impact-teal .impact-card-title strong { color: #16a085; }
+
+.impact-orange {
+    background: #fff8f0;
+    border-left-color: #e67e22;
+}
+.impact-orange .impact-card-header i { color: #e67e22; }
+.impact-orange .impact-card-title strong { color: #d35400; }
+
+.disclaimer-text {
+    font-size: 0.7rem;
+    color: #7f8c8d;
+    margin-top: 14px;
+    margin-bottom: 0;
+    line-height: 1.3;
 }
 
 /* ── Action buttons ── */
@@ -251,6 +317,95 @@
 
 .delete-infra-btn:active {
     transform: scale(0.98);
+}
+
+/* ── Cycle de vie Modal Inner ── */
+.cycle-vie-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(44, 62, 80, 0.85);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.3s ease;
+}
+
+.cycle-vie-modal {
+    background: #fff;
+    width: 100%;
+    max-height: 95%;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.cv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+}
+
+.cv-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.cv-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.cv-close:hover {
+    color: #e74c3c;
+}
+
+.cv-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.cv-step {
+    margin-bottom: 20px;
+    position: relative;
+    padding-left: 16px;
+    border-left: 2px solid #3498db;
+}
+
+.cv-step:last-child {
+    margin-bottom: 12px;
+}
+
+.cv-step h6 {
+    margin: 0 0 6px;
+    font-size: 0.9rem;
+    color: #3498db;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cv-step p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #444;
+    line-height: 1.5;
 }
 
 /* ── Responsive ── */

@@ -1,7 +1,8 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
 
 @Component({
   selector: 'app-infra-detail-modal',
@@ -11,6 +12,7 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
 })
 export class InfraDetailModal {
   activeTab: 'informations' | 'impacts' = 'informations';
+  showCycleVieModal: boolean = false;
 
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
@@ -18,7 +20,15 @@ export class InfraDetailModal {
   constructor(
     public infraDetailService: InfraDetailService,
     private infrasService: InfrastruturesService
-  ) {}
+  ) {
+    effect(() => {
+      // Déclencheur sur le changement d'infrastructure
+      const currentInfra = this.infra();
+      untracked(() => {
+        this.showCycleVieModal = false;
+      });
+    });
+  }
 
   deleteInfra() {
     const infra = this.infra();
@@ -31,6 +41,7 @@ export class InfraDetailModal {
   close() {
     this.infraDetailService.closeDetail();
     this.activeTab = 'informations';
+    this.showCycleVieModal = false;
   }
 
   switchTab(tab: 'informations' | 'impacts') {
@@ -48,12 +59,32 @@ export class InfraDetailModal {
     return icons[type] || '';
   }
 
-  getInfoFields(): { icon: string; label: string; value: string }[] {
+  openCycleVie() {
+    this.showCycleVieModal = true;
+  }
+
+  closeCycleVie() {
+    this.showCycleVieModal = false;
+  }
+
+  getCycleVieData(): CycleDeVieData | null {
+    const infra = this.infra();
+    if (!infra) return null;
+    return CYCLE_DE_VIE_DATA[infra.type] || null;
+  }
+
+  getImpactsData(): ImpactItem[] {
+    const infra = this.infra();
+    if (!infra) return [];
+    return IMPACTS_ENVIRONNEMENTAUX_DATA[infra.type] || [];
+  }
+
+  getInfoFields(): { icon: string; label: string; value: string; isVulgarisation?: boolean }[] {
     const infra = this.infra();
     if (!infra) return [];
 
     const d = infra.data;
-    const fields: { icon: string; label: string; value: string }[] = [];
+    const fields: { icon: string; label: string; value: string; isVulgarisation?: boolean }[] = [];
 
     fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
 
@@ -75,7 +106,40 @@ export class InfraDetailModal {
       fields.push({ icon: 'fa-solid fa-fire', label: "Type d'intrant", value: d.type_intrant || 'N/A' });
     }
 
+    // Vulgarisation (Comparaison)
+    if (d.puissance_nominal) {
+        const puissanceMW = parseFloat(d.puissance_nominal);
+        if (!isNaN(puissanceMW) && puissanceMW > 0) {
+           const telephones = (puissanceMW * 1000000) / 20;
+           // User's formula: Puissance x 365 x 24 x 60 x 10^9 divisé par 20 000
+           const foyers = (puissanceMW * 365 * 24 * 60 * 1000000000) / 20000;
+           
+           const millionsTelephones = (telephones / 1000000).toFixed(1);
+           const foyersFormatted = this.formatBigNumber(foyers);
+           
+           fields.push({
+               icon: 'fa-solid fa-mobile-screen-button',
+               label: 'Comparaison globale',
+               value: `Pourrait recharger ${millionsTelephones} millions de téléphones simultanément.`,
+               isVulgarisation: true
+           });
+           fields.push({
+               icon: 'fa-solid fa-house',
+               label: 'Foyers alimentés',
+               value: `${foyersFormatted} foyers théoriquement.`,
+               isVulgarisation: true
+           });
+        }
+    }
+
     return fields;
+  }
+
+  private formatBigNumber(num: number): string {
+    if (num >= 1e12) return `${(num / 1e12).toFixed(1)} billions`;
+    if (num >= 1e9) return `${(num / 1e9).toFixed(1)} milliards`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(1)} millions`;
+    return Math.floor(num).toLocaleString('fr-FR');
   }
 
   private formatVolume(vol: number | null | undefined): string {
