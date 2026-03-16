@@ -32,7 +32,7 @@ class EnergyUtils:
         
         return sum(energie_historique.values()) / len(energie_historique)
 
-    
+
     @staticmethod
     def estimer_production_annuelle(centrale) -> float:
         """
@@ -503,19 +503,45 @@ class EnergyUtils:
     def calculate_energy_from_power(network, power_data, is_journalier=None):
         """
         Calcule correctement l'énergie à partir des valeurs de puissance en tenant compte 
-        de la durée réelle des snapshots.
-        """
-        if is_journalier:
-            duration_hours = 24.0
-        elif len(network.snapshots) > 1:
-            duration_hours = (network.snapshots[1] - network.snapshots[0]).total_seconds() / 3600
-        else:
-            duration_hours = 1.0 # Par défaut 1h
+        de la durée des snapshots.
         
-        # Vérifier si les données sont déjà marquées comme étant en énergie
+        Args:
+            network: Réseau PyPSA contenant les snapshots
+            power_data: DataFrame ou Series contenant des valeurs de puissance en MW
+            is_journalier: Si True, force le mode journalier (override de la détection auto)
+            
+        Returns:
+            Même structure que power_data, mais avec des valeurs en MWh
+        """
+        # Déterminer si nous sommes en mode journalier
+        daily_snapshots = False
+        
+        if is_journalier is not None:
+            daily_snapshots = is_journalier
+        elif len(network.snapshots) > 1:
+            time_diff = network.snapshots[1] - network.snapshots[0]
+            if time_diff >= pd.Timedelta(hours=23):
+                daily_snapshots = True
+        
+        # Vérifier si les données sont déjà en énergie
         data_is_energy = getattr(power_data, '_energy_not_power', False)
         
-        if data_is_energy:
-            return power_data
+        if isinstance(power_data, pd.DataFrame):
+            energy_data = power_data.copy()
             
-        return power_data * duration_hours
+            if daily_snapshots and not data_is_energy:
+                logger.info(f"Mode journalier: Conversion puissance (MW) → énergie (MWh/jour)")
+                energy_data = energy_data * 24
+            
+        elif isinstance(power_data, pd.Series):
+            energy_data = power_data.copy()
+            
+            if daily_snapshots and not data_is_energy:
+                energy_data = energy_data * 24
+        
+        else:
+            energy_data = power_data
+            if daily_snapshots and not data_is_energy:
+                energy_data = energy_data * 24
+        
+        return energy_data
