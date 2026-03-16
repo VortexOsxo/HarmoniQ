@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import load_config
+from .config import ProfilerConfig
 
 class LogType(Enum):
     Init = 'Init'
@@ -34,7 +34,6 @@ class LogContainer():
     def __init__(self):
         self.logs = []
         self.depth = 0
-        self.config = load_config()
     
     def log_call(self, func_id):
         log = Log(LogType.Call, func_id, depth=self.depth)
@@ -57,7 +56,7 @@ class LogContainer():
         reduced_logs = []
         exits = {}
         durations_at_depth = {}
-        min_duration = self.config.get('min_duration', 0.0)
+        min_duration = ProfilerConfig.min_duration
         
         for log in reversed(self.logs):
             if log.type == LogType.Exit:

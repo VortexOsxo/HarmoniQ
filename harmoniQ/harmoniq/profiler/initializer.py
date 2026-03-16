@@ -2,12 +2,11 @@ import inspect
 import pkgutil
 import importlib
 
-from harmoniq.profiler import timer, validate_object_source, Profiler, get_func_id, load_config
+from harmoniq.profiler import timer, validate_object_source, Profiler, get_func_id, ProfilerConfig
 
 class Initializer:
-    config = load_config()
     skipped_functions = ['__init__', '__repr__', '__new__', '__str__']
-    skip_privates = config.get('skip_privates', False)
+    skip_privates = ProfilerConfig.skip_privates
 
     @classmethod
     def init_module(cls, module, visited=None):
