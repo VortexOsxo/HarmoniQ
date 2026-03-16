@@ -80,7 +80,7 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
     ):
         if table_name_lower not in read_only_tables:
             @class_router.post(
-                "/", response_model=response_class, summary=f"Create a {table_name}"
+                "", response_model=response_class, summary=f"Create a {table_name}"
             )
             async def create(item: create_class, db: Session = Depends(get_db)):
                 result = await create_data(db, sql_class, item)
@@ -91,7 +91,7 @@ for sql_class, pydantic_classes in engine.sql_tables.items():
                 return result
 
         @class_router.get(
-            "/",
+            "",
             response_model=List[response_class],
             summary=f"Read all {table_name_plural}",
         )

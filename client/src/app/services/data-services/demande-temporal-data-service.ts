@@ -17,7 +17,7 @@ export class DemandeTemporalDataService {
         if (this.cachedData && this.cachedScenarioId == scenario.id) {
             return of(this.cachedData);
         }
-        return this.http.post(`${environment.apiUrl}/demande/temporal/`, scenario)
+        return this.http.post(`${environment.apiUrl}/demande/temporal`, scenario)
             .pipe(map((data: any) => this.handleData(data, scenario.id)));
     }
 
