@@ -7,7 +7,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from '@app/components/scenario/scenario-creation-modal/scenario-creation-modal';
 import { WeatherLabels } from '@app/models/weather';
 import { ConsumptionLabels } from '@app/models/consumption';
-import { OptimismLabels } from '@app/models/optimism';
 import { TutorialService } from '@app/services/tutorial-service';
 
 @Component({
@@ -19,7 +18,6 @@ import { TutorialService } from '@app/services/tutorial-service';
 export class ScenarioSelector {
   public WeatherLabels = WeatherLabels;
   public ConsumptionLabels = ConsumptionLabels;
-  public OptimismLabels = OptimismLabels;
 
   get scenarios(): Scenario[] {
     return this.scenariosService.scenarios();
