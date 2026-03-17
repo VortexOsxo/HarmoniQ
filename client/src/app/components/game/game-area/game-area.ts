@@ -23,6 +23,8 @@ export class GameArea {
   questionsLeftAvailable: boolean = false; //to display the no more new question message
   goodGradeImage: boolean = false; //used to display the image at the end of the quiz
   nextQuestionButtonText: string = "Prochaine question"
+  questionAspect: string = "";
+  isOrderQuestion: boolean = false; //for the type of queston
 
   constructor(private cdr: ChangeDetectorRef,
     private gameService: GameService, private activeModal: NgbActiveModal) {
@@ -49,6 +51,13 @@ export class GameArea {
         this.displayOrder(optionBox, currentQuestion);
 
       this.questionText = currentQuestion.questionText;
+      
+      if(currentQuestion.questionAspect == "environment")
+        this.questionAspect = "Environnement";
+      else if(currentQuestion.questionAspect == "energy")
+        this.questionAspect = "Énergie";
+      else if(currentQuestion.questionAspect == "economy")
+        this.questionAspect = "Économie";
 
       // Restore state answered if the question has already been answered
       if (this.gameService.isCurrentAnswered) {
@@ -62,8 +71,6 @@ export class GameArea {
       this.cdr.detectChanges();
     });
   }
-
-  isOrderQuestion: boolean = false;
 
   displayOrder(optionBox: HTMLElement, currentQuestion: Question): void {
     this.isOrderQuestion = true;

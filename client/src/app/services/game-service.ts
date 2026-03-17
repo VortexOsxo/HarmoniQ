@@ -55,6 +55,7 @@ export class GameService {
     this.getQuiz();
   }
 
+  //gets the quiz from the backend
   getQuiz(): void {
     const listToSend = (this.answeredQuestions.length === 1 && 
       (this.answeredQuestions[0] === EMPTY || this.answeredQuestions[0] === NO_MORE_QUESTIONS_FLAG))
@@ -84,6 +85,7 @@ export class GameService {
       this._currentQuestion.next(this.questionIndex + 1) : this._currentQuestion.next(NO_MORE_QUESTIONS_FLAG)
   }
 
+  // Checks if the user has answered all the questions available
   restartAvailable(): boolean {
     if (this.answeredQuestions[0] == NO_MORE_QUESTIONS_FLAG) return false;
     return true;
@@ -145,7 +147,7 @@ checkAnswer(selectedOption: number[]): number[] {
   setQuizStarted(): void {
     this.quizStarted = true;
   }
-
+//returns every answered questions in strings
 getAnsweredQuestions() {
   const answeredCount = this.userAnswers.length;
   const questionsTexts = this.quiz.questions.slice(0, answeredCount).map(q => q.question.questionText);

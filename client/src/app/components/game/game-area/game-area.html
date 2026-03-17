@@ -1,28 +1,38 @@
 <app-start-area *ngIf="!quizStarted" (started)="start()"></app-start-area>
+<app-result-area *ngIf="quizTerminated" (restartQuiz)="startNewQuiz()"(closeModal)="close()">
+</app-result-area>
+
+<div id="quizHeader" [hidden]="!quizStarted || quizTerminated">
+  <div id="headerLeft">
+    <span class="header-icon">💡</span>
+    <span class="badge badge-category">{{questionAspect}}</span>
+  </div>
+  <div id="headerRight">
+    <span class="question-counter-text">{{currentQuestionIndex + 1}} / {{totalQuestions}}</span>
+  </div>
+</div>
+
+<div id="progressBar" [hidden]="!quizStarted || quizTerminated">
+  <div id="progressFill" [style.width.%]="((currentQuestionIndex + 1) / totalQuestions) * 100"></div>
+</div>
 
 <div id="game-area" [hidden]="!quizStarted">
 
-    <div id="questionContainer">
-        <div id="questionCounter" *ngIf="!quizTerminated">
-            <h1>Question {{currentQuestionIndex + 1}} / {{totalQuestions}}
-            </h1>
-        </div>
-        <pre id="questionText">{{questionText}}</pre>
-    </div>
+  <div id="questionContainer" [hidden]="quizTerminated">
+    <pre id="questionText">{{questionText}}</pre>
+  </div>
 
-    <div id="optionBox" [hidden]="quizTerminated"></div>
-    <div id="questonInformation" *ngIf="!quizTerminated && questionInformation">
-        <h1>{{questionInformation}}</h1>
-    </div>
+  <div id="optionBox" [hidden]="quizTerminated"></div>
 
-    <app-result-area *ngIf="quizTerminated"></app-result-area>
+  <div id="questonInformation" [hidden]="quizTerminated">
+  <h1>{{questionInformation}}</h1>
+</div>
 
 </div>
 
-<div id="quizButtons">
+<div id="quizButtons" [hidden]="!quizStarted">
+  <div class="primary-actions">
     <button class="quizButton" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
     <button class="quizButton" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
-    <button class="quizButton" *ngIf="quizTerminated" (click)="startNewQuiz()">
-        Commencer un nouveau quiz </button>
-    <button class="quizButton" *ngIf="quizTerminated" (click)="close()">Terminer</button>
+  </div>
 </div>

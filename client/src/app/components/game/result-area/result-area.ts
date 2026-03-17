@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GameService } from '@app/services/game-service';
@@ -10,6 +10,9 @@ import { GameService } from '@app/services/game-service';
   styleUrl: './result-area.css',
 })
 export class ResultArea {
+  @Output() restartQuiz = new EventEmitter<void>();
+  @Output() closeModal = new EventEmitter<void>();
+
   environmentGrade: number = 0;
   environmentMax: number = 0;
   energyGrade: number = 0;
@@ -23,6 +26,14 @@ export class ResultArea {
 
   constructor(private cdr: ChangeDetectorRef,
     private gameService: GameService) {
+  }
+
+  onRestartQuiz() {
+    this.restartQuiz.emit();
+  }
+
+  onCloseModal() {
+    this.closeModal.emit();
   }
 
   ngOnInit() {

@@ -40,4 +40,9 @@
       <p id="completionMessage" *ngIf="!questionsLeftAvailable" class="infoMessage">
         Vous avez répondu à toutes les questions disponibles. Si vous recommencez, ce seront les mêmes questions.
       </p>
+
+      <div id="resultActions">
+        <button class="resultButton" (click)="onRestartQuiz()">Commencer un nouveau quiz</button>
+        <button class="resultButton" (click)="onCloseModal()">Terminer</button>
+      </div>
     </div>

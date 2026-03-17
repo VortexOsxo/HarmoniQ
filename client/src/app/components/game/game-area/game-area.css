@@ -1,4 +1,3 @@
-/* --- Bloc inchangé comme demandé --- */
 #game-area {
   display: flex;
   flex-direction: column;
@@ -9,29 +8,22 @@
   min-height: 0;
   padding: 1rem;
   gap: 0.5rem;
-  overflow-y: auto;
+  overflow: hidden;
   box-sizing: border-box;
 }
-/* ------------------------------------ */
+
 #game-area[hidden="false"] #questionText {
-  max-height: none; /* Permet au texte de prendre la place nécessaire */
+  max-height: none;
 }
 
 .energyImage {
   width: 50%;
-  /* Réduit de 350px à 220px pour un look plus équilibré */
+  max-width: 80%;
   height: auto;
   border-radius: 15px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   transition: opacity 0.8s ease-in-out;
-  /* Optionnel : ajoute un peu d'espace autour */
-  margin: 1rem 0; 
-}
-
-.energyImage {
-  max-width: 80%; /* Ajusté pour la modale */
-  height: auto;
-  transition: opacity 0.8s ease-in-out;
+  margin: 1rem 0;
   opacity: 1;
 }
 
@@ -51,52 +43,54 @@ pre {
   text-align: center;
 }
 
-/* --- Boîte des options (ajustée pour la modale) --- */
 #optionBox {
   width: 100%;
   display: flex;
-  flex-direction: column; /* Empilement vertical */
-  gap: 0.4rem; /* Très peu d'espace entre les boutons */
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  box-sizing: border-box;
   margin: 0;
 }
 
 ::ng-deep .optionButton {
-  padding: 0.5rem 1rem; /* Boutons compacts */
-  font-size: 0.95rem;    /* Texte lisible mais petit */
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 10px;
   width: 100%;
-  background-color: white;
+  background-color: #ffffff;
   text-align: left;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  color: #222;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-::ng-deep .rightAnswerButtonColor {
-  background-color: #2ecc71;
-  border-color: #27ae60;
-  color: white;
+:host ::ng-deep .rightAnswerButtonColor {
+  background-color: #2ecc71 !important;
+  border-color: #27ae60 !important;
+  color: white !important;
 }
 
-::ng-deep .wrongAnswerButtonColor {
-  background-color: #e74c3c;
-  border-color: #c0392b;
-  color: white;
+:host ::ng-deep .wrongAnswerButtonColor {
+  background-color: #e74c3c !important;
+  border-color: #c0392b !important;
+  color: white !important;
 }
 
-/* --- Header et Questions --- */
 #questionContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   position: relative;
-  padding-top: 2rem; /* Espace réduit pour les badges */
+  padding-top: 2rem;
 }
 
 #questionContainer::before, 
 #questionContainer::after {
-  top: 2.2rem; /* Barre remontée */
-  height: 4px; /* Plus fine */
+  top: 3rem;
+  height: 4px;
 }
 
 #questionCounter {
@@ -104,7 +98,6 @@ pre {
   font-size: 0.8rem;
 }
 
-/* On écrase le style global du h1 pour ce compteur spécifique */
 #questionCounter h1 {
   font-size: 0.9rem; 
   font-weight: 500;
@@ -115,12 +108,11 @@ pre {
   max-height: none;
 }
 
-/* Ajustement du badge simulé pour qu'il soit aussi plus petit et propre */
 #questionCounter h1::before {
   content: "⚡ Énergie  •  ★ Facile";
   position: absolute;
   top: 0;
-  left: -280px; /* À ajuster selon la largeur de votre modale */
+  left: -280px;
   display: flex;
   font-size: 0.85rem;
   font-weight: 600;
@@ -128,44 +120,59 @@ pre {
   letter-spacing: 0.5px;
 }
 
-/* Réduction de l'espace de la barre de progression pour coller au compteur */
-#questionContainer::before, 
-#questionContainer::after {
-  top: 3rem; /* Remonté un peu pour être plus proche du texte 1/5 */
-}
-
 #questionText {
   width: 100%;
-  font-size: 1.2rem; /* Taille réduite */
+  font-size: 1.15rem;
   font-weight: 700;
   color: #1a1a1a;
   text-align: left;
-  margin: 0.5rem 0;
-  line-height: 1.2;
+  margin: 0.75rem 0 0.5rem;
+  line-height: 1.35;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
-/* Boutons d'action du bas */
+
 .quizButton {
-  background: #333;
+  background-color: #6c5ce7;
   color: white;
-  width: 100%;
-  max-width: 250px;
-  height: 2.4rem; /* Hauteur fixe réduite */
-  padding: 0;
-  border-radius: 10px;
-  font-size: 1rem;
+  min-width: 160px;
+  max-width: 260px;
+  height: 2.6rem;
+  padding: 0 1.2rem;
+  font-size: 0.8rem;
   font-weight: bold;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quizButton:hover {
+  background-color: #5b4bc4;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+}
+
+.quizButton:active {
+  transform: translateY(0);
 }
 
 #quizButtons {
   width: 100%;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  margin-top: auto; /* Se colle au bas du conteneur */
+  gap: 0.75rem;
+  flex-wrap: wrap;
   padding-top: 0.5rem;
+  min-height: 4rem;
 }
 
-/* S'assurer que le composant remplit et centre dans la modale */
 :host {
     display: flex;
     flex-direction: column;
@@ -177,41 +184,42 @@ pre {
     min-height: 0;
 }
 
-/* Effet au survol (hover) sur les choix de réponse */
 ::ng-deep .optionButton:not(.answered):hover {
-  background-color: #f0f4ff !important; /* Bleu très léger */
-  border-color: #6c5ce7 !important;     /* Bordure assortie à la barre de progression */
+  background-color: #f0f4ff !important;
+  border-color: #6c5ce7 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);          /* Léger effet de soulèvement */
-  color: #6c5ce7;                       /* Texte qui change de couleur aussi */
+  transform: translateY(-1px);
+  color: #6c5ce7;
 }
-f
-/* S'assurer que le curseur change bien */
+
 ::ng-deep .optionButton:not(.answered) {
   cursor: pointer;
 }
 
-/* On retire l'effet une fois que c'est répondu */
 ::ng-deep .optionButton.answered {
   cursor: default;
   transform: none;
 }
 
-/* Cache le bloc s'il n'a pas de contenu */
-#questonInformation:has(h1:not(:empty)) {
+#questonInformation {
   width: 100%;
+  min-height: 2.5rem;
   margin-top: 0.2rem;
   padding: 0.4rem 0.8rem;
+  box-sizing: border-box;
+  transition: opacity 0.3s ease;
+}
+
+#questonInformation:not(:has(h1:not(:empty))) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#questonInformation:has(h1:not(:empty)) {
+  opacity: 1;
   background-color: #f8f9fa;
   border-left: 3px solid #6c5ce7;
   border-radius: 4px;
-}
-
-#questonInformation h1 {
-  font-size: 0.85rem;
-  line-height: 1.3;
-  color: #555;
-  margin: 0;
 }
 
 #questonInformation h1 {
@@ -228,19 +236,78 @@ f
   line-height: 1.2;
 }
 
-/* Style pendant qu'on glisse */
 .draggable.dragging {
   opacity: 0.5;
   background-color: #f0f4ff;
   border: 2px dashed #6c5ce7;
 }
 
-/* Optionnel : transition douce pour le déplacement */
 .optionButton {
   transition: transform 0.2s ease, background-color 0.2s ease;
-  cursor: grab; /* Change le curseur pour indiquer qu'on peut prendre l'élément */
+  cursor: grab;
 }
 
 .optionButton:active {
   cursor: grabbing;
+}
+
+#quizHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 1rem 0.4rem;
+  box-sizing: border-box;
+}
+
+#headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-icon {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-category {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.badge-difficulty {
+  background-color: #fff8e1;
+  color: #f57f17;
+  border: 1px solid #ffe082;
+}
+
+.question-counter-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+}
+
+#progressBar {
+  width: 100%;
+  height: 5px;
+  background-color: #e0e0e0;
+  border-radius: 0;
+}
+
+#progressFill {
+  height: 100%;
+  background: linear-gradient(to right, #6c5ce7, #a29bfe);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.4s ease;
 }
