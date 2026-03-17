@@ -44,11 +44,6 @@ Notion de "Enum ou PyEnum" pour les types de données:
 - Type d'objet : Enum
 """
 
-class Optimisme(PyEnum):
-    pessimiste = 1
-    moyen = 2
-    optimiste = 3
-
 
 class Weather(PyEnum):
     warm = 1
@@ -101,8 +96,6 @@ class Scenario(SQLBase):
     pas_de_temps = Column(TimeDeltaString)
     weather = Column(Enum(Weather))
     consomation = Column(Enum(Consomation))
-    optimisme_social = Column(Enum(Optimisme))
-    optimisme_ecologique = Column(Enum(Optimisme))
 
 
 class ScenarioBase(BaseModel):
@@ -119,8 +112,6 @@ class ScenarioBase(BaseModel):
     )
     weather: Weather = Weather.typical
     consomation: Consomation = Consomation.PV
-    optimisme_social: Optimisme = Optimisme.moyen
-    optimisme_ecologique: Optimisme = Optimisme.moyen
 
     @field_validator("date_de_debut", "date_de_fin", mode="before")
     def parse_datetime(cls, value):
