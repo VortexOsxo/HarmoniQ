@@ -16,7 +16,7 @@
   <div id="progressFill" [style.width.%]="((currentQuestionIndex + 1) / totalQuestions) * 100"></div>
 </div>
 
-<div id="game-area" [hidden]="!quizStarted">
+<div id="game-area" [hidden]="!quizStarted || quizTerminated">
 
   <div id="questionContainer" [hidden]="quizTerminated">
     <pre id="questionText">{{questionText}}</pre>
@@ -30,7 +30,7 @@
 
 </div>
 
-<div id="quizButtons" [hidden]="!quizStarted">
+<div id="quizButtons" [hidden]="!quizStarted || quizTerminated">
   <div class="primary-actions">
     <button class="quizButton" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
     <button class="quizButton" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>

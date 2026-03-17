@@ -151,7 +151,7 @@ checkAnswer(selectedOption: number[]): number[] {
 getAnsweredQuestions() {
   const answeredCount = this.userAnswers.length;
   const questionsTexts = this.quiz.questions.slice(0, answeredCount).map(q => q.question.questionText);
-  const userAnswersTexts = this.userAnswers.map((answerIndices, qIndex) => {
+  const userAnswersTexts = this.userAnswers.slice(0, answeredCount).map((answerIndices, qIndex) => {
     const options = this.quiz.questions[qIndex].question.options;
     
     return answerIndices

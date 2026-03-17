@@ -158,15 +158,25 @@ export class GameArea {
     const optionButtons = document.getElementById("optionBox")?.children;
     if (!optionButtons) return;
 
-    selectedAnswer.forEach((answer, index) => {
-      if (answer == correctAnswer[index]) {
-        optionButtons[answer].classList.add("rightAnswerButtonColor");
-      } else {
-        optionButtons[answer].classList.add("wrongAnswerButtonColor");
-        if (correctAnswer.length == 1)
-          optionButtons[correctAnswer[0]].classList.add("rightAnswerButtonColor");
-      }
-    })
+    if (this.isOrderQuestion) {
+      selectedAnswer.forEach((answer, index) => {
+        if (answer == correctAnswer[index]) {
+          optionButtons[index].classList.add("rightAnswerButtonColor");
+        } else {
+          optionButtons[index].classList.add("wrongAnswerButtonColor");
+        }
+      });
+    } else {
+      selectedAnswer.forEach((answer, index) => {
+        if (answer == correctAnswer[index]) {
+          optionButtons[answer].classList.add("rightAnswerButtonColor");
+        } else {
+          optionButtons[answer].classList.add("wrongAnswerButtonColor");
+          if (correctAnswer.length == 1)
+            optionButtons[correctAnswer[0]].classList.add("rightAnswerButtonColor");
+        }
+      });
+    }
 
 
     this.questionAnswered = true;
