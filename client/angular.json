@@ -26,7 +26,6 @@
               }
             ],
             "styles": [
-              "src/material-theme.scss",
               "node_modules/bootswatch/dist/flatly/bootstrap.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.css",
               "node_modules/leaflet/dist/leaflet.css",
