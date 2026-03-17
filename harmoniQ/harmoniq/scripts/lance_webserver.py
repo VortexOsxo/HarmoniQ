@@ -91,11 +91,6 @@ def main():
         help="Activer le mode profiler",
     )
     parser.add_argument(
-        "--skip-privates",
-        action="store_true",
-        help="Ignorer les méthodes privées dans le profilage",
-    )
-    parser.add_argument(
         "--host",
         default="0.0.0.0",
         help="Adresse IP du serveur",
@@ -132,9 +127,6 @@ def main():
 
     if args.profile:
         from harmoniq.profiler import Initializer
-
-        if args.skip_privates:
-            Initializer.skip_privates = True
 
         import harmoniq.modules
         Initializer.init_module(harmoniq.modules)

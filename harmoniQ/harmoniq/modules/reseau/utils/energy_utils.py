@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Optional
 import logging
-import time
 from harmoniq.db.engine import get_db
 from harmoniq.db.CRUD import read_all_hydro
 from harmoniq.modules.hydro.calcule import reservoir_infill
@@ -389,7 +388,7 @@ class EnergyUtils:
         return new_network
 
     @staticmethod
-    def ensure_network_solvability(network, reference_bus=None, timers=None):
+    def ensure_network_solvability(network, reference_bus=None):
         """
         Assure la solvabilité du réseau en créant une topologie complètement connectée
         et en ajoutant suffisamment de capacité de génération.
@@ -409,16 +408,8 @@ class EnergyUtils:
         import networkx as nx
         import numpy as np
 
-        if timers is None:
-            timers = {}
-
-        # b1f_s1: align_time_indexes
-        t = time.time()
         EnergyUtils.align_time_indexes(network)
-        timers['b1f_s1_align_time_indexes'] = time.time() - t
 
-        # b1f_s2: build graph + connected components
-        t = time.time()
         G = nx.Graph()
         for bus in network.buses.index:
             G.add_node(bus)
@@ -440,10 +431,7 @@ class EnergyUtils:
                 reference_bus = list(buses_with_gen)[0]
             else:
                 reference_bus = network.buses.index[0]
-        timers['b1f_s2_graph_components'] = time.time() - t
 
-        # b1f_s3: add virtual lines
-        t = time.time()
         if "virtual_line_type" not in network.line_types.index:
             network.add(
                 "LineType",
@@ -473,11 +461,7 @@ class EnergyUtils:
                         type="virtual_line_type",
                         s_nom=1000000
                     )
-        
-        timers['b1f_s3_virtual_lines'] = time.time() - t
-
-        # b1f_s4: Vérifier la capacité totale de génération à chaque pas de temps
-        t = time.time()
+    
         if hasattr(network.generators_t, 'p_max_pu'):
             snapshots = network.snapshots
 
@@ -529,7 +513,6 @@ class EnergyUtils:
                     network.generators_t.p_max_pu = pd.concat([network.generators_t.p_max_pu, add_df], axis=1)
 
             network.generators_t.p_max_pu = network.generators_t.p_max_pu.copy()
-        timers['b1f_s4_capacity_check_vectorized'] = time.time() - t
 
         network.generators.p_nom_extendable = True
         network.generators.p_nom_max = network.generators.p_nom * 1.5  # 50% de flexibilité 

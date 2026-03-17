@@ -6,13 +6,14 @@ from harmoniq.modules.solaire.calculs_production_solaire import (
 
 
 import pandas as pd
+import numpy as np
 import logging
 
 logger = logging.getLogger("Solaire")
 
 
 class InfraSolaire(Infrastructure):
-    def calculer_production_interne(self) -> pd.DataFrame:
+    def calculer_production(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
 
@@ -33,7 +34,31 @@ class InfraSolaire(Infrastructure):
         self.couts  = cost_solar_powerplant(puissance_mw=self.donnees.puissance_nominal)
         return self.couts
     
-    
+    def calculer_cout_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        COST_PER_MW = 1_300_000  # CAD par MW
+        return self.donnees.puissance_nominal * COST_PER_MW
+
+
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        CAPACITY_FACTOR = 0.15
+        OPEX_PER_MWH = 15
+
+        HOURS_PER_YEAR = 8760
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+        )
+
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
 
 
 if __name__ == "__main__":
