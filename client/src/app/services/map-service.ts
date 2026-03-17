@@ -1,5 +1,5 @@
 import { Injectable, effect } from '@angular/core';
-import * as L from 'leaflet';
+declare const L: any;
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
 import { createClusterIcon } from '@app/utils/cluster-icon';
@@ -17,7 +17,7 @@ export class MapService {
   get map() { return this._map; }
 
   private _map?: L.Map;
-  private clusterGroup?: L.MarkerClusterGroup;
+  private clusterGroup?: any;
 
   private markers: any = {
     eolienneparc: {},
@@ -113,7 +113,7 @@ export class MapService {
     ];
     map.setMaxBounds(bounds);
 
-    map.getContainer().addEventListener("dragover", function (e) {
+    map.getContainer().addEventListener("dragover", function (e: any) {
       e.preventDefault();
     });
 
@@ -138,14 +138,14 @@ export class MapService {
 
     this._map = map;
 
-    this.clusterGroup = L.markerClusterGroup({
+    this.clusterGroup = (L as any).markerClusterGroup({
       maxClusterRadius: 70,
       disableClusteringAtZoom: 8,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
-      iconCreateFunction: (cluster) => createClusterIcon(cluster),
+      iconCreateFunction: (cluster: any) => createClusterIcon(cluster),
     });
-    map.addLayer(this.clusterGroup);
+    map.addLayer(this.clusterGroup as any);
 
     return map;
   }

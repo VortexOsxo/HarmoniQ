@@ -50,7 +50,10 @@ class SPAFallbackMiddleware(BaseHTTPMiddleware):
         if candidate.is_file():
             return FileResponse(candidate)
 
-        return FileResponse(ANGULAR_INDEX)
+        if ANGULAR_INDEX.is_file():
+            return FileResponse(ANGULAR_INDEX)
+            
+        return response
 
 
 app.add_middleware(SPAFallbackMiddleware)
