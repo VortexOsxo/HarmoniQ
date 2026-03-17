@@ -2,14 +2,14 @@
 #game-area {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Pousse les boutons vers le bas */
+  justify-content: center;
   align-items: center;
   width: 100%;
-  height: 100%;
-  max-height: 85vh; /* Assure de rester dans la modale */
+  flex: 1;
+  min-height: 0;
   padding: 1rem;
-  gap: 0.5rem; /* Espacement minimal */
-  overflow: hidden; /* Interdiction stricte du scroll */
+  gap: 0.5rem;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 /* ------------------------------------ */
@@ -26,63 +26,6 @@
   transition: opacity 0.8s ease-in-out;
   /* Optionnel : ajoute un peu d'espace autour */
   margin: 1rem 0; 
-}
-
-/* On réduit aussi un peu l'écart dans le start-area pour compacter le tout */
-#start-area {
-  gap: 1.5rem; 
-  padding: 1.5rem;
-}
-
-#start-area {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 2.5rem;
-  gap: 2.5rem;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-/* Le texte d'introduction */
-#start-area pre {
-  max-width: 80%;
-  font-size: 1.4rem;
-  font-weight: 700;
-  line-height: 1.4;
-  color: #1a1a1a;
-  white-space: pre-wrap;
-  font-family: inherit;
-  margin: 0;
-}
-
-/* Le bouton "Commencer" */
-#start-area .quizButton {
-  background-color: #6c5ce7; /* Couleur thématique (celle de la barre de progression) */
-  color: white;
-  width: 100%;
-  max-width: 250px;
-  height: auto;
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 50px; /* Bouton pill-shape comme sur les UI modernes */
-  cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
-}
-
-#start-area .quizButton:hover {
-  background-color: #5b4bc4;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
-}
-
-#start-area .quizButton:active {
-  transform: translateY(0);
 }
 
 .energyImage {
@@ -222,30 +165,16 @@ pre {
   padding-top: 0.5rem;
 }
 
-#resultsContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  width: 100%;
-}
-
-#resultsContainer img {
-  width: 35px; /* Petite icône */
-  margin: 0.2rem 0;
-}
-
-#resultsContainer h1 {
-  font-size: 0.9rem;
-  text-align: center;
-  margin: 0.2rem 0;
-}
-
-/* Pour s'assurer que la modale permet le scroll si le contenu est trop long */
+/* S'assurer que le composant remplit et centre dans la modale */
 :host {
-    display: block;
-    max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
 }
 
 /* Effet au survol (hover) sur les choix de réponse */

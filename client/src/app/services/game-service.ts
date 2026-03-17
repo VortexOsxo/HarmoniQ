@@ -10,6 +10,7 @@ export type Question = {
   questionText: string;
   options: string[];
   questionType: string;
+  questionAspect: string;
 }
 
 export type ImportedQuestion = {
@@ -29,15 +30,17 @@ export type Quiz = {
 export class GameService {
   private _currentQuestion = new BehaviorSubject<number>(-1);
   public currentQuestion$ = this._currentQuestion.asObservable();
-  private answeredQuestions: [number] = [EMPTY];
-  private goodAnswers: number = 0;
+  private answeredQuestions: [number] = [EMPTY]; //a list of all answered questions in previous quizzes
+  private goodAnswers: number = 0; // the number of right answer in a quiz
+  private userAnswers: number[][] = []; // a list of all answers 
   private quiz: Quiz =
     {
       questions: [{
         question: {
           questionText: "",
           options: [""],
-          questionType:""
+          questionType:"",
+          questionAspect: ""
         },
         answer: 0,
         message: ""
@@ -64,6 +67,7 @@ export class GameService {
       this.answeredQuestions = quiz.answeredQuestionList;
       this._currentQuestion.next(0);
       this.goodAnswers = 0;
+      this.userAnswers = [];
       this.isCurrentAnswered = false;
       this.userSelection = [-1];
     });
@@ -96,6 +100,7 @@ checkAnswer(selectedOption: number[]): number[] {
     
     this.isCurrentAnswered = true;
     this.userSelection = selectedOption;
+    this.userAnswers.push(selectedOption);
 
     if (typeof correctAnswer === 'number') {
         if (isFirstTime && selectedOption[0] === correctAnswer) {
@@ -140,6 +145,42 @@ checkAnswer(selectedOption: number[]): number[] {
   setQuizStarted(): void {
     this.quizStarted = true;
   }
+
+getAnsweredQuestions() {
+  const answeredCount = this.userAnswers.length;
+  const questionsTexts = this.quiz.questions.slice(0, answeredCount).map(q => q.question.questionText);
+  const userAnswersTexts = this.userAnswers.map((answerIndices, qIndex) => {
+    const options = this.quiz.questions[qIndex].question.options;
+    
+    return answerIndices
+      .filter(idx => idx !== -1)
+      .map(idx => options[idx])
+      .join(', ');
+  });
+
+  const correctAnswersTexts = this.quiz.questions.slice(0, answeredCount).map((q) => {
+    const options = q.question.options;
+    const ans = q.answer;
+
+    if (Array.isArray(ans)) {
+
+      return ans.map(idx => options[idx]).join(', ');
+    } else {
+      return options[ans];
+    }
+  });
+
+  const questionAspect = this.quiz.questions.slice(0, answeredCount).map((q) => {
+    return q.question.questionAspect;
+  })
+
+  return {
+    questions: questionsTexts,
+    answers: userAnswersTexts,
+    correctAnswers: correctAnswersTexts,
+    questionAspect: questionAspect
+  };
+}
 
   get questionIndex(): number {
     return this._currentQuestion.value;

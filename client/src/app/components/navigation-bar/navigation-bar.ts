@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GameArea } from '../game-area/game-area';
+import { GameArea } from '../game/game-area/game-area';
 import { Router, RouterModule } from '@angular/router';
 import { TutorialService } from '../../services/tutorial-service';
 import { CommonModule } from '@angular/common';

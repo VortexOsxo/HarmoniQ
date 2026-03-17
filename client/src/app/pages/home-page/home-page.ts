@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { GameArea } from '@app/components/game-area/game-area';
+import { GameArea } from '@app/components/game/game-area/game-area';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
