@@ -53,6 +53,13 @@ export class SimulationService {
     return this.http.post(url, payload);
   }
 
+  getInfraEmission(type: string, infraId: number) {
+    const url = `${environment.apiUrl}/emission/${type}`;
+    const payload = this.getInfraScenarioPayload(type, infraId);
+    if (!payload) return;
+    return this.http.post(url, payload);
+  }
+
   hasSimulationResults() {
     return !!this.cachedSimulationResult;
   }
