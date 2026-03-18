@@ -11,12 +11,12 @@ import { InfraDetailService } from '@app/services/infra-detail-service';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-simulation-page',
+  selector: 'app-map-page',
   imports: [CommonModule, NavigationBar, SimulationLauncher, ScenarioSelector, InfrastructureSelector, SimulationResults, TutorialOverlay],
-  templateUrl: './simulation-page.html',
-  styleUrl: './simulation-page.css',
+  templateUrl: './map-page.html',
+  styleUrl: './map-page.css',
 })
-export class SimulationPage implements OnDestroy, AfterViewInit {
+export class MapPage implements OnDestroy, AfterViewInit {
   showSourcesPanel = false;
   private tutorialSub: Subscription;
 
