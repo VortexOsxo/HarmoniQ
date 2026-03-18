@@ -61,6 +61,25 @@ class InfraSolaire(Infrastructure):
         return annual_cost * (hours / HOURS_PER_YEAR)
 
 
+    def calculer_co2_eq_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        return self.donnees.puissance_nominal * (CO2_PER_MW := 80)
+
+    def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        co2_intensity = 48 / 1000
+
+        CAPACITY_FACTOR = 0.15
+        HOURS_PER_YEAR = 8760
+        annual_energy = self.donnees.puissance_nominal * HOURS_PER_YEAR * CAPACITY_FACTOR
+        annual_co2 = annual_energy * co2_intensity
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_co2 * (hours / HOURS_PER_YEAR)
+
+
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_all_solaire, read_all_scenario
     from harmoniq.db.engine import get_db
