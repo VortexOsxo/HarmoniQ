@@ -3,25 +3,32 @@ import { ScenariosService } from '../scenarios-service';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
 import { graphServiceConfig } from '@app/services/graph-service';
-import { map } from 'rxjs';
-import { DemandeTemporalDataService } from '../data-services/demande-temporal-data-service';
-import { BaseGraphService } from './base-graph-service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
 })
-export class DemandeTemporalGraphService extends BaseGraphService {
+export class DemandeTemporalGraphService {
+    private cachedData: any;
+    private cachedScenarioId?: number;
 
     constructor(
         private scenariosService: ScenariosService,
-        private demandeTemporalDataService: DemandeTemporalDataService,
-    ) {
-        super(scenariosService.selectedScenario);
-    }
+        private http: HttpClient,
+    ) { }
 
-    protected fetchData(scenario: Scenario) {
-        return this.demandeTemporalDataService.fetch(scenario)
-            .pipe(map(this.handleData.bind(this)));
+    display() { }
+    undisplay() { }
+
+    async generate(scenario: Scenario) {
+        let data;
+        if (scenario.id != this.cachedScenarioId)
+            data = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/temporal`, scenario));
+        else
+            data = this.cachedData;
+        return this.handleData(data);
     }
 
     protected handleData(apidata: any) {
@@ -37,11 +44,14 @@ export class DemandeTemporalGraphService extends BaseGraphService {
             line: { shape: 'spline' },
             hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
         }];
+
+        this.generateGraph();
     }
 
-    protected generateGraph() {
+    private generateGraph() {
         const layout: any = {
             title: "Demande pour scénario " + this.scenariosService.selectedScenario()?.nom,
+            height: 800,
             xaxis: {
                 title: "Date",
                 tickformat: "%d %b %Y"
@@ -62,7 +72,7 @@ export class DemandeTemporalGraphService extends BaseGraphService {
         Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, this.cachedData, layout);
     }
 
-    protected removeGraph() {
+    clear() {
         Plotly.purge(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID);
     }
 }

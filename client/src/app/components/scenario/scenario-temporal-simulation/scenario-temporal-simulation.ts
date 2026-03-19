@@ -1,14 +1,13 @@
-import { AfterViewInit, Component, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
 
 @Component({
-  selector: 'app-scenario-temporal-demand-graph',
-  imports: [CommonModule],
-  templateUrl: './scenario-temporal-demand-graph.html',
+  selector: 'app-scenario-temporal-simulation',
+  imports: [],
+  templateUrl: './scenario-temporal-simulation.html',
 })
-export class ScenarioTemporalDemandGraph implements AfterViewInit, OnDestroy {
+export class ScenarioTemporalSimulation {
   config = graphServiceConfig;
 
   constructor(private graphService: DemandeTemporalGraphService) { }
@@ -21,4 +20,3 @@ export class ScenarioTemporalDemandGraph implements AfterViewInit, OnDestroy {
     this.graphService.undisplay();
   }
 }
-

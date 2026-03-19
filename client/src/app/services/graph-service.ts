@@ -4,8 +4,8 @@ import * as Plotly from 'plotly.js-dist-min';
 export const graphServiceConfig = {
     PRODUCTION_SINGLE_INFRA_ID: 'production-single-infra-id',
     ENERGY_PROD_CONS_SANKEY_ID: 'energy-prod-cons-sankey-id',
-    SECTOR_ENERGY_CONS_SANKEY_ID: 'sector-energy-cons-sankey-id',
-    TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id'
+    TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id',
+    TEMPORAL_SIMULATION_ID: 'temporal-simulation-id'
 };
 
 

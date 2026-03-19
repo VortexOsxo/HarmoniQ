@@ -3,11 +3,11 @@ import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
-import * as Plotly from 'plotly.js-dist-min';
-import { graphServiceConfig } from '@app/services/graph-service';
-import { DemandeTemporalDataService } from './data-services/demande-temporal-data-service';
-import { forkJoin, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
+import { DemandeTemporalGraphService } from './graph-services/demande-temporal-graph-service';
+import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
+import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 
 @Injectable({
   providedIn: 'root',
@@ -24,9 +24,11 @@ export class SimulationService {
   constructor(
     private scenariosService: ScenariosService,
     private infrastructuresService: InfrastruturesService,
-    private demandeTemporalDataService: DemandeTemporalDataService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private demandeTemporalGraphService: DemandeTemporalGraphService,
+    private demandeSankeyGraphService: DemandeSankeyGraphService,
+    private simulationTemporalGraphService: SimulationTemporalGraphService,
   ) { }
 
   private getInfraScenarioPayload(type: string, infraId: number) {
@@ -60,7 +62,7 @@ export class SimulationService {
     return !!this.cachedSimulationResult;
   }
 
-  launchSimulation() {
+  async launchSimulation() {
     const scenario = this.scenariosService.selectedScenario();
     const infraGroup = this.infrastructuresService.selectedInfraGroup();
 
@@ -68,144 +70,16 @@ export class SimulationService {
 
     this.router.navigate(["/simulation"]);
 
-    const payload = {
-      scenario: scenario,
-      infra_group: this.infrastructuresService.buildSimulationPayload()
-    }
+    this.step.set('Generation de la demande des differents secteurs');
+    await this.demandeSankeyGraphService.generate(scenario);
 
-    const url = `${environment.apiUrl}/reseau/production?is_journalier=false`;
+    this.step.set('Generation de la demande temporelle');
+    await this.demandeTemporalGraphService.generate(scenario);
 
-    forkJoin({
-      demande: this.demandeTemporalDataService.fetch(scenario),
-      production: this.http.post(url, payload),
-    }).subscribe((result) => {
-      this.cachedDemandeTemporal = result.demande;
-      this.cachedSimulationResult = result.production;
-      this.simulationResultsReceived.next();
-    });
-  }
+    this.step.set('Simulation Complete');
+    await this.simulationTemporalGraphService.generate(scenario);
 
-  generateSimulationDemandeGraph() {
-    if (!this.cachedSimulationResult) return false;
-
-    const productionData = this.cachedSimulationResult.production;
-    let x = productionData.map((instance: any) => (instance["snapshot"]));
-    let y = productionData.map((instance: any) => (instance["totale"]));
-    let eolien = productionData.map((instance: any) => (instance["total_eolien"]));
-    let solaire = productionData.map((instance: any) => (instance["total_solaire"]));
-    let hydro_fil = productionData.map((instance: any) => (instance["total_hydro_fil"]));
-    let hydro_res = productionData.map((instance: any) => (instance["total_hydro_reservoir"]));
-    let imports = productionData.map((instance: any) => (instance["total_import"]));
-    let nucleaire = productionData.map((instance: any) => (instance["total_nucleaire"]));
-    let thermique = productionData.map((instance: any) => (instance["total_thermique"]));
-
-    let demandeX = Object.keys(this.cachedDemandeTemporal.total_electricity);
-    let demandeY = Object.values(this.cachedDemandeTemporal.total_electricity).map((value: any) => value / 1000);
-
-    const productionTraces: any = [
-      {
-        x: demandeX,
-        y: demandeY,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Demande',
-        line: { shape: 'spline', color: 'black' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: y,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Production totale',
-        line: { shape: 'spline', color: 'green' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: eolien,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Éolien',
-        line: { shape: 'spline', color: 'orange' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: solaire,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Solaire',
-        line: { shape: 'spline', color: 'yellow' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: hydro_fil,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Hydro (fil)',
-        line: { shape: 'spline', color: 'blue' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: hydro_res,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Hydro (réservoir)',
-        line: { shape: 'spline', color: 'cyan' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: imports,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Importations',
-        line: { shape: 'spline', color: 'purple' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: nucleaire,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Nucléaire',
-        line: { shape: 'spline', color: 'red' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      },
-      {
-        x: x,
-        y: thermique,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Thermique',
-        line: { shape: 'spline', color: 'brown' },
-        hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-      }
-    ];
-
-    Plotly.purge(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID);
-    Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, productionTraces, {
-      title: `Production et Demande pour scénario ${this.scenariosService.selectedScenario()?.nom}`,
-      xaxis: {
-        title: "Date",
-        tickformat: "%d %b %Y"
-      },
-      yaxis: {
-        title: "Puissance (MW)",
-        autorange: true
-      },
-      legend: {
-        orientation: "h",
-        yanchor: "bottom",
-        y: 1.02,
-        xanchor: "right",
-        x: 1
-      }
-    } as any);
-    return true;
+    this.step.set('Simulation termine');
   }
 
   hasExportableData(): boolean {
