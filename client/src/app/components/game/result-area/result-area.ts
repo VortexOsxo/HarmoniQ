@@ -39,29 +39,29 @@ export class ResultArea {
   }
 
   ngOnInit() {
-    this.grade = this.gameService.getGoodAnswerNumber();
+    this.grade = parseFloat(this.gameService.getGoodAnswerNumber().toFixed(2));
     this.goodGradeImage = this.grade > 7;
     this.questionsLeftAvailable = this.gameService.restartAvailable();
     this.showfinalGrade();
     this.showFinalResults();
   }
 
-  showfinalGrade(){
+  showfinalGrade() {
     this.environmentMax = 0; this.energyMax = 0; this.economyMax = 0; //resetting the numbers
     this.economyGrade = parseFloat(this.gameService.getEconomyNumber().toFixed(2));
     this.environmentGrade = parseFloat(this.gameService.getEnvironmentNumber().toFixed(2));
     this.energyGrade = parseFloat(this.gameService.getEnergyNumber().toFixed(2));
     const questionAspect: string[] = this.gameService.getQuestionAspect();
     questionAspect.forEach((question: string) => {
-              if (question == 'economy') {
-          this.economyMax += 1;
-        }
-        if (question == 'energy') {
-          this.energyMax += 1;
-        }
-        if (question == 'environment') {
-          this.environmentMax += 1;
-        }
+      if (question == 'economy') {
+        this.economyMax += 1;
+      }
+      if (question == 'energy') {
+        this.energyMax += 1;
+      }
+      if (question == 'environment') {
+        this.environmentMax += 1;
+      }
     })
   }
 
@@ -80,55 +80,57 @@ export class ResultArea {
         const correctAnswerText = questionData.correctAnswers[i];
         const color = questionData.color[i];
 
-        if (sorter == questionAspect[i] || sorter == ""){
+        if (sorter == questionAspect[i] || sorter == "") {
 
-        const reviewItem = document.createElement('div');
-        reviewItem.className = 'reviewItem';
+          const reviewItem = document.createElement('div');
+          reviewItem.className = 'reviewItem';
 
-        const reviewContent = document.createElement('div');
-        reviewContent.className = 'reviewContent';
+          const reviewContent = document.createElement('div');
+          reviewContent.className = 'reviewContent';
 
-        const qText = document.createElement('p');
-        qText.className = 'reviewQuestion';
-        qText.textContent = `Q${i + 1}: ${questionText}`;
+          const qText = document.createElement('p');
+          qText.className = 'reviewQuestion';
+          qText.textContent = `Q${i + 1}: ${questionText}`;
 
-        const uAnswer = document.createElement('p');
-        uAnswer.className = `reviewUserAnswer ${color}`;
-        uAnswer.textContent = `Votre réponse: ${userAnswerText}`;
+          const uAnswer = document.createElement('p');
+          uAnswer.className = `reviewUserAnswer ${color}`;
+          uAnswer.textContent = `Votre réponse: ${userAnswerText}`;
 
-        reviewContent.appendChild(qText);
-        reviewContent.appendChild(uAnswer);
+          reviewContent.appendChild(qText);
+          reviewContent.appendChild(uAnswer);
 
-        //if its not correct, we add the answer below
-        if (!(userAnswerText === correctAnswerText)) {
-          const cAnswer = document.createElement('p');
-          cAnswer.className = 'reviewCorrectAnswer';
-          cAnswer.textContent = `Réponse correcte: ${correctAnswerText}`;
-          reviewContent.appendChild(cAnswer);
+          //if its not correct, we add the answer below
+          if (!(userAnswerText === correctAnswerText)) {
+            const cAnswer = document.createElement('p');
+            cAnswer.className = 'reviewCorrectAnswer';
+            cAnswer.textContent = `Réponse correcte: ${correctAnswerText}`;
+            reviewContent.appendChild(cAnswer);
+          }
+
+          reviewItem.appendChild(reviewContent);
+          questionPlaceHolder.appendChild(reviewItem);
         }
-
-        reviewItem.appendChild(reviewContent);
-        questionPlaceHolder.appendChild(reviewItem);
-      }}
+      }
     }
 
     this.cdr.detectChanges();
   }
 
   sortFinalResults(sorter: string): void {
-   if (sorter == this.sortType){
-    this.sortType = "";
-    this.showFinalResults("");}
-   else if (sorter == "economy") {
-    this.sortType = sorter;
-    this.showFinalResults(sorter)
-   } else if (sorter == "energy") {
-    this.sortType = sorter;
-    this.showFinalResults(sorter);
-   } else if (sorter == "environment") {
-    this.sortType = sorter;
-    this.showFinalResults(sorter);
-   }
+    if (sorter == this.sortType) {
+      this.sortType = "";
+      this.showFinalResults("");
+    }
+    else if (sorter == "economy") {
+      this.sortType = sorter;
+      this.showFinalResults(sorter)
+    } else if (sorter == "energy") {
+      this.sortType = sorter;
+      this.showFinalResults(sorter);
+    } else if (sorter == "environment") {
+      this.sortType = sorter;
+      this.showFinalResults(sorter);
+    }
   }
 
   get totalQuestions(): number {
