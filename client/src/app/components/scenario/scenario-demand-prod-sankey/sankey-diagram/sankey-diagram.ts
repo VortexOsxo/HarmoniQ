@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SankeyData } from '../sankey-data.types';
+import { SimulationService } from '@app/services/simulation-service';
 
 interface NodeRect {
   top: number;
@@ -43,6 +44,7 @@ interface ComputedFlow {
 })
 export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() data!: SankeyData;
+  @Input() showProduction = false;
 
   @ViewChild('sankeyContainer') sankeyContainer!: ElementRef<HTMLElement>;
   @ViewChildren('demandNodeEl') demandNodeEls!: QueryList<ElementRef<HTMLElement>>;
@@ -60,7 +62,11 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
 
   private resizeObserver?: ResizeObserver;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef, private simulationService: SimulationService) {}
+
+  openSourcesPanel(): void {
+    this.simulationService.openSourcesPanel$.next();
+  }
 
   ngAfterViewInit(): void {
     setTimeout(() => this.updateFlows(), 0);
@@ -82,7 +88,17 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
   }
 
   formatMW(value: number): string {
-    return value.toLocaleString('fr-FR') + ' MW';
+    let formatted: string;
+    if (value >= 10)      formatted = Math.round(value).toLocaleString('fr-FR');
+    else if (value >= 1)  formatted = value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+    else                  formatted = value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+    return formatted + ' MW/jour';
+  }
+
+  formatCo2(value: number): string {
+    if (value >= 10) return Math.round(value).toLocaleString('fr-FR');
+    if (value >= 1)  return value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+    return value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
   }
 
   get totalCo2(): number {
@@ -133,12 +149,12 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     const lines: string[] =
       flow.type === 'demand-prod'
         ? [
-            `${flow.fromLabel} → ${flow.toLabel}`,
-            `${Math.round(flow.valueMW).toLocaleString('fr-FR')} MW`,
+            `${flow.toLabel} → ${flow.fromLabel}`,
+            `${this.formatMW(flow.valueMW)}`,
           ]
         : [
             `${flow.fromLabel} → CO\u2082`,
-            `${Math.round(flow.co2Tph).toLocaleString('fr-FR')} t CO\u2082/h`,
+            `${this.formatCo2(flow.co2Tph)} t CO\u2082/h`,
           ];
 
     this.tooltip = {
@@ -180,10 +196,10 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     const prodRects   = prodEls.map(el => this.relativeRect(el.nativeElement, containerRect));
     const co2Rect     = this.relativeRect(this.co2NodeEl.nativeElement, containerRect);
 
-    this.computedFlows = [
+    this.computedFlows = this.showProduction ? [
       ...this.computeDemandToProdFlows(demandRects, prodRects),
       ...this.computeProdToCo2Flows(prodRects, co2Rect),
-    ];
+    ] : [];
 
     this.cdr.detectChanges();
   }
@@ -191,10 +207,17 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
   private computeDemandToProdFlows(demandRects: NodeRect[], prodRects: NodeRect[]): ComputedFlow[] {
     const D = this.data.demandNodes;
     const P = this.data.productionNodes;
+    const totalProduction = P.reduce((s, n) => s + n.value, 0);
     const totalDemand = D.reduce((s, n) => s + n.value, 0);
     const R = 10;
 
-    const flowValues = D.map(dem => P.map(prod => (dem.value / totalDemand) * prod.value));
+    // Distribute flow so neither side exceeds its own value:
+    // - surplus (prod > demand): each demand node fills 100%, each prod sends a partial fraction
+    // - deficit (prod < demand): each prod node fills 100%, each demand receives a partial fraction
+    const denom = Math.max(totalDemand, totalProduction);
+    const flowValues = D.map(dem =>
+      P.map(prod => denom > 0 ? dem.value * prod.value / denom : 0)
+    );
 
     const cumAtDemand = D.map((dem, i) => {
       const cums: number[] = [];
@@ -223,6 +246,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     for (let i = 0; i < D.length; i++) {
       for (let j = 0; j < P.length; j++) {
         const fVal  = flowValues[i][j];
+        if (fVal <= 0 || P[j].value <= 0) continue;
         const dRect = demandRects[i];
         const pRect = prodRects[j];
 
@@ -266,6 +290,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     const co2InnerH = co2Rect.height - 2 * R;
 
     for (let j = 0; j < P.length; j++) {
+      if (P[j].value <= 0) continue;
       const pRect   = prodRects[j];
       const co2Frac = co2Values[j] / totalCo2;
 

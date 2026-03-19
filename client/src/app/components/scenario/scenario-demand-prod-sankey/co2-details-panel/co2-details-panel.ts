@@ -17,7 +17,9 @@ export class Co2DetailsPanelComponent {
   }
 
   formatCo2(value: number): string {
-    return Math.round(value).toLocaleString('fr-FR');
+    if (value >= 10)  return Math.round(value).toLocaleString('fr-FR');
+    if (value >= 1)   return value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+    return value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
   }
 
   formatPercent(value: number): string {
