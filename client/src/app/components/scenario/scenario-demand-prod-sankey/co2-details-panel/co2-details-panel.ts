@@ -11,6 +11,7 @@ import { Co2DetailsData } from '../sankey-data.types';
 })
 export class Co2DetailsPanelComponent {
   @Input() data!: Co2DetailsData;
+  @Input() loading = false;
 
   get sortedSources() {
     return [...this.data.sources].sort((a, b) => b.percentage - a.percentage);

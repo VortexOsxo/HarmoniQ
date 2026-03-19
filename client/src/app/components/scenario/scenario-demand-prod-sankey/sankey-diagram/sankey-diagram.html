@@ -6,8 +6,8 @@
        [attr.height]="svgHeight"
        xmlns="http://www.w3.org/2000/svg"
        style="pointer-events:none">
+    @for (flow of computedFlows; track flow.path; let i = $index) {
     <path
-      *ngFor="let flow of computedFlows; let i = index"
       [attr.d]="flow.path"
       [attr.fill]="flow.color"
       [attr.fill-opacity]="flowOpacity(i)"
@@ -17,6 +17,7 @@
       (mousemove)="onFlowMouseMove($event, i)"
       (mouseleave)="onFlowMouseLeave()"
     />
+    }
   </svg>
 
   <!-- Tooltip -->
@@ -36,21 +37,22 @@
   <div class="sankey-column demand-column">
     <div class="column-header">1. Demande</div>
     <div class="column-nodes">
-      <div
-        *ngFor="let node of data.demandNodes; let i = index"
-        #demandNodeEl
-        class="node-card"
-        [style.background-color]="node.color"
-        [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'demand-' + i"
-        (mouseenter)="onNodeMouseEnter('demand-' + i)"
-        (mouseleave)="onNodeMouseLeave()"
-      >
-        <i class="fa-solid {{ node.icon }} node-icon"></i>
-        <div class="node-info">
-          <div class="node-label">{{ node.label }}</div>
-          <div class="node-value">{{ formatMW(node.value) }}</div>
+      @for (node of data.demandNodes; track node.id; let i = $index) {
+        <div
+          #demandNodeEl
+          class="node-card"
+          [style.background-color]="node.color"
+          [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'demand-' + i"
+          (mouseenter)="onNodeMouseEnter('demand-' + i)"
+          (mouseleave)="onNodeMouseLeave()"
+        >
+          <i class="fa-solid {{ node.icon }} node-icon"></i>
+          <div class="node-info">
+            <div class="node-label">{{ node.label }}</div>
+            <div class="node-value">{{ formatMW(node.value) }}</div>
+          </div>
         </div>
-      </div>
+      }
     </div>
   </div>
 
@@ -61,26 +63,26 @@
     <div class="column-header">2. Production</div>
     @if (showProduction) {
       <div class="column-nodes">
-        <div
-          *ngFor="let node of data.productionNodes; let i = index"
-          #prodNodeEl
-          class="node-card"
-          [style.background-color]="node.color"
-          [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'prod-' + i"
-          (mouseenter)="onNodeMouseEnter('prod-' + i)"
-          (mouseleave)="onNodeMouseLeave()"
-        >
-          <i class="fa-solid {{ node.icon }} node-icon"></i>
-          <div class="node-info">
-            <div class="node-label">{{ node.label }}</div>
-            <div class="node-value">{{ formatMW(node.value) }}</div>
+        @for (node of data.productionNodes; track node.id; let i = $index) {
+          <div
+            #prodNodeEl
+            class="node-card"
+            [style.background-color]="node.color"
+            [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'prod-' + i"
+            (mouseenter)="onNodeMouseEnter('prod-' + i)"
+            (mouseleave)="onNodeMouseLeave()"
+          >
+            <i class="fa-solid {{ node.icon }} node-icon"></i>
+            <div class="node-info">
+              <div class="node-label">{{ node.label }}</div>
+              <div class="node-value">{{ formatMW(node.value) }}</div>
+            </div>
           </div>
-        </div>
+        }
       </div>
     } @else {
-      <div class="column-pending">
-        <i class="fa-solid fa-circle-play"></i>
-        <span class="column-pending-text"><span class="column-pending-link" (click)="openSourcesPanel()">Lancez la simulation</span> pour voir la production</span>
+      <div class="column-loading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
       </div>
     }
   </div>
@@ -103,9 +105,8 @@
         </div>
       </div>
     } @else {
-      <div class="column-pending">
-        <i class="fa-solid fa-cloud"></i>
-        <span class="column-pending-text">Données CO₂ disponibles après simulation</span>
+      <div class="column-loading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
       </div>
     }
   </div>

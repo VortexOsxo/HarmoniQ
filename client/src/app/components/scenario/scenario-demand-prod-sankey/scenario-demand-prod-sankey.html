@@ -3,52 +3,13 @@
 } @else {
     <div class="sankey-wrapper">
         <h2 class="sankey-title">Détails de l'impact CO<sub>2</sub> de la production au Québec.</h2>
-        @if (simulationRan) {
-            <div class="coverage-meter" [class.has-deficit]="productionDeficit > 0">
-                <div class="coverage-stats">
-                    <span class="coverage-label"
-                        >Demande&nbsp;<strong
-                            >{{ totalDemandMW | number: '1.0-0' }} MW/jour</strong
-                        ></span
-                    >
-                    <span class="coverage-pct" [class.deficit]="productionDeficit > 0"
-                        >{{ coveragePercent }}%</span
-                    >
-                    <span class="coverage-label"
-                        >Production&nbsp;<strong
-                            >{{ totalProductionMW | number: '1.0-0' }} MW/jour</strong
-                        ></span
-                    >
-                </div>
-                <div class="coverage-track">
-                    <div
-                        class="coverage-fill"
-                        [style.width.%]="coveragePercent > 100 ? 100 : coveragePercent"
-                    ></div>
-                </div>
-                @if (productionDeficit > 0) {
-                    <div class="deficit-label">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        Déficit de {{ productionDeficit | number: '1.0-0' }} MW/jour non couverts
-                    </div>
-                } @else if (productionSurplus > 0) {
-                    <div class="surplus-label">
-                        <i class="fa-solid fa-circle-check"></i>
-                        Surplus de {{ productionSurplus | number: '1.0-0' }} MW/jour — demande
-                        couverte
-                    </div>
-                }
-            </div>
-        }
         <div class="sankey-view">
             <div class="sankey-diagram-wrapper">
                 <app-sankey-diagram [data]="sankeyData" [showProduction]="simulationRan" />
             </div>
-            @if (simulationRan) {
-                <div class="co2-panel-wrapper">
-                    <app-co2-details-panel [data]="co2Data" />
-                </div>
-            }
+            <div class="co2-panel-wrapper">
+                <app-co2-details-panel [data]="co2Data" [loading]="!simulationRan" />
+            </div>
         </div>
     </div>
 }

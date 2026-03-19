@@ -6,29 +6,37 @@
   </div>
 
   <!-- Per-source breakdown -->
-  <div class="sources-section">
-    <div *ngFor="let src of sortedSources" class="source-row">
-      <div class="source-top">
-        <div class="source-left">
-          <span class="source-dot" [style.background-color]="src.color"></span>
-          <span class="source-name">{{ src.name }}</span>
-        </div>
-        <div class="source-right">
-          <span class="source-mw">{{ src.productionMW | number:'1.0-0' }} MW/jour</span>
-          <span class="source-percent">{{ formatPercent(src.percentage) }}</span>
-        </div>
-      </div>
-
-      <div class="bar-track">
-        <div
-          class="bar-fill"
-          [style.width.%]="src.percentage"
-          [style.background-color]="src.color"
-        ></div>
-      </div>
-
-      <div class="source-co2">{{ formatCo2(src.totalCo2Tph) }} t CO<sub>2</sub>/h</div>
+  @if (loading) {
+    <div class="panel-loading">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
     </div>
-  </div>
+  } @else {
+    <div class="sources-section">
+      @for (src of sortedSources; track src.name) {
+        <div class="source-row">
+          <div class="source-top">
+            <div class="source-left">
+              <span class="source-dot" [style.background-color]="src.color"></span>
+              <span class="source-name">{{ src.name }}</span>
+            </div>
+            <div class="source-right">
+              <span class="source-mw">{{ src.productionMW | number:'1.0-0' }} MW/jour</span>
+              <span class="source-percent">{{ formatPercent(src.percentage) }}</span>
+            </div>
+          </div>
+
+          <div class="bar-track">
+            <div
+              class="bar-fill"
+              [style.width.%]="src.percentage"
+              [style.background-color]="src.color"
+            ></div>
+          </div>
+
+          <div class="source-co2">{{ formatCo2(src.totalCo2Tph) }} t CO<sub>2</sub>/h</div>
+        </div>
+      }
+    </div>
+  }
 
 </div>
