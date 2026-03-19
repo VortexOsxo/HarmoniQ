@@ -13,7 +13,7 @@ import { SimulationStepService } from './simulation-step-service';
 })
 export class SimulationService {
   canLaunch = computed(() => this.infrastructuresService.selectedInfraGroup() !== null && this.scenariosService.selectedScenario() !== null);
-  
+
   private simulationStepService = inject(SimulationStepService);
   step = computed(() => this.simulationStepService.currentStepName());
 
@@ -48,6 +48,13 @@ export class SimulationService {
 
   getInfraCost(type: string, infraId: number) {
     const url = `${environment.apiUrl}/cout/${type}`;
+    const payload = this.getInfraScenarioPayload(type, infraId);
+    if (!payload) return;
+    return this.http.post(url, payload);
+  }
+
+  getInfraEmission(type: string, infraId: number) {
+    const url = `${environment.apiUrl}/emission/${type}`;
     const payload = this.getInfraScenarioPayload(type, infraId);
     if (!payload) return;
     return this.http.post(url, payload);
