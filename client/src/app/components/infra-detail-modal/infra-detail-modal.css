@@ -541,3 +541,34 @@
         right: -100%;
     }
 }
+
+.protected-area-warning {
+    display: flex;
+    align-items: flex-start;
+    background-color: #fff3cd;
+    color: #8a3a30;
+    padding: 10px 12px;
+    margin: 15px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.85rem;
+    gap: 10px;
+    border-radius: 10px;
+}
+
+.protected-area-warning i {
+    font-size: 1.1rem;
+    color: #e74c3c;
+    margin-top: 2px;
+}
+
+.protected-area-warning .warning-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.protected-area-warning .warning-name {
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 3px;
+    color: #c0392b;
+}
