@@ -61,30 +61,28 @@
   <!-- ── Column 2 : Production ───────────────────────────────────────── -->
   <div class="sankey-column production-column">
     <div class="column-header">2. Production</div>
-    @if (showProduction) {
-      <div class="column-nodes">
-        @for (node of data.productionNodes; track node.id; let i = $index) {
-          <div
-            #prodNodeEl
-            class="node-card"
-            [style.background-color]="node.color"
-            [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'prod-' + i"
-            (mouseenter)="onNodeMouseEnter('prod-' + i)"
-            (mouseleave)="onNodeMouseLeave()"
-          >
-            <i class="fa-solid {{ node.icon }} node-icon"></i>
-            <div class="node-info">
-              <div class="node-label">{{ node.label }}</div>
+    <div class="column-nodes">
+      @for (node of data.productionNodes; track node.id; let i = $index) {
+        <div
+          #prodNodeEl
+          class="node-card"
+          [style.background-color]="node.color"
+          [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'prod-' + i"
+          (mouseenter)="onNodeMouseEnter('prod-' + i)"
+          (mouseleave)="onNodeMouseLeave()"
+        >
+          <i class="fa-solid {{ node.icon }} node-icon"></i>
+          <div class="node-info">
+            <div class="node-label">{{ node.label }}</div>
+            @if (showProduction) {
               <div class="node-value">{{ formatMW(node.value) }}</div>
-            </div>
+            } @else {
+              <i class="fa-solid fa-circle-notch fa-spin node-loading"></i>
+            }
           </div>
-        }
-      </div>
-    } @else {
-      <div class="column-loading">
-        <i class="fa-solid fa-circle-notch fa-spin"></i>
-      </div>
-    }
+        </div>
+      }
+    </div>
   </div>
 
   <div class="sankey-gap"></div>
@@ -92,23 +90,21 @@
   <!-- ── Column 3 : Impact CO₂ ──────────────────────────────────────── -->
   <div class="sankey-column co2-column">
     <div class="column-header">3. Impact CO<sub>2</sub></div>
-    @if (showProduction) {
-      <div class="column-nodes co2-nodes">
-        <div #co2NodeEl class="co2-total-card"
-             [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'co2'"
-             (mouseenter)="onNodeMouseEnter('co2')"
-             (mouseleave)="onNodeMouseLeave()">
-          <i class="fa-solid fa-cloud co2-cloud-icon"></i>
-          <div class="co2-label">CO<sub>2</sub> Total Émis</div>
+    <div class="column-nodes co2-nodes">
+      <div #co2NodeEl class="co2-total-card"
+           [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'co2'"
+           (mouseenter)="onNodeMouseEnter('co2')"
+           (mouseleave)="onNodeMouseLeave()">
+        <i class="fa-solid fa-cloud co2-cloud-icon"></i>
+        <div class="co2-label">CO<sub>2</sub> Total Émis</div>
+        @if (showProduction) {
           <div class="co2-value">{{ totalCo2 | number:'1.0-0' }}</div>
           <div class="co2-unit">tonnes CO<sub>2</sub>/h</div>
-        </div>
+        } @else {
+          <i class="fa-solid fa-circle-notch fa-spin co2-loading"></i>
+        }
       </div>
-    } @else {
-      <div class="column-loading">
-        <i class="fa-solid fa-circle-notch fa-spin"></i>
-      </div>
-    }
+    </div>
   </div>
 
 </div>

@@ -1,119 +1,118 @@
 /* ── Panel shell ─────────────────────────────────────────────────────────── */
 .co2-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-  padding: 16px 14px;
-  overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 14px;
+    min-height: 560px;
 }
 
 /* ── Header ───────────────────────────────────── */
 .panel-header {
-  background: #F1F5FB;
-  border-radius: 10px;
-  padding: 12px 16px;
-  text-align: center;
+    background: #f1f5fb;
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
 }
 
 .header-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #7689A1;
-  letter-spacing: 0.1px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #7689a1;
+    letter-spacing: 0.1px;
 }
 
 /* ── Loading state ───────────────────────────────────────────────────────── */
 .panel-loading {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: #b0bec8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    font-size: 22px;
+    color: #b0bec8;
 }
 
 /* ── Sources section ─────────────────────────────────────────────────────── */
 .sources-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .source-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .source-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
 }
 
 .source-left {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
 }
 
 .source-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  flex-shrink: 0;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .source-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #2c3e50;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .source-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  flex-shrink: 0;
-  gap: 1px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 1px;
 }
 
 .source-mw {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
 }
 
 .source-percent {
-  font-size: 11px;
-  color: #888;
-  font-weight: 500;
+    font-size: 11px;
+    color: #888;
+    font-weight: 500;
 }
 
 .bar-track {
-  background: #ebebeb;
-  border-radius: 4px;
-  height: 5px;
-  width: 100%;
-  overflow: hidden;
+    background: #ebebeb;
+    border-radius: 4px;
+    height: 5px;
+    width: 100%;
+    overflow: hidden;
 }
 
 .bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.4s ease;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
 }
 
 .source-co2 {
-  font-size: 12px;
-  font-weight: 500;
-  color: #777;
-  padding-left: 18px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #777;
+    padding-left: 18px;
 }
