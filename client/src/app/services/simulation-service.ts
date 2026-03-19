@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable, computed, } from '@angular/core';
+import { signal, Injectable, computed, } from '@angular/core';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
@@ -7,12 +7,14 @@ import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { DemandeTemporalDataService } from './data-services/demande-temporal-data-service';
 import { forkJoin, Subject } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SimulationService {
   canLaunch = computed(() => this.infrastructuresService.selectedInfraGroup() !== null && this.scenariosService.selectedScenario() !== null);
+  step = signal<string>('Initialisation');
 
   simulationResultsReceived = new Subject<void>();
 
@@ -23,6 +25,7 @@ export class SimulationService {
     private scenariosService: ScenariosService,
     private infrastructuresService: InfrastruturesService,
     private demandeTemporalDataService: DemandeTemporalDataService,
+    private router: Router,
     private http: HttpClient
   ) { }
 
@@ -62,6 +65,8 @@ export class SimulationService {
     const infraGroup = this.infrastructuresService.selectedInfraGroup();
 
     if (!scenario || !infraGroup) return;
+
+    this.router.navigate(["/simulation"]);
 
     const payload = {
       scenario: scenario,
