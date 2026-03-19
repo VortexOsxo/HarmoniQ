@@ -42,12 +42,6 @@ export const LAYER_TREE: LayerNode[] = [
                     { id: 20, name: 'Réserves nationales de faune' },
                 ],
             },
-            {
-                id: 21, name: 'Autres aires protégées',
-                // children: [
-                //     { id: 22, name: 'Autres aires protégées (détail)' },
-                // ],
-            },
             { id: 25, name: 'Autres mesures de conservation efficaces (AMCE)' },
         ],
     },

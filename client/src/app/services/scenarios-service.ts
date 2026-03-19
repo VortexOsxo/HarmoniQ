@@ -2,7 +2,6 @@ import { Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
-import { Optimism } from '@app/models/optimism';
 import { LocalStorageService } from './local-storage-service';
 
 const SCENARIOS_KEY = 'harmoniq_local_scenarios';
@@ -49,8 +48,6 @@ export class ScenariosService {
         "pas_de_temps": "PT1H",
         "weather": Weather.Typical,
         "consomation": Consumption.Normal,
-        "optimisme_social": Optimism.Moyen,
-        "optimisme_ecologique": Optimism.Moyen
       },
       {
         "id": 2,
@@ -61,8 +58,6 @@ export class ScenariosService {
         "pas_de_temps": "PT1H",
         "weather": Weather.Typical,
         "consomation": Consumption.Conservative,
-        "optimisme_social": Optimism.Moyen,
-        "optimisme_ecologique": Optimism.Moyen
       },
     ]
   }

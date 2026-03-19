@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { Scenario } from '@app/models/scenario';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-simulation-launcher',
@@ -13,19 +14,18 @@ import { Subscription } from 'rxjs';
   templateUrl: './simulation-launcher.html',
   styleUrl: './simulation-launcher.css',
 })
-export class SimulationLauncher implements OnDestroy {
+export class SimulationLauncher {
   isLaunching = signal(false);
 
   canLaunch!: Signal<boolean>;
   selectedInfrastructure!: Signal<InfrastructureGroup | null>;
   selectedScenario!: Signal<Scenario | null>;
 
-  sub?: Subscription;
-
   constructor(
     private simulationService: SimulationService,
     private scenariosService: ScenariosService,
     private infrastructuresService: InfrastruturesService,
+    private router: Router,
   ) {
     this.canLaunch = this.simulationService.canLaunch;
     this.selectedInfrastructure = this.infrastructuresService.selectedInfraGroup;
@@ -33,17 +33,6 @@ export class SimulationLauncher implements OnDestroy {
   }
 
   launchSimulation() {
-    this.simulationService.launchSimulation();
-    this.isLaunching.set(true);
-    this.sub = this.simulationService.simulationResultsReceived.subscribe(() => {
-      this.isLaunching.set(false);
-      this.sub?.unsubscribe();
-      this.sub = undefined;
-    });
-  }
-
-  ngOnDestroy() {
-    this.sub?.unsubscribe();
-    this.sub = undefined;
+    this.router.navigate(['/simulation']);
   }
 }

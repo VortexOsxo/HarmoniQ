@@ -1,4 +1,3 @@
-import { Optimism } from "./optimism";
 import { Weather } from "./weather";
 import { Consumption } from "./consumption";
 
@@ -11,8 +10,6 @@ export interface Scenario {
     pas_de_temps: string;
     weather: Weather;
     consomation: Consumption;
-    optimisme_social: Optimism;
-    optimisme_ecologique: Optimism;
 }
 
 export function createEmptyScenario(): Scenario {
@@ -25,7 +22,5 @@ export function createEmptyScenario(): Scenario {
         pas_de_temps: 'PT1H',
         weather: Weather.Typical,
         consomation: Consumption.Normal,
-        optimisme_social: Optimism.Moyen,
-        optimisme_ecologique: Optimism.Moyen
     };
 }

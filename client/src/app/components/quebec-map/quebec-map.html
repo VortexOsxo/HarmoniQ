@@ -33,7 +33,10 @@
         <label class="pa-checkbox-label">
             <input type="checkbox" [checked]="protectedAreasService.isGroupFullySelected(node)"
                 (change)="protectedAreasService.toggleNode(node)">
-            <span class="pa-layer-name">{{ node.name }}</span>
+            <span class="pa-layer-name">
+                <span *ngIf="node.color" class="pa-color-swatch" [style.background-color]="'rgba(' + node.color[0] + ',' + node.color[1] + ',' + node.color[2] + ',' + (node.color.length > 3 ? node.color[3]/255 : 1) + ')'"></span>
+                {{ node.name }}
+            </span>
         </label>
     </div>
     <ng-container *ngIf="node.children">
