@@ -44,7 +44,7 @@ export class GameArea {
       optionBox.innerHTML = '';
 
       const currentQuestion = this.gameService.getQuestion();
-      console.log(currentQuestion.questionType);
+
       if (currentQuestion.questionType == "choice")
         this.displayChoice(optionBox, currentQuestion);
       else

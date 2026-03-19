@@ -12,25 +12,6 @@
   box-sizing: border-box;
 }
 
-#game-area[hidden="false"] #questionText {
-  max-height: none;
-}
-
-.energyImage {
-  width: 50%;
-  max-width: 80%;
-  height: auto;
-  border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  transition: opacity 0.8s ease-in-out;
-  margin: 1rem 0;
-  opacity: 1;
-}
-
-.energyImage.fade-out {
-  opacity: 0;
-}
-
 pre {
   max-width: 100%;
   font-size: 1.2rem;
@@ -87,39 +68,6 @@ pre {
   padding-top: 2rem;
 }
 
-#questionContainer::before, 
-#questionContainer::after {
-  top: 3rem;
-  height: 4px;
-}
-
-#questionCounter {
-  top: 0.5rem;
-  font-size: 0.8rem;
-}
-
-#questionCounter h1 {
-  font-size: 0.9rem; 
-  font-weight: 500;
-  color: #888;
-  margin: 0;
-  padding: 0;
-  max-width: none;
-  max-height: none;
-}
-
-#questionCounter h1::before {
-  content: "⚡ Énergie  •  ★ Facile";
-  position: absolute;
-  top: 0;
-  left: -280px;
-  display: flex;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #444;
-  letter-spacing: 0.5px;
-}
-
 #questionText {
   width: 100%;
   font-size: 1.15rem;
@@ -174,14 +122,14 @@ pre {
 }
 
 :host {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 ::ng-deep .optionButton:not(.answered):hover {
@@ -199,6 +147,12 @@ pre {
 ::ng-deep .optionButton.answered {
   cursor: default;
   transform: none;
+}
+
+.draggable.dragging {
+  opacity: 0.5;
+  background-color: #f0f4ff;
+  border: 2px dashed #6c5ce7;
 }
 
 #questonInformation {
@@ -229,26 +183,6 @@ pre {
   line-height: 1.5;
   text-align: left;
   margin: 0;
-}
-
-#completionMessage {
-  font-size: 0.8rem !important;
-  line-height: 1.2;
-}
-
-.draggable.dragging {
-  opacity: 0.5;
-  background-color: #f0f4ff;
-  border: 2px dashed #6c5ce7;
-}
-
-.optionButton {
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  cursor: grab;
-}
-
-.optionButton:active {
-  cursor: grabbing;
 }
 
 #quizHeader {
@@ -284,12 +218,6 @@ pre {
   background-color: #e8f5e9;
   color: #2e7d32;
   border: 1px solid #c8e6c9;
-}
-
-.badge-difficulty {
-  background-color: #fff8e1;
-  color: #f57f17;
-  border: 1px solid #ffe082;
 }
 
 .question-counter-text {

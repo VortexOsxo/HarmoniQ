@@ -24,6 +24,8 @@ export class ResultArea {
   grade: number = 0;
   questionsLeftAvailable: boolean = false;
 
+  sortType: string = "";
+
   constructor(private cdr: ChangeDetectorRef,
     private gameService: GameService) {
   }
@@ -40,13 +42,34 @@ export class ResultArea {
     this.grade = this.gameService.getGoodAnswerNumber();
     this.goodGradeImage = this.grade > 7;
     this.questionsLeftAvailable = this.gameService.restartAvailable();
+    this.showfinalGrade();
     this.showFinalResults();
   }
 
-  showFinalResults() {
+  showfinalGrade(){
+    this.environmentMax = 0; this.energyMax = 0; this.economyMax = 0; //resetting the numbers
+    this.economyGrade = parseFloat(this.gameService.getEconomyNumber().toFixed(2));
+    this.environmentGrade = parseFloat(this.gameService.getEnvironmentNumber().toFixed(2));
+    this.energyGrade = parseFloat(this.gameService.getEnergyNumber().toFixed(2));
+    const questionAspect: string[] = this.gameService.getQuestionAspect();
+    questionAspect.forEach((question: string) => {
+              if (question == 'economy') {
+          this.economyMax += 1;
+        }
+        if (question == 'energy') {
+          this.energyMax += 1;
+        }
+        if (question == 'environment') {
+          this.environmentMax += 1;
+        }
+    })
+  }
+
+  showFinalResults(sorter: string = "") {
 
     const questionPlaceHolder = document.getElementById("answerReviewBox");
     const questionData = this.gameService.getAnsweredQuestions();
+    const questionAspect = this.gameService.getQuestionAspect();
 
     if (questionPlaceHolder) {
       questionPlaceHolder.innerHTML = '';
@@ -55,29 +78,12 @@ export class ResultArea {
         const questionText = questionData.questions[i];
         const userAnswerText = questionData.answers[i];
         const correctAnswerText = questionData.correctAnswers[i];
-        const questionAspect = questionData.questionAspect[i];
+        const color = questionData.color[i];
 
-        const isCorrect = (userAnswerText === correctAnswerText);
-        if (questionAspect == 'economy') {
-          this.economyMax += 1;
-          if (isCorrect) this.economyGrade += 1;
-        }
-        if (questionAspect == 'energy') {
-          this.energyMax += 1;
-          if (isCorrect) this.energyGrade += 1;
-        }
-        if (questionAspect == 'environment') {
-          this.environmentMax += 1;
-          if (isCorrect) this.environmentGrade += 1;
-        }
-
+        if (sorter == questionAspect[i] || sorter == ""){
 
         const reviewItem = document.createElement('div');
         reviewItem.className = 'reviewItem';
-
-        const statusIcon = document.createElement('span');
-        statusIcon.className = `statusIcon ${isCorrect ? 'correct' : 'incorrect'}`;
-        statusIcon.textContent = isCorrect ? '✅' : '❌';
 
         const reviewContent = document.createElement('div');
         reviewContent.className = 'reviewContent';
@@ -87,27 +93,42 @@ export class ResultArea {
         qText.textContent = `Q${i + 1}: ${questionText}`;
 
         const uAnswer = document.createElement('p');
-        uAnswer.className = `reviewUserAnswer ${!isCorrect ? 'incorrectText' : ''}`;
+        uAnswer.className = `reviewUserAnswer ${color}`;
         uAnswer.textContent = `Votre réponse: ${userAnswerText}`;
 
         reviewContent.appendChild(qText);
         reviewContent.appendChild(uAnswer);
 
         //if its not correct, we add the answer below
-        if (!isCorrect) {
+        if (!(userAnswerText === correctAnswerText)) {
           const cAnswer = document.createElement('p');
           cAnswer.className = 'reviewCorrectAnswer';
           cAnswer.textContent = `Réponse correcte: ${correctAnswerText}`;
           reviewContent.appendChild(cAnswer);
         }
 
-        reviewItem.appendChild(statusIcon);
         reviewItem.appendChild(reviewContent);
         questionPlaceHolder.appendChild(reviewItem);
-      }
+      }}
     }
 
     this.cdr.detectChanges();
+  }
+
+  sortFinalResults(sorter: string): void {
+   if (sorter == this.sortType){
+    this.sortType = "";
+    this.showFinalResults("");}
+   else if (sorter == "economy") {
+    this.sortType = sorter;
+    this.showFinalResults(sorter)
+   } else if (sorter == "energy") {
+    this.sortType = sorter;
+    this.showFinalResults(sorter);
+   } else if (sorter == "environment") {
+    this.sortType = sorter;
+    this.showFinalResults(sorter);
+   }
   }
 
   get totalQuestions(): number {

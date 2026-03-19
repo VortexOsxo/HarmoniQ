@@ -82,7 +82,7 @@
   padding: 0.4rem 0.6rem;
   border-radius: 10px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   gap: 0.1rem;
 }
 
@@ -102,9 +102,21 @@
   color: #111827;
 }
 
-.yellowCard { background-color: #fef3c7; }
-.greenCard { background-color: #d1fae5; }
-.blueCard { background-color: #dbeafe; }
+.scoreCard:hover {
+  cursor: pointer;
+}
+
+.yellowCard {
+  background-color: #fef3c7;
+}
+
+.greenCard {
+  background-color: #d1fae5;
+}
+
+.blueCard {
+  background-color: #dbeafe;
+}
 
 #answersReview {
   width: 100%;
@@ -166,8 +178,16 @@
   margin: 0;
 }
 
-.reviewUserAnswer.incorrectText {
-  color: #ef4444;
+::ng-deep .reviewUserAnswer.red {
+  color: #ef4444 !important;
+}
+
+::ng-deep .reviewUserAnswer.green {
+  color: #10b981 !important;
+}
+
+::ng-deep .reviewUserAnswer.orange {
+  color: orange !important;
 }
 
 .reviewCorrectAnswer {
@@ -212,18 +232,13 @@
   margin-top: 1rem;
 }
 
-#completionMessage {
-  font-size: 0.8rem !important;
-  line-height: 1.2;
-}
-
-#resultsContainer img {
-  width: 35px;
-  margin: 0.2rem 0;
-}
-
-#resultsContainer h1 {
-  font-size: 0.9rem;
-  text-align: center;
-  margin: 0.2rem 0;
+img {
+  height: 1em;
+  width: auto;
+  /* Maintains aspect ratio */
+  max-width: 1em;
+  /* Ensures it doesn't exceed emoji width */
+  vertical-align: -0.125em;
+  /* Aligns it with the baseline of text */
+  display: inline-block;
 }
