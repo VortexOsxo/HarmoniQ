@@ -6,9 +6,11 @@ import { CommonModule } from '@angular/common';
 import { GraphService, graphServiceConfig } from '@app/services/graph-service';
 import { forkJoin } from 'rxjs';
 
+import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
+
 @Component({
   selector: 'app-simulation-single-infra-modal',
-  imports: [CommonModule],
+  imports: [CommonModule, GranularitySelectorComponent],
   templateUrl: './simulation-single-infra-modal.html',
   styleUrl: './simulation-single-infra-modal.css',
 })
@@ -23,6 +25,9 @@ export class SimulationSingleInfraModal implements OnInit {
   config = graphServiceConfig;
   costs?: any;
   emissions?: any;
+
+  selectedGranularity = 'original';
+  productionData: any;
 
   get label() {
     return `Simulation de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
@@ -42,6 +47,13 @@ export class SimulationSingleInfraModal implements OnInit {
     this.initEmissions();
   }
 
+  onGranularityChange(granularity: string) {
+    this.selectedGranularity = granularity;
+    if (this.productionData) {
+      this.graphService.generateProductionSingleInfraGraph(this.type, this.productionData, this.selectedGranularity);
+    }
+  }
+
   private initProduction() {
     const obs = this.simulationService.launchSimulationSingleInfra(this.type, this.id);
     if (!obs) return;
@@ -49,7 +61,8 @@ export class SimulationSingleInfraModal implements OnInit {
     obs.subscribe({
       next: (data) => {
         this.isLoading = false;
-        this.graphService.generateProductionSingleInfraGraph(this.type, data);
+        this.productionData = data;
+        this.graphService.generateProductionSingleInfraGraph(this.type, data, this.selectedGranularity);
         this.cdr.detectChanges();
       },
       error: (e) => {
