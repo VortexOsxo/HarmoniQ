@@ -22,9 +22,6 @@ export class SimulationTemporalGraphService {
         private http: HttpClient,
     ) { }
 
-    display() { }
-    undisplay() { }
-
     async generate(scenario: Scenario) {
         const url = `${environment.apiUrl}/reseau/production?is_journalier=false`;
 
@@ -34,18 +31,13 @@ export class SimulationTemporalGraphService {
         };
 
 
-        let simulationResult;
-        let demandeResult;
         if (scenario.id != this.cachedScenarioId) {
             this.cachedScenarioId = scenario.id;
             this.cachedSimulationResult = await firstValueFrom(this.http.post(url, payload));
             this.cachedDemandeResult = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/temporal`, scenario));
         }
-        simulationResult = this.cachedSimulationResult;
-        demandeResult = this.cachedDemandeResult;
 
-
-        return this.handleData(simulationResult, demandeResult);
+        return this.handleData(this.cachedSimulationResult, this.cachedDemandeResult);
     }
 
     protected handleData(simulationResult: any, demandeResult: any) {
@@ -167,7 +159,6 @@ export class SimulationTemporalGraphService {
             }
 
         } as any);
-        return true;
     }
 
     clear() {

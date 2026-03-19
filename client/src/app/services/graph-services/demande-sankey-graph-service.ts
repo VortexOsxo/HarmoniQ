@@ -16,18 +16,16 @@ export class DemandeSankeyGraphService {
 
     constructor(private http: HttpClient) { }
 
-    display() { }
-    undisplay() { }
-
     async generate(scenario: Scenario) {
+        this.tempShouldShowSignal.set(false);
         const mrc_id = 1;
 
-        let data;
-        if (scenario.id != this.cachedScenarioId)
-            data = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/sankey?CUID=${mrc_id}`, scenario));
-        else
-            data = this.cachedData;
-        return this.handleData(data);
+        if (scenario.id != this.cachedScenarioId) {
+            this.cachedScenarioId = scenario.id;
+            this.cachedData = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/sankey?CUID=${mrc_id}`, scenario));
+        }
+
+        return this.handleData(this.cachedData);
     }
 
     protected handleData(apidata: any) {

@@ -3,8 +3,6 @@ import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
-import { Subject } from 'rxjs';
-import { Router } from '@angular/router';
 import { DemandeTemporalGraphService } from './graph-services/demande-temporal-graph-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
@@ -16,15 +14,9 @@ export class SimulationService {
   canLaunch = computed(() => this.infrastructuresService.selectedInfraGroup() !== null && this.scenariosService.selectedScenario() !== null);
   step = signal<string>('Initialisation');
 
-  simulationResultsReceived = new Subject<void>();
-
-  private cachedSimulationResult: any = null;
-  private cachedDemandeTemporal: any = null;
-
   constructor(
     private scenariosService: ScenariosService,
     private infrastructuresService: InfrastruturesService,
-    private router: Router,
     private http: HttpClient,
     private demandeTemporalGraphService: DemandeTemporalGraphService,
     private demandeSankeyGraphService: DemandeSankeyGraphService,
@@ -58,17 +50,11 @@ export class SimulationService {
     return this.http.post(url, payload);
   }
 
-  hasSimulationResults() {
-    return !!this.cachedSimulationResult;
-  }
-
   async launchSimulation() {
     const scenario = this.scenariosService.selectedScenario();
     const infraGroup = this.infrastructuresService.selectedInfraGroup();
 
     if (!scenario || !infraGroup) return;
-
-    this.router.navigate(["/simulation"]);
 
     this.step.set('Generation de la demande des differents secteurs');
     await this.demandeSankeyGraphService.generate(scenario);
@@ -83,23 +69,25 @@ export class SimulationService {
   }
 
   hasExportableData(): boolean {
-    return this.cachedSimulationResult !== null || this.cachedDemandeTemporal !== null;
+    const cachedSimulationResult = null;
+    const cachedDemandeTemporal = null;
+    return false && (cachedSimulationResult !== null || cachedDemandeTemporal !== null);
   }
 
   exportSimulationToCSV(): void {
-    if (!this.cachedSimulationResult && !this.cachedDemandeTemporal) {
-      console.warn('No simulation data available to export');
-      return;
-    }
+    console.warn('No simulation data available to export');
+    return;
+    const cachedSimulationResult: any = null;
+    const cachedDemandeTemporal: any = null;
 
     const headers = ['Date', 'Demande (MW)', 'Production Totale (MW)', 'Éolien (MW)', 'Solaire (MW)',
       'Hydro Fil (MW)', 'Hydro Réservoir (MW)', 'Importations (MW)', 'Nucléaire (MW)', 'Thermique (MW)'];
 
     const rows: string[] = [headers.join(',')];
 
-    if (this.cachedSimulationResult && this.cachedSimulationResult.production) {
-      const productionData = this.cachedSimulationResult.production;
-      const demandeData = this.cachedDemandeTemporal?.total_electricity || {};
+    if (cachedSimulationResult && cachedSimulationResult.production) {
+      const productionData = cachedSimulationResult.production;
+      const demandeData = cachedDemandeTemporal?.total_electricity || {};
 
       productionData.forEach((instance: any) => {
         // TODO : we can modify the precision if needed later (talk w meca people)
@@ -119,9 +107,9 @@ export class SimulationService {
         ];
         rows.push(row.join(','));
       });
-    } else if (this.cachedDemandeTemporal) {
+    } else if (cachedDemandeTemporal) {
       //if no simulation result, we export only the demand data
-      const demandeData = this.cachedDemandeTemporal.total_electricity;
+      const demandeData = cachedDemandeTemporal.total_electricity;
       Object.keys(demandeData).forEach((date: string) => {
         const row = [
           date,

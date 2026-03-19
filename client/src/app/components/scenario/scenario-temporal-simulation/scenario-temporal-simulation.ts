@@ -12,11 +12,4 @@ export class ScenarioTemporalSimulation {
 
   constructor(private graphService: DemandeTemporalGraphService) { }
 
-  ngAfterViewInit(): void {
-    this.graphService.display();
-  }
-
-  ngOnDestroy(): void {
-    this.graphService.undisplay();
-  }
 }

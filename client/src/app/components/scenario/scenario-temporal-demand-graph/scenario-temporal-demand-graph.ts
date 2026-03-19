@@ -8,17 +8,9 @@ import { DemandeTemporalGraphService } from '@app/services/graph-services/demand
   imports: [CommonModule],
   templateUrl: './scenario-temporal-demand-graph.html',
 })
-export class ScenarioTemporalDemandGraph implements AfterViewInit, OnDestroy {
+export class ScenarioTemporalDemandGraph {
   config = graphServiceConfig;
 
   constructor(private graphService: DemandeTemporalGraphService) { }
-
-  ngAfterViewInit(): void {
-    this.graphService.display();
-  }
-
-  ngOnDestroy(): void {
-    this.graphService.undisplay();
-  }
 }
 

@@ -19,23 +19,19 @@ export class DemandeTemporalGraphService {
         private http: HttpClient,
     ) { }
 
-    display() { }
-    undisplay() { }
-
     async generate(scenario: Scenario) {
-        let data;
-        if (scenario.id != this.cachedScenarioId)
-            data = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/temporal`, scenario));
-        else
-            data = this.cachedData;
-        return this.handleData(data);
+        if (scenario.id != this.cachedScenarioId) {
+            this.cachedScenarioId = scenario.id;
+            this.cachedData = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/temporal`, scenario));
+        }
+        return this.handleData(this.cachedData);
     }
 
     protected handleData(apidata: any) {
         const xval = Object.keys(apidata.total_electricity);
         const yval = Object.values(apidata.total_electricity).map((value: any) => value / 1000);
 
-        this.cachedData = [{
+        const graphData = [{
             x: xval,
             y: yval,
             type: 'scatter',
@@ -45,10 +41,10 @@ export class DemandeTemporalGraphService {
             hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
         }];
 
-        this.generateGraph();
+        this.generateGraph(graphData);
     }
 
-    private generateGraph() {
+    private generateGraph(graphData: any) {
         const layout: any = {
             title: "Demande pour scénario " + this.scenariosService.selectedScenario()?.nom,
             height: 800,
@@ -69,7 +65,7 @@ export class DemandeTemporalGraphService {
             },
         };
 
-        Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, this.cachedData, layout);
+        Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, graphData, layout);
     }
 
     clear() {
