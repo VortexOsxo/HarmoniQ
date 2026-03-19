@@ -40,6 +40,7 @@
         transform: translateY(20px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -126,4 +127,10 @@
 .btn-link:hover {
     transform: translateX(-4px);
     opacity: 0.8;
+}
+
+.scenario-name {
+    color: white;
+    font-size: 24px;
+    margin: 0px;
 }

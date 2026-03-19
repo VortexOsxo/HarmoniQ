@@ -7,6 +7,11 @@
     </div>
 
     <div class="nav-section center-section">
+        <p class="scenario-name"> Scénario: {{scenarioService.selectedScenario()?.nom}}</p>
+
+    </div>
+
+    <div class="nav-section right-section">
         @if (simulationService.step() !== '') {
         <div class="step-indicator">
             <div class="step-badge d-flex align-items-center">
@@ -20,8 +25,5 @@
             </div>
         </div>
         }
-    </div>
-
-    <div class="nav-section right-section">
     </div>
 </nav>
