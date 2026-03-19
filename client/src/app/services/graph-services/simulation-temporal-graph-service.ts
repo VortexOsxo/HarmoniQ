@@ -176,6 +176,9 @@ export class SimulationTemporalGraphService implements SimulationStep {
         } as any);
     }
 
+    getCachedSimulationResult(): any { return this.cachedSimulationResult; }
+    getCachedDemandeResult(): any { return this.cachedDemandeResult; }
+
     getProductionNodes(): ProductionNode[] {
         if (!this.cachedSimulationResult?.production?.length) return [];
         const data: any[] = this.cachedSimulationResult.production;

@@ -90,10 +90,87 @@ export class SimulationService {
     }
 
     hasExportableData(): boolean {
-        return false;
+        return (
+            !!this.simulationTemporalGraphService.getCachedSimulationResult() ||
+            !!this.simulationTemporalGraphService.getCachedDemandeResult()
+        );
     }
 
     exportSimulationToCSV(): void {
-        console.warn('No simulation data available to export');
+        const simulationResult = this.simulationTemporalGraphService.getCachedSimulationResult();
+        const demandeResult = this.simulationTemporalGraphService.getCachedDemandeResult();
+
+        if (!simulationResult && !demandeResult) {
+            console.warn('No simulation data available to export');
+            return;
+        }
+
+        const headers = [
+            'Date',
+            'Demande (MW)',
+            'Production Totale (MW)',
+            'Éolien (MW)',
+            'Solaire (MW)',
+            'Hydro Fil (MW)',
+            'Hydro Réservoir (MW)',
+            'Importations (MW)',
+            'Nucléaire (MW)',
+            'Thermique (MW)',
+        ];
+        const rows: string[] = [headers.join(',')];
+
+        if (simulationResult?.production) {
+            const demandeData = demandeResult?.total_electricity || {};
+            simulationResult.production.forEach((instance: any) => {
+                const date = instance['snapshot'];
+                const demande = demandeData[date] ? (demandeData[date] / 1000).toFixed(2) : '';
+                rows.push(
+                    [
+                        date,
+                        demande,
+                        instance['totale']?.toFixed(2) || '',
+                        instance['total_eolien']?.toFixed(2) || '',
+                        instance['total_solaire']?.toFixed(2) || '',
+                        instance['total_hydro_fil']?.toFixed(2) || '',
+                        instance['total_hydro_reservoir']?.toFixed(2) || '',
+                        instance['total_import']?.toFixed(2) || '',
+                        instance['total_nucleaire']?.toFixed(2) || '',
+                        instance['total_thermique']?.toFixed(2) || '',
+                    ].join(','),
+                );
+            });
+        } else if (demandeResult) {
+            const demandeData = demandeResult.total_electricity;
+            Object.keys(demandeData).forEach((date: string) => {
+                rows.push(
+                    [
+                        date,
+                        (demandeData[date] / 1000).toFixed(2),
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                        '',
+                    ].join(','),
+                );
+            });
+        }
+
+        const csvContent = rows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const scenarioName = this.scenariosService.selectedScenario()?.nom || 'simulation';
+        const filename = `simulation_${scenarioName}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 }
