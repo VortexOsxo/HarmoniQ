@@ -1,4 +1,4 @@
-import { signal, Injectable, computed, } from '@angular/core';
+import { signal, Injectable, computed, inject } from '@angular/core';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
@@ -6,13 +6,16 @@ import { environment } from 'environments/environment';
 import { DemandeTemporalGraphService } from './graph-services/demande-temporal-graph-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
+import { SimulationStepService } from './simulation-step-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SimulationService {
   canLaunch = computed(() => this.infrastructuresService.selectedInfraGroup() !== null && this.scenariosService.selectedScenario() !== null);
-  step = signal<string>('Initialisation');
+  
+  private simulationStepService = inject(SimulationStepService);
+  step = computed(() => this.simulationStepService.currentStepName());
 
   constructor(
     private scenariosService: ScenariosService,
@@ -56,16 +59,13 @@ export class SimulationService {
 
     if (!scenario || !infraGroup) return;
 
-    this.step.set('Generation de la demande des differents secteurs');
-    await this.demandeSankeyGraphService.generate(scenario);
+    const steps = [
+      this.demandeSankeyGraphService,
+      this.demandeTemporalGraphService,
+      this.simulationTemporalGraphService
+    ]
 
-    this.step.set('Generation de la demande temporelle');
-    await this.demandeTemporalGraphService.generate(scenario);
-
-    this.step.set('Simulation Complete');
-    await this.simulationTemporalGraphService.generate(scenario);
-
-    this.step.set('Simulation termine');
+    await this.simulationStepService.runSteps(steps, scenario);
   }
 
   hasExportableData(): boolean {

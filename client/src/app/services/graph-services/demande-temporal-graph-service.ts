@@ -6,11 +6,12 @@ import { graphServiceConfig } from '@app/services/graph-service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import { firstValueFrom } from 'rxjs';
+import { SimulationStep } from '@app/models/interfaces/simulation-step';
 
 @Injectable({
     providedIn: 'root',
 })
-export class DemandeTemporalGraphService {
+export class DemandeTemporalGraphService implements SimulationStep {
     private cachedData: any;
     private cachedScenarioId?: number;
 
@@ -18,6 +19,10 @@ export class DemandeTemporalGraphService {
         private scenariosService: ScenariosService,
         private http: HttpClient,
     ) { }
+
+    getStepName(): string {
+        return 'Generation de la demande temporelle';
+    }
 
     async generate(scenario: Scenario) {
         if (scenario.id != this.cachedScenarioId) {

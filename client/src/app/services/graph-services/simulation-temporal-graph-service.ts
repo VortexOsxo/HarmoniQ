@@ -7,11 +7,12 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { InfrastruturesService } from '../infrastrutures-service';
+import { SimulationStep } from '@app/models/interfaces/simulation-step';
 
 @Injectable({
     providedIn: 'root',
 })
-export class SimulationTemporalGraphService {
+export class SimulationTemporalGraphService implements SimulationStep {
     private cachedScenarioId?: number;
     private cachedSimulationResult: any;
     private cachedDemandeResult: any;
@@ -21,6 +22,10 @@ export class SimulationTemporalGraphService {
         private infrastructuresService: InfrastruturesService,
         private http: HttpClient,
     ) { }
+
+    getStepName(): string {
+        return 'Simulation du reseau complet';
+    }
 
     async generate(scenario: Scenario) {
         const url = `${environment.apiUrl}/reseau/production?is_journalier=false`;

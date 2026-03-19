@@ -1,11 +1,39 @@
 <div class="simulation-view">
     <app-simulation-top-bar />
 
-    <main class="page-content">
-        <div class="graph-content">
-            <app-scenario-demand-prod-sankey />
-            <app-scenario-temporal-demand-graph />
-            <app-scenario-temporal-simulation />
-        </div>
-    </main>
+    <div class="main-layout">
+
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-header d-flex align-items-center justify-content-between bg-primary text-white p-3">
+                    <h3 class="m-0 fs-5 fw-bold">Étapes de Simulation</h3>
+                </div>
+                <div class="step-list">
+                    @for (step of stepService.steps(); track step.name; let i = $index) {
+                    <div class="step-item" [class.active]="stepService.currentStepIndex() === i"
+                        [class.completed]="step.status === 'completed'">
+                        <div class="step-status-icon">
+                            @if (step.status === 'completed') {
+                            <i class="fa-solid fa-circle-check text-success"></i>
+                            } @else if (step.status === 'loading') {
+                            <i class="fa-solid fa-circle-notch fa-spin text-primary"></i>
+                            } @else {
+                            <i class="fa-regular fa-circle text-muted"></i>
+                            }
+                        </div>
+                        <span class="step-name">{{ step.name }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+        </aside>
+
+        <main class="page-content">
+            <div class="graph-content">
+                <app-scenario-demand-prod-sankey />
+                <app-scenario-temporal-demand-graph />
+                <app-scenario-temporal-simulation />
+            </div>
+        </main>
+    </div>
 </div>

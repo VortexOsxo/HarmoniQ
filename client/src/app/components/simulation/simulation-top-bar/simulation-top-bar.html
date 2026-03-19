@@ -12,18 +12,5 @@
     </div>
 
     <div class="nav-section right-section">
-        @if (simulationService.step() !== '') {
-        <div class="step-indicator">
-            <div class="step-badge d-flex align-items-center">
-                <div class="status-dot-container me-3">
-                    <div class="status-dot"></div>
-                    <div class="status-pulse"></div>
-                </div>
-                <div class="step-content">
-                    <div class="step-value text-truncate">{{ simulationService.step() }}</div>
-                </div>
-            </div>
-        </div>
-        }
     </div>
 </nav>

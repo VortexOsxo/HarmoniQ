@@ -3,18 +3,23 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import { Scenario } from '@app/models/scenario';
 import { firstValueFrom } from 'rxjs';
+import { SimulationStep } from '@app/models/interfaces/simulation-step';
 
 
 @Injectable({
     providedIn: 'root',
 })
-export class DemandeSankeyGraphService {
+export class DemandeSankeyGraphService implements SimulationStep {
     private cachedData: any;
     private cachedScenarioId?: number;
 
     tempShouldShowSignal = signal(false);
 
     constructor(private http: HttpClient) { }
+
+    getStepName(): string {
+        return 'Generation de la demande des differents secteurs';
+    }
 
     async generate(scenario: Scenario) {
         this.tempShouldShowSignal.set(false);
