@@ -1,60 +1,30 @@
-import { Component, OnDestroy, AfterViewInit } from '@angular/core';
-import { NavigationBar } from '@app/components/navigation-bar/navigation-bar';
-import { SimulationLauncher } from '@app/components/simulation/simulation-launcher/simulation-launcher';
-import { ScenarioSelector } from '@app/components/scenario/scenario-selector/scenario-selector';
-import { InfrastructureSelector } from '@app/components/infrastructure/infrastructure-selector/infrastructure-selector';
-import { SimulationResults } from '@app/components/simulation/simulation-results/simulation-results';
-import { TutorialOverlay } from '@app/components/tutorial-overlay/tutorial-overlay';
+import { AfterViewInit, Component, inject } from '@angular/core';
+import { SimulationTopBar } from '@app/components/simulation/simulation-top-bar/simulation-top-bar';
 import { CommonModule } from '@angular/common';
-import { TutorialService } from '@app/services/tutorial-service';
-import { InfraDetailService } from '@app/services/infra-detail-service';
+import { ScenarioTemporalDemandGraph } from "@app/components/scenario/scenario-temporal-demand-graph/scenario-temporal-demand-graph";
+import { ScenarioDemandProdSankey } from "@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey";
+import { ScenarioTemporalSimulation } from "@app/components/scenario/scenario-temporal-simulation/scenario-temporal-simulation";
 import { SimulationService } from '@app/services/simulation-service';
-import { Subscription } from 'rxjs';
+import { SimulationStepService } from '@app/services/simulation-step-service';
 
 @Component({
   selector: 'app-simulation-page',
-  imports: [CommonModule, NavigationBar, SimulationLauncher, ScenarioSelector, InfrastructureSelector, SimulationResults, TutorialOverlay],
+  standalone: true,
+  imports: [SimulationTopBar, CommonModule, ScenarioTemporalDemandGraph, ScenarioDemandProdSankey, ScenarioTemporalSimulation],
   templateUrl: './simulation-page.html',
   styleUrl: './simulation-page.css',
 })
-export class SimulationPage implements OnDestroy, AfterViewInit {
-  showSourcesPanel = false;
-  private tutorialSub: Subscription;
-  private panelSub: Subscription;
+export class SimulationPage implements AfterViewInit {
+  simulationService = inject(SimulationService);
+  stepService = inject(SimulationStepService);
 
-  constructor(
-    public tutorialService: TutorialService,
-    private infraDetailService: InfraDetailService,
-    private simulationService: SimulationService,
-  ) {
-    this.tutorialSub = this.tutorialService.tutorialState$.subscribe((s) => {
-      if (s.active && s.showWelcome) {
-        this.closeSourcesPanel();
-      }
-    });
-    this.panelSub = this.simulationService.openSourcesPanel$.subscribe(() => {
-      this.showSourcesPanel = true;
-    });
+  ngAfterViewInit(): void {
+    this.simulationService.launchSimulation();
   }
 
-  ngAfterViewInit() {
-    // Slight delay to let the map and UI elements fully render
-    setTimeout(() => this.tutorialService.autoStart(), 500);
-  }
-
-  ngOnDestroy() {
-    this.tutorialSub.unsubscribe();
-    this.panelSub.unsubscribe();
-    this.infraDetailService.closeDetail();
-  }
-
-  toggleSourcesPanel() {
-    this.showSourcesPanel = !this.showSourcesPanel;
-  }
-
-  closeSourcesPanel() {
-    this.showSourcesPanel = false;
+  scrollToGraph(index: number) {
+    const element = document.getElementById(`step-${index}`);
+    if (element)
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
-
-

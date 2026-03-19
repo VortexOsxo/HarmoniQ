@@ -6,7 +6,6 @@ import { Co2DetailsData, SankeyData } from './sankey-data.types';
 import { buildCo2Details, PLACEHOLDER_SANKEY_DATA } from './sankey-placeholder.data';
 import { DemandeSankeyGraphService } from '@app/services/graph-services/demande-sankey-graph-service';
 import { ScenariosService } from '@app/services/scenarios-service';
-import { GraphState } from '@app/services/graph-services/base-graph-service';
 import { SimulationService } from '@app/services/simulation-service';
 
 @Component({
@@ -17,15 +16,9 @@ import { SimulationService } from '@app/services/simulation-service';
   styleUrl: './scenario-demand-prod-sankey.css',
 })
 export class ScenarioDemandProdSankey {
-  GraphState = GraphState;
-
   sankeyData: SankeyData = PLACEHOLDER_SANKEY_DATA;
   co2Data: Co2DetailsData = buildCo2Details(PLACEHOLDER_SANKEY_DATA);
   simulationRan = false;
-
-  get graphState() {
-    return this.graphService.state;
-  }
 
   get selectedScenario() {
     return this.scenariosService.selectedScenario;

@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import * as L from 'leaflet';
-import { LayerNode, LAYER_TREE, ALL_LAYER_IDS, DEFAULT_SELECTED_LAYERS, buildIdentifyHtml } from './protected-areas-utils';
+import { LayerNode, LAYER_TREE, ALL_LAYER_IDS, DEFAULT_SELECTED_LAYERS, buildIdentifyHtml, LAYER_NODE_MAP } from './protected-areas-utils';
 
 @Injectable({
     providedIn: 'root',
@@ -13,7 +13,7 @@ export class ProtectedAreasService {
     legendOpen = signal(false);
     selectedLayers = signal<Set<number>>(new Set(DEFAULT_SELECTED_LAYERS));
 
-    private tiledLayer?: L.TileLayer;
+    private tileLayers: L.TileLayer[] = [];
     private map?: L.Map;
     private clickHandler?: (e: L.LeafletMouseEvent) => void;
 
@@ -25,48 +25,115 @@ export class ProtectedAreasService {
     private rebuildTileLayer(): void {
         if (!this.map) return;
 
-        if (this.tiledLayer) {
-            this.map.removeLayer(this.tiledLayer);
-            this.tiledLayer = undefined;
+        if (this.tileLayers.length > 0) {
+            this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
+            this.tileLayers = [];
         }
 
         const selected = this.selectedLayers();
         if (selected.size === 0) return;
 
-        const layerIds = Array.from(selected).sort((a, b) => a - b).join(',');
+        const serverGroups = new Map<string, number[]>();
 
-        this.tiledLayer = L.tileLayer('');
+        for (const id of selected) {
+            const node = LAYER_NODE_MAP.get(id);
+            const url = node?.mapServerUrl || this.MAP_SERVER_URL;
+            if (!serverGroups.has(url)) serverGroups.set(url, []);
+            serverGroups.get(url)!.push(id);
+        }
 
-        this.tiledLayer.getTileUrl = (coords: L.Coords) => {
-            const tileSize = 256;
-            const nwPoint = coords.scaleBy(new L.Point(tileSize, tileSize));
-            const sePoint = nwPoint.add(new L.Point(tileSize, tileSize));
+        for (const [url, ids] of serverGroups.entries()) {
+            const tiledLayer = L.tileLayer('');
 
-            const nw = this.map!.unproject(nwPoint, coords.z);
-            const se = this.map!.unproject(sePoint, coords.z);
+            tiledLayer.getTileUrl = (coords: L.Coords) => {
+                const tileSize = 256;
+                const nwPoint = coords.scaleBy(new L.Point(tileSize, tileSize));
+                const sePoint = nwPoint.add(new L.Point(tileSize, tileSize));
 
-            const nwMerc = this.latLngToWebMercator(nw);
-            const seMerc = this.latLngToWebMercator(se);
+                const nw = this.map!.unproject(nwPoint, coords.z);
+                const se = this.map!.unproject(sePoint, coords.z);
 
-            const bbox = `${nwMerc.x},${seMerc.y},${seMerc.x},${nwMerc.y}`;
+                const nwMerc = this.latLngToWebMercator(nw);
+                const seMerc = this.latLngToWebMercator(se);
 
-            const dynamicLayers = Array.from(selected).map(id => ({
-                id,
-                source: { type: 'mapLayer', mapLayerId: id },
-                drawingInfo: { showLabels: false }, // enlever si on veux montrer le nom des territoires quand on zoom
-            }));
+                const bbox = `${nwMerc.x},${seMerc.y},${seMerc.x},${nwMerc.y}`;
 
-            return `${this.MAP_SERVER_URL}/export?` +
-                `dpi=96&transparent=true&format=png32&` +
-                `layers=show:${layerIds}&` +
-                `dynamicLayers=${encodeURIComponent(JSON.stringify(dynamicLayers))}&` +
-                `bbox=${bbox}&` +
-                `bboxSR=3857&imageSR=3857&` +
-                `size=${tileSize},${tileSize}&f=image`;
-        };
+                const isAuto = url.includes('STF_WMS');
+                const zoom = this.map!.getZoom();
 
-        if (this.isVisible()) {
-            this.tiledLayer.addTo(this.map);
+                const actualServerIds: { id: number, serverId: number, color?: number[] }[] = [];
+                ids.forEach(id => {
+                    const node = LAYER_NODE_MAP.get(id);
+                    if (node?.serverLayerIds) {
+                        node.serverLayerIds.forEach(sid => {
+                            actualServerIds.push({ id, serverId: sid, color: node.color });
+                        });
+                    } else {
+                        actualServerIds.push({ id, serverId: node?.serverLayerId !== undefined ? node.serverLayerId : id, color: node?.color });
+                    }
+                });
+
+                const dynamicLayers = actualServerIds.map(item => {
+                    let drawingInfo: any = { showLabels: false };
+
+                    if (item.color) {
+                        drawingInfo = {
+                            showLabels: false,
+                            renderer: {
+                                type: "simple",
+                                symbol: {
+                                    type: "esriSFS",
+                                    style: "esriSFSSolid",
+                                    color: item.color,
+                                    outline: {
+                                        type: "esriSLS",
+                                        style: "esriSLSSolid",
+                                        color: item.color.map((c, i) => i === 3 ? 255 : Math.max(0, c - 50)),
+                                        width: 1
+                                    }
+                                }
+                            }
+                        };
+                    }
+                    return {
+                        id: item.serverId,
+                        source: { type: 'mapLayer', mapLayerId: item.serverId },
+                        drawingInfo: drawingInfo
+                    };
+                });
+
+                const layerIds = actualServerIds.map(i => i.serverId).sort((a, b) => a - b).join(',');
+
+                const layerDefsObj: Record<number, string> = {};
+                actualServerIds.forEach(item => {
+                    const node = LAYER_NODE_MAP.get(item.id);
+                    if (node?.layerDef) {
+                        layerDefsObj[item.serverId] = node.layerDef;
+                    }
+                });
+                const layerDefsParam = Object.keys(layerDefsObj).length > 0 ? `&layerDefs=${encodeURIComponent(JSON.stringify(layerDefsObj))}` : '';
+
+                const useDynamicLayers = url === this.MAP_SERVER_URL;
+                const dynamicLayersParam = useDynamicLayers
+                    ? `&dynamicLayers=${encodeURIComponent(JSON.stringify(dynamicLayers))}`
+                    : '';
+
+                const reqDpi = isAuto && zoom < 10 ? 5 : 96;
+
+                const finalUrl = `${url}/export?` +
+                    `dpi=${reqDpi}&transparent=true&format=png32&` +
+                    `layers=show:${layerIds}` +
+                    dynamicLayersParam +
+                    `&bbox=${bbox}&` +
+                    `bboxSR=3857&imageSR=3857&` +
+                    `size=${tileSize},${tileSize}&f=image` + layerDefsParam;
+
+                return finalUrl;
+            };
+            if (this.isVisible()) {
+                tiledLayer.addTo(this.map);
+            }
+            this.tileLayers.push(tiledLayer);
         }
     }
 
@@ -160,22 +227,18 @@ export class ProtectedAreasService {
     }
 
     toggleVisibility(): void {
-        if (!this.tiledLayer || !this.map) {
+        if (this.tileLayers.length === 0 || !this.map) {
             this.rebuildTileLayer();
         }
 
         if (this.isVisible()) {
-            if (this.tiledLayer && this.map) {
-                this.map.removeLayer(this.tiledLayer);
-            }
+            this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
             this.map?.closePopup();
             this.isVisible.set(false);
             this.legendOpen.set(false);
             this.unregisterClickHandler();
         } else {
-            if (this.tiledLayer && this.map) {
-                this.tiledLayer.addTo(this.map);
-            }
+            this.tileLayers.forEach(layer => layer.addTo(this.map!));
             this.isVisible.set(true);
             this.legendOpen.set(true);
             this.registerClickHandler();
@@ -183,15 +246,16 @@ export class ProtectedAreasService {
     }
 
     show(): void {
-        if (!this.tiledLayer || !this.map || this.isVisible()) return;
-        this.tiledLayer.addTo(this.map);
+        if (!this.map || this.isVisible()) return;
+        if (this.tileLayers.length === 0) this.rebuildTileLayer();
+        this.tileLayers.forEach(layer => layer.addTo(this.map!));
         this.isVisible.set(true);
         this.registerClickHandler();
     }
 
     hide(): void {
-        if (!this.tiledLayer || !this.map || !this.isVisible()) return;
-        this.map.removeLayer(this.tiledLayer);
+        if (!this.map || !this.isVisible()) return;
+        this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
         this.isVisible.set(false);
         this.legendOpen.set(false);
         this.unregisterClickHandler();
@@ -230,7 +294,6 @@ export class ProtectedAreasService {
         const selected = this.selectedLayers();
         if (selected.size === 0) return null;
 
-        const layerIds = Array.from(selected).sort((a, b) => a - b).join(',');
         const point = this.map.latLngToContainerPoint(latlng);
         const size = this.map.getSize();
         const bounds = this.map.getBounds();
@@ -239,29 +302,65 @@ export class ProtectedAreasService {
         const ne = this.latLngToWebMercator(bounds.getNorthEast());
         const envelope = `${sw.x},${sw.y},${ne.x},${ne.y}`;
 
-        const url = `${this.MAP_SERVER_URL}/identify?` +
-            `geometry=${this.latLngToWebMercator(latlng).x},${this.latLngToWebMercator(latlng).y}&` +
-            `geometryType=esriGeometryPoint&` +
-            `sr=3857&` +
-            `layers=visible:${layerIds}&` +
-            `tolerance=5&` +
-            `mapExtent=${envelope}&` +
-            `imageDisplay=${size.x},${size.y},96&` +
-            `returnGeometry=false&` +
-            `f=json`;
+        const serverGroups = new Map<string, number[]>();
+        for (const id of selected) {
+            const node = LAYER_NODE_MAP.get(id);
+            if (!node) continue;
+            const url = node.mapServerUrl || this.MAP_SERVER_URL;
+            if (!serverGroups.has(url)) serverGroups.set(url, []);
 
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (!data.results || data.results.length === 0) return null;
-
-            const result = data.results[0];
-            return buildIdentifyHtml(result.attributes);
-        } catch (err) {
-            console.error('Protected areas identify failed:', err);
-            return null;
+            if (node.serverLayerIds) {
+                serverGroups.get(url)!.push(...node.serverLayerIds);
+            } else {
+                serverGroups.get(url)!.push(node.serverLayerId !== undefined ? node.serverLayerId : id);
+            }
         }
+
+        const zoom = this.map.getZoom();
+        for (const [url, serverIds] of serverGroups.entries()) {
+            const isAuto = url.includes('STF_WMS');
+            const reqDpi = isAuto && zoom < 10 ? 5 : 96;
+
+            const layerIds = serverIds.sort((a, b) => a - b).join(',');
+
+            const layerDefsObj: Record<number, string> = {};
+            for (const id of selected) {
+                const node = LAYER_NODE_MAP.get(id);
+                const nodeUrl = node?.mapServerUrl || this.MAP_SERVER_URL;
+                if (nodeUrl !== url) continue;
+                if (node?.layerDef) {
+                    if (node.serverLayerIds) {
+                        node.serverLayerIds.forEach(sid => layerDefsObj[sid] = node.layerDef!);
+                    } else {
+                        layerDefsObj[node.serverLayerId !== undefined ? node.serverLayerId : id] = node.layerDef;
+                    }
+                }
+            }
+            const layerDefsParam = Object.keys(layerDefsObj).length > 0 ? `&layerDefs=${encodeURIComponent(JSON.stringify(layerDefsObj))}` : '';
+
+            const reqUrl = `${url}/identify?` +
+                `geometry=${this.latLngToWebMercator(latlng).x},${this.latLngToWebMercator(latlng).y}&` +
+                `geometryType=esriGeometryPoint&` +
+                `sr=3857&` +
+                `layers=visible:${layerIds}&` +
+                `tolerance=5&` +
+                `mapExtent=${envelope}&` +
+                `imageDisplay=${size.x},${size.y},${reqDpi}&` +
+                `returnGeometry=false&` +
+                `f=json` + layerDefsParam;
+
+            try {
+                const response = await fetch(reqUrl);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    return buildIdentifyHtml(data.results[0].attributes);
+                }
+            } catch (err) {
+                console.error('Protected areas identify failed:', err);
+            }
+        }
+        return null;
     }
 
     private protectedAreaCache = new Map<string, Promise<string | null>>();
@@ -285,43 +384,74 @@ export class ProtectedAreasService {
         const imgSize = 256;
         const envelope = `${x - delta},${y - delta},${x + delta},${y + delta}`;
 
-        const allIds = ALL_LAYER_IDS.join(',');
+        const serverGroups = new Map<string, number[]>();
+        for (const id of ALL_LAYER_IDS) {
+            const node = LAYER_NODE_MAP.get(id);
+            if (!node) continue;
+            const url = node.mapServerUrl || this.MAP_SERVER_URL;
+            if (!serverGroups.has(url)) serverGroups.set(url, []);
 
-        const url = `${this.MAP_SERVER_URL}/identify?` +
-            `geometry=${x},${y}&` +
-            `geometryType=esriGeometryPoint&` +
-            `sr=3857&` +
-            `layers=all:${allIds}&` +
-            `tolerance=1&` +
-            `mapExtent=${envelope}&` +
-            `imageDisplay=${imgSize},${imgSize},96&` +
-            `returnGeometry=false&` +
-            `f=json`;
-
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            if (!data.results || data.results.length === 0) return null;
-
-            const attrs = data.results[0].attributes;
-            return attrs['Toponyme'] || attrs['TOPONYME'] || 'Aire protégée';
-        } catch {
-            return null;
+            if (node.serverLayerIds) {
+                serverGroups.get(url)!.push(...node.serverLayerIds);
+            } else {
+                serverGroups.get(url)!.push(node.serverLayerId !== undefined ? node.serverLayerId : id);
+            }
         }
+
+        for (const [url, serverIds] of serverGroups.entries()) {
+            const layerIds = serverIds.sort((a, b) => a - b).join(',');
+
+            const layerDefsObj: Record<number, string> = {};
+            for (const id of ALL_LAYER_IDS) {
+                const node = LAYER_NODE_MAP.get(id);
+                const nodeUrl = node?.mapServerUrl || this.MAP_SERVER_URL;
+                if (nodeUrl !== url) continue;
+                if (node?.layerDef) {
+                    if (node.serverLayerIds) {
+                        node.serverLayerIds.forEach(sid => layerDefsObj[sid] = node.layerDef!);
+                    } else {
+                        layerDefsObj[node.serverLayerId !== undefined ? node.serverLayerId : id] = node.layerDef;
+                    }
+                }
+            }
+            const layerDefsParam = Object.keys(layerDefsObj).length > 0 ? `&layerDefs=${encodeURIComponent(JSON.stringify(layerDefsObj))}` : '';
+
+            const reqUrl = `${url}/identify?` +
+                `geometry=${x},${y}&` +
+                `geometryType=esriGeometryPoint&` +
+                `sr=3857&` +
+                `layers=all:${layerIds}&` +
+                `tolerance=1&` +
+                `mapExtent=${envelope}&` +
+                `imageDisplay=${imgSize},${imgSize},96&` +
+                `returnGeometry=false&` +
+                `f=json` + layerDefsParam;
+
+            try {
+                const response = await fetch(reqUrl);
+                const data = await response.json();
+                if (data.results && data.results.length > 0) {
+                    const attrs = data.results[0].attributes;
+                    let title = attrs['Toponyme'] || attrs['TOPONYME'] || attrs['NOM_ID_MGE'] || attrs['Nom_identification'] || attrs['NAME_F'] || attrs['NAME_E'] || attrs['FNAME'] || attrs['Nom de la réserve indienne ou de la terre indienne'];
+                    const isAuto = attrs['GEOCODE'] || attrs['Identifiant_unique'] || attrs['DOMANIALIT'] || attrs['Domanialité'] || attrs['NOM_ID_MGE'] || attrs['Nom_identification'];
+                    if (isAuto && title) return `Communauté autochtone de ${title}`;
+                    if (isAuto) return 'Communauté autochtone';
+                    return title || 'Aire protégée';
+                }
+            } catch {
+            }
+        }
+        return null;
     }
 
     destroy(): void {
         this.unregisterClickHandler();
-        if (this.tiledLayer) {
-            this.tiledLayer.off('loading');
-            this.tiledLayer.off('load');
-            this.tiledLayer.off('tileerror');
-
-            if (this.map) {
-                this.map.removeLayer(this.tiledLayer);
-            }
-        }
-        this.tiledLayer = undefined;
+        this.tileLayers.forEach(layer => {
+            layer.off('loading');
+            layer.off('load');
+            if (this.map) this.map.removeLayer(layer);
+        });
+        this.tileLayers = [];
         this.map = undefined;
         this.isVisible.set(false);
         this.legendOpen.set(false);

@@ -1,8 +1,6 @@
-@if (graphState() === GraphState.Unavailable) {
+@if (!selectedScenario()) {
     <p>Choisis un scénario pour voir des données</p>
-} @else if (graphState() === GraphState.Loading) {
-    <p>Chargement des données...</p>
-} @else if (graphState() === GraphState.Displayable) {
+} @else {
     <div class="sankey-wrapper">
         <h2 class="sankey-title">Détails de l'impact CO<sub>2</sub> de la production au Québec.</h2>
         @if (simulationRan) {
@@ -36,7 +34,8 @@
                 } @else if (productionSurplus > 0) {
                     <div class="surplus-label">
                         <i class="fa-solid fa-circle-check"></i>
-                        Surplus de {{ productionSurplus | number: '1.0-0' }} MW/jour — demande couverte
+                        Surplus de {{ productionSurplus | number: '1.0-0' }} MW/jour — demande
+                        couverte
                     </div>
                 }
             </div>

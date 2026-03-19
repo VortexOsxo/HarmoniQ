@@ -27,6 +27,26 @@
             </div>
         </div>
     </div>
+
+    <div class="row w-100 mb-4" *ngIf="emissions">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase small font-weight-bold mb-2">CO2 Annuel</h6>
+                    <h4 class="text-secondary mb-0">{{ emissions.co2_annuel | number:'1.0-2' }} tonnes</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase small font-weight-bold mb-2">CO2 Construction</h6>
+                    <h4 class="text-dark mb-0">{{ emissions.co2_construction | number:'1.0-2' }} tonnes</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="w-100"></div>
     <div *ngIf="error" class="alert alert-danger" role="alert">
         {{ error }}

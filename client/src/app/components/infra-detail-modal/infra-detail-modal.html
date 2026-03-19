@@ -31,6 +31,14 @@
                 </div>
             </div>
 
+            <div class="protected-area-warning" *ngIf="protectedAreaName">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div class="warning-text">
+                    <strong>Attention :</strong> Cette infrastructure se situe dans une aire protégée :<br>
+                    <span class="warning-name">{{ protectedAreaName }}</span>
+                </div>
+            </div>
+
             <!-- Cycle de vie link -->
             <div class="cycle-vie-link-container" *ngIf="getCycleVieData()">
                 <p class="cycle-vie-link" (click)="openCycleVie()">
@@ -58,68 +66,71 @@
     </div>
 </div>
 
-    <!-- Cycle de vie / Impacts Modal Inner -->
-    <div class="cycle-vie-overlay" *ngIf="showCycleVieModal" (click)="closeCycleVie()">
-        <div class="cycle-vie-modal" (click)="$event.stopPropagation()">
-            <div class="cv-header">
-                <h5>{{ getCapitalizedPluralCategoryName() }}</h5>
-                <button class="cv-close" (click)="closeCycleVie()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="cv-body-grid">
-                <!-- Cycle de vie column -->
-                <div class="cv-column" *ngIf="getCycleVieData() as cv">
-                    <h4 class="column-title">Cycle de vie</h4>
-                    <div class="cv-step">
-                        <h6><i class="fa-solid fa-lightbulb"></i> Conception</h6>
-                        <p>{{ cv.conception }}</p>
-                    </div>
-                    <div class="cv-step">
-                        <h6><i class="fa-solid fa-hammer"></i> Construction</h6>
-                        <p>{{ cv.construction }}</p>
-                    </div>
-                    <div class="cv-step">
-                        <h6><i class="fa-solid fa-gears"></i> Exploitation</h6>
-                        <p>{{ cv.exploitation }}</p>
-                    </div>
-                    <div class="cv-step">
-                        <h6><i class="fa-solid fa-trash-arrow-up"></i> Démantèlement / Fin de vie</h6>
-                        <p>{{ cv.demantelement }}</p>
-                    </div>
+<!-- Cycle de vie / Impacts Modal Inner -->
+<div class="cycle-vie-overlay" *ngIf="showCycleVieModal" (click)="closeCycleVie()">
+    <div class="cycle-vie-modal" (click)="$event.stopPropagation()">
+        <div class="cv-header">
+            <h5>{{ getCapitalizedPluralCategoryName() }}</h5>
+            <button class="cv-close" (click)="closeCycleVie()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="cv-body-grid">
+            <!-- Cycle de vie column -->
+            <div class="cv-column" *ngIf="getCycleVieData() as cv">
+                <h4 class="column-title">Cycle de vie</h4>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-lightbulb"></i> Conception</h6>
+                    <p>{{ cv.conception }}</p>
                 </div>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-hammer"></i> Construction</h6>
+                    <p>{{ cv.construction }}</p>
+                </div>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-gears"></i> Exploitation</h6>
+                    <p>{{ cv.exploitation }}</p>
+                </div>
+                <div class="cv-step">
+                    <h6><i class="fa-solid fa-trash-arrow-up"></i> Démantèlement / Fin de vie</h6>
+                    <p>{{ cv.demantelement }}</p>
+                </div>
+            </div>
 
-                <!-- Impacts environnementaux column -->
-                <div class="cv-column">
-                    <h4 class="column-title">Impacts environnementaux</h4>
-                    <div class="impacts-section modal-impacts">
-                        <div *ngIf="getImpactsData().length > 0; else noImpacts">
-                            <div class="impact-card" *ngFor="let impact of getImpactsData()" [ngClass]="impact.colorClass">
-                                <div class="impact-card-header">
-                                    <i [class]="impact.icon"></i>
-                                    <span class="impact-card-title">{{ impact.title }} : <strong>{{ impact.value }}</strong></span>
-                                </div>
-                                <p class="impact-card-desc">{{ impact.description }}</p>
+            <!-- Impacts environnementaux column -->
+            <div class="cv-column">
+                <h4 class="column-title">Impacts environnementaux</h4>
+                <div class="impacts-section modal-impacts">
+                    <div *ngIf="getImpactsData().length > 0; else noImpacts">
+                        <div class="impact-card" *ngFor="let impact of getImpactsData()" [ngClass]="impact.colorClass">
+                            <div class="impact-card-header">
+                                <i [class]="impact.icon"></i>
+                                <span class="impact-card-title">{{ impact.title }} : <strong>{{ impact.value
+                                        }}</strong></span>
                             </div>
+                            <p class="impact-card-desc">{{ impact.description }}</p>
                         </div>
-                        <ng-template #noImpacts>
-                            <p class="impacts-placeholder">
-                                Les données d'impacts environnementaux ne sont pas encore disponibles pour cette infrastructure.
-                            </p>
-                        </ng-template>
                     </div>
+                    <ng-template #noImpacts>
+                        <p class="impacts-placeholder">
+                            Les données d'impacts environnementaux ne sont pas encore disponibles pour cette
+                            infrastructure.
+                        </p>
+                    </ng-template>
                 </div>
             </div>
-            <div class="cv-footer">
-                <p class="disclaimer-text-global">* Les explications et données sont à titre indicatif et peuvent ne pas être exactes.</p>
-            </div>
+        </div>
+        <div class="cv-footer">
+            <p class="disclaimer-text-global">* Les explications et données sont à titre indicatif et peuvent ne pas
+                être exactes.</p>
         </div>
     </div>
+</div>
 
-    <!-- Image Viewer Overlay -->
-    <div class="image-viewer-overlay" *ngIf="showImageOverlay" (click)="showImageOverlay = false">
-        <div class="image-viewer-content" (click)="$event.stopPropagation()">
-            <button class="close-image-btn" (click)="showImageOverlay = false" title="Fermer l'image">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <img [src]="getHQImageUrl()" alt="Image de l'infrastructure" />
-        </div>
+<!-- Image Viewer Overlay -->
+<div class="image-viewer-overlay" *ngIf="showImageOverlay" (click)="showImageOverlay = false">
+    <div class="image-viewer-content" (click)="$event.stopPropagation()">
+        <button class="close-image-btn" (click)="showImageOverlay = false" title="Fermer l'image">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img [src]="getHQImageUrl()" alt="Image de l'infrastructure" />
     </div>
+</div>

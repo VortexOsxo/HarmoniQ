@@ -22,6 +22,7 @@ export class SimulationSingleInfraModal implements OnInit {
 
   config = graphServiceConfig;
   costs?: any;
+  emissions?: any;
 
   get label() {
     return `Simulation de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
@@ -38,6 +39,7 @@ export class SimulationSingleInfraModal implements OnInit {
   ngOnInit(): void {
     this.initProduction();
     this.initCosts();
+    this.initEmissions();
   }
 
   private initProduction() {
@@ -62,6 +64,14 @@ export class SimulationSingleInfraModal implements OnInit {
     this.simulationService.getInfraCost(this.type, this.id)?.
       subscribe((result) => {
         this.costs = result;
+        this.cdr.detectChanges();
+      });
+  }
+
+  private initEmissions() {
+    this.simulationService.getInfraEmission(this.type, this.id)?.
+      subscribe((result) => {
+        this.emissions = result;
         this.cdr.detectChanges();
       });
   }

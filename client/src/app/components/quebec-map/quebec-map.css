@@ -149,6 +149,20 @@ div.map-overlay img.icon-draggable {
     accent-color: #27ae60;
 }
 
+.pa-color-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+    margin-right: 8px;
+    vertical-align: middle;
+    margin-bottom: 2px;
+    flex-shrink: 0;
+}
+
 .pa-layer-name {
     flex: 1;
+    display: flex;
+    align-items: center;
 }
