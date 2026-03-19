@@ -3,32 +3,40 @@ import { ScenariosService } from '../scenarios-service';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
 import { graphServiceConfig } from '@app/services/graph-service';
-import { map } from 'rxjs';
-import { DemandeTemporalDataService } from '../data-services/demande-temporal-data-service';
-import { BaseGraphService } from './base-graph-service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
+import { firstValueFrom } from 'rxjs';
+import { SimulationStep } from '@app/models/interfaces/simulation-step';
 
 @Injectable({
     providedIn: 'root',
 })
-export class DemandeTemporalGraphService extends BaseGraphService {
+export class DemandeTemporalGraphService implements SimulationStep {
+    private cachedData: any;
+    private cachedScenarioId?: number;
 
     constructor(
         private scenariosService: ScenariosService,
-        private demandeTemporalDataService: DemandeTemporalDataService,
-    ) {
-        super(scenariosService.selectedScenario);
+        private http: HttpClient,
+    ) { }
+
+    getStepName(): string {
+        return 'Generation de la demande temporelle';
     }
 
-    protected fetchData(scenario: Scenario) {
-        return this.demandeTemporalDataService.fetch(scenario)
-            .pipe(map(this.handleData.bind(this)));
+    async generate(scenario: Scenario) {
+        if (scenario.id != this.cachedScenarioId) {
+            this.cachedScenarioId = scenario.id;
+            this.cachedData = await firstValueFrom(this.http.post(`${environment.apiUrl}/demande/temporal`, scenario));
+        }
+        return this.handleData(this.cachedData);
     }
 
     protected handleData(apidata: any) {
         const xval = Object.keys(apidata.total_electricity);
         const yval = Object.values(apidata.total_electricity).map((value: any) => value / 1000);
 
-        this.cachedData = [{
+        const graphData = [{
             x: xval,
             y: yval,
             type: 'scatter',
@@ -37,11 +45,14 @@ export class DemandeTemporalGraphService extends BaseGraphService {
             line: { shape: 'spline' },
             hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
         }];
+
+        this.generateGraph(graphData);
     }
 
-    protected generateGraph() {
+    private generateGraph(graphData: any) {
         const layout: any = {
             title: "Demande pour scénario " + this.scenariosService.selectedScenario()?.nom,
+            height: 800,
             xaxis: {
                 title: "Date",
                 tickformat: "%d %b %Y"
@@ -59,10 +70,10 @@ export class DemandeTemporalGraphService extends BaseGraphService {
             },
         };
 
-        Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, this.cachedData, layout);
+        Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, graphData, layout);
     }
 
-    protected removeGraph() {
+    clear() {
         Plotly.purge(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID);
     }
 }

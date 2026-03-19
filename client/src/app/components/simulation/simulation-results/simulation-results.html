@@ -1,22 +1,6 @@
 <div id="plots">
-    <!-- Top-right floating view buttons -->
-    <div class="view-buttons" [class.detail-open]="isDetailOpen">
-        <button class="view-btn" [class.active]="activeTab === 'map'" (click)="switchTab('map')">
-            <i class="fa-solid fa-map"></i>
-            Carte
-        </button>
-        <button class="view-btn" [class.active]="activeTab === 'sankey'" (click)="switchTab('sankey')">
-            <i class="fa-solid fa-chart-bar"></i>
-            Production
-        </button>
-        <button class="view-btn" [class.active]="activeTab === 'temporal'" (click)="switchTab('temporal')">
-            <i class="fa-solid fa-clock"></i>
-            Temporel
-        </button>
-    </div>
-
     <!-- Aires protégées button below view buttons -->
-    <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen" *ngIf="activeTab === 'map'">
+    <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen">
         <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
             [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
             (click)="protectedAreasService.toggleVisibility()">
@@ -30,14 +14,6 @@
 
     <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
     <div class="view-content">
-        <div *ngIf="activeTab === 'map'" class="view-pane">
-            <app-quebec-map class="d-block h-100 w-100" />
-        </div>
-        <div *ngIf="activeTab === 'sankey'" class="view-pane">
-            <app-scenario-demand-prod-sankey />
-        </div>
-        <div *ngIf="activeTab === 'temporal'" class="view-pane">
-            <app-scenario-temporal-demand-graph />
-        </div>
+        <app-quebec-map class="d-block h-100 w-100" />
     </div>
 </div>
