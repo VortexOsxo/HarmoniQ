@@ -82,7 +82,7 @@ export class GraphService {
             template: 'plotly_white',
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            margin: { t: 80, b: 50, l: 80, r: 40, ...extra.margin },
+            margin: { t: 80, b: 100, l: 80, r: 40, ...extra.margin },
             hovermode: 'x unified',
             hoverlabel: {
                 bgcolor: 'white',
@@ -93,8 +93,8 @@ export class GraphService {
             },
             legend: {
                 orientation: "h",
-                yanchor: "bottom",
-                y: 1.05,
+                yanchor: "top",
+                y: -0.2,
                 xanchor: "center",
                 x: 0.5,
                 font: { size: 14 },
@@ -118,7 +118,7 @@ export class GraphService {
         };
     }
 
-    private hexToRgba(hex: string, alpha: number): string {
+    public hexToRgba(hex: string, alpha: number): string {
         try {
             const r = parseInt(hex.slice(1, 3), 16);
             const g = parseInt(hex.slice(3, 5), 16);

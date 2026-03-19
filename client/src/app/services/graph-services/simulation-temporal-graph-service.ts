@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ScenariosService } from '../scenarios-service';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
-import { graphServiceConfig } from '@app/services/graph-service';
+import { GraphService, graphServiceConfig } from '@app/services/graph-service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import { firstValueFrom } from 'rxjs';
@@ -13,13 +13,14 @@ import { SimulationStep } from '@app/models/interfaces/simulation-step';
     providedIn: 'root',
 })
 export class SimulationTemporalGraphService implements SimulationStep {
-    private cachedScenarioId?: number;
-    private cachedSimulationResult: any;
-    private cachedDemandeResult: any;
+    public cachedScenarioId?: number;
+    public cachedSimulationResult: any;
+    public cachedDemandeResult: any;
 
     constructor(
         private scenariosService: ScenariosService,
         private infrastructuresService: InfrastruturesService,
+        private graphService: GraphService,
         private http: HttpClient,
     ) { }
 
@@ -45,125 +46,77 @@ export class SimulationTemporalGraphService implements SimulationStep {
         return this.handleData(this.cachedSimulationResult, this.cachedDemandeResult);
     }
 
-    protected handleData(simulationResult: any, demandeResult: any) {
+    public handleData(simulationResult: any, demandeResult: any, granularity: string = 'original') {
         const productionData = simulationResult.production;
         let x = productionData.map((instance: any) => (instance["snapshot"]));
-        let y = productionData.map((instance: any) => (instance["totale"]));
-        let eolien = productionData.map((instance: any) => (instance["total_eolien"]));
-        let solaire = productionData.map((instance: any) => (instance["total_solaire"]));
-        let hydro_fil = productionData.map((instance: any) => (instance["total_hydro_fil"]));
-        let hydro_res = productionData.map((instance: any) => (instance["total_hydro_reservoir"]));
-        let imports = productionData.map((instance: any) => (instance["total_import"]));
-        let nucleaire = productionData.map((instance: any) => (instance["total_nucleaire"]));
-        let thermique = productionData.map((instance: any) => (instance["total_thermique"]));
 
-        let demandeX = Object.keys(demandeResult.total_electricity);
-        let demandeY = Object.values(demandeResult.total_electricity).map((value: any) => value / 1000);
-
-        const productionTraces: any = [
-            {
-                x: demandeX,
-                y: demandeY,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Demande',
-                line: { shape: 'spline', color: 'black' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: y,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Production totale',
-                line: { shape: 'spline', color: 'green' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: eolien,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Éolien',
-                line: { shape: 'spline', color: 'orange' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: solaire,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Solaire',
-                line: { shape: 'spline', color: 'yellow' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: hydro_fil,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Hydro (fil)',
-                line: { shape: 'spline', color: 'blue' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: hydro_res,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Hydro (réservoir)',
-                line: { shape: 'spline', color: 'cyan' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: imports,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Importations',
-                line: { shape: 'spline', color: 'purple' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: nucleaire,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Nucléaire',
-                line: { shape: 'spline', color: 'red' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            },
-            {
-                x: x,
-                y: thermique,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Thermique',
-                line: { shape: 'spline', color: 'brown' },
-                hovertemplate: "%{x}<br>%{y:.2f} MW<extra></extra>"
-            }
+        const components = [
+            { key: 'total_eolien', name: 'Éolien', color: '#f39c12' },
+            { key: 'total_solaire', name: 'Solaire', color: '#f1c40f' },
+            { key: 'total_hydro_fil', name: 'Hydro (fil)', color: '#3498db' },
+            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: '#1abc9c' },
+            { key: 'total_nucleaire', name: 'Nucléaire', color: '#e74c3c' },
+            { key: 'total_thermique', name: 'Thermique', color: '#95a5a6' },
+            { key: 'total_import', name: 'Importations', color: '#9b59b6' }
         ];
 
-        Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, productionTraces, {
-            title: `Production et Demande pour scénario ${this.scenariosService.selectedScenario()?.nom}`,
-            height: 800,
-            xaxis: {
-                title: "Date",
-                tickformat: "%d %b %Y"
-            },
-            yaxis: {
-                title: "Puissance (MW)",
-                autorange: true
-            },
-            legend: {
-                orientation: "h",
-                yanchor: "bottom",
-                y: 1.02,
-                xanchor: "right",
-                x: 1
+        let traces: any[] = [];
+
+        components.forEach(comp => {
+            let y = productionData.map((instance: any) => instance[comp.key] || 0);
+            let xLocal = x;
+
+            if (granularity !== 'original') {
+                const aggregated = this.graphService.aggregateData(x, y, granularity);
+                xLocal = aggregated.x;
+                y = aggregated.y;
             }
 
-        } as any);
+            const trace = this.graphService.getStandardTrace(comp.name, xLocal, y, comp.color, `<b>%{y:.2f} MW</b>`);
+            traces.push({
+                ...trace,
+                line: { ...trace.line, width: 2 },
+                fill: 'none'
+            });
+        });
+
+        let demandeX = Object.keys(demandeResult.total_electricity);
+        let demandeY = Object.values(demandeResult.total_electricity).map((value: any) => (value as number) / 1000);
+
+        if (granularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(demandeX, demandeY, granularity);
+            demandeX = aggregated.x;
+            demandeY = aggregated.y;
+        }
+
+        const demandTrace = this.graphService.getStandardTrace('Demande', demandeX, demandeY, '#2c3e50', `<b>%{y:.2f} MW</b>`);
+        traces.push({
+            ...demandTrace,
+            line: { shape: 'spline', color: '#2c3e50', width: 2 },
+            fill: 'none'
+        });
+
+        let totalY = productionData.map((instance: any) => instance["totale"] || 0);
+        let totalX = x;
+        if (granularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(x, totalY, granularity);
+            totalX = aggregated.x;
+            totalY = aggregated.y;
+        }
+        traces.push({
+            ...this.graphService.getStandardTrace('Production Totale', totalX, totalY, '#27ae60', `<b>%{y:.2f} MW</b>`),
+            line: { shape: 'spline', color: '#27ae60', width: 2 },
+            fill: 'none'
+        });
+
+        const layout = this.graphService.getStandardLayout(
+            `Production et Demande (${this.scenariosService.selectedScenario()?.nom})`,
+            'Puissance (MW)',
+            granularity,
+            { height: 800 }
+        );
+
+        Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, traces, layout as any, { responsive: true });
     }
 
     clear() {
