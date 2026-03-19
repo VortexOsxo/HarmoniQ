@@ -64,6 +64,7 @@
 }
 
 .step-item {
+    cursor: default;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -82,7 +83,12 @@
 }
 
 .step-item.completed {
+    cursor: pointer;
     color: #2c3e50;
+}
+
+.step-item.completed:hover {
+    background: #f0f4f8;
 }
 
 .step-status-icon {

@@ -21,4 +21,10 @@ export class SimulationPage implements AfterViewInit {
   ngAfterViewInit(): void {
     this.simulationService.launchSimulation();
   }
+
+  scrollToGraph(index: number) {
+    const element = document.getElementById(`step-${index}`);
+    if (element)
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }

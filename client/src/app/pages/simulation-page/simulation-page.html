@@ -11,7 +11,7 @@
                 <div class="step-list">
                     @for (step of stepService.steps(); track step.name; let i = $index) {
                     <div class="step-item" [class.active]="stepService.currentStepIndex() === i"
-                        [class.completed]="step.status === 'completed'">
+                        [class.completed]="step.status === 'completed'" (click)="scrollToGraph(i)">
                         <div class="step-status-icon">
                             @if (step.status === 'completed') {
                             <i class="fa-solid fa-circle-check text-success"></i>
@@ -30,9 +30,9 @@
 
         <main class="page-content">
             <div class="graph-content">
-                <app-scenario-demand-prod-sankey />
-                <app-scenario-temporal-demand-graph />
-                <app-scenario-temporal-simulation />
+                <app-scenario-demand-prod-sankey id="step-0" />
+                <app-scenario-temporal-demand-graph id="step-1" />
+                <app-scenario-temporal-simulation id="step-2" />
             </div>
         </main>
     </div>
