@@ -1,0 +1,119 @@
+﻿"""Orchestration du service `reseau_bis`.
+
+Ce fichier conserve volontairement des noms :
+- `charger_scenario`
+- `creer_reseau`
+- `calculer_production`
+
+pour faciliter la migration depuis l'ancien `InfraReseau`.
+"""
+
+from typing import Any, Dict
+import time
+import pandas as pd
+import pypsa
+
+from .data_loader import NetworkDataLoaderBis, get_loader_todo_list
+from .network_builder import build_pypsa_network, get_builder_todo_list
+from .optimizer import run_dispatch_and_flow, get_optimizer_todo_list
+from .results import extract_kpis, format_api_response, get_results_todo_list
+
+
+def get_reseau_bis_todo_list():
+    """Aggrège les TODO de tous les sous-modules."""
+    return (
+        get_loader_todo_list()
+        + get_builder_todo_list()
+        + get_optimizer_todo_list()
+        + get_results_todo_list()
+    )
+
+
+class InfraReseauBis:
+    """Gabarit minimal inspire de la classe `InfraReseau`."""
+
+    def __init__(self, liste_infra: Any):
+        self.liste_infra = liste_infra
+        self.scenario = None
+        self.network: pypsa.Network | None = None
+        self.timers: Dict[str, float] = {}
+        self.data_loader = NetworkDataLoaderBis()
+
+    def charger_scenario(self, scenario: Any) -> None:
+        """Attache le scenario actif a l'instance de service."""
+        self.scenario = scenario
+
+    def _ensure_scenario(self) -> None:
+        """Valide qu'un scenario est charge avant d'executer le workflow."""
+        if self.scenario is None:
+            raise ValueError("Le scenario n'est pas charge")
+
+    def creer_reseau(self, db: Any) -> pypsa.Network:
+        """Construit le reseau PyPSA a partir de la topologie, generation et demande."""
+        self._ensure_scenario()
+
+        t0 = time.time()
+        snapshots = pd.date_range(
+            start=self.scenario.date_de_debut,
+            end=self.scenario.date_de_fin,
+            freq=self.scenario.pas_de_temps,
+        )
+
+        topology = self.data_loader.load_topology_from_db(db)
+        gen_profiles = self.data_loader.load_generation_profiles(self.scenario, self.liste_infra, db)
+        demand_profile = self.data_loader.load_demand_profile(self.scenario, db)
+
+        self.timers["load_data"] = time.time() - t0
+
+        t1 = time.time()
+        self.network = build_pypsa_network(
+            topology=topology,
+            generation_profiles=gen_profiles,
+            demand_profile=demand_profile,
+            snapshots=snapshots,
+        )
+        self.timers["build_network"] = time.time() - t1
+
+        return self.network
+
+    def calculer_production(self, db: Any, is_journalier: bool = False, flow_mode: str = "ac") -> Dict[str, Any]:
+        """Execute optimisation + flux puis retourne une reponse API prete."""
+        self._ensure_scenario()
+
+        total_start = time.time()
+
+        if self.network is None:
+            self.creer_reseau(db)
+
+        t_opt = time.time()
+        optimizer_result = run_dispatch_and_flow(self.network, mode=flow_mode)
+        self.timers["dispatch_and_flow"] = time.time() - t_opt
+
+        t_kpi = time.time()
+        kpis = extract_kpis(self.network, optimizer_result=optimizer_result)
+        self.timers["extract_kpis"] = time.time() - t_kpi
+
+        total_time = time.time() - total_start
+        self.timers["TOTAL"] = total_time
+
+        return format_api_response(
+            scenario_id=getattr(self.scenario, "id", -1),
+            liste_infra_id=getattr(self.liste_infra, "id", -1),
+            is_journalier=is_journalier,
+            kpis=kpis,
+            execution_time_seconds=total_time,
+        )
+
+
+def simulate_network(
+    *,
+    scenario: Any,
+    liste_infra: Any,
+    db: Any,
+    is_journalier: bool = False,
+    flow_mode: str = "ac",
+) -> Dict[str, Any]:
+    """Facade fonctionnelle pour integration route/service."""
+    infra_reseau = InfraReseauBis(liste_infra)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_production(db=db, is_journalier=is_journalier, flow_mode=flow_mode)
