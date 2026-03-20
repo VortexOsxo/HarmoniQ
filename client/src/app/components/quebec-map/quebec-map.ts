@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { ReseauService, BUS_CATEGORIES, LINE_CATEGORIES } from '@app/services/reseau-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -16,6 +17,9 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 export class QuebecMap implements AfterViewInit, OnDestroy {
   toolTipText = 'Glissez et déposez sur la carte pour ajouter une infrastructure';
 
+  busCategories = BUS_CATEGORIES;
+  lineCategories = LINE_CATEGORIES;
+
   get map() {
     return this.mapService.map;
   }
@@ -23,6 +27,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
   constructor(
     private mapService: MapService,
     public protectedAreasService: ProtectedAreasService,
+    public reseauService: ReseauService,
     public infraDetailService: InfraDetailService
   ) { }
 
@@ -37,6 +42,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
 
     if (this.mapService.map) {
       this.protectedAreasService.initLayer(this.mapService.map);
+      this.reseauService.initLayer(this.mapService.map);
     }
 
     const draggableIcons = document.querySelectorAll(".icon-draggable");
@@ -52,6 +58,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.reseauService.destroy();
     this.protectedAreasService.destroy();
     this.mapService.destroyMap();
     this.mapService.destroyMarkers();

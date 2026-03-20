@@ -154,6 +154,38 @@ class InfraHydro(Infrastructure):
         return annual_cost * (hours / HOURS_PER_YEAR)
 
 
+    def calculer_co2_eq_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        return self.donnees.puissance_nominal * (CO2_PER_MW := 400)
+
+    def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        if self.donnees.type_barrage == "Fil de l'eau":
+            co2_intensity = 6 / 1000
+        else:
+            co2_intensity = 17 / 1000
+
+        CAPACITY_FACTOR = 0.50
+        HOURS_PER_YEAR = 8760
+        availability = 1 - (
+            self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines
+        )
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+            * availability
+        )
+
+        annual_co2 = annual_energy * co2_intensity
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_co2 * (hours / HOURS_PER_YEAR)
+
+
 if __name__ == "__main__":
 
     from harmoniq.modules.hydro import InfraHydro

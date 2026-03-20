@@ -1,6 +1,7 @@
-import { Component, computed, effect, untracked } from '@angular/core';
+import { Component, computed, effect, untracked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
 import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
@@ -20,10 +21,17 @@ export class InfraDetailModal {
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
 
+  protectedAreaName: string | null = null;
+  loadingProtectionStatus: boolean = false;
+  lat: number = 0;
+  lon: number = 0;
+
   constructor(
     public infraDetailService: InfraDetailService,
     private infrasService: InfrastruturesService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private protectedAreasService: ProtectedAreasService,
+    private cdr: ChangeDetectorRef
   ) {
     effect(() => {
       // Déclencheur sur le changement d'infrastructure
@@ -31,6 +39,25 @@ export class InfraDetailModal {
       untracked(() => {
         this.showCycleVieModal = false;
         this.showImageOverlay = false;
+        this.protectedAreaName = null;
+        this.loadingProtectionStatus = false;
+        
+        if (currentInfra && currentInfra.data) {
+            this.lat = parseFloat(currentInfra.data.latitude || currentInfra.data.lat);
+            this.lon = parseFloat(currentInfra.data.longitude || currentInfra.data.lng);
+            
+            if (!isNaN(this.lat) && !isNaN(this.lon)) {
+                this.loadingProtectionStatus = true;
+                this.protectedAreasService.checkProtectedArea(this.lat, this.lon).then(name => {
+                    this.protectedAreaName = name;
+                    this.loadingProtectionStatus = false;
+                    this.cdr.detectChanges();
+                }).catch(() => {
+                    this.loadingProtectionStatus = false;
+                    this.cdr.detectChanges();
+                });
+            }
+        }
       });
     });
   }

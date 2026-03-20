@@ -37,17 +37,8 @@
             <i class="fa-solid fa-cloud-sun detail-icon"></i>
             <span class="detail-text">Météo : <strong>{{ WeatherLabels[scenario.weather] }}</strong></span>
         </div>
-        <div class="scenario-detail-item">
-            <i class="fa-solid fa-users detail-icon"></i>
-            <span class="detail-text">Social : <strong>{{ OptimismLabels[scenario.optimisme_social] }}</strong></span>
-        </div>
-        <div class="scenario-detail-item">
-            <i class="fa-solid fa-leaf detail-icon"></i>
-            <span class="detail-text">Écologique : <strong>{{ OptimismLabels[scenario.optimisme_ecologique]
-                    }}</strong></span>
-        </div>
 
-        <button  *ngIf="canDeleteSelected" class="delete-btn" (click)="deleteScenario(scenario)">
+        <button *ngIf="canDeleteSelected" class="delete-btn" (click)="deleteScenario(scenario)">
             <i class="fa-solid fa-trash me-1"></i>
             Supprimer
         </button>

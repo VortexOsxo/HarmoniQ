@@ -224,6 +224,20 @@ async def calculer_cout(
     }
     return results
 
+@router.post("/emission/{infra_type}")
+async def calculer_emission(
+    infra_type: str, 
+    payload: schemas.InfraSimulationPayload
+):
+    scenario = hydrate_model(schemas.Scenario, payload.scenario)
+    infra = get_infra_object(infra_type, payload)
+    infra.charger_scenario(scenario)
+    results = {
+        'co2_annuel': infra.calculer_co2_eq_pas_de_temps(timedelta(days=365)),
+        'co2_construction': infra.calculer_co2_eq_construction(),
+    }
+    return results
+
 
 #-----#-----#-----#-----#-----#  Fake Data  #-----#-----#-----#-----#-----#
 

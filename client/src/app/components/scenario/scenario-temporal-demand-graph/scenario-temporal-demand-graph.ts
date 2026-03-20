@@ -1,64 +1,32 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SimulationService } from '@app/services/simulation-service';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
-import { ScenariosService } from '@app/services/scenarios-service';
-import { Subscription } from 'rxjs';
-import { GraphState } from '@app/services/graph-services/base-graph-service';
+import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
+import { SimulationStepService } from '@app/services/simulation-step-service';
 
 @Component({
   selector: 'app-scenario-temporal-demand-graph',
-  imports: [CommonModule],
+  imports: [CommonModule, GranularitySelectorComponent],
   templateUrl: './scenario-temporal-demand-graph.html',
-  styleUrl: './scenario-temporal-demand-graph.css',
 })
-export class ScenarioTemporalDemandGraph implements AfterViewInit, OnDestroy {
+export class ScenarioTemporalDemandGraph {
   config = graphServiceConfig;
-  GraphState = GraphState;
-
-  get graphState() {
-    return this.graphService.state;
-  }
-
-  get selectedScenario() {
-    return this.scenariosService.selectedScenario
-  }
-
-  private subscription?: Subscription;
 
   constructor(
-    private simulationService: SimulationService,
     private graphService: DemandeTemporalGraphService,
-    private scenariosService: ScenariosService,
-  ) {
-    this.subscription = this.simulationService.simulationResultsReceived.subscribe(() => {
-      this.graphService.undisplay();
-      this.simulationService.generateSimulationDemandeGraph();
-    })
-  }
+    private stepService: SimulationStepService
+  ) { }
 
-  ngAfterViewInit(): void {
-    if (!this.simulationService.hasSimulationResults()) {
-      this.graphService.display();
-    } else {
-      this.simulationService.generateSimulationDemandeGraph();
+  onGranularityChange(granularity: string) {
+    if (this.graphService.cachedData) {
+      this.graphService.handleData(this.graphService.cachedData, granularity);
     }
   }
 
-  ngOnDestroy(): void {
-    if (!this.simulationService.hasSimulationResults()) {
-      this.graphService.undisplay();
-    }
-    this.subscription?.unsubscribe();
-  }
-
-  hasExportableData(): boolean {
-    return this.simulationService.hasExportableData();
-  }
-
-  downloadCSV(): void {
-    this.simulationService.exportSimulationToCSV();
+  get hasData() {
+    const steps = this.stepService.steps();
+    const myStep = steps.find(s => s.name === this.graphService.getStepName());
+    return myStep?.status === 'completed';
   }
 }
-

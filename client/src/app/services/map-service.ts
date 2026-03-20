@@ -134,8 +134,6 @@ export class MapService {
       infrasService.createInfra(className, type, lat, lng);
     });
 
-    this.mapLineService.addLinesToMap(map);
-
     this._map = map;
 
     this.clusterGroup = L.markerClusterGroup({

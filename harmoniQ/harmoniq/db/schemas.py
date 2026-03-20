@@ -44,11 +44,6 @@ Notion de "Enum ou PyEnum" pour les types de données:
 - Type d'objet : Enum
 """
 
-class Optimisme(PyEnum):
-    pessimiste = 1
-    moyen = 2
-    optimiste = 3
-
 
 class Weather(PyEnum):
     warm = 1
@@ -101,8 +96,6 @@ class Scenario(SQLBase):
     pas_de_temps = Column(TimeDeltaString)
     weather = Column(Enum(Weather))
     consomation = Column(Enum(Consomation))
-    optimisme_social = Column(Enum(Optimisme))
-    optimisme_ecologique = Column(Enum(Optimisme))
 
 
 class ScenarioBase(BaseModel):
@@ -119,8 +112,6 @@ class ScenarioBase(BaseModel):
     )
     weather: Weather = Weather.typical
     consomation: Consomation = Consomation.PV
-    optimisme_social: Optimisme = Optimisme.moyen
-    optimisme_ecologique: Optimisme = Optimisme.moyen
 
     @field_validator("date_de_debut", "date_de_fin", mode="before")
     def parse_datetime(cls, value):
@@ -454,11 +445,13 @@ class Bus(SQLBase):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    display_name = Column(String, nullable=True)
     v_nom = Column(Integer)
     type = Column(Enum(BusType))
     x = Column(Float)
     y = Column(Float)
     control = Column(Enum(BusControlType))
+    reseau_type = Column(String, nullable=True)
 
     lines_from = relationship(
         "Line", back_populates="bus_from", foreign_keys="Line.bus0"
@@ -468,11 +461,13 @@ class Bus(SQLBase):
 
 class BusBase(BaseModel):
     name: str
+    display_name: Optional[str] = None
     v_nom: int
     type: BusType
     x: float
     y: float
     control: BusControlType
+    reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -530,6 +525,7 @@ class Line(SQLBase):
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)
+    reseau_type = Column(String, nullable=True)
 
     bus_from = relationship("Bus", back_populates="lines_from", foreign_keys=[bus0])
     bus_to = relationship("Bus", back_populates="lines_to", foreign_keys=[bus1])
@@ -544,6 +540,7 @@ class LineBase(BaseModel):
     capital_cost: float
     length: float
     s_nom: float
+    reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
