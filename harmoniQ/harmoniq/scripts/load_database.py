@@ -1,7 +1,7 @@
 import gdown
 
 from harmoniq import DEMANDE_PATH
-GOOGLE_DRIVE_FILE_ID = "1AChv-YwvDrE-nlYdT_aRSumKc571Cqxk"
+GOOGLE_DRIVE_FILE_ID = "1EA596DXPYxUMKDWa3L9WyKiwzGBW_7aP"
 
 
 def download_db():
