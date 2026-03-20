@@ -46,6 +46,12 @@ class SPAFallbackMiddleware(BaseHTTPMiddleware):
         if path.startswith("api"):
             return response
 
+        if not ANGULAR_INDEX.exists():
+            return Response(
+                content=f"Angular build not found at {ANGULAR_DIST}. Please build the client first.",
+                status_code=404
+            )
+
         candidate = ANGULAR_DIST / path
         if candidate.is_file():
             return FileResponse(candidate)

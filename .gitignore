@@ -15,10 +15,6 @@ _version.py
 __pycache__/
 .vscode/
 
-# Remove build files
-build/
-dist/
-
 # remove the data cache
 cache/
 n_cache/
