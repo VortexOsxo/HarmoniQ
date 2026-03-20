@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import * as L from 'leaflet';
+import { L } from '@app/utils/leaflet-init';
 import { environment } from 'environments/environment';
 
 export interface ReseauBus {

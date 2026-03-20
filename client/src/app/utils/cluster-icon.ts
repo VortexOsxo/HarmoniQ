@@ -1,4 +1,4 @@
-import * as L from 'leaflet';
+import { L } from '@app/utils/leaflet-init';
 
 const TYPE_ICON_URLS: Record<string, string> = {
     hydro: '/icons/barrage.png',

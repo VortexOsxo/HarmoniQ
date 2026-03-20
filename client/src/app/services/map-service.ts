@@ -1,5 +1,5 @@
 import { Injectable, effect } from '@angular/core';
-import * as L from 'leaflet';
+import { L } from '@app/utils/leaflet-init';
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
 import { createClusterIcon } from '@app/utils/cluster-icon';

@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import * as L from 'leaflet';
+import { L } from '@app/utils/leaflet-init';
 import { LayerNode, LAYER_TREE, ALL_LAYER_IDS, DEFAULT_SELECTED_LAYERS, buildIdentifyHtml, LAYER_NODE_MAP } from './protected-areas-utils';
 
 @Injectable({

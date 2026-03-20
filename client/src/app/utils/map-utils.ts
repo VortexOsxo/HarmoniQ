@@ -1,4 +1,4 @@
-import L from 'leaflet';
+import { L } from '@app/utils/leaflet-init';
 
 export const map_icons: any = {
     eolienneparc: L.icon({

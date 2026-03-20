@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as L from 'leaflet';
+import { L } from '@app/utils/leaflet-init';
 
 // Value was 80, comment said 735, am confused
 const WANTED_VOLTAGE = 80;
