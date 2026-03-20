@@ -83,7 +83,12 @@ def fill_solaire():
 def fill_parc_eoliennes():
     db = next(get_db())
 
-    station_df = pd.read_excel(CSV_DIR / "Wind_Turbine_Database_FGP.xlsx")
+    try:
+        station_df = pd.read_excel(CSV_DIR / "Wind_Turbine_Database_FGP.xlsx")
+    except Exception as e:
+        print(f"Erreur lors de l'ouverture du fichier Excel: {e}")
+        return
+
     station_df = station_df[station_df["Province_Territoire"] == "Québec"]
 
     # Get unique "Project Name"
@@ -201,27 +206,70 @@ def fill_line_types():
     print(f"{count} types de ligne ajoutés à la base de données")
 
 
+BUS_RESEAU_TYPE_MAP = {
+    'Bus': 'Transport',
+    'Eolienne': 'Éoliennes',
+    'Solaire': 'Solaire',
+    'Thermique': 'Thermique',
+    'Reservoir': 'Hydroélectrique',
+    'Fil de l\'eau': 'Hydroélectrique',
+    'Conso': 'Consommation',
+}
+
+LINE_RESEAU_TYPE_MAP = {
+    'Bus': 'Transport',
+    'Eolienne': 'Éoliennes',
+    'Solaire': 'Solaire',
+    'Thermique': 'Thermique',
+    'Hydro': 'Hydroélectrique',
+    'Conso': 'Consommation',
+}
+
+BUS_TYPE_CSV_MAP = {
+    'Bus': 'ligne',
+    'Eolienne': 'prod',
+    'Solaire': 'prod',
+    'Thermique': 'prod',
+    'Reservoir': 'prod',
+    'Fil de l\'eau': 'prod',
+    'Conso': 'conso',
+}
+
+
 def fill_buses():
-    """Remplit la table bus à partir du fichier CSV"""
+    """Remplit la table bus à partir du fichier CSV bus_new_2026.csv"""
     db = next(get_db())
 
-    file_path = CSV_DIR / "buses.csv"
+    file_path = CSV_DIR / "bus_new_2026.csv"
     buses_df = pd.read_csv(file_path)
 
     count = 0
     for _, row in buses_df.iterrows():
-        existing = db.query(schemas.Bus).filter(schemas.Bus.name == row["name"]).first()
+        bus_id = str(row['id'])
+        display_name = str(row['name'])
+        existing = db.query(schemas.Bus).filter(schemas.Bus.name == bus_id).first()
         if existing:
-            print(f"Bus {row['name']} existe déjà")
+            print(f"Bus {bus_id} existe déjà")
             continue
 
+        csv_type_col = row.get('type', 'line')  # 'line', 'prod', 'conso'
+        csv_category = row.get('type.1', 'Bus')  # 'Bus', 'Eolienne', etc.
+        reseau_type = BUS_RESEAU_TYPE_MAP.get(csv_category, 'Transport')
+
+        # Map CSV type values to BusType enum values
+        bus_type_val = csv_type_col
+        if bus_type_val == 'line':
+            bus_type_val = 'ligne'
+
         db_bus = schemas.BusCreate(
-            name=row["name"],
-            v_nom=row["voltage"],
-            type=schemas.BusType(row["type"]),
-            x=row["longitude"],
-            y=row["latitude"],
-            control=schemas.BusControlType(row["control"]),
+            name=bus_id,
+            display_name=display_name,
+            v_nom=int(row['v_nom']),
+            type=schemas.BusType(bus_type_val),
+            x=float(row['y']),
+            y=float(row['x']),
+            control=schemas.BusControlType(row['control']),
+            reseau_type=reseau_type,
         )
 
         count += 1
@@ -232,20 +280,21 @@ def fill_buses():
 
 
 def fill_lines():
-    """Remplit la table line à partir du fichier CSV"""
+    """Remplit la table line à partir du fichier lines_new_2026.csv"""
     db = next(get_db())
 
-    file_path = CSV_DIR / "lines.csv"
+    file_path = CSV_DIR / "lines_new_2026.csv"
     lines_df = pd.read_csv(file_path)
 
     count = 0
     for _, row in lines_df.iterrows():
         try:
+            line_name = row['name']
             existing = (
-                db.query(schemas.Line).filter(schemas.Line.name == row["name"]).first()
+                db.query(schemas.Line).filter(schemas.Line.name == line_name).first()
             )
             if existing:
-                print(f"Ligne {row['name']} existe déjà")
+                print(f"Ligne {line_name} existe déjà")
                 continue
 
             bus_from = (
@@ -253,7 +302,7 @@ def fill_lines():
             )
             if not bus_from:
                 print(
-                    f"Bus de départ {row['bus0']} non trouvé pour la ligne {row['name']}"
+                    f"Bus de départ {row['bus0']} non trouvé pour la ligne {line_name}"
                 )
                 continue
 
@@ -262,29 +311,34 @@ def fill_lines():
             )
             if not bus_to:
                 print(
-                    f"Bus d'arrivée {row['bus1']} non trouvé pour la ligne {row['name']}"
+                    f"Bus d'arrivée {row['bus1']} non trouvé pour la ligne {line_name}"
                 )
                 continue
 
+            line_type_name = row.get('type.1', '735kV_line')  # the actual line type
             line_type = (
                 db.query(schemas.LineType)
-                .filter(schemas.LineType.name == row["type"])
+                .filter(schemas.LineType.name == line_type_name)
                 .first()
             )
             if not line_type:
                 print(
-                    f"Type de ligne {row['type']} non trouvé pour la ligne {row['name']}"
+                    f"Type de ligne {line_type_name} non trouvé pour la ligne {line_name}"
                 )
                 continue
 
+            csv_category = row['type']  # 'Bus', 'Eolienne', 'Solaire', etc.
+            reseau_type = LINE_RESEAU_TYPE_MAP.get(csv_category, 'Transport')
+
             db_line = schemas.LineCreate(
-                name=row["name"],
+                name=line_name,
                 bus0=row["bus0"],
                 bus1=row["bus1"],
-                type=row["type"],
-                length=row["length"],
-                capital_cost=row["capital_cost"],
-                s_nom=row["s_nom"],
+                type=line_type_name,
+                length=float(row["length"]),
+                capital_cost=float(row["capital_cost"]),
+                s_nom=float(row["s_nom"]),
+                reseau_type=reseau_type,
             )
             count += 1
             CRUD.create_line(db, db_line)

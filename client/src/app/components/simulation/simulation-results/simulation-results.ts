@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { QuebecMap } from '@app/components/quebec-map/quebec-map';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { ReseauService } from '@app/services/reseau-service';
 import { TutorialService } from '@app/services/tutorial-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { InfraDetailModal } from '@app/components/infra-detail-modal/infra-detail-modal';
@@ -23,6 +24,7 @@ export class SimulationResults implements OnInit, OnDestroy {
 
   constructor(
     public protectedAreasService: ProtectedAreasService,
+    public reseauService: ReseauService,
     private tutorialService: TutorialService,
     private infraDetailService: InfraDetailService,
   ) { }

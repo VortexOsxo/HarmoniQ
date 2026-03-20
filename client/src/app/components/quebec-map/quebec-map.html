@@ -1,11 +1,12 @@
 <div id="map" style="height: 100%; width: 100%;"></div>
 
 <button class="pa-legend-reopen" *ngIf="protectedAreasService.isVisible() && !protectedAreasService.legendOpen()"
+    [class.offset-right]="reseauService.legendOpen()"
     (click)="protectedAreasService.legendOpen.set(true)">
     <i class="fa-solid fa-layer-group"></i>
 </button>
 
-<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()">
+<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()" [class.offset-right]="reseauService.legendOpen()">
     <div class="pa-legend-header">
         <i class="fa-solid fa-layer-group"></i>
         <strong>Aires protégées</strong>
@@ -46,6 +47,61 @@
         </ng-container>
     </ng-container>
 </ng-template>
+
+<!-- Réseau toggle button (below protected areas button) -->
+<button class="reseau-legend-reopen" *ngIf="reseauService.isVisible() && !reseauService.legendOpen()"
+    [class.offset-right]="protectedAreasService.legendOpen()"
+    (click)="reseauService.legendOpen.set(true)">
+    <i class="fa-solid fa-network-wired"></i>
+</button>
+
+<!-- Réseau legend panel -->
+<div class="reseau-legend card" *ngIf="reseauService.legendOpen()">
+    <div class="reseau-legend-header">
+        <i class="fa-solid fa-network-wired"></i>
+        <strong>Réseau électrique</strong>
+        <button class="reseau-legend-close" (click)="reseauService.legendOpen.set(false)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="reseau-legend-controls">
+        <button class="btn btn-sm btn-outline-secondary" (click)="reseauService.selectAll()">Tout sélectionner</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="reseauService.deselectAll()">Tout désélectionner</button>
+    </div>
+
+    <div class="reseau-legend-body">
+        <div class="reseau-section-title">
+            <label class="reseau-checkbox-label">
+                <input type="checkbox" [checked]="reseauService.isBusGroupSelected()" (change)="reseauService.toggleBusGroup()">
+                <strong>Bus</strong>
+            </label>
+        </div>
+        <div class="reseau-layer-item" *ngFor="let cat of busCategories">
+            <label class="reseau-checkbox-label">
+                <input type="checkbox" [checked]="reseauService.isBusTypeSelected(cat.key)"
+                    (change)="reseauService.toggleBusType(cat.key)">
+                <span class="reseau-color-swatch" [style.background-color]="cat.color"></span>
+                <span class="reseau-cat-label">{{ cat.label }}</span>
+            </label>
+        </div>
+
+        <div class="reseau-section-title" style="margin-top: 8px;">
+            <label class="reseau-checkbox-label">
+                <input type="checkbox" [checked]="reseauService.isLineGroupSelected()" (change)="reseauService.toggleLineGroup()">
+                <strong>Lignes</strong>
+            </label>
+        </div>
+        <div class="reseau-layer-item" *ngFor="let cat of lineCategories">
+            <label class="reseau-checkbox-label">
+                <input type="checkbox" [checked]="reseauService.isLineTypeSelected(cat.key)"
+                    (change)="reseauService.toggleLineType(cat.key)">
+                <span class="reseau-color-swatch" [style.background-color]="cat.color"></span>
+                <span class="reseau-cat-label">{{ cat.label }}</span>
+            </label>
+        </div>
+    </div>
+</div>
 
 <div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
     <p>Ajouter une infrastructure :</p>

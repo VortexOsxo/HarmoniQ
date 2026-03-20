@@ -18,52 +18,6 @@ export class MapLineService {
     this.loadPromise = this.loadLineData();
   }
 
-  addLinesToMap(map: L.Map) {
-    if (!this.isDataLoaded) {
-      this.loadPromise.then(() => this.addLinesToMap(map));
-      return;
-    }
-    Object.values(this.points).forEach((point: any) => {
-      let color = 'gray';
-      if (point.isDepart && !point.isArrivee) {
-        color = 'blue';
-      } else if (!point.isDepart && point.isArrivee) {
-        color = 'red';
-      }
-
-      const popupContent = `
-                    <b>Nom:</b> ${point.nom || 'N/A'}<br>
-                    <b>Type:</b> ${point.isDepart && point.isArrivee ? 'Départ et Arrivée' : point.isDepart ? 'Départ' : 'Arrivée'}
-                `;
-
-      L.circleMarker([parseFloat(point.lat), parseFloat(point.lon)], {
-        radius: 2,
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.8
-      }).addTo(map)
-        .bindPopup(popupContent);
-    });
-
-    this.lines.forEach(line => {
-      const busDepart: L.LatLngExpression = [parseFloat(line.latitude_starting), parseFloat(line.longitude_starting)];
-      const busArrivee: L.LatLngExpression = [parseFloat(line.latitude_ending), parseFloat(line.longitude_ending)];
-
-      const popupContent = `
-                    <b>Voltage:</b> ${line.voltage || 'N/A'} kV<br>
-                    <b>Longueur:</b> ${line.line_length_km || 'N/A'} km<br>
-                    <b>Point de départ:</b> ${line.network_node_name_starting || 'N/A'}<br>
-                    <b>Point d'arrivée:</b> ${line.network_node_name_ending || 'N/A'}
-                `;
-
-      L.polyline([busDepart, busArrivee], {
-        color: 'gray',
-        weight: 1
-      }).addTo(map)
-        .bindPopup(popupContent); // TODO: Make it less pain to open the popup
-    });
-  }
-
 
   private async loadLineData() {
     const csvData = await fetch('/lignes_quebec.csv')
