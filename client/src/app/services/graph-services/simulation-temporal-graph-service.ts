@@ -8,6 +8,16 @@ import { environment } from 'environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
+import { ProductionNode } from '@app/components/scenario/scenario-demand-prod-sankey/sankey-data.types';
+
+const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
+    hydro: { id: 'hydraulique', label: 'Hydraulique', color: '#4a9dd4', icon: 'fa-droplet', co2FactorKgMWh: 24 },
+    eolien: { id: 'eolien', label: 'Éolien', color: '#6abbc4', icon: 'fa-wind', co2FactorKgMWh: 12 },
+    solaire: { id: 'solaire', label: 'Solaire', color: '#e8c53c', icon: 'fa-sun', co2FactorKgMWh: 48 },
+    thermique: { id: 'thermique', label: 'Thermique', color: '#e25c5c', icon: 'fa-bolt', co2FactorKgMWh: 820 },
+    nucleaire: { id: 'nucleaire', label: 'Nucléaire', color: '#e8754a', icon: 'fa-radiation', co2FactorKgMWh: 12 },
+    import: { id: 'import', label: 'Importation', color: '#a0a0c8', icon: 'fa-right-to-bracket', co2FactorKgMWh: 200 },
+};
 
 @Injectable({
     providedIn: 'root',
@@ -117,6 +127,26 @@ export class SimulationTemporalGraphService implements SimulationStep {
         );
 
         Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, traces, layout as any, { responsive: true });
+    }
+
+    getCachedSimulationResult(): any { return this.cachedSimulationResult; }
+    getCachedDemandeResult(): any { return this.cachedDemandeResult; }
+
+    getProductionNodes(): ProductionNode[] {
+        if (!this.cachedSimulationResult?.production?.length) return [];
+        const data: any[] = this.cachedSimulationResult.production;
+        const n = data.length;
+        const avg = (key: string) => data.reduce((sum: number, row: any) => sum + (row[key] ?? 0), 0) / n;
+        const hydro = avg('total_hydro_reservoir') + avg('total_hydro_fil');
+        const carriers: [string, number][] = [
+            ['hydro', hydro],
+            ['eolien', avg('total_eolien')],
+            ['solaire', avg('total_solaire')],
+            ['thermique', avg('total_thermique')],
+            ['nucleaire', avg('total_nucleaire')],
+            ['import', avg('total_import')],
+        ];
+        return carriers.map(([carrier, value]) => ({ ...CARRIER_NODE_DEFS[carrier], value: Math.round(value) }));
     }
 
     clear() {
