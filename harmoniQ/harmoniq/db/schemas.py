@@ -445,11 +445,13 @@ class Bus(SQLBase):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    display_name = Column(String, nullable=True)
     v_nom = Column(Integer)
     type = Column(Enum(BusType))
     x = Column(Float)
     y = Column(Float)
     control = Column(Enum(BusControlType))
+    reseau_type = Column(String, nullable=True)
 
     lines_from = relationship(
         "Line", back_populates="bus_from", foreign_keys="Line.bus0"
@@ -459,11 +461,13 @@ class Bus(SQLBase):
 
 class BusBase(BaseModel):
     name: str
+    display_name: Optional[str] = None
     v_nom: int
     type: BusType
     x: float
     y: float
     control: BusControlType
+    reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -521,6 +525,7 @@ class Line(SQLBase):
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)
+    reseau_type = Column(String, nullable=True)
 
     bus_from = relationship("Bus", back_populates="lines_from", foreign_keys=[bus0])
     bus_to = relationship("Bus", back_populates="lines_to", foreign_keys=[bus1])
@@ -535,6 +540,7 @@ class LineBase(BaseModel):
     capital_cost: float
     length: float
     s_nom: float
+    reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

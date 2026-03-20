@@ -12,13 +12,17 @@ div#plots {
     right: 16px;
     z-index: 1100;
     transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .protected-areas-btn-container.detail-open {
     right: 416px;
 }
 
-.protected-areas-btn {
+.protected-areas-btn,
+.reseau-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -31,6 +35,7 @@ div#plots {
     background: #fff !important;
     color: #555 !important;
     border: 1px solid #ddd !important;
+    min-width: 180px;
 }
 
 .protected-areas-btn.btn-success {
@@ -38,6 +43,14 @@ div#plots {
     color: #fff !important;
     border-color: #27ae60 !important;
     box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);
+}
+
+/* ── Réseau button ── */
+.reseau-btn.btn-reseau-active {
+    background: #4A90D9 !important;
+    color: #fff !important;
+    border-color: #4A90D9 !important;
+    box-shadow: 0 2px 8px rgba(74, 144, 217, 0.35);
 }
 
 /* ── Content area ── */
