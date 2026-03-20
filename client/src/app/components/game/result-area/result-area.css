@@ -17,7 +17,6 @@
   background-color: #f9fafb;
   border-radius: 20px;
   padding: 0.8rem;
-  overflow: visible;
 }
 
 #scoreHeader {
@@ -27,11 +26,6 @@
   text-align: center;
   gap: 0.15rem;
   padding: 0.1rem 0;
-}
-
-#trophyIcon {
-  font-size: 1.5rem;
-  margin-bottom: 0;
 }
 
 #scoreHeader h1 {
@@ -46,10 +40,6 @@
   color: #6b7280;
   margin: 0;
   max-width: 80%;
-}
-
-#finalScore {
-  margin-top: 0.2rem;
 }
 
 #finalScore .fraction {
@@ -82,12 +72,9 @@
   padding: 0.4rem 0.6rem;
   border-radius: 10px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   gap: 0.1rem;
-}
-
-.scoreCard .cardIcon {
-  font-size: 1.2rem;
+  cursor: pointer;
 }
 
 .scoreCard .cardLabel {
@@ -102,9 +89,17 @@
   color: #111827;
 }
 
-.yellowCard { background-color: #fef3c7; }
-.greenCard { background-color: #d1fae5; }
-.blueCard { background-color: #dbeafe; }
+.yellowCard {
+  background-color: #fef3c7;
+}
+
+.greenCard {
+  background-color: #d1fae5;
+}
+
+.blueCard {
+  background-color: #dbeafe;
+}
 
 #answersReview {
   width: 100%;
@@ -131,27 +126,30 @@
   padding-right: 0.5rem;
 }
 
-.reviewItem {
+::ng-deep .reviewItem {
   display: flex;
   align-items: flex-start;
+  flex-direction: column;
   gap: 0.8rem;
   border-bottom: 1px solid #f3f4f6;
-  padding-bottom: 0.8rem;
+  padding-bottom: 1.2rem;
+  margin-bottom: 1.2rem;
 }
 
-.statusIcon {
-  font-size: 1.1rem;
-  margin-top: 2px;
+::ng-deep .reviewItem:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
-.reviewContent {
+::ng-deep .reviewContent {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.4rem;
 }
 
-.reviewQuestion {
+::ng-deep .reviewQuestion {
   font-size: 0.95rem;
   font-weight: 600;
   color: #1f2937;
@@ -159,20 +157,23 @@
   line-height: 1.4;
 }
 
-.reviewUserAnswer,
-.reviewCorrectAnswer {
+::ng-deep .reviewUserAnswer,
+::ng-deep .reviewCorrectAnswer {
   font-size: 0.85rem;
-  color: #6b7280;
+  font-weight: 500;
   margin: 0;
 }
 
-.reviewUserAnswer.incorrectText {
-  color: #ef4444;
+::ng-deep .reviewUserAnswer.red {
+  color: #ef4444 !important;
 }
 
-.reviewCorrectAnswer {
-  color: #10b981;
-  font-weight: 500;
+::ng-deep .reviewUserAnswer.green {
+  color: #10b981 !important;
+}
+
+::ng-deep .reviewUserAnswer.orange {
+  color: #f97316 !important;
 }
 
 #resultActions {
@@ -196,7 +197,6 @@
   box-shadow: 0 6px 18px rgba(108, 92, 231, 0.25);
   transition: transform 0.2s ease, background-color 0.2s ease;
   min-width: 160px;
-  text-align: center;
 }
 
 .resultButton:hover {
@@ -212,18 +212,10 @@
   margin-top: 1rem;
 }
 
-#completionMessage {
-  font-size: 0.8rem !important;
-  line-height: 1.2;
-}
-
-#resultsContainer img {
-  width: 35px;
-  margin: 0.2rem 0;
-}
-
-#resultsContainer h1 {
-  font-size: 0.9rem;
-  text-align: center;
-  margin: 0.2rem 0;
+img {
+  height: 1em;
+  width: auto;
+  max-width: 1em;
+  vertical-align: -0.125em;
+  display: inline-block;
 }

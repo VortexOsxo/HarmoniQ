@@ -31,7 +31,10 @@ export class GameService {
   private _currentQuestion = new BehaviorSubject<number>(-1);
   public currentQuestion$ = this._currentQuestion.asObservable();
   private answeredQuestions: [number] = [EMPTY]; //a list of all answered questions in previous quizzes
-  private goodAnswers: number = 0; // the number of right answer in a quiz
+  private answerColorCode: string[] = []; // the number of right answer in a quiz
+  private energyAnswers: number = 0;
+  private environmentAnswers: number = 0;
+  private economyAnswers: number = 0;
   private userAnswers: number[][] = []; // a list of all answers 
   private quiz: Quiz =
     {
@@ -39,7 +42,7 @@ export class GameService {
         question: {
           questionText: "",
           options: [""],
-          questionType:"",
+          questionType: "",
           questionAspect: ""
         },
         answer: 0,
@@ -57,7 +60,7 @@ export class GameService {
 
   //gets the quiz from the backend
   getQuiz(): void {
-    const listToSend = (this.answeredQuestions.length === 1 && 
+    const listToSend = (this.answeredQuestions.length === 1 &&
       (this.answeredQuestions[0] === EMPTY || this.answeredQuestions[0] === NO_MORE_QUESTIONS_FLAG))
       ? [] : this.answeredQuestions;
 
@@ -67,11 +70,18 @@ export class GameService {
       this.quiz.questions = quiz.questions;
       this.answeredQuestions = quiz.answeredQuestionList;
       this._currentQuestion.next(0);
-      this.goodAnswers = 0;
-      this.userAnswers = [];
-      this.isCurrentAnswered = false;
-      this.userSelection = [-1];
+      this.resetStats();
     });
+  }
+
+  private resetStats(): void {
+    this.answerColorCode = [];
+    this.userAnswers = [];
+    this.isCurrentAnswered = false;
+    this.userSelection = [-1];
+    this.economyAnswers = 0;
+    this.energyAnswers = 0;
+    this.environmentAnswers = 0;
   }
 
   getQuestion(): Question {
@@ -95,49 +105,87 @@ export class GameService {
     this.answeredQuestions = [EMPTY];
   }
 
-checkAnswer(selectedOption: number[]): number[] {
+  //checks the answer and attribute points, also gives partials on order type questions
+  checkAnswer(selectedOption: number[]): number[] {
     const isFirstTime = !this.isCurrentAnswered;
     const currentQ = this.quiz.questions[this._currentQuestion.value];
     const correctAnswer = currentQ.answer;
-    
+    let stackedPts = 0;
+
     this.isCurrentAnswered = true;
     this.userSelection = selectedOption;
-    this.userAnswers.push(selectedOption);
+
+    if (isFirstTime) {
+      this.userAnswers.push(selectedOption);
+    }
 
     if (typeof correctAnswer === 'number') {
-        if (isFirstTime && selectedOption[0] === correctAnswer) {
-            this.goodAnswers++;
+      if (isFirstTime) {
+        if (selectedOption[0] === correctAnswer) {
+          this.answerColorCode.push("green");
+          if (this.quiz.questions[this.questionIndex].question.questionAspect == "economy")
+            this.economyAnswers++;
+          if (this.quiz.questions[this.questionIndex].question.questionAspect == "environment")
+            this.environmentAnswers++;
+          if (this.quiz.questions[this.questionIndex].question.questionAspect == "energy")
+            this.energyAnswers++;
+        } else {
+          this.answerColorCode.push("red");
         }
-        return [correctAnswer];
+      }
+      return [correctAnswer];
     }
 
     if (Array.isArray(correctAnswer)) {
-        let isCorrect = true;
-        if (selectedOption.length !== correctAnswer.length) {
-            isCorrect = false;
-        } else {
-            for (let i = 0; i < selectedOption.length; i++) {
-                if (selectedOption[i] !== correctAnswer[i]) {
-                    isCorrect = false;
-                    break;
-                }
-            }
+      let isCorrect = true;
+      if (selectedOption.length !== correctAnswer.length) {
+        isCorrect = false;
+      } else {
+        for (let i = 0; i < selectedOption.length; i++) {
+          if (selectedOption[i] == correctAnswer[i]) {
+            stackedPts += 1 / selectedOption.length;
+          }
         }
+      }
 
-        if (isFirstTime && isCorrect) {
-            this.goodAnswers++;
+      if (isFirstTime) {
+        if (isCorrect) {
+          if (this.quiz.questions[this.questionIndex].question.questionAspect == "economy")
+            this.economyAnswers += stackedPts;
+          if (this.quiz.questions[this.questionIndex].question.questionAspect == "environment")
+            this.environmentAnswers += stackedPts;
+          if (this.quiz.questions[this.questionIndex].question.questionAspect == "energy")
+            this.energyAnswers += stackedPts;
+          if (stackedPts == 0) this.answerColorCode.push("red");
+          else if (stackedPts > 0 && stackedPts < 1) this.answerColorCode.push("orange");
+          else if (stackedPts == 1) this.answerColorCode.push("green");
+        } else {
+          this.answerColorCode.push("red");
         }
-        return correctAnswer;
+      }
+      return correctAnswer;
     }
     return [];
-}
+  }
 
   getGoodAnswerNumber(): number {
-    return this.goodAnswers;
+    return this.economyAnswers + this.energyAnswers + this.environmentAnswers;
   }
+
+  getEconomyNumber(): number { return this.economyAnswers; }
+
+  getEnergyNumber(): number { return this.energyAnswers }
+
+  getEnvironmentNumber(): number { return this.environmentAnswers }
 
   getMessage(): string {
     return this.quiz.questions[this._currentQuestion.value].message;
+  }
+
+  getQuestionAspect(): string[] {
+    return this.quiz.questions.map((q) => {
+      return q.question.questionAspect;
+    })
   }
 
   isQuizStarted(): boolean {
@@ -147,42 +195,38 @@ checkAnswer(selectedOption: number[]): number[] {
   setQuizStarted(): void {
     this.quizStarted = true;
   }
-//returns every answered questions in strings
-getAnsweredQuestions() {
-  const answeredCount = this.userAnswers.length;
-  const questionsTexts = this.quiz.questions.slice(0, answeredCount).map(q => q.question.questionText);
-  const userAnswersTexts = this.userAnswers.slice(0, answeredCount).map((answerIndices, qIndex) => {
-    const options = this.quiz.questions[qIndex].question.options;
-    
-    return answerIndices
-      .filter(idx => idx !== -1)
-      .map(idx => options[idx])
-      .join(', ');
-  });
+  //returns every answered questions in strings
+  getAnsweredQuestions() {
+    const answeredCount = this.userAnswers.length;
+    const questionsTexts = this.quiz.questions.slice(0, answeredCount).map(q => q.question.questionText);
+    const userAnswersTexts = this.userAnswers.slice(0, answeredCount).map((answerIndices, qIndex) => {
+      const options = this.quiz.questions[qIndex].question.options;
 
-  const correctAnswersTexts = this.quiz.questions.slice(0, answeredCount).map((q) => {
-    const options = q.question.options;
-    const ans = q.answer;
+      return answerIndices
+        .filter(idx => idx !== -1)
+        .map(idx => options[idx])
+        .join(', ');
+    });
 
-    if (Array.isArray(ans)) {
+    const correctAnswersTexts = this.quiz.questions.slice(0, answeredCount).map((q) => {
+      const options = q.question.options;
+      const ans = q.answer;
 
-      return ans.map(idx => options[idx]).join(', ');
-    } else {
-      return options[ans];
-    }
-  });
+      if (Array.isArray(ans)) {
 
-  const questionAspect = this.quiz.questions.slice(0, answeredCount).map((q) => {
-    return q.question.questionAspect;
-  })
+        return ans.map(idx => options[idx]).join(', ');
+      } else {
+        return options[ans];
+      }
+    });
 
-  return {
-    questions: questionsTexts,
-    answers: userAnswersTexts,
-    correctAnswers: correctAnswersTexts,
-    questionAspect: questionAspect
-  };
-}
+    return {
+      questions: questionsTexts,
+      answers: userAnswersTexts,
+      correctAnswers: correctAnswersTexts,
+      color: this.answerColorCode
+    };
+  }
 
   get questionIndex(): number {
     return this._currentQuestion.value;
