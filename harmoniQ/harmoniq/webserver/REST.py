@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -294,6 +294,29 @@ async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, i
     return response
 
 router.include_router(reseau_router)
+
+#/informativegame/question
+#-----#-----#-----#-----#-----#-----#  Ludification   #-----#-----#-----#-----#-----#-----#
+from .Ludification import selectQuestion
+
+game_router = APIRouter(
+    prefix="/jeux-informatifs",
+    tags=["Jeux"],
+    responses={404: {"description": "Not found"}},
+)
+
+@game_router.get("/quiz")
+async def fetch_question(
+    answeredQuestionList: List[int] = Query(default=[])
+):
+    quiz, answeredQuestionList = selectQuestion(answeredQuestionList)
+
+    return {       
+        "questions": quiz,
+    "answeredQuestionList": answeredQuestionList
+    }
+
+router.include_router(game_router)
 
 #-----#-----#-----#-----#-----#  Ajout de toutes les routes  #-----#-----#-----#-----#-----#
 

@@ -6,6 +6,8 @@ import { ScenarioDemandProdSankey } from "@app/components/scenario/scenario-dema
 import { ScenarioTemporalSimulation } from "@app/components/scenario/scenario-temporal-simulation/scenario-temporal-simulation";
 import { SimulationService } from '@app/services/simulation-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GameArea } from '@app/components/game/game-area/game-area';
 
 @Component({
   selector: 'app-simulation-page',
@@ -15,6 +17,9 @@ import { SimulationStepService } from '@app/services/simulation-step-service';
   styleUrl: './simulation-page.css',
 })
 export class SimulationPage implements AfterViewInit {
+
+  constructor(private bootstrap: NgbModal) { }
+
   simulationService = inject(SimulationService);
   stepService = inject(SimulationStepService);
 
@@ -26,5 +31,12 @@ export class SimulationPage implements AfterViewInit {
     const element = document.getElementById(`step-${index}`);
     if (element)
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  openQuiz() {
+    this.bootstrap.open(GameArea, {
+      centered: true,
+      windowClass: 'game-modal'
+    });
   }
 }

@@ -12,9 +12,9 @@ import { TopBarLogo } from "../top-bar-logo/top-bar-logo";
   standalone: true,
 })
 export class NavigationBar {
-  isCollapsed = true;
-
   constructor(public tutorialService: TutorialService, public router: Router) { }
+
+  isCollapsed = true;
 
   toggleNavbar() {
     this.isCollapsed = !this.isCollapsed;
