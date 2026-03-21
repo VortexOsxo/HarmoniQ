@@ -105,6 +105,39 @@
     font-weight: 500;
 }
 
+.sidebar-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.btn-quiz {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.5px;
+}
+
+.btn-quiz:hover {
+    background: linear-gradient(135deg, #5b4cc4 0%, #8e85f1 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+}
+
+.btn-quiz:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(108, 92, 231, 0.3);
+}
+
+.btn-quiz i {
+    font-size: 1.1rem;
+}
+
 .text-success {
     color: #2ecc71;
 }

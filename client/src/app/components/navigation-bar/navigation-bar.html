@@ -12,9 +12,6 @@
         <li class="nav-item">
             <a class="nav-link text-white" routerLink="/map" routerLinkActive="fw-bold disabled">Simulation</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" style="cursor: pointer;" (click)="openQuiz()">Testez vos connaissances</a>
-        </li>
         <li class="nav-item" *ngIf="router.url === '/map'">
             <a class="nav-link text-white" style="cursor: pointer;" (click)="startHelp()">Aide</a>
         </li>
@@ -38,9 +35,6 @@
                 </a>
                 <a class="nav-popup-link" routerLink="/map" routerLinkActive="active" (click)="collapseNavbar()">
                     <i class="fas fa-play-circle"></i> Simulation
-                </a>
-                <a class="nav-popup-link" (click)="openQuiz()">
-                    <i class="fas fa-book"></i> Testez vos connaissances
                 </a>
                 <a class="nav-popup-link" *ngIf="router.url === '/map'" (click)="startHelp(); collapseNavbar()">
                     <i class="fas fa-question-circle"></i> Aide
