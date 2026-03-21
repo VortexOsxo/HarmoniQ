@@ -81,29 +81,30 @@ pre {
 }
 
 .quizButton {
-  background-color: #6c5ce7;
-  color: white;
   min-width: 160px;
   max-width: 260px;
   height: 2.6rem;
   padding: 0 1.2rem;
-  font-size: 0.8rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
-  white-space: nowrap;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #4361ee, #3a56d4);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+  white-space: nowrap;
 }
 
 .quizButton:hover {
-  background-color: #5b4bc4;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+  color: #fff;
 }
 
 .quizButton:active {
@@ -134,10 +135,8 @@ pre {
 
 ::ng-deep .optionButton:not(.answered):hover {
   background-color: #f0f4ff !important;
-  border-color: #6c5ce7 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-  color: #6c5ce7;
+  border-color: #3498db !important;
+  color: #3498db;
 }
 
 ::ng-deep .optionButton:not(.answered) {
@@ -152,7 +151,7 @@ pre {
 .draggable.dragging {
   opacity: 0.5;
   background-color: #f0f4ff;
-  border: 2px dashed #6c5ce7;
+  border: 2px dashed #3498db;
 }
 
 #questonInformation {
@@ -172,7 +171,7 @@ pre {
 #questonInformation:has(h1:not(:empty)) {
   opacity: 1;
   background-color: #f8f9fa;
-  border-left: 3px solid #6c5ce7;
+  border-left: 3px solid #3498db;
   border-radius: 4px;
 }
 
@@ -235,7 +234,7 @@ pre {
 
 #progressFill {
   height: 100%;
-  background: linear-gradient(to right, #6c5ce7, #a29bfe);
+  background: #3498db;
   border-radius: 0 3px 3px 0;
   transition: width 0.4s ease;
 }

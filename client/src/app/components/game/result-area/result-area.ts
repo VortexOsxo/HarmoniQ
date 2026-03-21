@@ -78,7 +78,7 @@ export class ResultArea {
         const questionText = questionData.questions[i];
         const userAnswerText = questionData.answers[i];
         const correctAnswerText = questionData.correctAnswers[i];
-        const color = questionData.color[i];
+        const isCorrect = userAnswerText === correctAnswerText;
 
         if (sorter == questionAspect[i] || sorter == "") {
 
@@ -93,7 +93,7 @@ export class ResultArea {
           qText.textContent = `Q${i + 1}: ${questionText}`;
 
           const uAnswer = document.createElement('p');
-          uAnswer.className = `reviewUserAnswer ${color}`;
+          uAnswer.className = `reviewUserAnswer ${isCorrect ? 'green' : 'red'}`;
           uAnswer.textContent = `Votre réponse: ${userAnswerText}`;
 
           reviewContent.appendChild(qText);

@@ -46,25 +46,29 @@
 }
 
 #start-area .quizButton {
-  background-color: #6c5ce7;
-  color: white;
   width: 100%;
   max-width: 250px;
   height: auto;
   padding: 1rem 2rem;
-  font-size: 1.2rem;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #4361ee, #3a56d4);
+  color: #fff;
   border: none;
-  border-radius: 50px;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
 }
 
 #start-area .quizButton:hover {
-  background-color: #5b4bc4;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+  color: white;
 }
 
 #start-area .quizButton:active {
