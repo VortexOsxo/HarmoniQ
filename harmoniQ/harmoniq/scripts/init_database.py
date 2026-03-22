@@ -3,6 +3,7 @@
 import pandas as pd
 from pathlib import Path
 from pathlib import Path
+import itertools
 
 from harmoniq.db.engine import engine, get_db
 from harmoniq.db.schemas import SQLBase
@@ -16,6 +17,9 @@ import argparse
 CURRENT_DIR = Path(__file__).parent
 CSV_DIR = CURRENT_DIR / ".." / "db" / "CSVs"
 
+
+
+id_gen = itertools.count(1)
 
 def init_db(reset=False):
     if reset:
@@ -41,6 +45,7 @@ def fill_thermique():
         CRUD.create_thermique(
             db,
             schemas.ThermiqueBase(
+                id=next(id_gen),
                 nom=row["nom"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
@@ -68,6 +73,7 @@ def fill_solaire():
         CRUD.create_solaire(
             db,
             schemas.SolaireBase(
+                id=next(id_gen),
                 nom=row["nom"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
@@ -119,6 +125,7 @@ def fill_parc_eoliennes():
                     )
 
             eolienne_parc = schemas.EolienneParcBase(
+                id=next(id_gen),
                 nom=project_name,
                 latitude=average_lat,
                 longitude=average_lon,
@@ -155,6 +162,7 @@ def fill_hydro():
             continue
 
         db_hydro = schemas.HydroBase(
+            id=next(id_gen),
             nom=row["Nom"],
             puissance_nominal=row["Puissance_Installee_MW"],
             type_barrage=row["Type"],
