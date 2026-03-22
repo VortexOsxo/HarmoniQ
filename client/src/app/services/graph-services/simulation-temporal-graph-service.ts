@@ -9,15 +9,15 @@ import { firstValueFrom } from 'rxjs';
 import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import { ProductionNode } from '@app/components/scenario/scenario-demand-prod-sankey/sankey-data.types';
-import { INFRA_COLORS } from '@app/data/infra-colors.data';
+import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
 
 const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
-    hydro: { id: 'hydraulique', label: 'Hydraulique', color: INFRA_COLORS['hydro'], icon: 'fa-droplet', co2FactorKgMWh: 24 },
-    eolien: { id: 'eolien', label: 'Éolien', color: INFRA_COLORS['eolien'], icon: 'fa-wind', co2FactorKgMWh: 12 },
-    solaire: { id: 'solaire', label: 'Solaire', color: INFRA_COLORS['solaire'], icon: 'fa-sun', co2FactorKgMWh: 48 },
-    thermique: { id: 'thermique', label: 'Thermique', color: INFRA_COLORS['thermique'], icon: 'fa-bolt', co2FactorKgMWh: 820 },
-    nucleaire: { id: 'nucleaire', label: 'Nucléaire', color: INFRA_COLORS['nucleaire'], icon: 'fa-radiation', co2FactorKgMWh: 12 },
-    import: { id: 'import', label: 'Importation', color: INFRA_COLORS['import'], icon: 'fa-right-to-bracket', co2FactorKgMWh: 200 },
+    hydro: { id: 'hydraulique', label: INFRA_LABELS['hydraulique'], color: INFRA_COLORS['hydro'], icon: 'fa-droplet', co2FactorKgMWh: 24 },
+    eolien: { id: 'eolien', label: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'], icon: 'fa-wind', co2FactorKgMWh: 12 },
+    solaire: { id: 'solaire', label: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'], icon: 'fa-sun', co2FactorKgMWh: 48 },
+    thermique: { id: 'thermique', label: INFRA_LABELS['thermique'], color: INFRA_COLORS['thermique'], icon: 'fa-bolt', co2FactorKgMWh: 820 },
+    nucleaire: { id: 'nucleaire', label: INFRA_LABELS['nucleaire'], color: INFRA_COLORS['nucleaire'], icon: 'fa-radiation', co2FactorKgMWh: 12 },
+    import: { id: 'import', label: INFRA_LABELS['import'], color: INFRA_COLORS['import'], icon: 'fa-right-to-bracket', co2FactorKgMWh: 200 },
 };
 
 @Injectable({
@@ -62,13 +62,13 @@ export class SimulationTemporalGraphService implements SimulationStep {
         let x = productionData.map((instance: any) => (instance["snapshot"]));
 
         const components = [
-            { key: 'total_eolien', name: 'Éolien', color: INFRA_COLORS['eolien'] },
-            { key: 'total_solaire', name: 'Solaire', color: INFRA_COLORS['solaire'] },
+            { key: 'total_eolien', name: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'] },
+            { key: 'total_solaire', name: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'] },
             { key: 'total_hydro_fil', name: 'Hydro (fil)', color: INFRA_COLORS['hydro'] },
             { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: INFRA_COLORS['hydro'] },
-            { key: 'total_nucleaire', name: 'Nucléaire', color: INFRA_COLORS['nucleaire'] },
-            { key: 'total_thermique', name: 'Thermique', color: INFRA_COLORS['thermique'] },
-            { key: 'total_import', name: 'Importations', color: INFRA_COLORS['import'] }
+            { key: 'total_nucleaire', name: INFRA_LABELS['nucleaire'], color: INFRA_COLORS['nucleaire'] },
+            { key: 'total_thermique', name: INFRA_LABELS['thermique'], color: INFRA_COLORS['thermique'] },
+            { key: 'total_import', name: INFRA_LABELS['import'], color: INFRA_COLORS['import'] }
         ];
 
         let traces: any[] = [];

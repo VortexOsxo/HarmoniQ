@@ -14,3 +14,20 @@ export const INFRA_COLORS: Record<string, string> = {
     'commercial': '#5c9fd6',
     'pertes': '#e8a93c'
 };
+
+export const INFRA_LABELS: Record<string, string> = {
+    'hydro': 'Hydraulique',
+    'hydraulique': 'Hydraulique',
+    'eolien': 'Éolien',
+    'eolienneparc': 'Éolien',
+    'solaire': 'Solaire',
+    'thermique': 'Thermique',
+    'nucleaire': 'Nucléaire',
+    'import': 'Importation',
+    
+    // Demand labels
+    'industrie': 'Industrie',
+    'residentiel': 'Résidentiel',
+    'commercial': 'Commercial',
+    'pertes': 'Pertes'
+};

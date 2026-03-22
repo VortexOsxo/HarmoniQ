@@ -7,7 +7,7 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig, GraphService } from '../graph-service';
-import { INFRA_COLORS } from '@app/data/infra-colors.data';
+import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
 
 const typeKeyMap: Record<string, string> = {
     'hydro': 'central_hydroelectriques',
@@ -59,8 +59,8 @@ export class SimulationCostGraphService implements SimulationStep {
         for (const key in typeKeyMap) {
             const cost = simulationResult[key].reduce((acc: number, infraCost: any) => 
                 acc + (this.costMode === 'annuel' ? infraCost.cout_annuel : infraCost.cout_construction), 0);
-            costs.push(cost);
-            titles.push(key);
+            costs.push(cost / 1e9);
+            titles.push(INFRA_LABELS[key]);
             colors.push(INFRA_COLORS[key]);
         }
 
@@ -71,7 +71,8 @@ export class SimulationCostGraphService implements SimulationStep {
                 type: "bar",
                 marker: {
                     color: colors
-                }
+                },
+                hovertemplate: "<b>%{y:.2f} Md $</b><extra></extra>"
             }
         ];
 
@@ -86,7 +87,7 @@ export class SimulationCostGraphService implements SimulationStep {
                 title: { text: "Type d'Infrastructure", font: { size: 14, color: '#7f8c8d' } }
             },
             yaxis: { 
-                title: { text: this.costMode === 'annuel' ? "Cout annuel" : "Cout de construction", font: { size: 14, color: '#7f8c8d' } }
+                title: { text: this.costMode === 'annuel' ? "Cout annuel (Milliards $)" : "Cout de construction (Milliards $)", font: { size: 14, color: '#7f8c8d' } }
             },
             height: 800,
             margin: { t: 80, b: 100, l: 100, r: 40 }
