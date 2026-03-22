@@ -8,11 +8,12 @@ import { SimulationService } from '@app/services/simulation-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GameArea } from '@app/components/game/game-area/game-area';
+import { ScenarioCostSimulation } from '@app/components/scenario/scenario-cost-simulation/scenario-cost-simulation';
 
 @Component({
   selector: 'app-simulation-page',
   standalone: true,
-  imports: [SimulationTopBar, CommonModule, ScenarioTemporalDemandGraph, ScenarioDemandProdSankey, ScenarioTemporalSimulation],
+  imports: [SimulationTopBar, CommonModule, ScenarioCostSimulation, ScenarioTemporalDemandGraph, ScenarioDemandProdSankey, ScenarioTemporalSimulation],
   templateUrl: './simulation-page.html',
   styleUrl: './simulation-page.css',
 })

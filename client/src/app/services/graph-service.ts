@@ -5,7 +5,9 @@ export const graphServiceConfig = {
     PRODUCTION_SINGLE_INFRA_ID: 'production-single-infra-id',
     ENERGY_PROD_CONS_SANKEY_ID: 'energy-prod-cons-sankey-id',
     TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id',
-    TEMPORAL_SIMULATION_ID: 'temporal-simulation-id'
+    TEMPORAL_SIMULATION_ID: 'temporal-simulation-id',
+    COST_SIMULATION_ID: 'cost-simulation-id',
+    CO2_SIMULATION_ID: 'co2-simulation-id',
 };
 
 
