@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ScenarioTemporalDemandGraph } from "@app/components/scenario/scenario-temporal-demand-graph/scenario-temporal-demand-graph";
 import { ScenarioDemandProdSankey } from "@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey";
 import { ScenarioTemporalSimulation } from "@app/components/scenario/scenario-temporal-simulation/scenario-temporal-simulation";
+import { ScenarioCo2Simulation } from '@app/components/scenario/scenario-co2-simulation/scenario-co2-simulation';
 import { SimulationService } from '@app/services/simulation-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +14,7 @@ import { ScenarioCostSimulation } from '@app/components/scenario/scenario-cost-s
 @Component({
   selector: 'app-simulation-page',
   standalone: true,
-  imports: [SimulationTopBar, CommonModule, ScenarioCostSimulation, ScenarioTemporalDemandGraph, ScenarioDemandProdSankey, ScenarioTemporalSimulation],
+  imports: [SimulationTopBar, CommonModule, ScenarioCostSimulation, ScenarioCo2Simulation, ScenarioTemporalDemandGraph, ScenarioDemandProdSankey, ScenarioTemporalSimulation],
   templateUrl: './simulation-page.html',
   styleUrl: './simulation-page.css',
 })
