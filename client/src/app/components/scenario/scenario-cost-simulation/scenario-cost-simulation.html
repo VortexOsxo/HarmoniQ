@@ -1,1 +1,19 @@
-<div [id]="config.COST_SIMULATION_ID" class="w-100 position-relative shadow-sm bg-white rounded">
+<div class="w-100 position-relative shadow-sm bg-white rounded p-3">
+    <div class="d-flex justify-content-end mb-2">
+        <div class="btn-group shadow-sm" role="group">
+            <button type="button" class="btn" 
+                    [class.btn-primary]="simulationCostGraphService.costMode === 'annuel'"
+                    [class.btn-outline-primary]="simulationCostGraphService.costMode !== 'annuel'"
+                    (click)="simulationCostGraphService.setCostMode('annuel')">
+                Coût Annuel
+            </button>
+            <button type="button" class="btn" 
+                    [class.btn-primary]="simulationCostGraphService.costMode === 'construction'"
+                    [class.btn-outline-primary]="simulationCostGraphService.costMode !== 'construction'"
+                    (click)="simulationCostGraphService.setCostMode('construction')">
+                Coût de Construction
+            </button>
+        </div>
+    </div>
+    <div [id]="config.COST_SIMULATION_ID" class="w-100"></div>
+</div>

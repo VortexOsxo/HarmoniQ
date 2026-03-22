@@ -23,6 +23,7 @@ const typeKeyMap: Record<string, string> = {
 export class SimulationCostGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedData: any;
+    public costMode: 'annuel' | 'construction' = 'annuel';
 
     constructor(
         private infrastructuresService: InfrastruturesService,
@@ -56,7 +57,8 @@ export class SimulationCostGraphService implements SimulationStep {
         const colors: string[] = [];
 
         for (const key in typeKeyMap) {
-            const cost = simulationResult[key].reduce((acc: number, infraCost: any) => acc + infraCost.cout_annuel, 0);
+            const cost = simulationResult[key].reduce((acc: number, infraCost: any) => 
+                acc + (this.costMode === 'annuel' ? infraCost.cout_annuel : infraCost.cout_construction), 0);
             costs.push(cost);
             titles.push(key);
             colors.push(INFRA_COLORS[key]);
@@ -75,20 +77,31 @@ export class SimulationCostGraphService implements SimulationStep {
 
         const layout: any = {
             title: {
-                text: "<b>Cout des differents types d'infrastructures</b>",
+                text: this.costMode === 'annuel' 
+                      ? "<b>Cout annuel des differents types d'infrastructures</b>" 
+                      : "<b>Cout de construction des differents types d'infrastructures</b>",
                 font: { size: 20, color: '#2c3e50' }
             },
             xaxis: { 
                 title: { text: "Type d'Infrastructure", font: { size: 14, color: '#7f8c8d' } }
             },
             yaxis: { 
-                title: { text: "Cout annuel", font: { size: 14, color: '#7f8c8d' } }
+                title: { text: this.costMode === 'annuel' ? "Cout annuel" : "Cout de construction", font: { size: 14, color: '#7f8c8d' } }
             },
             height: 800,
             margin: { t: 80, b: 100, l: 100, r: 40 }
         };
 
         Plotly.newPlot(graphServiceConfig.COST_SIMULATION_ID, data, layout);
+    }
+
+    public setCostMode(mode: 'annuel' | 'construction') {
+        if (this.costMode !== mode) {
+            this.costMode = mode;
+            if (this.cachedData) {
+                this.handleData(this.cachedData);
+            }
+        }
     }
 
     clear() {
