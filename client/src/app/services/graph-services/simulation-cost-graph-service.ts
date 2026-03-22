@@ -6,7 +6,8 @@ import { firstValueFrom } from 'rxjs';
 import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
-import { graphServiceConfig } from '../graph-service';
+import { graphServiceConfig, GraphService } from '../graph-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 
 const typeKeyMap: Record<string, string> = {
     'hydro': 'central_hydroelectriques',
@@ -52,11 +53,13 @@ export class SimulationCostGraphService implements SimulationStep {
     public handleData(simulationResult: any) {
         const costs: any[] = [];
         const titles: any[] = [];
+        const colors: string[] = [];
 
         for (const key in typeKeyMap) {
             const cost = simulationResult[key].reduce((acc: number, infraCost: any) => acc + infraCost.cout_annuel, 0);
             costs.push(cost);
             titles.push(key);
+            colors.push(INFRA_COLORS[key]);
         }
 
         const data: Partial<Plotly.PlotData>[] = [
@@ -65,7 +68,7 @@ export class SimulationCostGraphService implements SimulationStep {
                 y: costs,
                 type: "bar",
                 marker: {
-                    color: ["#4a9dd4", "#6abbc4", "#e8c53c", "#e25c5c", "#e8754a"]
+                    color: colors
                 }
             }
         ];
