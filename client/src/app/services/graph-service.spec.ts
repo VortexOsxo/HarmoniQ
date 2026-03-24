@@ -155,6 +155,16 @@ describe('GraphService', () => {
   });
 
   describe('generateProductionSingleInfraGraph', () => {
+    beforeEach(() => {
+      const el = document.createElement('div');
+      el.id = 'production-single-infra-id';
+      document.body.appendChild(el);
+    });
+
+    afterEach(() => {
+      document.getElementById('production-single-infra-id')?.remove();
+    });
+
     it('should complete without error for eolienneparc type', () => {
       const data = { tempsdate: { 0: '2035-01-01' }, puissance: { 0: 100 } };
       expect(() => service.generateProductionSingleInfraGraph('eolienneparc', data)).not.toThrow();
@@ -172,6 +182,16 @@ describe('GraphService', () => {
   });
 
   describe('downloadGraph', () => {
+    beforeEach(() => {
+      const el = document.createElement('div');
+      el.id = 'my-graph-id';
+      document.body.appendChild(el);
+    });
+
+    afterEach(() => {
+      document.getElementById('my-graph-id')?.remove();
+    });
+
     it('should complete without error for a valid graph id', () => {
       expect(() => service.downloadGraph('my-graph-id')).not.toThrow();
     });
