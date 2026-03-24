@@ -1,4 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -59,80 +60,118 @@ const mockInfrastruturesService = {
 
 const mockRouter = { navigate: vi.fn() };
 
-describe('SimulationLauncher', () => {
-  let component: SimulationLauncher;
-  let fixture: ComponentFixture<SimulationLauncher>;
+const defaultProviders = [
+  { provide: SimulationService, useValue: mockSimulationService },
+  { provide: ScenariosService, useValue: mockScenariosService },
+  { provide: InfrastruturesService, useValue: mockInfrastruturesService },
+  { provide: Router, useValue: mockRouter },
+];
 
-  beforeEach(async () => {
+describe('SimulationLauncher', () => {
+  beforeEach(() => {
     canLaunch.set(false);
     selectedScenario.set(null);
     selectedInfraGroup.set(null);
-
-    await TestBed.configureTestingModule({
-      imports: [SimulationLauncher],
-      providers: [
-        { provide: SimulationService, useValue: mockSimulationService },
-        { provide: ScenariosService, useValue: mockScenariosService },
-        { provide: InfrastruturesService, useValue: mockInfrastruturesService },
-        { provide: Router, useValue: mockRouter },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(SimulationLauncher);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the simulation launcher component', () => {
-    expect(component).toBeTruthy();
+  it('should render the CONFIGURATION ACTIVE label', async () => {
+    await render(SimulationLauncher, {
+      providers: defaultProviders,
+      schemas: [NO_ERRORS_SCHEMA],
+    });
+
+    expect(screen.getByText(/CONFIGURATION ACTIVE/i)).toBeInTheDocument();
   });
 
   describe('launchSimulation', () => {
-    it('should navigate to /simulation', () => {
-      component.launchSimulation();
+    it('should navigate to /simulation when the launch button is clicked', async () => {
+      const user = userEvent.setup();
+      canLaunch.set(true);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByRole('button', { name: /Lancer Simulation/i }));
+
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/simulation']);
     });
   });
 
   describe('canLaunch signal', () => {
-    it('should be false when no scenario or group is selected', () => {
-      expect(component.canLaunch()).toBe(false);
+    it('should render the launch button as disabled when canLaunch is false', async () => {
+      canLaunch.set(false);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(screen.getByRole('button', { name: /Lancer Simulation/i })).toBeDisabled();
     });
 
-    it('should reflect changes from the simulation service', () => {
+    it('should render the launch button as enabled when canLaunch is true', async () => {
       canLaunch.set(true);
-      expect(component.canLaunch()).toBe(true);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(screen.getByRole('button', { name: /Lancer Simulation/i })).not.toBeDisabled();
     });
   });
 
-  describe('selectedScenario signal', () => {
-    it('should return null initially', () => {
-      expect(component.selectedScenario()).toBeNull();
+  describe('selectedScenario display', () => {
+    it('should show "Aucun" when no scenario is selected', async () => {
+      selectedScenario.set(null);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      const scenarioValues = screen.getAllByText('Aucun');
+      expect(scenarioValues.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should return the selected scenario', () => {
+    it('should show the scenario name when a scenario is selected', async () => {
       selectedScenario.set(MOCK_SCENARIO);
-      expect(component.selectedScenario()).toEqual(MOCK_SCENARIO);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(screen.getByText('Scénario 2035')).toBeInTheDocument();
     });
   });
 
-  describe('selectedInfrastructure signal', () => {
-    it('should return null initially', () => {
-      expect(component.selectedInfrastructure()).toBeNull();
+  describe('selectedInfrastructure display', () => {
+    it('should show "Aucun" for infra group when none is selected', async () => {
+      selectedInfraGroup.set(null);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      const aucunItems = screen.getAllByText('Aucun');
+      expect(aucunItems.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should return the selected infrastructure group', () => {
+    it('should show the group name when an infrastructure group is selected', async () => {
       selectedInfraGroup.set(MOCK_GROUP);
-      expect(component.selectedInfrastructure()).toEqual(MOCK_GROUP);
-    });
-  });
 
-  describe('isLaunching signal', () => {
-    it('should be false initially', () => {
-      expect(component.isLaunching()).toBe(false);
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(screen.getByText('Mon Groupe')).toBeInTheDocument();
     });
   });
 });

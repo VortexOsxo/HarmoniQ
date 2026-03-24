@@ -1,59 +1,56 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen, fireEvent } from '@testing-library/angular';
 import { GranularitySelectorComponent } from './granularity-selector';
 
 const GRANULARITIES = ['original', 'daily', 'weekly', 'monthly'];
 
 describe('GranularitySelectorComponent', () => {
-  let component: GranularitySelectorComponent;
-  let fixture: ComponentFixture<GranularitySelectorComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [GranularitySelectorComponent],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(GranularitySelectorComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the granularity selector component', () => {
-    expect(component).toBeTruthy();
+  it('should render the granularity selector component', async () => {
+    await render(GranularitySelectorComponent);
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
   describe('@Input() selected', () => {
-    it('should default to "original"', () => {
-      expect(component.selected).toBe('original');
+    it('should default to "original" as the selected option', async () => {
+      await render(GranularitySelectorComponent);
+      const select = screen.getByRole('combobox') as HTMLSelectElement;
+      expect(select.value).toBe('original');
     });
 
-    it('should accept a custom selected value', () => {
-      component.selected = 'monthly';
-
-      expect(component.selected).toBe('monthly');
+    it('should reflect a custom selected value', async () => {
+      await render(GranularitySelectorComponent, {
+        componentInputs: { selected: 'monthly' },
+      });
+      const select = screen.getByRole('combobox') as HTMLSelectElement;
+      expect(select.value).toBe('monthly');
     });
   });
 
   describe('@Output() granularityChange', () => {
-    it('should emit the selected granularity on onChange()', () => {
-      const emitted: string[] = [];
-      component.granularityChange.subscribe((val: string) => emitted.push(val));
+    it('should emit the selected granularity when the select changes', async () => {
+      const granularityChange = vi.fn();
+      await render(GranularitySelectorComponent, {
+        componentOutputs: { granularityChange: { emit: granularityChange } as any },
+      });
 
-      component.onChange({ target: { value: 'daily' } });
+      const select = screen.getByRole('combobox');
+      fireEvent.change(select, { target: { value: 'daily' } });
 
-      expect(emitted).toContain('daily');
+      expect(granularityChange).toHaveBeenCalledWith('daily');
     });
 
-    it('should emit correct value for each granularity option', () => {
-      GRANULARITIES.forEach(granularity => {
-        const emitted: string[] = [];
-        component.granularityChange.subscribe((val: string) => emitted.push(val));
-
-        component.onChange({ target: { value: granularity } });
-
-        expect(emitted).toContain(granularity);
+    it('should emit correct value for each granularity option', async () => {
+      const granularityChange = vi.fn();
+      await render(GranularitySelectorComponent, {
+        componentOutputs: { granularityChange: { emit: granularityChange } as any },
       });
+      const select = screen.getByRole('combobox');
+
+      for (const granularity of GRANULARITIES) {
+        fireEvent.change(select, { target: { value: granularity } });
+        expect(granularityChange).toHaveBeenCalledWith(granularity);
+      }
     });
   });
 });

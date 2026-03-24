@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render } from '@testing-library/angular';
 import { NO_ERRORS_SCHEMA, signal, ChangeDetectorRef } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ScenarioDemandProdSankey } from './scenario-demand-prod-sankey';
@@ -49,15 +49,15 @@ const mockSimulationService = {
 const mockCdr = { markForCheck: vi.fn(), detectChanges: vi.fn() };
 
 describe('ScenarioDemandProdSankey', () => {
-  let component: ScenarioDemandProdSankey;
-  let fixture: ComponentFixture<ScenarioDemandProdSankey>;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     demandNodes.set(null);
     productionNodes.set(null);
+  });
 
-    await TestBed.configureTestingModule({
-      imports: [ScenarioDemandProdSankey],
+  afterEach(() => vi.clearAllMocks());
+
+  async function renderComponent() {
+    return render(ScenarioDemandProdSankey, {
       providers: [
         { provide: DemandeSankeyGraphService, useValue: mockGraphService },
         { provide: ScenariosService, useValue: mockScenariosService },
@@ -65,89 +65,94 @@ describe('ScenarioDemandProdSankey', () => {
         { provide: ChangeDetectorRef, useValue: mockCdr },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    });
+  }
 
-    fixture = TestBed.createComponent(ScenarioDemandProdSankey);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  afterEach(() => vi.clearAllMocks());
-
-  it('should create the scenario demand prod sankey component', () => {
-    expect(component).toBeTruthy();
+  it('should create the scenario demand prod sankey component', async () => {
+    const { fixture } = await renderComponent();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
   describe('totalDemandMW', () => {
-    it('should sum all demand node values', () => {
-      component.sankeyData = MOCK_SANKEY_DATA;
-      expect(component.totalDemandMW).toBe(500);
+    it('should sum all demand node values', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.sankeyData = MOCK_SANKEY_DATA;
+      expect(fixture.componentInstance.totalDemandMW).toBe(500);
     });
 
-    it('should return 0 for empty demand nodes', () => {
-      component.sankeyData = { demandNodes: [], productionNodes: [] };
-      expect(component.totalDemandMW).toBe(0);
+    it('should return 0 for empty demand nodes', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [] };
+      expect(fixture.componentInstance.totalDemandMW).toBe(0);
     });
   });
 
   describe('totalProductionMW', () => {
-    it('should sum all production node values', () => {
-      component.sankeyData = MOCK_SANKEY_DATA;
-      expect(component.totalProductionMW).toBe(500);
+    it('should sum all production node values', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.sankeyData = MOCK_SANKEY_DATA;
+      expect(fixture.componentInstance.totalProductionMW).toBe(500);
     });
 
-    it('should return 0 for empty production nodes', () => {
-      component.sankeyData = { demandNodes: [], productionNodes: [] };
-      expect(component.totalProductionMW).toBe(0);
+    it('should return 0 for empty production nodes', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [] };
+      expect(fixture.componentInstance.totalProductionMW).toBe(0);
     });
   });
 
   describe('coveragePercent', () => {
-    it('should compute production / demand * 100', () => {
-      component.sankeyData = {
+    it('should compute production / demand * 100', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.sankeyData = {
         demandNodes: [{ id: 'r', label: 'R', value: 400, color: '#000', icon: '' }],
         productionNodes: [{ id: 'h', label: 'H', value: 200, color: '#000', icon: '', co2FactorKgMWh: 0 }],
       };
-      expect(component.coveragePercent).toBe(50);
+      expect(fixture.componentInstance.coveragePercent).toBe(50);
     });
 
-    it('should return 0 when total demand is 0', () => {
-      component.sankeyData = { demandNodes: [], productionNodes: [] };
-      expect(component.coveragePercent).toBe(0);
+    it('should return 0 when total demand is 0', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [] };
+      expect(fixture.componentInstance.coveragePercent).toBe(0);
     });
   });
 
   describe('productionDeficit', () => {
-    it('should return 0 when simulation has not run', () => {
-      component.simulationRan = false;
-      component.sankeyData = MOCK_SANKEY_DATA;
-      expect(component.productionDeficit).toBe(0);
+    it('should return 0 when simulation has not run', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.simulationRan = false;
+      fixture.componentInstance.sankeyData = MOCK_SANKEY_DATA;
+      expect(fixture.componentInstance.productionDeficit).toBe(0);
     });
 
-    it('should return deficit when production is less than demand', () => {
-      component.simulationRan = true;
-      component.sankeyData = {
+    it('should return deficit when production is less than demand', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.simulationRan = true;
+      fixture.componentInstance.sankeyData = {
         demandNodes: [{ id: 'r', label: 'R', value: 600, color: '#000', icon: '' }],
         productionNodes: [{ id: 'h', label: 'H', value: 400, color: '#000', icon: '', co2FactorKgMWh: 0 }],
       };
-      expect(component.productionDeficit).toBe(200);
+      expect(fixture.componentInstance.productionDeficit).toBe(200);
     });
   });
 
   describe('productionSurplus', () => {
-    it('should return 0 when simulation has not run', () => {
-      component.simulationRan = false;
-      component.sankeyData = MOCK_SANKEY_DATA;
-      expect(component.productionSurplus).toBe(0);
+    it('should return 0 when simulation has not run', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.simulationRan = false;
+      fixture.componentInstance.sankeyData = MOCK_SANKEY_DATA;
+      expect(fixture.componentInstance.productionSurplus).toBe(0);
     });
 
-    it('should return surplus when production exceeds demand', () => {
-      component.simulationRan = true;
-      component.sankeyData = {
+    it('should return surplus when production exceeds demand', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.simulationRan = true;
+      fixture.componentInstance.sankeyData = {
         demandNodes: [{ id: 'r', label: 'R', value: 300, color: '#000', icon: '' }],
         productionNodes: [{ id: 'h', label: 'H', value: 500, color: '#000', icon: '', co2FactorKgMWh: 0 }],
       };
-      expect(component.productionSurplus).toBe(200);
+      expect(fixture.componentInstance.productionSurplus).toBe(200);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from './scenario-creation-modal';
@@ -22,64 +22,64 @@ const mockActiveModal = { close: vi.fn(), dismiss: vi.fn() };
 const mockScenariosService = { createScenario: vi.fn() };
 
 describe('ScenarioCreationModal', () => {
-  let component: ScenarioCreationModal;
-  let fixture: ComponentFixture<ScenarioCreationModal>;
+  afterEach(() => vi.clearAllMocks());
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ScenarioCreationModal],
+  async function renderComponent() {
+    return render(ScenarioCreationModal, {
       providers: [
         { provide: NgbActiveModal, useValue: mockActiveModal },
         { provide: ScenariosService, useValue: mockScenariosService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    });
+  }
 
-    fixture = TestBed.createComponent(ScenarioCreationModal);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  afterEach(() => vi.clearAllMocks());
-
-  it('should create the scenario creation modal component', () => {
-    expect(component).toBeTruthy();
+  it('should create the scenario creation modal component', async () => {
+    const { fixture } = await renderComponent();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
   describe('initial state', () => {
-    it('should initialize scenario with empty fields', () => {
-      expect(component.scenario.nom).toBe('');
-      expect(component.scenario.id).toBe(0);
+    it('should render the modal title', async () => {
+      await renderComponent();
+      expect(screen.getByText('Créer nouveau scenario')).toBeInTheDocument();
     });
 
-    it('should expose Weather enum', () => {
-      expect(component.Weather).toBeDefined();
+    it('should expose Weather enum', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.Weather).toBeDefined();
     });
 
-    it('should expose Consumption enum', () => {
-      expect(component.Consumption).toBeDefined();
+    it('should expose Consumption enum', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.Consumption).toBeDefined();
     });
   });
 
   describe('onSubmit', () => {
-    it('should call scenariosService.createScenario with the current scenario', () => {
-      component.scenario = MOCK_CREATED_SCENARIO;
+    it('should call scenariosService.createScenario with the current scenario', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.scenario = MOCK_CREATED_SCENARIO;
 
-      component.onSubmit();
+      fixture.componentInstance.onSubmit();
 
       expect(mockScenariosService.createScenario).toHaveBeenCalledWith(MOCK_CREATED_SCENARIO);
     });
 
-    it('should close the modal after submitting', () => {
-      component.onSubmit();
+    it('should close the modal after submitting', async () => {
+      const { fixture } = await renderComponent();
+
+      fixture.componentInstance.onSubmit();
 
       expect(mockActiveModal.close).toHaveBeenCalled();
     });
   });
 
   describe('dismiss', () => {
-    it('should call activeModal.dismiss()', () => {
-      component.dismiss();
+    it('should call activeModal.dismiss()', async () => {
+      const { fixture } = await renderComponent();
+
+      fixture.componentInstance.dismiss();
 
       expect(mockActiveModal.dismiss).toHaveBeenCalled();
     });

@@ -1,6 +1,6 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { render } from '@testing-library/angular';
+import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { SimulationResults } from './simulation-results';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
@@ -9,7 +9,6 @@ import { TutorialService, TutorialState } from '@app/services/tutorial-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 
 vi.mock('leaflet.markercluster', () => ({}));
-
 vi.mock('leaflet', () => ({
   default: {
     icon: vi.fn().mockReturnValue({}),
@@ -57,63 +56,65 @@ const mockInfraDetailService = {
   closeDetail: vi.fn(),
 };
 
-describe('SimulationResults', () => {
-  let component: SimulationResults;
-  let fixture: ComponentFixture<SimulationResults>;
+const providers = [
+  { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
+  { provide: ReseauService, useValue: mockReseauService },
+  { provide: TutorialService, useValue: mockTutorialService },
+  { provide: InfraDetailService, useValue: mockInfraDetailService },
+];
 
-  beforeEach(async () => {
+async function renderComponent() {
+  // Override the template to avoid rendering QuebecMap (Leaflet) and InfraDetailModal in jsdom
+  TestBed.overrideComponent(SimulationResults, {
+    set: { template: '<div class="simulation-results"></div>', imports: [] },
+  });
+  return render(SimulationResults, { providers });
+}
+
+describe('SimulationResults', () => {
+  beforeEach(() => {
     isDetailOpen.set(false);
     tutorialState$.next({ active: false, currentStep: 0, showWelcome: false });
-
-    await TestBed.configureTestingModule({
-      imports: [SimulationResults],
-      providers: [
-        { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
-        { provide: ReseauService, useValue: mockReseauService },
-        { provide: TutorialService, useValue: mockTutorialService },
-        { provide: InfraDetailService, useValue: mockInfraDetailService },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    })
-      .overrideComponent(SimulationResults, { set: { template: '', imports: [CommonModule] } })
-      .compileComponents();
-
-    fixture = TestBed.createComponent(SimulationResults);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the simulation results component', () => {
-    expect(component).toBeTruthy();
+  it('should render the simulation results component', async () => {
+    const { container } = await renderComponent();
+    expect(container).toBeTruthy();
   });
 
   describe('isDetailOpen', () => {
-    it('should return false when no infra detail is open', () => {
-      expect(component.isDetailOpen).toBe(false);
+    it('should return false when no infra detail is open', async () => {
+      isDetailOpen.set(false);
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.isDetailOpen).toBe(false);
     });
 
-    it('should return true when an infra detail is open', () => {
+    it('should return true when an infra detail is open', async () => {
       isDetailOpen.set(true);
-      expect(component.isDetailOpen).toBe(true);
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.isDetailOpen).toBe(true);
     });
   });
 
   describe('ngOnInit', () => {
-    it('should subscribe to tutorialService state', () => {
-      expect(component).toBeTruthy();
+    it('should subscribe to tutorialService state on init', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance).toBeTruthy();
     });
 
-    it('should call protectedAreasService.hide() when tutorial is active with welcome', () => {
+    it('should call protectedAreasService.hide() when tutorial is active with welcome', async () => {
+      await renderComponent();
       tutorialState$.next({ active: true, currentStep: 0, showWelcome: true });
       expect(mockProtectedAreasService.hide).toHaveBeenCalled();
     });
   });
 
   describe('ngOnDestroy', () => {
-    it('should unsubscribe without throwing', () => {
-      expect(() => component.ngOnDestroy()).not.toThrow();
+    it('should unsubscribe without throwing', async () => {
+      const { fixture } = await renderComponent();
+      expect(() => fixture.componentInstance.ngOnDestroy()).not.toThrow();
     });
   });
 });

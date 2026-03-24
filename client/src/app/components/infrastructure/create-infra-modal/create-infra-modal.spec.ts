@@ -1,4 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { NO_ERRORS_SCHEMA, ChangeDetectorRef } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder } from '@angular/forms';
@@ -37,81 +38,101 @@ const mockProtectedAreasService = {
 
 const mockCdr = { detectChanges: vi.fn(), markForCheck: vi.fn() };
 
-describe('CreateInfraModal', () => {
-  let component: CreateInfraModal;
-  let fixture: ComponentFixture<CreateInfraModal>;
+const defaultProviders = [
+  { provide: NgbActiveModal, useValue: mockActiveModal },
+  FormBuilder,
+  { provide: OpenApiService, useValue: mockOpenApiService },
+  { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
+  { provide: ChangeDetectorRef, useValue: mockCdr },
+];
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [CreateInfraModal],
-      providers: [
-        { provide: NgbActiveModal, useValue: mockActiveModal },
-        FormBuilder,
-        { provide: OpenApiService, useValue: mockOpenApiService },
-        { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
-        { provide: ChangeDetectorRef, useValue: mockCdr },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(CreateInfraModal);
-    component = fixture.componentInstance;
-    component.schema = MOCK_SCHEMA;
-    component.lat = 45.5;
-    component.lon = -73.5;
-    component.type = 'hydro';
-    fixture.detectChanges();
+async function renderComponent(inputs: Record<string, unknown> = {}) {
+  return render(CreateInfraModal, {
+    componentInputs: {
+      schema: MOCK_SCHEMA,
+      lat: 45.5,
+      lon: -73.5,
+      type: 'hydro',
+      ...inputs,
+    },
+    providers: defaultProviders,
+    schemas: [NO_ERRORS_SCHEMA],
   });
+}
 
+describe('CreateInfraModal', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the create infra modal component', () => {
-    expect(component).toBeTruthy();
+  it('should render the create infra modal component', async () => {
+    await renderComponent();
+    expect(screen.getByRole('heading', { level: 5 })).toBeInTheDocument();
   });
 
   describe('ngOnInit', () => {
-    it('should call processPrettyName and set a pretty name', () => {
-      expect(component.prettyName).toBeTruthy();
+    it('should render a form with submit button', async () => {
+      await renderComponent();
+      expect(screen.getByRole('button', { name: /fermer/i })).toBeInTheDocument();
     });
 
-    it('should call buildForm and create a form group', () => {
-      expect(component.form).toBeDefined();
+    it('should pre-fill latitude input with the provided lat value', async () => {
+      await renderComponent();
+      const latInput = screen.getByDisplayValue('45.5');
+      expect(latInput).toBeInTheDocument();
     });
 
-    it('should pre-fill latitude and longitude in the form', () => {
-      expect(component.form.get('latitude')?.value).toBe(45.5);
-      expect(component.form.get('longitude')?.value).toBe(-73.5);
+    it('should pre-fill longitude input with the provided lon value', async () => {
+      await renderComponent();
+      const lonInput = screen.getByDisplayValue('-73.5');
+      expect(lonInput).toBeInTheDocument();
     });
 
-    it('should call protectedAreasService.checkProtectedArea with lat and lon', () => {
+    it('should call protectedAreasService.checkProtectedArea with lat and lon', async () => {
+      await renderComponent();
       expect(mockProtectedAreasService.checkProtectedArea).toHaveBeenCalledWith(45.5, -73.5);
     });
 
-    it('should set protectedAreaName after promise resolves', async () => {
+    it('should show protected area warning when checkProtectedArea resolves a name', async () => {
       mockProtectedAreasService.checkProtectedArea.mockResolvedValue('Parc National');
-      component.ngOnInit();
-      await Promise.resolve();
-      expect(component.protectedAreaName).toBe('Parc National');
+      await renderComponent();
+      await screen.findByText('Aire protégée');
+      expect(screen.getByText(/Parc National/)).toBeInTheDocument();
     });
   });
 
-  describe('buildForm', () => {
-    it('should populate fields array from required schema properties', () => {
-      expect(component.fields.length).toBeGreaterThan(0);
+  describe('form fields', () => {
+    it('should render an input for each required schema property', async () => {
+      await renderComponent();
+      expect(screen.getByLabelText(/nom/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/latitude/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/longitude/i)).toBeInTheDocument();
     });
 
-    it('should mark latitude and longitude fields as readonly', () => {
-      const latField = component.fields.find((f) => f.key === 'latitude');
-      const lonField = component.fields.find((f) => f.key === 'longitude');
-      expect(latField?.readonly).toBe(true);
-      expect(lonField?.readonly).toBe(true);
+    it('should render latitude and longitude inputs as readonly', async () => {
+      await renderComponent();
+      const latInput = screen.getByDisplayValue('45.5');
+      const lonInput = screen.getByDisplayValue('-73.5');
+      expect(latInput).toHaveAttribute('readonly');
+      expect(lonInput).toHaveAttribute('readonly');
     });
   });
 
   describe('submit', () => {
-    it('should call activeModal.close with the form value', () => {
-      component.submit();
-      expect(mockActiveModal.close).toHaveBeenCalledWith(component.form.value);
+    it('should call activeModal.close when the form is submitted', async () => {
+      const user = userEvent.setup();
+      await renderComponent();
+      const nomInput = screen.getByLabelText(/nom/i);
+      await user.type(nomInput, 'Barrage Test');
+      const submitBtn = screen.getByRole('button', { name: /créer/i });
+      await user.click(submitBtn);
+      expect(mockActiveModal.close).toHaveBeenCalled();
+    });
+
+    it('should call activeModal.close when the close button is clicked', async () => {
+      const user = userEvent.setup();
+      await renderComponent();
+      const closeBtn = screen.getByRole('button', { name: /fermer/i });
+      await user.click(closeBtn);
+      expect(mockActiveModal.close).toHaveBeenCalled();
     });
   });
 });
