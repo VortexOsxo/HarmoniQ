@@ -1,7 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { render } from '@testing-library/angular';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { InfraListBody } from './infra-list-body';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
@@ -19,36 +17,28 @@ const mockInfrastruturesService = {
 };
 
 describe('InfraListBody', () => {
-  let component: InfraListBody;
-  let fixture: ComponentFixture<InfraListBody>;
+  afterEach(() => vi.clearAllMocks());
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [InfraListBody],
+  async function renderComponent() {
+    return render(InfraListBody, {
+      componentInputs: { infras: MOCK_INFRAS, type: 'hydro' },
       providers: [
         { provide: InfrastruturesService, useValue: mockInfrastruturesService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    })
-      .overrideComponent(InfraListBody, { set: { template: '', imports: [CommonModule] } })
-      .compileComponents();
+    });
+  }
 
-    fixture = TestBed.createComponent(InfraListBody);
-    component = fixture.componentInstance;
-    component.infras = MOCK_INFRAS;
-    component.type = 'hydro';
-    fixture.detectChanges();
-  });
-
-  afterEach(() => vi.clearAllMocks());
-
-  it('should create the infra list body component', () => {
-    expect(component).toBeTruthy();
+  it('should create the infra list body component', async () => {
+    const { fixture } = await renderComponent();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
   describe('selectAll', () => {
-    it('should call setInfrasForType with all infra ids as strings', () => {
-      component.selectAll();
+    it('should call setInfrasForType with all infra ids as strings', async () => {
+      const { fixture } = await renderComponent();
+
+      fixture.componentInstance.selectAll();
 
       expect(mockInfrastruturesService.setInfrasForType).toHaveBeenCalledWith(
         'hydro',
@@ -58,8 +48,10 @@ describe('InfraListBody', () => {
   });
 
   describe('selectNone', () => {
-    it('should call setInfrasForType with an empty array', () => {
-      component.selectNone();
+    it('should call setInfrasForType with an empty array', async () => {
+      const { fixture } = await renderComponent();
+
+      fixture.componentInstance.selectNone();
 
       expect(mockInfrastruturesService.setInfrasForType).toHaveBeenCalledWith('hydro', []);
     });

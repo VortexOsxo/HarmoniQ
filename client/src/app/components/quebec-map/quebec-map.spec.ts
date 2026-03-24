@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render } from '@testing-library/angular';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { QuebecMap } from './quebec-map';
 import { MapService } from '@app/services/map-service';
@@ -68,65 +68,65 @@ const mockInfraDetailService = {
   selectedInfra: signal(null),
 };
 
-describe('QuebecMap', () => {
-  let component: QuebecMap;
-  let fixture: ComponentFixture<QuebecMap>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [QuebecMap],
-      providers: [
-        { provide: MapService, useValue: mockMapService },
-        { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
-        { provide: ReseauService, useValue: mockReseauService },
-        { provide: InfraDetailService, useValue: mockInfraDetailService },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(QuebecMap);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+async function renderComponent() {
+  return render(QuebecMap, {
+    providers: [
+      { provide: MapService, useValue: mockMapService },
+      { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
+      { provide: ReseauService, useValue: mockReseauService },
+      { provide: InfraDetailService, useValue: mockInfraDetailService },
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
   });
+}
 
+describe('QuebecMap', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the quebec map component', () => {
-    expect(component).toBeTruthy();
+  it('should render the quebec map component', async () => {
+    const { container } = await renderComponent();
+    expect(container).toBeTruthy();
   });
 
   describe('ngAfterViewInit', () => {
-    it('should call mapService.createMap()', () => {
+    it('should call mapService.createMap()', async () => {
+      await renderComponent();
       expect(mockMapService.createMap).toHaveBeenCalled();
     });
 
-    it('should call mapService.initMarkers()', () => {
+    it('should call mapService.initMarkers()', async () => {
+      await renderComponent();
       expect(mockMapService.initMarkers).toHaveBeenCalled();
     });
 
-    it('should call mapService.onMapLoaded()', () => {
+    it('should call mapService.onMapLoaded()', async () => {
+      await renderComponent();
       expect(mockMapService.onMapLoaded).toHaveBeenCalled();
     });
   });
 
   describe('ngOnDestroy', () => {
-    it('should call mapService.destroyMap()', () => {
-      component.ngOnDestroy();
+    it('should call mapService.destroyMap() on destroy', async () => {
+      const { fixture } = await renderComponent();
+      fixture.destroy();
       expect(mockMapService.destroyMap).toHaveBeenCalled();
     });
 
-    it('should call mapService.destroyMarkers()', () => {
-      component.ngOnDestroy();
+    it('should call mapService.destroyMarkers() on destroy', async () => {
+      const { fixture } = await renderComponent();
+      fixture.destroy();
       expect(mockMapService.destroyMarkers).toHaveBeenCalled();
     });
 
-    it('should call protectedAreasService.destroy()', () => {
-      component.ngOnDestroy();
+    it('should call protectedAreasService.destroy() on destroy', async () => {
+      const { fixture } = await renderComponent();
+      fixture.destroy();
       expect(mockProtectedAreasService.destroy).toHaveBeenCalled();
     });
 
-    it('should call reseauService.destroy()', () => {
-      component.ngOnDestroy();
+    it('should call reseauService.destroy() on destroy', async () => {
+      const { fixture } = await renderComponent();
+      fixture.destroy();
       expect(mockReseauService.destroy).toHaveBeenCalled();
     });
   });

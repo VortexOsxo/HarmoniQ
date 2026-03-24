@@ -1,4 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen, fireEvent } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateInfraGroupModal } from './create-infra-group-modal';
@@ -21,63 +22,75 @@ const mockInfrastruturesService = {
   selectedInfraGroup: signal<any>(null),
 };
 
+const defaultProviders = [
+  { provide: NgbActiveModal, useValue: mockActiveModal },
+  { provide: InfrastruturesService, useValue: mockInfrastruturesService },
+];
+
 describe('CreateInfraGroupModal', () => {
-  let component: CreateInfraGroupModal;
-  let fixture: ComponentFixture<CreateInfraGroupModal>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [CreateInfraGroupModal],
-      providers: [
-        { provide: NgbActiveModal, useValue: mockActiveModal },
-        { provide: InfrastruturesService, useValue: mockInfrastruturesService },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(CreateInfraGroupModal);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the create infra group modal component', () => {
-    expect(component).toBeTruthy();
+  it('should render the modal with the name input and create button', async () => {
+    await render(CreateInfraGroupModal, { providers: defaultProviders });
+
+    expect(screen.getByLabelText(/Nom du groupe/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Créer/i })).toBeInTheDocument();
   });
 
   describe('initial state', () => {
-    it('should have an empty name by default', () => {
-      expect(component.name).toBe('');
+    it('should render an empty name input by default', async () => {
+      await render(CreateInfraGroupModal, { providers: defaultProviders });
+
+      expect(screen.getByLabelText(/Nom du groupe/i)).toHaveValue('');
     });
 
-    it('should have currentGroup as null by default', () => {
-      expect(component.currentGroup).toBeNull();
+    it('should render the Create button as disabled when name is empty', async () => {
+      await render(CreateInfraGroupModal, { providers: defaultProviders });
+
+      expect(screen.getByRole('button', { name: /Créer/i })).toBeDisabled();
     });
   });
 
   describe('create', () => {
-    it('should call infrastructuresService.createInfraGroup when name is provided', () => {
-      component.name = 'Mon Groupe';
+    it('should call infrastructuresService.createInfraGroup when a name is typed and Create is clicked', async () => {
+      const user = userEvent.setup();
+      await render(CreateInfraGroupModal, { providers: defaultProviders });
 
-      component.create();
+      await user.type(screen.getByLabelText(/Nom du groupe/i), 'Mon Groupe');
+      await user.click(screen.getByRole('button', { name: /Créer/i }));
 
       expect(mockInfrastruturesService.createInfraGroup).toHaveBeenCalled();
     });
 
-    it('should close the modal after creating the group', () => {
-      component.name = 'Mon Groupe';
+    it('should close the modal after creating the group', async () => {
+      const user = userEvent.setup();
+      await render(CreateInfraGroupModal, { providers: defaultProviders });
 
-      component.create();
+      await user.type(screen.getByLabelText(/Nom du groupe/i), 'Mon Groupe');
+      await user.click(screen.getByRole('button', { name: /Créer/i }));
 
       expect(mockActiveModal.close).toHaveBeenCalled();
     });
 
-    it('should not call createInfraGroup when name is empty', () => {
-      component.name = '';
+    it('should not call createInfraGroup when name is empty', async () => {
+      const user = userEvent.setup();
+      await render(CreateInfraGroupModal, { providers: defaultProviders });
 
-      component.create();
+      // The button is disabled when empty — clicking it should have no effect
+      await user.click(screen.getByRole('button', { name: /Créer/i }));
 
       expect(mockInfrastruturesService.createInfraGroup).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancel', () => {
+    it('should call activeModal.dismiss when Annuler is clicked', async () => {
+      const user = userEvent.setup();
+      await render(CreateInfraGroupModal, { providers: defaultProviders });
+
+      await user.click(screen.getByRole('button', { name: /Annuler/i }));
+
+      expect(mockActiveModal.dismiss).toHaveBeenCalled();
     });
   });
 });

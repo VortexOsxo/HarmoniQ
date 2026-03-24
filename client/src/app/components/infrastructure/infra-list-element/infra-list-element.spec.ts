@@ -1,4 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { InfraListElement } from './infra-list-element';
@@ -47,96 +48,122 @@ const mockInfraDetailService = {
   openDetail: vi.fn(),
 };
 
-describe('InfraListElement', () => {
-  let component: InfraListElement;
-  let fixture: ComponentFixture<InfraListElement>;
+const defaultInputs = {
+  nom: 'Barrage Test',
+  id: '42',
+  type: 'hydro',
+};
 
-  beforeEach(async () => {
+const defaultProviders = [
+  { provide: InfrastruturesService, useValue: mockInfrasService },
+  { provide: ScenariosService, useValue: mockScenariosService },
+  { provide: NgbModal, useValue: mockModalService },
+  { provide: InfraDetailService, useValue: mockInfraDetailService },
+];
+
+describe('InfraListElement', () => {
+  beforeEach(() => {
     selectedScenario.set(null);
     mockInfrasService.isInfraSelected.mockReturnValue(false);
-
-    await TestBed.configureTestingModule({
-      imports: [InfraListElement],
-      providers: [
-        { provide: InfrastruturesService, useValue: mockInfrasService },
-        { provide: ScenariosService, useValue: mockScenariosService },
-        { provide: NgbModal, useValue: mockModalService },
-        { provide: InfraDetailService, useValue: mockInfraDetailService },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(InfraListElement);
-    component = fixture.componentInstance;
-    component.nom = 'Barrage Test';
-    component.id = '42';
-    component.type = 'hydro';
-    fixture.detectChanges();
   });
 
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the infra list element component', () => {
-    expect(component).toBeTruthy();
+  it('should render the infrastructure name', async () => {
+    await render(InfraListElement, {
+      componentInputs: defaultInputs,
+      providers: defaultProviders,
+      schemas: [NO_ERRORS_SCHEMA],
+    });
+
+    expect(screen.getByText('Barrage Test')).toBeInTheDocument();
   });
 
-  describe('isSelected', () => {
-    it('should return false when infra is not selected', () => {
-      mockInfrasService.isInfraSelected.mockReturnValue(false);
-      expect(component.isSelected).toBe(false);
-    });
+  describe('isInfraSelected', () => {
+    it('should call isInfraSelected with the correct type and id when rendering', async () => {
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
 
-    it('should return true when infra is selected', () => {
-      mockInfrasService.isInfraSelected.mockReturnValue(true);
-      expect(component.isSelected).toBe(true);
-    });
-
-    it('should call isInfraSelected with the correct type and id', () => {
-      component.isSelected;
       expect(mockInfrasService.isInfraSelected).toHaveBeenCalledWith('hydro', '42');
     });
   });
 
   describe('toggleInfra', () => {
-    it('should call infrastructuresService.toggleInfra with type and id', () => {
-      component.toggleInfra();
+    it('should call infrastructuresService.toggleInfra with type and id when the item is clicked', async () => {
+      const user = userEvent.setup();
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByTitle(/Cliquez pour sélectionner/i));
+
       expect(mockInfrasService.toggleInfra).toHaveBeenCalledWith('hydro', '42');
     });
   });
 
   describe('handleInfoClick', () => {
-    it('should call infraDetailService.openDetail with type and id', () => {
-      const event = { stopPropagation: vi.fn() };
-      component.handleInfoClick(event);
-      expect(mockInfraDetailService.openDetail).toHaveBeenCalledWith('hydro', '42');
-    });
+    it('should call infraDetailService.openDetail with type and id when info icon is clicked', async () => {
+      const user = userEvent.setup();
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
 
-    it('should stop event propagation', () => {
-      const event = { stopPropagation: vi.fn() };
-      component.handleInfoClick(event);
-      expect(event.stopPropagation).toHaveBeenCalled();
+      await user.click(screen.getByTitle(/Afficher les informations/i));
+
+      expect(mockInfraDetailService.openDetail).toHaveBeenCalledWith('hydro', '42');
     });
   });
 
   describe('simulate_single', () => {
-    it('should not open modal when no scenario is selected', () => {
+    it('should not open modal when no scenario is selected', async () => {
+      const user = userEvent.setup();
       selectedScenario.set(null);
-      const event = { stopPropagation: vi.fn() };
-      component.simulate_single(event);
+
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByTitle(/Simuler cette infrastructure/i));
+
       expect(mockModalService.open).not.toHaveBeenCalled();
     });
 
-    it('should open modal when a scenario is selected', () => {
+    it('should open modal when a scenario is selected', async () => {
+      const user = userEvent.setup();
       selectedScenario.set(MOCK_SCENARIO);
-      const event = { stopPropagation: vi.fn() };
-      component.simulate_single(event);
+
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByTitle(/Simuler cette infrastructure/i));
+
       expect(mockModalService.open).toHaveBeenCalled();
     });
 
-    it('should set modal instance properties when opening', () => {
+    it('should set modal instance properties when opening', async () => {
+      const user = userEvent.setup();
       selectedScenario.set(MOCK_SCENARIO);
-      const event = { stopPropagation: vi.fn() };
-      component.simulate_single(event);
+
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByTitle(/Simuler cette infrastructure/i));
+
       expect(mockModalRef.componentInstance.id).toBe('42');
       expect(mockModalRef.componentInstance.name).toBe('Barrage Test');
       expect(mockModalRef.componentInstance.type).toBe('hydro');
@@ -144,23 +171,41 @@ describe('InfraListElement', () => {
   });
 
   describe('deleteInfra', () => {
-    it('should open a confirmation modal', () => {
-      const event = { stopPropagation: vi.fn() };
-      component.deleteInfra(event);
+    it('should open a confirmation modal when delete icon is clicked', async () => {
+      const user = userEvent.setup();
+      await render(InfraListElement, {
+        componentInputs: { ...defaultInputs, isUserCreated: true },
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByTitle(/Supprimer cette infrastructure/i));
+
       expect(mockModalService.open).toHaveBeenCalled();
     });
 
-    it('should stop event propagation', () => {
-      const event = { stopPropagation: vi.fn() };
-      component.deleteInfra(event);
-      expect(event.stopPropagation).toHaveBeenCalled();
+    it('should call deleteLocalInfra when confirmation is accepted', async () => {
+      const user = userEvent.setup();
+      await render(InfraListElement, {
+        componentInputs: { ...defaultInputs, isUserCreated: true },
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByTitle(/Supprimer cette infrastructure/i));
+      await mockModalRef.result;
+
+      expect(mockInfrasService.deleteLocalInfra).toHaveBeenCalledWith('hydro', 42);
     });
 
-    it('should call deleteLocalInfra when confirmation is accepted', async () => {
-      const event = { stopPropagation: vi.fn() };
-      component.deleteInfra(event);
-      await mockModalRef.result;
-      expect(mockInfrasService.deleteLocalInfra).toHaveBeenCalledWith('hydro', 42);
+    it('should not render the delete icon when isUserCreated is false', async () => {
+      await render(InfraListElement, {
+        componentInputs: { ...defaultInputs, isUserCreated: false },
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(screen.queryByTitle(/Supprimer cette infrastructure/i)).not.toBeInTheDocument();
     });
   });
 });

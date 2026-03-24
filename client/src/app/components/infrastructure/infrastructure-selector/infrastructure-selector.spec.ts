@@ -1,4 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { InfrastructureSelector } from './infrastructure-selector';
@@ -43,76 +44,97 @@ const mockModalService = {
   open: vi.fn().mockReturnValue({ componentInstance: {}, result: Promise.resolve(null) }),
 };
 
+const providers = [
+  { provide: InfrastruturesService, useValue: mockInfrasService },
+  { provide: NgbModal, useValue: mockModalService },
+];
+
+async function renderComponent() {
+  return render(InfrastructureSelector, { providers, schemas: [NO_ERRORS_SCHEMA] });
+}
+
 describe('InfrastructureSelector', () => {
-  let component: InfrastructureSelector;
-  let fixture: ComponentFixture<InfrastructureSelector>;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     selectedInfraGroup.set(null);
-
-    await TestBed.configureTestingModule({
-      imports: [InfrastructureSelector],
-      providers: [
-        { provide: InfrastruturesService, useValue: mockInfrasService },
-        { provide: NgbModal, useValue: mockModalService },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(InfrastructureSelector);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the infrastructure selector component', () => {
-    expect(component).toBeTruthy();
+  it('should render the infrastructure selector component', async () => {
+    const { container } = await renderComponent();
+    expect(container).toBeTruthy();
+  });
+
+  it('should render the group selector label', async () => {
+    await renderComponent();
+    expect(screen.getByText('Groupe infras actif')).toBeInTheDocument();
   });
 
   describe('infrastructureGroups getter', () => {
-    it('should return the list of infra groups from the service', () => {
-      expect(component.infrastructureGroups).toHaveLength(2);
+    it('should return the list of infra groups from the service', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.infrastructureGroups).toHaveLength(2);
     });
 
-    it('should return the correct group names', () => {
-      const names = component.infrastructureGroups.map((g) => g.nom);
+    it('should return the correct group names', async () => {
+      const { fixture } = await renderComponent();
+      const names = fixture.componentInstance.infrastructureGroups.map((g) => g.nom);
       expect(names).toContain('Groupe Alpha');
       expect(names).toContain('Groupe Beta');
+    });
+
+    it('should render group names as options in the select', async () => {
+      await renderComponent();
+      expect(screen.getByText('Groupe Alpha')).toBeInTheDocument();
+      expect(screen.getByText('Groupe Beta')).toBeInTheDocument();
     });
   });
 
   describe('selectedInfrastructureGroup', () => {
-    it('should return null initially', () => {
-      expect(component.selectedInfrastructureGroup).toBeNull();
+    it('should return null initially', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.selectedInfrastructureGroup).toBeNull();
     });
 
-    it('should update the signal when set', () => {
-      component.selectedInfrastructureGroup = MOCK_GROUP_A;
+    it('should update the signal when set', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.selectedInfrastructureGroup = MOCK_GROUP_A;
       expect(mockInfrasService.selectedInfraGroup()).toEqual(MOCK_GROUP_A);
     });
   });
 
   describe('compareInfraGroups', () => {
-    it('should return true when two groups have the same id', () => {
-      expect(component.compareInfraGroups(MOCK_GROUP_A, { ...MOCK_GROUP_A })).toBe(true);
+    it('should return true when two groups have the same id', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.compareInfraGroups(MOCK_GROUP_A, { ...MOCK_GROUP_A })).toBe(true);
     });
 
-    it('should return false when two groups have different ids', () => {
-      expect(component.compareInfraGroups(MOCK_GROUP_A, MOCK_GROUP_B)).toBe(false);
+    it('should return false when two groups have different ids', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.compareInfraGroups(MOCK_GROUP_A, MOCK_GROUP_B)).toBe(false);
     });
   });
 
   describe('openCreateModal', () => {
-    it('should call modalService.open()', () => {
-      component.openCreateModal();
+    it('should call modalService.open() when the add button is clicked', async () => {
+      const user = userEvent.setup();
+      await renderComponent();
+      const addBtn = screen.getByTitle("Créer un nouveau groupe d'infrastructure");
+      await user.click(addBtn);
+      expect(mockModalService.open).toHaveBeenCalled();
+    });
+
+    it('should call modalService.open() when called directly', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.openCreateModal();
       expect(mockModalService.open).toHaveBeenCalled();
     });
   });
 
   describe('getInfrasFromType', () => {
-    it('should delegate to infrasService.getInfrasSignalByType', () => {
-      component.getInfrasFromType('hydro');
+    it('should delegate to infrasService.getInfrasSignalByType', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.getInfrasFromType('hydro');
       expect(mockInfrasService.getInfrasSignalByType).toHaveBeenCalledWith('hydro');
     });
   });

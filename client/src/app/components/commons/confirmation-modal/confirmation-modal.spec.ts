@@ -1,86 +1,93 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from './confirmation-modal';
 
-const DEFAULT_TITLE = 'Confirmation';
-const DEFAULT_MESSAGE = 'Êtes-vous sûr de vouloir continuer ?';
-const DEFAULT_CONFIRM_TEXT = 'Confirmer';
-const DEFAULT_CANCEL_TEXT = 'Annuler';
-const DEFAULT_CONFIRM_CLASS = 'btn-danger';
-
 const mockActiveModal = {
-  close: vi.fn(),
-  dismiss: vi.fn(),
+    close: vi.fn(),
+    dismiss: vi.fn(),
 };
 
 describe('ConfirmationModal', () => {
-  let component: ConfirmationModal;
-  let fixture: ComponentFixture<ConfirmationModal>;
+    afterEach(() => vi.clearAllMocks());
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ConfirmationModal],
-      providers: [
-        { provide: NgbActiveModal, useValue: mockActiveModal },
-      ],
-    }).compileComponents();
+    async function renderComponent(inputs: Partial<ConfirmationModal> = {}) {
+        return render(ConfirmationModal, {
+            componentInputs: inputs,
+            providers: [{ provide: NgbActiveModal, useValue: mockActiveModal }],
+        });
+    }
 
-    fixture = TestBed.createComponent(ConfirmationModal);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  afterEach(() => vi.clearAllMocks());
-
-  it('should create the confirmation modal component', () => {
-    expect(component).toBeTruthy();
-  });
-
-  describe('default input values', () => {
-    it('should have the default title', () => {
-      expect(component.title).toBe(DEFAULT_TITLE);
+    it('should render the default title', async () => {
+        await renderComponent();
+        expect(screen.getByText('Confirmation')).toBeInTheDocument();
     });
 
-    it('should have the default message', () => {
-      expect(component.message).toBe(DEFAULT_MESSAGE);
+    it('should render the default message', async () => {
+        await renderComponent();
+        expect(screen.getByText('Êtes-vous sûr de vouloir continuer ?')).toBeInTheDocument();
     });
 
-    it('should have the default confirmText', () => {
-      expect(component.confirmText).toBe(DEFAULT_CONFIRM_TEXT);
+    it('should render the default confirm button label', async () => {
+        await renderComponent();
+        expect(screen.getByRole('button', { name: 'Confirmer' })).toBeInTheDocument();
     });
 
-    it('should have the default cancelText', () => {
-      expect(component.cancelText).toBe(DEFAULT_CANCEL_TEXT);
+    it('should render the default cancel button label', async () => {
+        await renderComponent();
+        expect(screen.getByRole('button', { name: 'Annuler' })).toBeInTheDocument();
     });
 
-    it('should have the default confirmBtnClass', () => {
-      expect(component.confirmBtnClass).toBe(DEFAULT_CONFIRM_CLASS);
-    });
-  });
-
-  describe('custom input values', () => {
-    it('should accept a custom title', () => {
-      component.title = 'Supprimer le scénario?';
-
-      expect(component.title).toBe('Supprimer le scénario?');
+    it('should render a custom title', async () => {
+        await renderComponent({ title: 'Supprimer le scénario?' });
+        expect(screen.getByText('Supprimer le scénario?')).toBeInTheDocument();
     });
 
-    it('should accept a custom message', () => {
-      component.message = 'Cette action est irréversible.';
-
-      expect(component.message).toBe('Cette action est irréversible.');
+    it('should render a custom message', async () => {
+        await renderComponent({ message: 'Cette action est irréversible.' });
+        expect(screen.getByText('Cette action est irréversible.')).toBeInTheDocument();
     });
 
-    it('should accept a custom confirmBtnClass', () => {
-      component.confirmBtnClass = 'btn-warning';
-
-      expect(component.confirmBtnClass).toBe('btn-warning');
+    it('should render custom button labels', async () => {
+        await renderComponent({ confirmText: 'Oui, supprimer', cancelText: 'Non, garder' });
+        expect(screen.getByRole('button', { name: 'Oui, supprimer' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Non, garder' })).toBeInTheDocument();
     });
-  });
 
-  describe('activeModal injection', () => {
-    it('should have activeModal injected and accessible', () => {
-      expect(component.activeModal).toBe(mockActiveModal);
+    it('should apply the default btn-danger class to the confirm button', async () => {
+        await renderComponent();
+        expect(screen.getByRole('button', { name: 'Confirmer' })).toHaveClass('btn-danger');
     });
-  });
+
+    it('should apply a custom confirmBtnClass to the confirm button', async () => {
+        await renderComponent({ confirmBtnClass: 'btn-warning' });
+        expect(screen.getByRole('button', { name: 'Confirmer' })).toHaveClass('btn-warning');
+    });
+
+    it('should call activeModal.close(true) when confirm is clicked', async () => {
+        const user = userEvent.setup();
+        await renderComponent();
+
+        await user.click(screen.getByRole('button', { name: 'Confirmer' }));
+
+        expect(mockActiveModal.close).toHaveBeenCalledWith(true);
+    });
+
+    it('should call activeModal.close(false) when cancel is clicked', async () => {
+        const user = userEvent.setup();
+        await renderComponent();
+
+        await user.click(screen.getByRole('button', { name: 'Annuler' }));
+
+        expect(mockActiveModal.close).toHaveBeenCalledWith(false);
+    });
+
+    it('should call activeModal.dismiss() when the X button is clicked', async () => {
+        const user = userEvent.setup();
+        await renderComponent();
+
+        await user.click(screen.getByRole('button', { name: /close/i }));
+
+        expect(mockActiveModal.dismiss).toHaveBeenCalled();
+    });
 });

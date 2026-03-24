@@ -1,6 +1,7 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { SimulationPage } from './simulation-page';
 import { SimulationService } from '@app/services/simulation-service';
@@ -37,58 +38,59 @@ const mockStepService = {
   runSteps: vi.fn(),
 };
 
-describe('SimulationPage', () => {
-  let component: SimulationPage;
-  let fixture: ComponentFixture<SimulationPage>;
+// Stub template to avoid rendering heavy graph child components (Plotly, etc.)
+const STUB_TEMPLATE = `<div data-testid="simulation-page">Simulation Page</div>`;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [SimulationPage],
-      providers: [
-        { provide: SimulationService, useValue: mockSimulationService },
-        { provide: SimulationStepService, useValue: mockStepService },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    })
-      .overrideComponent(SimulationPage, { set: { template: '', imports: [CommonModule] } })
-      .compileComponents();
+async function renderComponent() {
+  TestBed.overrideComponent(SimulationPage, { set: { template: STUB_TEMPLATE, imports: [CommonModule] } });
 
-    fixture = TestBed.createComponent(SimulationPage);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  return render(SimulationPage, {
+    providers: [
+      { provide: SimulationService, useValue: mockSimulationService },
+      { provide: SimulationStepService, useValue: mockStepService },
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
   });
+}
 
+describe('SimulationPage', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('should create the simulation page component', () => {
-    expect(component).toBeTruthy();
+  it('should render the simulation page component', async () => {
+    await renderComponent();
+    expect(screen.getByTestId('simulation-page')).toBeInTheDocument();
   });
 
-  it('should inject simulationService and stepService', () => {
+  it('should have simulationService and stepService injected', async () => {
+    const { fixture } = await renderComponent();
+    const component = fixture.componentInstance;
     expect(component.simulationService).toBeDefined();
     expect(component.stepService).toBeDefined();
   });
 
   describe('ngAfterViewInit', () => {
-    it('should call simulationService.launchSimulation on init', () => {
+    it('should call simulationService.launchSimulation on init', async () => {
+      await renderComponent();
       expect(mockSimulationService.launchSimulation).toHaveBeenCalled();
     });
   });
 
   describe('scrollToGraph', () => {
-    it('should call scrollIntoView when element exists', () => {
+    it('should call scrollIntoView when element exists', async () => {
+      const { fixture } = await renderComponent();
       const mockElement = { scrollIntoView: vi.fn() };
       vi.spyOn(document, 'getElementById').mockReturnValue(mockElement as any);
 
-      component.scrollToGraph(0);
+      fixture.componentInstance.scrollToGraph(0);
 
       expect(mockElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     });
 
-    it('should not throw when element does not exist', () => {
+    it('should not throw when element does not exist', async () => {
+      const { fixture } = await renderComponent();
       vi.spyOn(document, 'getElementById').mockReturnValue(null);
 
-      expect(() => component.scrollToGraph(99)).not.toThrow();
+      expect(() => fixture.componentInstance.scrollToGraph(99)).not.toThrow();
     });
   });
 });

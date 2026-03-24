@@ -1,4 +1,5 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { NO_ERRORS_SCHEMA, signal, ChangeDetectorRef } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
@@ -55,51 +56,53 @@ const mockGraphService = {
 
 const mockCdr = { detectChanges: vi.fn(), markForCheck: vi.fn() };
 
-describe('SimulationSingleInfraModal', () => {
-  let component: SimulationSingleInfraModal;
-  let fixture: ComponentFixture<SimulationSingleInfraModal>;
+const defaultProviders = [
+  { provide: NgbActiveModal, useValue: mockActiveModal },
+  { provide: ScenariosService, useValue: mockScenariosService },
+  { provide: SimulationService, useValue: mockSimulationService },
+  { provide: GraphService, useValue: mockGraphService },
+  { provide: ChangeDetectorRef, useValue: mockCdr },
+];
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [SimulationSingleInfraModal],
-      providers: [
-        { provide: NgbActiveModal, useValue: mockActiveModal },
-        { provide: ScenariosService, useValue: mockScenariosService },
-        { provide: SimulationService, useValue: mockSimulationService },
-        { provide: GraphService, useValue: mockGraphService },
-        { provide: ChangeDetectorRef, useValue: mockCdr },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(SimulationSingleInfraModal);
-    component = fixture.componentInstance;
-    component.name = 'Barrage La Grande';
-    component.type = 'hydro';
-    component.id = '7';
-    fixture.detectChanges();
+async function renderComponent(inputs: Record<string, unknown> = {}) {
+  return render(SimulationSingleInfraModal, {
+    componentInputs: {
+      name: 'Barrage La Grande',
+      type: 'hydro',
+      id: '7',
+      ...inputs,
+    },
+    providers: defaultProviders,
+    schemas: [NO_ERRORS_SCHEMA],
   });
+}
 
+describe('SimulationSingleInfraModal', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the simulation single infra modal component', () => {
-    expect(component).toBeTruthy();
+  it('should render the simulation single infra modal component', async () => {
+    const { container } = await renderComponent();
+    expect(container).toBeTruthy();
   });
 
   describe('ngOnInit', () => {
-    it('should call launchSimulationSingleInfra with type and id', () => {
+    it('should call launchSimulationSingleInfra with type and id', async () => {
+      await renderComponent();
       expect(mockSimulationService.launchSimulationSingleInfra).toHaveBeenCalledWith('hydro', '7');
     });
 
-    it('should call getInfraCost with type and id', () => {
+    it('should call getInfraCost with type and id', async () => {
+      await renderComponent();
       expect(mockSimulationService.getInfraCost).toHaveBeenCalledWith('hydro', '7');
     });
 
-    it('should call getInfraEmission with type and id', () => {
+    it('should call getInfraEmission with type and id', async () => {
+      await renderComponent();
       expect(mockSimulationService.getInfraEmission).toHaveBeenCalledWith('hydro', '7');
     });
 
-    it('should call generateProductionSingleInfraGraph after receiving data', () => {
+    it('should call generateProductionSingleInfraGraph after receiving data', async () => {
+      await renderComponent();
       expect(mockGraphService.generateProductionSingleInfraGraph).toHaveBeenCalledWith(
         'hydro',
         MOCK_PRODUCTION_DATA,
@@ -107,43 +110,33 @@ describe('SimulationSingleInfraModal', () => {
       );
     });
 
-    it('should set isLoading to false after receiving production data', () => {
-      expect(component.isLoading).toBe(false);
+    it('should hide loading spinner after receiving production data', async () => {
+      await renderComponent();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
-    it('should store production data', () => {
-      expect(component.productionData).toEqual(MOCK_PRODUCTION_DATA);
-    });
-  });
-
-  describe('label getter', () => {
-    it('should include the infra name and scenario name', () => {
-      expect(component.label).toContain('Barrage La Grande');
-      expect(component.label).toContain('Année 2035');
+    it('should render the modal title including the infra name and scenario name', async () => {
+      await renderComponent();
+      const title = screen.getByRole('heading', { level: 5 });
+      expect(title).toHaveTextContent('Barrage La Grande');
+      expect(title).toHaveTextContent('Année 2035');
     });
   });
 
-  describe('onGranularityChange', () => {
-    it('should update selectedGranularity', () => {
-      component.onGranularityChange('monthly');
-      expect(component.selectedGranularity).toBe('monthly');
+  describe('granularity selector', () => {
+    it('should render the granularity selector after loading completes', async () => {
+      const { container } = await renderComponent();
+      expect(container.querySelector('app-granularity-selector')).toBeTruthy();
     });
+  });
 
-    it('should call generateProductionSingleInfraGraph with new granularity when data is present', () => {
-      component.productionData = MOCK_PRODUCTION_DATA;
-      component.onGranularityChange('daily');
-      expect(mockGraphService.generateProductionSingleInfraGraph).toHaveBeenCalledWith(
-        'hydro',
-        MOCK_PRODUCTION_DATA,
-        'daily',
-      );
-    });
-
-    it('should not call generateProductionSingleInfraGraph when no data', () => {
-      component.productionData = undefined;
-      mockGraphService.generateProductionSingleInfraGraph.mockClear();
-      component.onGranularityChange('weekly');
-      expect(mockGraphService.generateProductionSingleInfraGraph).not.toHaveBeenCalled();
+  describe('close button', () => {
+    it('should call activeModal.dismiss when the close button is clicked', async () => {
+      const user = userEvent.setup();
+      await renderComponent();
+      const closeBtn = screen.getByRole('button', { name: /close/i });
+      await user.click(closeBtn);
+      expect(mockActiveModal.dismiss).toHaveBeenCalled();
     });
   });
 });

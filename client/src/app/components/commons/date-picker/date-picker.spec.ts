@@ -1,98 +1,105 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { render, screen, fireEvent } from '@testing-library/angular';
 import { DatePicker } from './date-picker';
 
 const FIXED_START = '2035-01-01';
 const FIXED_END = '2035-12-31';
 
 describe('DatePicker', () => {
-  let component: DatePicker;
-  let fixture: ComponentFixture<DatePicker>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [DatePicker],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(DatePicker);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
   afterEach(() => vi.clearAllMocks());
 
-  it('should create the date picker component', () => {
-    expect(component).toBeTruthy();
+  it('should render the date picker component', async () => {
+    await render(DatePicker);
+    expect(screen.getByLabelText('Début')).toBeInTheDocument();
   });
 
   describe('default values', () => {
-    it('should have "date" as the default title', () => {
-      expect(component.title).toBe('date');
+    it('should render "date" as the default title label', async () => {
+      await render(DatePicker);
+      expect(screen.getByText('date')).toBeInTheDocument();
     });
 
-    it('should have minDate set to 2010-01-01', () => {
-      expect(component.minDate).toBe('2010-01-01');
+    it('should render the start date input with min 2010-01-01', async () => {
+      await render(DatePicker);
+      const startInput = screen.getByLabelText('Début');
+      expect(startInput).toHaveAttribute('min', '2010-01-01');
     });
 
-    it('should have maxDate set to 2050-12-31', () => {
-      expect(component.maxDate).toBe('2050-12-31');
+    it('should render the end date input with max 2050-12-31', async () => {
+      await render(DatePicker);
+      const endInput = screen.getByLabelText('Fin');
+      expect(endInput).toHaveAttribute('max', '2050-12-31');
     });
   });
 
   describe('@Input() startDate', () => {
-    it('should accept an input start date', () => {
-      component.startDate = FIXED_START;
-      fixture.detectChanges();
-
-      expect(component.startDate).toBe(FIXED_START);
+    it('should render the provided start date in the input', async () => {
+      await render(DatePicker, {
+        componentInputs: { startDate: FIXED_START },
+      });
+      const startInput = screen.getByLabelText('Début') as HTMLInputElement;
+      expect(startInput.value).toBe(FIXED_START);
     });
   });
 
   describe('@Input() endDate', () => {
-    it('should accept an input end date', () => {
-      component.endDate = FIXED_END;
-      fixture.detectChanges();
-
-      expect(component.endDate).toBe(FIXED_END);
+    it('should render the provided end date in the input', async () => {
+      await render(DatePicker, {
+        componentInputs: { endDate: FIXED_END },
+      });
+      const endInput = screen.getByLabelText('Fin') as HTMLInputElement;
+      expect(endInput.value).toBe(FIXED_END);
     });
   });
 
   describe('@Output() startDateChange', () => {
-    it('should emit when startDateStr setter is called', () => {
-      const emitted: string[] = [];
-      component.startDateChange.subscribe((val: string) => emitted.push(val));
+    it('should emit when the start date input changes', async () => {
+      const startDateChange = vi.fn();
+      await render(DatePicker, {
+        componentOutputs: { startDateChange: { emit: startDateChange } as any },
+      });
 
-      component.startDateStr = FIXED_START;
+      const startInput = screen.getByLabelText('Début');
+      fireEvent.input(startInput, { target: { value: FIXED_START } });
 
-      expect(emitted.length).toBeGreaterThan(0);
+      expect(startDateChange).toHaveBeenCalled();
     });
 
-    it('should emit the new start date value', () => {
-      const emitted: string[] = [];
-      component.startDateChange.subscribe((val: string) => emitted.push(val));
+    it('should emit the new start date value', async () => {
+      const startDateChange = vi.fn();
+      await render(DatePicker, {
+        componentOutputs: { startDateChange: { emit: startDateChange } as any },
+      });
 
-      component.startDateStr = FIXED_START;
+      const startInput = screen.getByLabelText('Début');
+      fireEvent.input(startInput, { target: { value: FIXED_START } });
 
-      expect(emitted[0]).toBe(FIXED_START);
+      expect(startDateChange).toHaveBeenCalledWith(FIXED_START);
     });
   });
 
   describe('@Output() endDateChange', () => {
-    it('should emit when endDateStr setter is called', () => {
-      const emitted: string[] = [];
-      component.endDateChange.subscribe((val: string) => emitted.push(val));
+    it('should emit when the end date input changes', async () => {
+      const endDateChange = vi.fn();
+      await render(DatePicker, {
+        componentOutputs: { endDateChange: { emit: endDateChange } as any },
+      });
 
-      component.endDateStr = FIXED_END;
+      const endInput = screen.getByLabelText('Fin');
+      fireEvent.input(endInput, { target: { value: FIXED_END } });
 
-      expect(emitted.length).toBeGreaterThan(0);
+      expect(endDateChange).toHaveBeenCalled();
     });
 
-    it('should emit the new end date value', () => {
-      const emitted: string[] = [];
-      component.endDateChange.subscribe((val: string) => emitted.push(val));
+    it('should emit the new end date value', async () => {
+      const endDateChange = vi.fn();
+      await render(DatePicker, {
+        componentOutputs: { endDateChange: { emit: endDateChange } as any },
+      });
 
-      component.endDateStr = FIXED_END;
+      const endInput = screen.getByLabelText('Fin');
+      fireEvent.input(endInput, { target: { value: FIXED_END } });
 
-      expect(emitted[0]).toBe(FIXED_END);
+      expect(endDateChange).toHaveBeenCalledWith(FIXED_END);
     });
   });
 });
