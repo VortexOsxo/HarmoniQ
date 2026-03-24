@@ -1,4 +1,9 @@
 vi.mock('plotly.js-dist-min', () => ({
+  default: {
+    newPlot: vi.fn(),
+    purge: vi.fn(),
+    downloadImage: vi.fn(),
+  },
   newPlot: vi.fn(),
   purge: vi.fn(),
   downloadImage: vi.fn(),
@@ -43,6 +48,10 @@ describe('DemandeTemporalGraphService', () => {
   let mockScenariosService: Partial<ScenariosService>;
 
   beforeEach(() => {
+    const el = document.createElement('div');
+    el.id = 'temporal-demande-production-id';
+    document.body.appendChild(el);
+
     mockGraphService = {
       aggregateData: vi.fn().mockReturnValue({ x: [], y: [] }),
       getStandardTrace: vi.fn().mockReturnValue({ x: [], y: [], type: 'scatter' }),
@@ -70,6 +79,7 @@ describe('DemandeTemporalGraphService', () => {
   afterEach(() => {
     httpMock.verify();
     vi.clearAllMocks();
+    document.getElementById('temporal-demande-production-id')?.remove();
   });
 
   describe('getStepName', () => {
