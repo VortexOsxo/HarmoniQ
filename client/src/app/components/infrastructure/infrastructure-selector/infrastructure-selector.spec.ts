@@ -39,6 +39,7 @@ const mockInfrasService = {
   selectedInfraGroup,
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
   deleteInfraGroup: vi.fn(),
+  isInfraSelected: vi.fn().mockReturnValue(false),
 };
 
 const mockModalService = {
