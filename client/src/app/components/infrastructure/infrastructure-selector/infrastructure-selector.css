@@ -14,6 +14,111 @@
     flex-shrink: 0;
 }
 
+/* ── Infrastructure toolbar (Filter & Sort) ── */
+.infra-toolbar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.filter-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.filter-icon {
+    position: absolute;
+    left: 9px;
+    color: #95a5a6;
+    font-size: 0.75rem;
+    pointer-events: none;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 7px 28px 7px 28px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: #2c3e50;
+    background: #fff;
+    transition: border-color 0.15s;
+}
+
+.filter-input::placeholder {
+    color: #bdc3c7;
+    font-size: 0.8rem;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
+}
+
+.filter-clear-btn {
+    position: absolute;
+    right: 4px;
+    background: none;
+    border: none;
+    color: #95a5a6;
+    cursor: pointer;
+    padding: 2px 5px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.filter-clear-btn:hover {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.08);
+}
+
+.sort-toggle-btn {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #7f8c8d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+
+.sort-toggle-btn:hover {
+    background: #3498db;
+    color: #fff;
+    border-color: #3498db;
+}
+
+.infra-empty-state {
+    padding: 32px 16px;
+    text-align: center;
+    color: #95a5a6;
+}
+
+.infra-empty-state i {
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: #bdc3c7;
+}
+
+.infra-empty-state p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
 .group-label {
     display: block;
     font-size: 0.78rem;
@@ -77,6 +182,28 @@
     background: #3498db;
     color: #fff;
     border-color: #3498db;
+}
+
+.group-delete-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #e74c3c;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+}
+
+.group-delete-btn:hover {
+    background: rgba(231, 76, 60, 0.08);
+    color: #e74c3c;
+    border-color: #e74c3c;
 }
 
 /* ── Infrastructure accordion list ── */

@@ -68,3 +68,8 @@ ngb-modal-window.modal {
 ngb-modal-window.modal.modal-static .modal-dialog {
   transform: none !important;
 }
+
+/* Fix tooltip z-index over side panels */
+.tooltip, ngb-tooltip-window, .bs-tooltip-top {
+  z-index: 2000 !important;
+}

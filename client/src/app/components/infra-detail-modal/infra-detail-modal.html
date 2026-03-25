@@ -23,7 +23,13 @@
                     [class.vulgarisation-field]="field.isVulgarisation">
                     <i [class]="field.icon" class="info-field-icon"></i>
                     <span class="info-field-text" *ngIf="!field.isVulgarisation">
-                        {{ field.label }} : <strong>{{ field.value }}</strong>
+                        {{ field.label }} : 
+                        <strong *ngIf="field.tooltip" (click)="showExplanationFromTooltip(field.tooltip)" style="cursor: pointer; border-bottom: 1px dotted #888; color: #2980b9;" title="Cliquez pour plus d'informations">
+                            {{ field.value }} <i class="fa-solid fa-circle-info" style="font-size: 0.8em; margin-left: 2px;"></i>
+                        </strong>
+                        <strong *ngIf="!field.tooltip">
+                            {{ field.value }}
+                        </strong>
                     </span>
                     <span class="info-field-text" *ngIf="field.isVulgarisation">
                         <strong>{{ field.label }}</strong> : {{ field.value }}
@@ -62,6 +68,17 @@
             <button class="delete-infra-btn" (click)="deleteInfra()" title="Supprimer l'infrastructure">
                 <i class="fa-solid fa-trash"></i> Supprimer
             </button>
+        </div>
+    </div>
+
+    <!-- Mini Explication Modal -->
+    <div class="mini-explication-modal" *ngIf="selectedExplanationText">
+        <div class="mini-explication-header">
+            <h6><i class="fa-solid fa-circle-info"></i> {{ selectedExplanationTitle }}</h6>
+            <button class="mini-explication-close" (click)="closeExplanation()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="mini-explication-body">
+            <p>{{ selectedExplanationText }}</p>
         </div>
     </div>
 </div>

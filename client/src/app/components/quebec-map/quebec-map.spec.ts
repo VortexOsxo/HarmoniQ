@@ -36,6 +36,10 @@ const mockMapService = {
   destroyMap: vi.fn(),
   destroyMarkers: vi.fn(),
   onMapLoaded: vi.fn(),
+  mapFilterName: signal(''),
+  mapFilterTypes: signal(new Set(['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'])),
+  mapFilterMinPower: signal<number | null>(null),
+  mapFilterMaxPower: signal<number | null>(null),
 };
 
 const mockProtectedAreasService = {

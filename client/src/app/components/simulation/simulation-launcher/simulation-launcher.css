@@ -97,3 +97,111 @@
     cursor: not-allowed;
     box-shadow: none;
 }
+
+/* ── Disabled-look (still clickable to show hints) ── */
+.launch-btn.launch-btn-disabled {
+    background: linear-gradient(135deg, #95a5a6, #bdc3c7);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.launch-btn.launch-btn-disabled:hover {
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Status item error state ── */
+.status-item.status-item-error {
+    border-color: #e67e22;
+    background: #fef9f4;
+    animation: statusShake 0.4s ease-out;
+}
+
+.status-item.status-item-error .status-icon {
+    color: #e67e22;
+}
+
+.status-item.status-item-error .status-item-value {
+    color: #d35400;
+}
+
+@keyframes statusShake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-4px); }
+    30% { transform: translateX(4px); }
+    45% { transform: translateX(-3px); }
+    60% { transform: translateX(2px); }
+    75% { transform: translateX(-1px); }
+}
+
+/* ── Config hint bubbles ── */
+.config-hint-bubble {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #fef3e2, #fdebd0);
+    border: 1px solid #f0c27a;
+    border-left: 3px solid #e67e22;
+    border-radius: 8px;
+    animation: hintSlideIn 0.3s ease-out;
+    position: relative;
+}
+
+.hint-icon {
+    color: #e67e22;
+    font-size: 0.95rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.hint-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.hint-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #d35400;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.hint-desc {
+    font-size: 0.82rem;
+    color: #6d4c1a;
+    line-height: 1.4;
+}
+
+.hint-dismiss {
+    background: none;
+    border: none;
+    color: #c0904a;
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.hint-dismiss:hover {
+    color: #d35400;
+    background: rgba(230, 126, 34, 0.12);
+}
+
+@keyframes hintSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

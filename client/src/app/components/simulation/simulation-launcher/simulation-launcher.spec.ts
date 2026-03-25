@@ -102,7 +102,7 @@ describe('SimulationLauncher', () => {
   });
 
   describe('canLaunch signal', () => {
-    it('should render the launch button as disabled when canLaunch is false', async () => {
+    it('should render the launch button with disabled class when canLaunch is false', async () => {
       canLaunch.set(false);
 
       await render(SimulationLauncher, {
@@ -110,10 +110,11 @@ describe('SimulationLauncher', () => {
         schemas: [NO_ERRORS_SCHEMA],
       });
 
-      expect(screen.getByRole('button', { name: /Lancer Simulation/i })).toBeDisabled();
+      const btn = screen.getByRole('button', { name: /Lancer Simulation/i });
+      expect(btn.classList.contains('launch-btn-disabled')).toBe(true);
     });
 
-    it('should render the launch button as enabled when canLaunch is true', async () => {
+    it('should render the launch button without disabled class when canLaunch is true', async () => {
       canLaunch.set(true);
 
       await render(SimulationLauncher, {
@@ -121,7 +122,8 @@ describe('SimulationLauncher', () => {
         schemas: [NO_ERRORS_SCHEMA],
       });
 
-      expect(screen.getByRole('button', { name: /Lancer Simulation/i })).not.toBeDisabled();
+      const btn = screen.getByRole('button', { name: /Lancer Simulation/i });
+      expect(btn.classList.contains('launch-btn-disabled')).toBe(false);
     });
   });
 
@@ -172,6 +174,56 @@ describe('SimulationLauncher', () => {
       });
 
       expect(screen.getByText('Mon Groupe')).toBeInTheDocument();
+    });
+  });
+
+  describe('config hint bubbles', () => {
+    it('should show config hints when clicking launch with incomplete config', async () => {
+      const user = userEvent.setup();
+      canLaunch.set(false);
+      selectedScenario.set(null);
+      selectedInfraGroup.set(null);
+
+      const { fixture } = await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByRole('button', { name: /Lancer Simulation/i }));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.showConfigHints()).toBe(true);
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should NOT show config hints when config is complete', async () => {
+      const user = userEvent.setup();
+      canLaunch.set(true);
+      selectedScenario.set(MOCK_SCENARIO);
+      selectedInfraGroup.set(MOCK_GROUP);
+
+      const { fixture } = await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByRole('button', { name: /Lancer Simulation/i }));
+
+      expect(fixture.componentInstance.showConfigHints()).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/simulation']);
+    });
+
+    it('should report missingScenario and missingInfra correctly', async () => {
+      selectedScenario.set(null);
+      selectedInfraGroup.set(MOCK_GROUP);
+
+      const { fixture } = await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(fixture.componentInstance.missingScenario()).toBe(true);
+      expect(fixture.componentInstance.missingInfra()).toBe(false);
     });
   });
 });

@@ -5,12 +5,12 @@ import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
 import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 
 @Component({
   selector: 'app-infra-detail-modal',
-  imports: [CommonModule],
+  imports: [CommonModule, NgbTooltipModule],
   templateUrl: './infra-detail-modal.html',
   styleUrl: './infra-detail-modal.css',
 })
@@ -23,6 +23,27 @@ export class InfraDetailModal {
 
   protectedAreaName: string | null = null;
   loadingProtectionStatus: boolean = false;
+  
+  selectedExplanationTitle: string | null = null;
+  selectedExplanationText: string | null = null;
+  
+  showExplanationFromTooltip(tooltip: string) {
+    if (!tooltip) return;
+    const parts = tooltip.split(' : ');
+    if (parts.length > 1) {
+        this.selectedExplanationTitle = parts[0];
+        this.selectedExplanationText = parts.slice(1).join(' : ');
+    } else {
+        this.selectedExplanationTitle = 'Information';
+        this.selectedExplanationText = tooltip;
+    }
+  }
+
+  closeExplanation() {
+    this.selectedExplanationTitle = null;
+    this.selectedExplanationText = null;
+  }
+
   lat: number = 0;
   lon: number = 0;
 
@@ -41,6 +62,7 @@ export class InfraDetailModal {
         this.showImageOverlay = false;
         this.protectedAreaName = null;
         this.loadingProtectionStatus = false;
+        this.closeExplanation();
         
         if (currentInfra && currentInfra.data) {
             this.lat = parseFloat(currentInfra.data.latitude || currentInfra.data.lat);
@@ -83,6 +105,7 @@ export class InfraDetailModal {
     this.infraDetailService.closeDetail();
     this.showCycleVieModal = false;
     this.showImageOverlay = false;
+    this.closeExplanation();
   }
 
   getHQImageUrl(): string | null {
@@ -182,30 +205,30 @@ export class InfraDetailModal {
     return IMPACTS_ENVIRONNEMENTAUX_DATA[infra.type] || [];
   }
 
-  getInfoFields(): { icon: string; label: string; value: string; isVulgarisation?: boolean }[] {
+  getInfoFields(): { icon: string; label: string; value: string; isVulgarisation?: boolean; tooltip?: string }[] {
     const infra = this.infra();
     if (!infra) return [];
 
     const d = infra.data;
-    const fields: { icon: string; label: string; value: string; isVulgarisation?: boolean }[] = [];
+    const fields: { icon: string; label: string; value: string; isVulgarisation?: boolean; tooltip?: string }[] = [];
 
     fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
 
     if (infra.type === 'hydro') {
       fields.push({ icon: 'fa-solid fa-water', label: 'Type de barrage', value: d.type_barrage || 'N/A' });
-      fields.push({ icon: 'fa-solid fa-gauge-high', label: 'Débit nominal', value: d.debits_nominal ? `${parseFloat(d.debits_nominal).toFixed(1)} m³/s` : 'N/A' });
-      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A' });
-      fields.push({ icon: 'fa-solid fa-database', label: 'Volume du réservoir', value: this.formatVolume(d.volume_reservoir) });
+      fields.push({ icon: 'fa-solid fa-gauge-high', label: 'Débit nominal', value: d.debits_nominal ? `${parseFloat(d.debits_nominal).toFixed(1)} m³/s` : 'N/A', tooltip: "Mètres cubes par seconde (m³/s) : Mesure le volume d'eau qui s'écoule chaque seconde." });
+      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A', tooltip: "Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production." });
+      fields.push({ icon: 'fa-solid fa-database', label: 'Volume du réservoir', value: this.formatVolume(d.volume_reservoir), tooltip: "Volume d'eau emmagasiné dans le réservoir. Référé en km³, Mm³ (Millions de m³), ou Gm³." });
     } else if (infra.type === 'eolienneparc') {
       fields.push({ icon: 'fa-solid fa-wind', label: "Nombre d'éoliennes", value: d.nombre_eoliennes || 'N/A' });
-      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A' });
-      fields.push({ icon: 'fa-solid fa-battery-full', label: 'Capacité totale', value: d.capacite_total ? `${d.capacite_total} MW` : 'N/A' });
+      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A', tooltip: "Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production." });
+      fields.push({ icon: 'fa-solid fa-battery-full', label: 'Capacité totale', value: d.capacite_total ? `${d.capacite_total} MW` : 'N/A', tooltip: "Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts." });
     } else if (infra.type === 'solaire') {
       fields.push({ icon: 'fa-solid fa-solar-panel', label: 'Nombre de panneaux', value: d.nombre_panneau || 'N/A' });
-      fields.push({ icon: 'fa-solid fa-compass', label: 'Orientation des panneaux', value: d.orientation_panneau ? `${d.orientation_panneau}° S` : 'N/A' });
-      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A' });
+      fields.push({ icon: 'fa-solid fa-compass', label: 'Orientation des panneaux', value: d.orientation_panneau ? `${d.orientation_panneau}° S` : 'N/A', tooltip: "Degrés Sud (° S) : Angle d'orientation des panneaux par rapport au Sud." });
+      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A', tooltip: "Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production." });
     } else if (infra.type === 'thermique' || infra.type === 'nucleaire') {
-      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A' });
+      fields.push({ icon: 'fa-solid fa-bolt', label: 'Puissance nominale', value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A', tooltip: "Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production." });
       fields.push({ icon: 'fa-solid fa-fire', label: "Type d'intrant", value: d.type_intrant || 'N/A' });
     }
 
