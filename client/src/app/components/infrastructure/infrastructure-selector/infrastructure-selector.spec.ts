@@ -38,6 +38,7 @@ const mockInfrasService = {
   infraGroups: signal([MOCK_GROUP_A, MOCK_GROUP_B]),
   selectedInfraGroup,
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
+  deleteInfraGroup: vi.fn(),
 };
 
 const mockModalService = {
@@ -131,11 +132,122 @@ describe('InfrastructureSelector', () => {
     });
   });
 
+  describe('deleteInfraGroup', () => {
+    it('should not do anything if default group (id: 1) is selected', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.selectedInfrastructureGroup = MOCK_GROUP_A; // id: 1
+      fixture.componentInstance.deleteInfraGroup();
+      expect(mockModalService.open).not.toHaveBeenCalled();
+    });
+
+    it('should open ConfirmationModal if custom group selected', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.selectedInfrastructureGroup = MOCK_GROUP_B; // id: 2
+      fixture.componentInstance.deleteInfraGroup();
+      expect(mockModalService.open).toHaveBeenCalled();
+    });
+
+    it('should call deleteInfraGroup on service if confirmed', async () => {
+      const { fixture } = await renderComponent();
+      mockInfrasService.deleteInfraGroup = vi.fn();
+      
+      // Mock modal to return true
+      mockModalService.open.mockReturnValueOnce({ 
+        componentInstance: {}, 
+        result: Promise.resolve(true) 
+      });
+
+      fixture.componentInstance.selectedInfrastructureGroup = MOCK_GROUP_B; // id: 2
+      fixture.componentInstance.deleteInfraGroup();
+      
+      // Wait for promise resolution
+      await Promise.resolve();
+      
+      expect(mockInfrasService.deleteInfraGroup).toHaveBeenCalledWith(MOCK_GROUP_B);
+    });
+  });
+
   describe('getInfrasFromType', () => {
     it('should delegate to infrasService.getInfrasSignalByType', async () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.getInfrasFromType('hydro');
       expect(mockInfrasService.getInfrasSignalByType).toHaveBeenCalledWith('hydro');
+    });
+  });
+
+  describe('visibleCategories & getFilteredAndSortedInfras', () => {
+    const mockHydroInfras = [
+      { id: 101, nom: 'Barrage Robert-Bourassa' },
+      { id: 102, nom: 'Centrale La Grande-1' },
+      { id: 103, nom: 'Barrage Manic-5' }
+    ];
+
+    beforeEach(() => {
+      mockInfrasService.getInfrasSignalByType.mockImplementation((type: string) => {
+        if (type === 'hydro') return signal(mockHydroInfras);
+        return signal([]);
+      });
+    });
+
+    it('should return all categories when filter is empty', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = '';
+      expect(fixture.componentInstance.visibleCategories).toEqual(fixture.componentInstance.infras);
+    });
+
+    it('should only show categories with matching infras when filtered', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = 'manic';
+      
+      const visible = fixture.componentInstance.visibleCategories;
+      expect(visible.length).toBe(1);
+      expect(visible[0].type).toBe('hydro');
+    });
+
+    it('should hide all categories when no infras match', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = 'introuvable';
+      expect(fixture.componentInstance.visibleCategories.length).toBe(0);
+    });
+
+    it('should filter infras by name within a category', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = 'barrage';
+      
+      const filtered = fixture.componentInstance.getFilteredAndSortedInfras('hydro');
+      expect(filtered.length).toBe(2);
+      expect(filtered.map((i: any) => i.nom)).toContain('Barrage Robert-Bourassa');
+      expect(filtered.map((i: any) => i.nom)).toContain('Barrage Manic-5');
+    });
+
+    it('should sort infras A-Z by default', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = '';
+      
+      const sorted = fixture.componentInstance.getFilteredAndSortedInfras('hydro');
+      expect(sorted[0].nom).toBe('Barrage Manic-5');
+      expect(sorted[1].nom).toBe('Barrage Robert-Bourassa');
+      expect(sorted[2].nom).toBe('Centrale La Grande-1');
+    });
+
+    it('should sort infras Z-A when sortAsc is false', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = '';
+      fixture.componentInstance.sortAsc = false;
+      
+      const sorted = fixture.componentInstance.getFilteredAndSortedInfras('hydro');
+      expect(sorted[0].nom).toBe('Centrale La Grande-1');
+      expect(sorted[1].nom).toBe('Barrage Robert-Bourassa');
+      expect(sorted[2].nom).toBe('Barrage Manic-5');
+    });
+  });
+
+  describe('toggleSort', () => {
+    it('should flip sortAsc', async () => {
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.sortAsc).toBe(true);
+      fixture.componentInstance.toggleSort();
+      expect(fixture.componentInstance.sortAsc).toBe(false);
     });
   });
 });

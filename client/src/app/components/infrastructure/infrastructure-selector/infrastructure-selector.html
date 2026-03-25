@@ -12,20 +12,49 @@
                 (click)="openCreateModal()">
                 <i class="fa-solid fa-plus"></i>
             </button>
+            <button class="group-delete-btn" title="Supprimer ce groupe d'infrastructure"
+                *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== 1"
+                (click)="deleteInfraGroup()">
+                <i class="fa-solid fa-trash"></i>
+            </button>
         </div>
     </div>
 
+    <!-- Infrastructure filter & sort -->
+    <div class="infra-toolbar">
+        <div class="filter-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass filter-icon"></i>
+            <input type="text" class="filter-input" placeholder="Chercher une infrastructure..."
+                [(ngModel)]="filterText" />
+            <button class="filter-clear-btn" *ngIf="filterText" (click)="filterText = ''"
+                title="Effacer la recherche">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <button class="sort-toggle-btn" (click)="toggleSort()"
+            [title]="sortAsc ? 'Tri : A → Z' : 'Tri : Z → A'">
+            <i class="fa-solid" [class.fa-arrow-down-a-z]="sortAsc"
+                [class.fa-arrow-down-z-a]="!sortAsc"></i>
+        </button>
+    </div>
+
     <!-- Infrastructure accordions -->
-    <div ngbAccordion class="infra-accordion">
-        <div ngbAccordionItem *ngFor="let infra of infras">
+    <div ngbAccordion class="infra-accordion" *ngIf="visibleCategories.length > 0">
+        <div ngbAccordionItem *ngFor="let infra of visibleCategories" [id]="infra.type">
             <h2 ngbAccordionHeader>
                 <button ngbAccordionButton>{{ infra.name }}</button>
             </h2>
             <div ngbAccordionCollapse>
                 <div ngbAccordionBody>
-                    <app-infra-list-body [infras]="this.getInfrasFromType(infra.type)()" [type]="infra.type" />
+                    <app-infra-list-body [infras]="getFilteredAndSortedInfras(infra.type)" [type]="infra.type" />
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Empty state for search -->
+    <div class="infra-empty-state" *ngIf="filterText.trim() && visibleCategories.length === 0">
+        <i class="fa-solid fa-search"></i>
+        <p>Aucune infrastructure trouvée pour "{{ filterText }}"</p>
     </div>
 </div>

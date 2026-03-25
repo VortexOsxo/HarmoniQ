@@ -3,26 +3,49 @@
     <div class="status-section">
         <span class="status-label">CONFIGURATION ACTIVE</span>
         <div class="status-items">
-            <div class="status-item">
+            <div class="status-item" [class.status-item-error]="showConfigHints() && missingScenario()">
                 <i class="fa-solid fa-flask status-icon"></i>
                 <div class="status-item-content">
                     <span class="status-item-label">Scénario</span>
                     <span class="status-item-value">{{ selectedScenario()?.nom ?? 'Aucun' }}</span>
                 </div>
             </div>
-            <div class="status-item">
+            <!-- Help bubble for missing scenario -->
+            <div class="config-hint-bubble" *ngIf="showConfigHints() && missingScenario()">
+                <i class="fa-solid fa-triangle-exclamation hint-icon"></i>
+                <div class="hint-content">
+                    <span class="hint-title">Scénario requis</span>
+                    <span class="hint-desc">Sélectionnez un scénario dans le panneau ci-dessus ou créez-en un nouveau avec le bouton <strong>+</strong>.</span>
+                </div>
+                <button class="hint-dismiss" (click)="dismissHints()" title="Fermer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="status-item" [class.status-item-error]="showConfigHints() && missingInfra()">
                 <i class="fa-solid fa-layer-group status-icon"></i>
                 <div class="status-item-content">
                     <span class="status-item-label">Groupe infra.</span>
                     <span class="status-item-value">{{ selectedInfrastructure()?.nom ?? 'Aucun' }}</span>
                 </div>
             </div>
+            <!-- Help bubble for missing infrastructure -->
+            <div class="config-hint-bubble" *ngIf="showConfigHints() && missingInfra()">
+                <i class="fa-solid fa-triangle-exclamation hint-icon"></i>
+                <div class="hint-content">
+                    <span class="hint-title">Groupe d'infrastructures requis</span>
+                    <span class="hint-desc">Sélectionnez un groupe d'infrastructures dans le panneau ci-dessus pour pouvoir lancer la simulation.</span>
+                </div>
+                <button class="hint-dismiss" (click)="dismissHints()" title="Fermer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Launch button -->
-    <button id="run" class="launch-btn" [disabled]="!canLaunch() || isLaunching()"
-        (click)="launchSimulation()">
+    <button id="run" class="launch-btn" [class.launch-btn-disabled]="!canLaunch()"
+        [disabled]="isLaunching()" (click)="onLaunchClick()">
         <span *ngIf="isLaunching()" class="spinner-border spinner-border-sm me-2"></span>
         <i *ngIf="!isLaunching()" class="fa-solid fa-play me-2"></i>
         {{ isLaunching() ? 'Lancement...' : 'Lancer Simulation' }}
