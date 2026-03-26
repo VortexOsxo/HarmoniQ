@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 import pandas as pd
 import logging
@@ -8,7 +7,6 @@ from harmoniq.db.schemas import PositionBase
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
-import numpy as np
 from harmoniq import METEO_DATA_PATH
 import math
 
@@ -34,28 +32,34 @@ _CURRENT_YEAR = datetime.now().year
 _REFERENCE_YEAR = 2024
 
 
-class Meteo:
-    def __init__(self):
-        self.cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
-        self.retry_session = retry(self.cache_session, retries=5, backoff_factor=0.2)
-        self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
-        
-        # Load existing CSV data once
-        try:
-            self.existing_df = pd.read_csv(METEO_DATA_PATH)
-            self.existing_df["date"] = pd.to_datetime(self.existing_df["date"])
-        except Exception as e:
-            print(f"⚠️ Impossible de charger data.csv : {e}")
-            self.existing_df = None
+class _Meteo:
+    existing_df = None
+    client = None
 
-    def haversine(self, lat1, lon1, lat2, lon2):
+    @classmethod
+    def _initialize(cls):
+        cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
+        retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+        
+        cls.client = openmeteo_requests.Client(session=retry_session)
+        
+        try:
+            cls.existing_df = pd.read_csv(METEO_DATA_PATH)
+            cls.existing_df["date"] = pd.to_datetime(cls.existing_df["date"])
+        except Exception as e:
+            logger.warning("Impossible de charger data.csv : %s", e)
+            cls.existing_df = None
+
+    @classmethod
+    def _haversine(cls, lat1, lon1, lat2, lon2):
         R = 6371  # Radius of Earth in km
         dlat = math.radians(lat2 - lat1)
         dlon = math.radians(lon2 - lon1)
         a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
         return 2 * R * math.asin(math.sqrt(a))
 
-    def get_weather_data(self, Latitude, Longitude, start_date, end_date):
+    @classmethod
+    def _get_weather_data(cls, Latitude, Longitude, start_date, end_date):
         url = "https://archive-api.open-meteo.com/v1/archive"
         params = {
             "latitude": Latitude,
@@ -66,13 +70,9 @@ class Meteo:
             "timezone": "America/New_York",
             "wind_speed_unit": "ms"
         }
-        responses = self.openmeteo.weather_api(url, params=params)
+        responses = cls.client.weather_api(url, params=params)
         response = responses[0]
         hourly = response.Hourly()
-        hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
-        hourly_wind_speed_100m = hourly.Variables(13).ValuesAsNumpy()
-        hourly_wind_direction_100m = hourly.Variables(15).ValuesAsNumpy()
-        hourly_surface_pressure = hourly.Variables(19).ValuesAsNumpy()
 
         hourly_data = {
             "date": pd.date_range(
@@ -80,50 +80,53 @@ class Meteo:
                 end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
                 freq=pd.Timedelta(seconds=hourly.Interval()),
                 inclusive="left"
-            )
+            ),
+            "temperature_C" : hourly.Variables(0).ValuesAsNumpy(),
+            "vitesse_vent_kmh" : hourly.Variables(13).ValuesAsNumpy() * 3.6,
+            "direction_vent" : hourly.Variables(15).ValuesAsNumpy(),
+            "pression" : hourly.Variables(19).ValuesAsNumpy() / 10,
         }
-        hourly_data["temperature_C"] = hourly_temperature_2m
-        hourly_data["vitesse_vent_kmh"] = hourly_wind_speed_100m * 3.6
-        hourly_data["direction_vent"] = hourly_wind_direction_100m
-        hourly_data["pression"] = hourly_surface_pressure / 10
 
         df = pd.DataFrame(data=hourly_data)
         df["date"] = df["date"] - pd.Timedelta(hours=4)
         return (df)
 
-    def get_weather_or_nearest(self, Latitude, Longitude, start_date, end_date):
-        print(f"🌍 Recherche météo pour {Latitude}, {Longitude} de {start_date} à {end_date}")
+    @classmethod
+    def get_weather_or_nearest(cls, Latitude, Longitude, start_date, end_date):
+        if cls.client is None: cls._initialize()
 
-        if self.existing_df is None:
-            print("❌ Pas de base de données locale, appel à l’API...")
+        logger.debug("Recherche météo pour %s, %s de %s à %s", Latitude, Longitude, start_date, end_date)
+
+        if cls.existing_df is None:
+            logger.info("Pas de base de données locale, appel à l’API")
             start_str = start_date.strftime("%Y-%m-%d")
             end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
-            return self.get_weather_data(Latitude, Longitude, start_str, end_str)
+            return cls._get_weather_data(Latitude, Longitude, start_str, end_str)
 
         # Trouver la station la plus proche
-        unique_coords = self.existing_df[["lat", "lon"]].drop_duplicates()
+        unique_coords = cls.existing_df[["lat", "lon"]].drop_duplicates()
         unique_coords["distance"] = unique_coords.apply(
-            lambda row: self.haversine(Latitude, Longitude, row["lat"], row["lon"]), axis=1
+            lambda row: cls._haversine(Latitude, Longitude, row["lat"], row["lon"]), axis=1
         )
         nearest = unique_coords.sort_values("distance").iloc[0]
 
         if nearest["distance"] > 50:
-            print(f"ℹ️ Station la plus proche à {nearest['distance']:.1f} km — appel API")
+            logger.info("Station la plus proche à %.1f km — appel API", nearest["distance"])
             start_str = start_date.strftime("%Y-%m-%d")
             end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
-            return self.get_weather_data(Latitude, Longitude, start_str, end_str)
-        
-        print(f"✅ Utilisation de la station à {nearest['distance']:.1f} km")
+            return cls._get_weather_data(Latitude, Longitude, start_str, end_str)
+
+        logger.debug("Utilisation de la station à %.1f km", nearest["distance"])
 
         # Conversion des dates en UTC avec seulement 00h00 inclus pour la date de fin
         start = pd.to_datetime(start_date).tz_localize("UTC") if pd.to_datetime(start_date).tzinfo is None else pd.to_datetime(start_date)
         end = pd.to_datetime(end_date).tz_localize("UTC") if pd.to_datetime(end_date).tzinfo is None else pd.to_datetime(end_date)
         end = end.replace(hour=0, minute=0, second=0, microsecond=0)
-        df_filtered = self.existing_df[
-            (self.existing_df["lat"] == nearest["lat"]) &
-            (self.existing_df["lon"] == nearest["lon"]) &
-            (self.existing_df["date"] >= start) &
-            (self.existing_df["date"] <= end)
+        df_filtered = cls.existing_df[
+            (cls.existing_df["lat"] == nearest["lat"]) &
+            (cls.existing_df["lon"] == nearest["lon"]) &
+            (cls.existing_df["date"] >= start) &
+            (cls.existing_df["date"] <= end)
         ].copy()
         # Supprimer doublons exacts sur la date
         df_filtered["date"] = pd.to_datetime(df_filtered["date"], utc=True)
@@ -152,7 +155,6 @@ class WeatherHelper:
 
         self._granularity = granularity
         self._data = None
-        self.meteo_client = Meteo()
 
         logger.info(
             f"WeatherHelper({self.position} de {self.start_time} à {self.end_time}, granularité={self.granularity})"
@@ -181,7 +183,7 @@ class WeatherHelper:
             self.end_time = self.end_time.replace(year=2024)
 
         # Open-Meteo demande un end_date exclusif => ajouter 1 jour
-        df = self.meteo_client.get_weather_or_nearest(
+        df = _Meteo.get_weather_or_nearest(
             Latitude=self.position.latitude,
             Longitude=self.position.longitude,
             start_date=self.start_time,
@@ -204,33 +206,3 @@ class WeatherHelper:
 
         self._data = df
         return df
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    pos = PositionBase(latitude=45.80944, longitude=-73.43472)
-    start_time = datetime(2024, 9, 1)
-    end_time = datetime(2024, 9, 4)
-    granularity = Granularity.HOURLY
-
-    weather = WeatherHelper(
-        pos,
-        interpolate=True,
-        start_time=start_time,
-        end_time=end_time,
-        data_type=EnergyType.EOLIEN,
-        granularity=granularity,
-    )
-
-    print("#-----#-----#-----#-----#")
-    print("Running the load method...")
-    print("#-----#-----#-----#-----#")
-    df = weather.load()
-    print(df.head())
-    print("#-----#-----#-----#-----#")
-    print("Finished loading data.")
-    print("#-----#-----#-----#-----#")

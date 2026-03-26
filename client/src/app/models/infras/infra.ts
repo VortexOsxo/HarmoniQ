@@ -3,6 +3,7 @@ export abstract class Infra<T extends Infra<T>> {
     nom!: string;
     longitude!: number;
     latitude!: number;
+    isUserCreated: boolean = false;
 }
 
 export abstract class InfraFactory<T extends Infra<T>> {

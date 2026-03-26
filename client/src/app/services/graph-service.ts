@@ -4,8 +4,8 @@ import * as Plotly from 'plotly.js-dist-min';
 export const graphServiceConfig = {
     PRODUCTION_SINGLE_INFRA_ID: 'production-single-infra-id',
     ENERGY_PROD_CONS_SANKEY_ID: 'energy-prod-cons-sankey-id',
-    SECTOR_ENERGY_CONS_SANKEY_ID: 'sector-energy-cons-sankey-id',
-    TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id'
+    TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id',
+    TEMPORAL_SIMULATION_ID: 'temporal-simulation-id'
 };
 
 
@@ -16,7 +16,7 @@ export class GraphService {
 
     constructor() { }
 
-    public generateProductionSingleInfraGraph(type: string, data: any): void {
+    public generateProductionSingleInfraGraph(type: string, data: any, granularity: string = 'original'): void {
         let unit = '';
         let xval: any[] = [];
         let yval: any[] = [];
@@ -31,46 +31,135 @@ export class GraphService {
             yval = Object.values(data.production_mwh);
         } else if (type === "solaire") {
             unit = "W";
-            xval = Object.keys(data.production_horaire_wh);
-            yval = Object.values(data.production_horaire_wh);
+            xval = Object.keys(data.production);
+            yval = Object.values(data.production);
         }
 
-        const layout = {
-            xaxis: {
-                title: "Date",
-                tickformat: "%d %b %Y"
-            },
-            yaxis: {
-                title: "Production (" + unit + ")",
-                autorange: true
-            },
-        };
+        if (granularity !== 'original') {
+            const aggregated = this.aggregateData(xval, yval, granularity);
+            xval = aggregated.x;
+            yval = aggregated.y;
+        }
 
-        const trace = {
-            x: xval,
-            y: yval,
-            type: 'scatter' as any,
-            mode: 'lines' as any,
-            marker: { color: 'blue' },
-            line: { shape: 'spline' as any }
-        };
+        const layout = this.getStandardLayout(
+            `Production de l'infrastructure (${type})`,
+            `Production (${unit})`,
+            granularity
+        );
 
-        Plotly.newPlot(graphServiceConfig.PRODUCTION_SINGLE_INFRA_ID, [trace], layout as any);
+        const trace = this.getStandardTrace(
+            'Production',
+            xval,
+            yval,
+            '#3498db',
+            `%{y:.2f} ${unit}<extra></extra>`
+        );
+
+        Plotly.newPlot(graphServiceConfig.PRODUCTION_SINGLE_INFRA_ID, [trace], layout as any, { responsive: true });
     }
 
-    public generateEnergyProdConsSankeyGraph(data: any): void {
-        const layout = {
-            title: {
-                text: "Flux de Production et de Consommation d'Énergie",
-                font: { size: 22, family: "Arial", color: "#333" }
+    public getStandardLayout(title: any, yTitle: string, granularity: string, extra: any = {}) {
+        return {
+            title: typeof title === "string" ? {
+                text: `<b>${title}</b>`,
+                font: { size: 20, color: '#2c3e50' }
+            } : title,
+            xaxis: {
+                title: { text: "Date", font: { size: 14, color: '#7f8c8d' } },
+                tickformat: granularity === 'monthly' ? "%b %Y" : granularity === 'daily' || granularity === 'weekly' ? "%d %b %Y" : "%d %b %H:%M",
+                gridcolor: '#eee',
+                rangeslider: { visible: false },
+                type: 'date',
+                ...extra.xaxis
             },
-            font: { size: 14, family: "Helvetica" },
-            margin: { l: 20, r: 20, t: 60, b: 20 },
-            paper_bgcolor: "#f8f9fa",
-            plot_bgcolor: "#f8f9fa",
+            yaxis: {
+                title: { text: yTitle, font: { size: 14, color: '#7f8c8d' } },
+                gridcolor: '#eee',
+                zerolinecolor: '#ccc',
+                autorange: true,
+                ...extra.yaxis
+            },
+            template: 'plotly_white',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            margin: { t: 80, b: 100, l: 80, r: 40, ...extra.margin },
+            hovermode: 'x unified',
+            hoverlabel: {
+                bgcolor: 'white',
+                bordercolor: '#ccc',
+                font: { size: 16, color: '#2c3e50' },
+                namelength: -1,
+                align: 'left'
+            },
+            legend: {
+                orientation: "h",
+                yanchor: "top",
+                y: -0.2,
+                xanchor: "center",
+                x: 0.5,
+                font: { size: 14 },
+                ...extra.legend
+            },
+            ...extra
         };
+    }
 
-        Plotly.react(graphServiceConfig.ENERGY_PROD_CONS_SANKEY_ID, [data], layout);
+    public getStandardTrace(name: string, x: any[], y: any[], color: string, hovertemplate?: string) {
+        return {
+            x: x,
+            y: y,
+            type: 'scatter' as any,
+            mode: 'lines' as any,
+            name: name,
+            line: { shape: 'spline' as any, color: color, width: 4 },
+            fill: 'tozeroy',
+            fillcolor: this.hexToRgba(color, 0.1),
+            hovertemplate: hovertemplate || "<b>%{y:.2f}</b><extra></extra>"
+        };
+    }
+
+    public hexToRgba(hex: string, alpha: number): string {
+        try {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        } catch (e) {
+            return `rgba(52, 152, 219, ${alpha})`;
+        }
+    }
+
+    public aggregateData(x: any[], y: any[], granularity: string): { x: any[], y: any[] } {
+        const groups: { [key: string]: number[] } = {};
+
+        x.forEach((dateStr, index) => {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return;
+
+            let key = '';
+            if (granularity === 'daily') {
+                key = date.toISOString().split('T')[0];
+            } else if (granularity === 'weekly') {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+                d.setDate(d.getDate() - d.getDay()); // Sunday as the start of the week
+                key = d.toISOString().split('T')[0];
+            } else if (granularity === 'monthly') {
+                key = date.toISOString().substring(0, 7); // YYYY-MM
+            }
+
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(y[index]);
+        });
+
+        const sortedKeys = Object.keys(groups).sort();
+        return {
+            x: sortedKeys,
+            y: sortedKeys.map(key => {
+                const values = groups[key];
+                return values.reduce((a, b) => a + b, 0) / values.length;
+            })
+        };
     }
 
     public downloadGraph(graphId: string) {

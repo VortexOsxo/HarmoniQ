@@ -1,20 +1,16 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ScenarioBase, Hydro, ListeInfrastructures
-from harmoniq.db.CRUD import read_all_hydro, read_multiple_by_id
 from harmoniq.db.engine import get_db
 
-from harmoniq.modules.reseau.core import NetworkBuilder, PowerFlowAnalyzer, NetworkOptimizer
+from harmoniq.modules.reseau.core import NetworkBuilder, NetworkOptimizer
 from harmoniq.modules.reseau.utils import EnergyUtils
 
 import pandas as pd
-import numpy as np
 import pypsa
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, Tuple
 import logging
 from pathlib import Path
 import os
 import hashlib
-import time
 
 logger = logging.getLogger("Reseau")
 
@@ -35,7 +31,7 @@ class InfraReseau(Infrastructure):
     4. Analyse des résultats
     """
     
-    def __init__(self, donnees: ListeInfrastructures, data_dir: str = None):
+    def __init__(self, donnees, data_dir: str = None):
         """
         Args:
             donnees: Liste des infrastructures incluses dans le réseau
@@ -47,12 +43,6 @@ class InfraReseau(Infrastructure):
         self.statistics = {}
         self.builder = NetworkBuilder(data_dir)
         self.is_journalier = False  # Par défaut, le mode horaire est utilisé
-        self.timers = {}
-        
-    def charger_scenario(self, scenario: ScenarioBase):
-
-        self.scenario = scenario
-        logger.info(f"Scénario chargé: {scenario.nom}")
         
     @necessite_scenario
     async def creer_reseau(self, liste_infra=None) -> pypsa.Network: #Ne sert uniquement à créer le reseau que si il n'est pas déja crée, ce qui n'arrive à priori pas
@@ -89,13 +79,11 @@ class InfraReseau(Infrastructure):
         # Vérifier si un réseau précalculé existe
         if network_path.exists():
             logger.info(f"Chargement du réseau précalculé depuis {network_path}")
-            t_cache_start = time.time()
             try:
                 network = pypsa.Network()
                 network.import_from_netcdf(str(network_path))
                 
                 self.network = network
-                self.timers['a1a_cache_load'] = time.time() - t_cache_start
                 logger.info(f"Réseau chargé: {len(network.buses)} bus, {len(network.lines)} lignes, {len(network.generators)} générateurs")
                 return network
                 
@@ -109,7 +97,6 @@ class InfraReseau(Infrastructure):
         
         # Création d'un nouveau réseau
         logger.info("Création d'un nouveau réseau électrique")
-        t_build_start = time.time()
         
         annee = str(self.scenario.date_de_debut.year)
         start_date = self.scenario.date_de_debut
@@ -117,23 +104,15 @@ class InfraReseau(Infrastructure):
         
         network = await self.builder.create_network(self.scenario, liste_infra, annee, start_date, end_date)
         
-        self.timers['a1b_network_build'] = time.time() - t_build_start
-        
-        if hasattr(self.builder, 'timers'):
-            for key, value in self.builder.timers.items():
-                self.timers[f'a1b_{key}'] = value
-        
         # Normaliser les types de données avant sauvegarde
         self._normaliser_types_reseau(network)
         
         # Sauvegarder en format netCDF
-        t_save_start = time.time()
         try:
             network.export_to_netcdf(str(network_path))
             logger.info("Réseau sauvegardé avec succès")
         except Exception as e:
             logger.warning(f"Erreur lors de la sauvegarde du réseau: {e}")
-        self.timers['a1c_cache_save'] = time.time() - t_save_start
         
         self.network = network
         logger.info(f"Réseau créé: {len(network.buses)} bus, {len(network.lines)} lignes, {len(network.generators)} générateurs")
@@ -173,14 +152,8 @@ class InfraReseau(Infrastructure):
         """
         logger.info("Calcul de la capacité d'import/export...")
         
-        # Timer: Network creation (if needed)
         if self.network is None:
-            t_start = time.time()
             await self.creer_reseau(liste_infra)
-            self.timers['a1_creer_reseau'] = time.time() - t_start
-        
-        # Timer: Pmax calculation (vectorized)
-        t_start = time.time()
         
         annee = str(self.scenario.date_de_debut.year)
         
@@ -234,8 +207,6 @@ class InfraReseau(Infrastructure):
             
             Pmax = (Pmax_min + Pmax_max) / 2
         
-        self.timers['a2_pmax_calculation'] = time.time() - t_start
-        
         logger.info(f"Pmax calculé: {Pmax:.2f} MW après {iteration+1} itérations")
         
         self.Pmax = Pmax
@@ -274,48 +245,40 @@ class InfraReseau(Infrastructure):
                 Pmax = await self.calculer_capacite_import_export(liste_infra)
             else:
                 Pmax = self.Pmax
-        
-        t_prep_start = time.time()
-        
-        # Réechantillonner à une fréquence journalière si demandé
+
         if is_journalier:
             logger.info("Passage en mode journalier (pas de temps = 24h)")
             self.network = EnergyUtils.reechantillonner_reseau_journalier(self.network)
-        
+
         barrages_reservoir = self.network.generators[
             self.network.generators.carrier == 'hydro_reservoir'
         ].index.tolist()
-        
+
         if not barrages_reservoir:
             logger.warning("Aucun barrage à réservoir trouvé dans le réseau")
             return self.network, {}
-        
-        # Générer des niveaux de réservoir simulés
+
         niveaux_reservoirs = EnergyUtils.generer_faux_niveaux_reservoirs(
             self.network.snapshots, barrages_reservoir
         )
-        
+
         marginal_costs = niveaux_reservoirs.apply(
             lambda col: EnergyUtils.calcul_cout_reservoir_vectorized(col.values)
         )
-        
-        # Ajouter les coûts marginaux au réseau
+
         if not hasattr(self.network, 'generators_t'):
             self.network.generators_t = {}
         if 'marginal_cost' not in self.network.generators_t:
             self.network.generators_t['marginal_cost'] = pd.DataFrame(index=self.network.snapshots)
-        
+
         for barrage in barrages_reservoir:
             self.network.generators_t['marginal_cost'][barrage] = marginal_costs[barrage]
 
-        # Ajouter l'interconnexion et vérifier la connectivité
         bus_frontiere = EnergyUtils.obtenir_bus_frontiere(self.network, "Interconnexion")
         self.network = EnergyUtils.ajouter_interconnexion_import_export(self.network, Pmax)
+
         self.network = EnergyUtils.ensure_network_solvability(self.network)
         
-        self.timers['b1_preparation'] = time.time() - t_prep_start
-        
-        t_opt_start = time.time()
         
         # Optimiser le réseau avec l'optimisateur manuel au lieu de PyPSA standard
         optimizer = NetworkOptimizer(self.network, is_journalier=is_journalier)
@@ -325,10 +288,6 @@ class InfraReseau(Infrastructure):
         
         # Utilise notre méthode d'optimisation manuelle
         optimized_network = optimizer.optimize_manually()
-        
-        self.timers['b2_optimize_manually'] = time.time() - t_opt_start
-        
-        t_results_start = time.time()
         
         optimization_results = optimizer.get_optimization_results()
 
@@ -346,8 +305,6 @@ class InfraReseau(Infrastructure):
             "energie_exportee": optimized_network.loads_t['p'].get(f"export_{bus_frontiere}", pd.Series()).sum() 
                 if f"export_{bus_frontiere}" in optimized_network.loads_t['p'].columns else 0
         }
-        
-        self.timers['b3_results_gathering'] = time.time() - t_results_start
         
         self.statistics = statistics
         self.network = optimized_network
@@ -409,13 +366,9 @@ class InfraReseau(Infrastructure):
         # Mettre à jour le mode de l'instance
         self.is_journalier = is_journalier
         
-        t_start = time.time()
         Pmax = await self.calculer_capacite_import_export(liste_infra)
-        self.timers['a_capacite_import_export'] = time.time() - t_start
         
-        t_start = time.time()
         network, statistics = await self.fake_optimiser_reservoirs(liste_infra, Pmax, is_journalier)
-        self.timers['b_fake_optimiser_reservoirs'] = time.time() - t_start
         
         logger.info("Workflow d'optimisation terminé")
         return network, statistics
@@ -496,13 +449,7 @@ class InfraReseau(Infrastructure):
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_data_by_id, read_all_scenario
     from harmoniq.db.engine import get_db
-    from harmoniq.db.schemas import ListeInfrastructures
-    import asyncio
-    
-    db = next(get_db())
-    
-    liste_infrastructures = asyncio.run(read_data_by_id(db, ListeInfrastructures, 1))
-    infraReseau = InfraReseau(liste_infrastructures)
+    infraReseau = InfraReseau(None)
     
     scenario = read_all_scenario(db)[1]
     infraReseau.charger_scenario(scenario)

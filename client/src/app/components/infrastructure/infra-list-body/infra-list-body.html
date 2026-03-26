@@ -6,7 +6,7 @@
             désélectionner</button>
     </div>
     <ul class="list-group" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
-        <app-infra-list-element *ngFor="let infra of infras" [nom]="infra.nom" [id]="infra.id.toString()"
-            [type]="type" />
+        <app-infra-list-element *ngFor="let infra of infras" [nom]="infra.nom" [id]="infra.id.toString()" [type]="type"
+            [isUserCreated]="infra.isUserCreated" />
     </ul>
 </div>

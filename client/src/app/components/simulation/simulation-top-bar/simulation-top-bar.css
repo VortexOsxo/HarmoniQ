@@ -1,0 +1,37 @@
+.navbar {
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.center-section {
+    justify-content: center;
+}
+
+.right-section {
+    justify-content: flex-end;
+}
+
+.btn-link {
+    transition: transform 0.2s ease;
+    text-decoration: none;
+    border: none;
+}
+
+.btn-link:hover {
+    transform: translateX(-4px);
+    opacity: 0.8;
+}
+
+.scenario-name {
+    color: white;
+    font-size: 24px;
+    margin: 0px;
+}

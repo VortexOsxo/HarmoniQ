@@ -6,6 +6,7 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { InfraListBody } from '../infra-list-body/infra-list-body';
 import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-group-modal';
+import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 
 @Component({
   selector: 'app-infrastructure-selector',
@@ -14,6 +15,8 @@ import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-
   styleUrl: './infrastructure-selector.css',
 })
 export class InfrastructureSelector {
+  filterText = '';
+  sortAsc = true;
 
   get infrastructureGroups(): InfrastructureGroup[] {
     return this.infrasService.infraGroups();
@@ -28,6 +31,30 @@ export class InfrastructureSelector {
   }
 
   infras: any[] = []
+
+  get visibleCategories() {
+    if (!this.filterText.trim()) {
+      return this.infras;
+    }
+    // Only show categories that have matches when searching
+    return this.infras.filter(cat => this.getFilteredAndSortedInfras(cat.type).length > 0);
+  }
+
+  getFilteredAndSortedInfras(type: string) {
+    let infrasList = this.infrasService.getInfrasSignalByType(type)();
+    
+    // Filter by name (case-insensitive)
+    if (this.filterText.trim()) {
+      const query = this.filterText.trim().toLowerCase();
+      infrasList = infrasList.filter((i: any) => i.nom && i.nom.toLowerCase().includes(query));
+    }
+    
+    // Sort by name (A-Z or Z-A)
+    return [...infrasList].sort((a: any, b: any) => {
+      const cmp = (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' });
+      return this.sortAsc ? cmp : -cmp;
+    });
+  }
 
   getInfrasFromType(type: string) {
     return this.infrasService.getInfrasSignalByType(type);
@@ -46,12 +73,32 @@ export class InfrastructureSelector {
     ]
   }
 
+  toggleSort(): void {
+    this.sortAsc = !this.sortAsc;
+  }
+
   compareInfraGroups(g1: InfrastructureGroup, g2: InfrastructureGroup): boolean {
     return g1 && g2 ? g1.id === g2.id : g1 === g2;
   }
 
   openCreateModal() {
     this.modalService.open(CreateInfraGroupModal);
+  }
+
+  deleteInfraGroup() {
+    const group = this.selectedInfrastructureGroup;
+    if (!group || group.id === 1) return; // Cannot delete the default group
+
+    const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
+    modalRef.componentInstance.title = 'Supprimer le groupe d\'infrastructures';
+    modalRef.componentInstance.message = `Êtes-vous sûr de vouloir supprimer le groupe "${group.nom}" ? Cette action est irréversible.`;
+    modalRef.componentInstance.confirmText = 'Supprimer';
+
+    modalRef.result.then((confirmed) => {
+      if (confirmed) {
+        this.infrasService.deleteInfraGroup(group);
+      }
+    }).catch(() => { });
   }
 
 }

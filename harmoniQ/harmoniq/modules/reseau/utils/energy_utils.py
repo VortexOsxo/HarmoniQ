@@ -461,72 +461,59 @@ class EnergyUtils:
                         type="virtual_line_type",
                         s_nom=1000000
                     )
-        
-        # Vérifier la capacité totale de génération à chaque pas de temps
+    
         if hasattr(network.generators_t, 'p_max_pu'):
-            new_pmax_cols = {}
-            # Pour chaque pas de temps, vérifier si la capacité est suffisante
-            for timestamp in network.snapshots:
-                # Vérifier si le timestamp existe dans p_set
-                try:
-                    if timestamp in network.loads_t.p_set.index:
-                        total_demand_t = network.loads_t.p_set.loc[timestamp].sum()
+            snapshots = network.snapshots
+
+            if not network.loads_t.p_set.empty:
+                total_demand = (
+                    network.loads_t.p_set
+                    .reindex(snapshots)
+                    .fillna(network.loads_t.p_set.mean())
+                    .sum(axis=1)
+                )
+            else:
+                total_demand = pd.Series(0.0, index=snapshots)
+
+            p_nom = network.generators['p_nom']
+            p_max_pu_full = (
+                network.generators_t.p_max_pu
+                .reindex(index=snapshots, columns=network.generators.index, fill_value=1.0)
+            )
+            available_capacity = p_max_pu_full.multiply(p_nom, axis=1).sum(axis=1)
+
+            gap_series = total_demand - available_capacity
+            shortage_timestamps = gap_series[gap_series > 0]
+
+            if not shortage_timestamps.empty:
+                new_pmax_cols = {}
+                for timestamp, capacity_gap in shortage_timestamps.items():
+                    gen_name = f"emergency_gen_{timestamp.strftime('%Y%m%d')}"
+
+                    if gen_name not in network.generators.index:
+                        network.add(
+                            "Generator",
+                            gen_name,
+                            bus=reference_bus,
+                            p_nom=capacity_gap * 1.1,
+                            marginal_cost=800,
+                            carrier="import"
+                        )
+
+                    if gen_name not in network.generators_t.p_max_pu.columns and gen_name not in new_pmax_cols:
+                        new_pmax_cols[gen_name] = pd.Series(0.0, index=snapshots)
+
+                    if gen_name in new_pmax_cols:
+                        new_pmax_cols[gen_name].at[timestamp] = 1.0
                     else:
-                        logger.warning(f"Timestamp {timestamp} non trouvé dans network.loads_t.p_set. Utilisation de valeur par défaut.")
-                        if not network.loads_t.p_set.empty:
-                            total_demand_t = network.loads_t.p_set.mean().sum()  # Moyenne comme valeur par défaut
-                        else:
-                            total_demand_t = 0  # Aucune demande si aucune donnée disponible
-                    
-                    # Calculer la capacité de génération disponible
-                    available_capacity = 0
-                    for gen in network.generators.index:
-                        p_nom = network.generators.loc[gen, 'p_nom']
-                        p_max_pu = 1.0  # Par défaut
-                        
-                        if gen in network.generators_t.p_max_pu.columns:
-                            if timestamp in network.generators_t.p_max_pu.index:
-                                p_max_pu = network.generators_t.p_max_pu.loc[timestamp, gen]
-                        
-                        available_capacity += p_nom * p_max_pu
-                    
-                    # Si la capacité est insuffisante, ajouter un générateur d'urgence
-                    if available_capacity < total_demand_t:
-                        capacity_gap = total_demand_t - available_capacity
-                        gen_name = f"emergency_gen_{timestamp.strftime('%Y%m%d')}"
-                        
-                        if gen_name not in network.generators.index:
-                            network.add(
-                                "Generator",
-                                gen_name,
-                                bus=reference_bus,
-                                p_nom=capacity_gap * 1.1,  # 10% de marge
-                                marginal_cost=800,  # Très coûteux
-                                carrier="import"
-                            )
-                        
-                        if gen_name not in network.generators_t.p_max_pu.columns and gen_name not in new_pmax_cols:
-                            s = pd.Series(0.0, index=network.snapshots)
-                            new_pmax_cols[gen_name] = s
+                        network.generators_t.p_max_pu.at[timestamp, gen_name] = 1.0
 
-                        # Mettre 1.0 au timestamp du gap
-                        if gen_name in network.generators_t.p_max_pu.columns:
-                            network.generators_t.p_max_pu.at[timestamp, gen_name] = 1.0
-                        else:
-                            new_pmax_cols[gen_name].at[timestamp] = 1.0
-                except KeyError as e:
-                    logger.error(f"Erreur lors du traitement du timestamp {timestamp}: {str(e)}")
-                    # Continuer avec le timestamp suivant
-                    continue
-                        
-            if new_pmax_cols:
-                add_df = pd.DataFrame(new_pmax_cols, index=network.snapshots)
-                network.generators_t.p_max_pu = pd.concat([network.generators_t.p_max_pu, add_df], axis=1)
+                if new_pmax_cols:
+                    add_df = pd.DataFrame(new_pmax_cols, index=snapshots)
+                    network.generators_t.p_max_pu = pd.concat([network.generators_t.p_max_pu, add_df], axis=1)
 
-            # Optionnel: défragmenter définitivement
             network.generators_t.p_max_pu = network.generators_t.p_max_pu.copy()
-        
-        # 6. Créer une matrice "safety_factor" pour tous les générateurs
+
         network.generators.p_nom_extendable = True
         network.generators.p_nom_max = network.generators.p_nom * 1.5  # 50% de flexibilité 
         

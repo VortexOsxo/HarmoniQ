@@ -2,11 +2,11 @@ import inspect
 import pkgutil
 import importlib
 
-from harmoniq.profiler import timer, validate_object_source, Profiler, get_func_id
+from harmoniq.profiler import timer, validate_object_source, Profiler, get_func_id, ProfilerConfig
 
 class Initializer:
     skipped_functions = ['__init__', '__repr__', '__new__', '__str__']
-    skip_privates = False
+    skip_privates = ProfilerConfig.skip_privates
 
     @classmethod
     def init_module(cls, module, visited=None):
@@ -44,14 +44,26 @@ class Initializer:
         if not validate_object_source(clas, "harmoniq"):
             return
         for name, obj in vars(clas).items():
-            if inspect.isfunction(obj):
+            if isinstance(obj, staticmethod):
+                cls.init_function(clas, obj.__func__, name, is_static=True)
+            elif isinstance(obj, classmethod):
+                cls.init_function(clas, obj.__func__, name, is_class=True)
+            elif inspect.isfunction(obj):
                 cls.init_function(clas, obj, name)
 
     @classmethod
-    def init_function(cls, owner, function, name):
+    def init_function(cls, owner, function, name, is_static=False, is_class=False):
         if function.__name__ in cls.skipped_functions:
             return
         if cls.skip_privates and name.startswith("_") and not (name.startswith("__") and name.endswith("__")):
             return
-        setattr(owner, name, timer(function))
+        
+        wrapped = timer(function)
+        if is_static:
+            setattr(owner, name, staticmethod(wrapped))
+        elif is_class:
+            setattr(owner, name, classmethod(wrapped))
+        else:
+            setattr(owner, name, wrapped)
+            
         Profiler.log_init(get_func_id(function))

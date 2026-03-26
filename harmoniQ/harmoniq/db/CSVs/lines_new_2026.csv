@@ -1,0 +1,289 @@
+﻿type,name,bus0,bus1,type,capital_cost,length,s_nom
+Bus,Radisson - La Grande-3,Bus1,Bus2,735kV_line,113521.472209913,113.521472209913,2000
+Bus,La Grande-3 - Le Moyne,Bus2,Bus4,735kV_line,70128.8248937638,70.1288248937638,2000
+Bus,Le Moyne - EDU de Francisco,Bus4,Bus3,735kV_line,111882.615060088,111.882615060088,2000
+Bus,Radisson - Muskeg,Bus1,Bus6,735kV_line,185755.030724343,185.755030724343,2000
+Bus,Muskeg - Nemiscau,Bus6,Bus7,735kV_line,66144.4690749632,66.1444690749632,2000
+Bus,Nemiscau - Albanel,Bus7,Bus8,735kV_line,31333.0744432519,31.3330744432519,2000
+Bus,La Grande-3 - Albanel,Bus2,Bus8,735kV_line,231222.925051916,231.222925051916,2000
+Bus,Le Moyne - Albanel,Bus4,Bus8,735kV_line,205365.615981003,205.365615981003,2000
+Bus,Nemiscau - Abitibi,Bus7,Bus15,735kV_line,213415.136092936,213.415136092936,2000
+Bus,Albanel - Chibougamau,Bus8,Bus16,735kV_line,219926.499821375,219.926499821375,2000
+Bus,Abitibi - Chibougamau,Bus15,Bus16,735kV_line,58598.8386828066,58.5988386828066,2000
+Bus,Abitibi - La Verendrye,Bus15,Bus22,735kV_line,262088.171843916,262.088171843916,2000
+Bus,Chibougamau - Chamouchouane,Bus16,Bus19,735kV_line,188114.455432004,188.114455432004,2000
+Bus,La Verendrye - Grand-Brule,Bus22,Bus27,735kV_line,162088.211341537,162.088211341537,2000
+Bus,Grand-Brule - Chenier,Bus27,Bus29,735kV_line,65587.7675542798,65.5877675542798,2000
+Bus,Chenier - Duvernay,Bus29,Bus30,735kV_line,31331.9503520423,31.3319503520423,2000
+Bus,Duvernay - Judith-Jasmin,Bus30,Bus31,735kV_line,7174.02291953965,7.17402291953965,2000
+Bus,La Verendrye - Judith-Jasmin,Bus22,Bus31,735kV_line,218510.427900907,218.510427900907,2000
+Bus,Duvernay - Bout-de-l'ile,Bus30,Bus28,735kV_line,11364.3563269471,11.3643563269471,2000
+Bus,Bout-de-l'ile - Boucherville,Bus28,Bus36,735kV_line,14408.2777514311,14.4082777514311,2000
+Bus,Chenier - Chateauguay,Bus29,Bus39,735kV_line,40060.8266092554,40.0608266092554,2000
+Bus,Chateauguay - Hertel,Bus39,Bus40,735kV_line,38693.3456290261,38.6933456290261,2000
+Bus,Hertel - Monteregie,Bus40,Bus38,735kV_line,56607.9657867475,56.6079657867475,2000
+Bus,Monteregie - Cantons,Bus38,Bus37,735kV_line,59862.1682620508,59.8621682620508,2000
+Bus,Hertel - Boucherville,Bus40,Bus36,735kV_line,21745.8269907508,21.7458269907508,2000
+Bus,Hertel - Nicolet,Bus40,Bus33,735kV_line,117724.708246269,117.724708246269,2000
+Bus,Boucherville - Nicolet,Bus36,Bus33,735kV_line,101265.129171558,101.265129171558,2000
+Bus,Boucherville - Carignan,Bus36,Bus32,735kV_line,44372.9732731523,44.3729732731523,2000
+Bus,Judith-Jasmin - Chamouchouane,Bus31,Bus19,735kV_line,336947.862058783,336.947862058783,2000
+Bus,Carignan - Jacques-Cartier,Bus32,Bus25,735kV_line,142898.098981816,142.898098981816,2000
+Bus,Judith-Jasmin - Jacques-Cartier,Bus31,Bus25,735kV_line,195019.441472078,195.019441472078,2000
+Bus,Jacques-Cartier - Chamouchouane,Bus25,Bus19,735kV_line,221072.997800472,221.072997800472,2000
+Bus,Cantons - Nicolet,Bus37,Bus33,735kV_line,61893.6236579776,61.8936236579776,2000
+Bus,Cantons - Appalaches,Bus37,Bus34,735kV_line,76415.9442145168,76.4159442145168,2000
+Bus,Nicolet - Levis,Bus33,Bus35,735kV_line,107339.741916222,107.339741916222,2000
+Bus,Appalaches - Levis,Bus34,Bus35,735kV_line,65903.0503594448,65.9030503594448,2000
+Bus,Jacques-Cartier - Laurentides,Bus25,Bus26,735kV_line,31795.448822121,31.795448822121,2000
+Bus,Levis - Laurentides,Bus35,Bus26,735kV_line,18654.3089437799,18.6543089437799,2000
+Bus,Chamouchouane - Saguenay,Bus19,Bus23,735kV_line,109831.924947871,109.831924947871,2000
+Bus,Jacques-Cartier - Saguenay,Bus25,Bus23,735kV_line,178806.174889402,178.806174889402,2000
+Bus,Saguenay - Outarde,Bus23,Bus18,735kV_line,241418.114139147,241.418114139147,2000
+Bus,Outarde - Micoua,Bus18,Bus17,735kV_line,5586.75666506948,5.58675666506948,2000
+Bus,Outarde - Manicouagan,Bus18,Bus21,735kV_line,53035.2959872049,53.0352959872049,2000
+Bus,Outarde - Arnaud,Bus18,Bus14,735kV_line,159993.772644844,159.993772644844,2000
+Bus,Arnaud - Manicouagan,Bus14,Bus21,735kV_line,165885.649022826,165.885649022826,2000
+Bus,Laurentides - Perigny,Bus26,Bus20,735kV_line,169574.970358403,169.574970358403,2000
+Bus,Perigny - Outarde,Bus20,Bus18,735kV_line,204747.48831989,204.74748831989,2000
+Bus,Levis - Bergeronnes,Bus35,Bus24,735kV_line,222832.620730527,222.832620730527,2000
+Bus,Bergeronnes - Manicouagan,Bus24,Bus21,735kV_line,131903.147641882,131.903147641882,2000
+Bus,Arnaud - Montagnais,Bus14,Bus9,735kV_line,194030.738676692,194.030738676692,2000
+Bus,Montagnais - Churchill Falls,Bus9,Bus5,735kV_line,216928.729698754,216.928729698754,2000
+Bus,Montagnais - Romaine-4,Bus9,Bus10,735kV_line,165579.568749087,165.579568749087,2000
+Bus,Romaine-4 - Romaine-3,Bus10,Bus11,735kV_line,27029.9787744133,27.0299787744133,2000
+Bus,Romaine-3 - Romaine-2,Bus11,Bus12,735kV_line,52428.7251340163,52.4287251340163,2000
+Bus,Romaine-2 - Romaine-1,Bus12,Bus13,735kV_line,23673.1175323239,23.6731175323239,2000
+Bus,Romaine-1 - Arnaud,Bus13,Bus14,735kV_line,237781.683290785,237.781683290785,2000
+Eolienne,Baie-des-Sables - Saint-Damase,Eolienne41,Eolienne76,735kV_line,8090.997797918191,8.090997797918,2000
+Eolienne,Baie-des-Sables - Jardin d'Eole (Saint-Ulric Saint-Leandre),Eolienne41,Eolienne50,735kV_line,17061.007245477645,17.061007245478,2000
+Eolienne,Carleton - New Richmond,Eolienne42,Eolienne70,735kV_line,31949.032683041809,31.949032683042,2000
+Eolienne,Carleton - Mesgi'g Ugju's'n,Eolienne42,Eolienne62,735kV_line,45823.240840552135,45.823240840552,2000
+Eolienne,Cote-de-Beaupre - Seigneurie de Beaupre,Eolienne43,Eolienne79,735kV_line,4092.8366456909,4.092836645691,2000
+Eolienne,Des Moulins I - Mont Sainte-Marguerite,Eolienne46,Eolienne66,735kV_line,23212.123563588681,23.212123563589,2000
+Eolienne,Des Moulins I - Le Granit,Eolienne46,Eolienne55,735kV_line,79592.148968173104,79.592148968173,2000
+Eolienne,Des Moulins II - Le Plateau II,Eolienne47,Eolienne59,735kV_line,3122.658267803436,3.122658267803,2000
+Eolienne,Frampton - Massif du Sud,Eolienne48,Eolienne61,735kV_line,26100.1714899086,26.100171489909,2000
+Eolienne,Frampton - Mont Sainte-Marguerite,Eolienne48,Eolienne66,735kV_line,33503.796784814491,33.503796784814,2000
+Eolienne,Gros-Morne - Mont Louis,Eolienne49,Eolienne64,735kV_line,13355.046919732657,13.355046919733,2000
+Eolienne,Gros-Morne - Mont Miller,Eolienne49,Eolienne65,735kV_line,25122.428892408108,25.122428892408,2000
+Eolienne,Gros-Morne - Montagne-Seche,Eolienne49,Eolienne67,735kV_line,37250.906841626129,37.250906841626,2000
+Eolienne,Jardin d'Eole (Saint-Ulric Saint-Leandre) - Le Nordais (Matane),Eolienne50,Eolienne57,735kV_line,7086.197208486902,7.086197208487,2000
+Eolienne,La Dune-du-Nord aux Iles-de-la-Madeleine - SNEEC,Eolienne51,Eolienne80,735kV_line,261395.882267312409,261.395882267312,2000
+Eolienne,La Mitis - Lac Alfred,Eolienne52,Eolienne53,735kV_line,7099.797177344106,7.099797177344,2000
+Eolienne,La Mitis - Nicolas-Riou,Eolienne52,Eolienne71,735kV_line,81281.859348651575,81.281859348652,2000
+Eolienne,Lac Alfred - Saint-Damase,Eolienne53,Eolienne76,735kV_line,27807.480414950867,27.807480414951,2000
+Eolienne,Lac Alfred - Roncevaux,Eolienne53,Eolienne75,735kV_line,38638.91996039838,38.638919960398,2000
+Eolienne,L'Anse-a-Valleau - SNEEC,Eolienne54,Eolienne80,735kV_line,18780.905761411406,18.780905761411,2000
+Eolienne,L'Anse-a-Valleau - Montagne-Seche,Eolienne54,Eolienne67,735kV_line,23418.128987690245,23.41812898769,2000
+Eolienne,Le Granit - Saint-Robert-Bellarmin,Eolienne55,Eolienne78,735kV_line,3456.469716366928,3.456469716367,2000
+Eolienne,Le Nordais (Cap-Chat) - Le Nordais (Matane),Eolienne56,Eolienne57,735kV_line,68180.477973707821,68.180477973708,2000
+Eolienne,Le Nordais (Cap-Chat) - Mont Louis,Eolienne56,Eolienne64,735kV_line,82425.651408404461,82.425651408404,2000
+Eolienne,EDU de Francisco - Raglan Mine,Bus3,Eolienne73,735kV_line,868306.937702793395,868.306937702793,2000
+Eolienne,Le Plateau I - Le Plateau II,Eolienne58,Eolienne59,735kV_line,3522.752312935377,3.522752312935,2000
+Eolienne,Le Plateau I - Roncevaux,Eolienne58,Eolienne75,735kV_line,8977.354093005189,8.977354093005,2000
+Eolienne,Massif du Sud - Saint-Philemon,Eolienne61,Eolienne77,735kV_line,12189.708787988026,12.189708787988,2000
+Eolienne,Mesgi'g Ugju's'n - Vents du Kempt,Eolienne62,Eolienne82,735kV_line,28717.644458089613,28.71764445809,2000
+Eolienne,Mont Copper - Mont Miller,Eolienne63,Eolienne65,735kV_line,5661.46589074879,5.661465890749,2000
+Eolienne,Mont Miller - Mont-Rothery,Eolienne65,Eolienne69,735kV_line,7306.466902609856,7.30646690261,2000
+Eolienne,Nicolas-Riou - Viger-Denonville,Eolienne71,Eolienne83,735kV_line,34763.207417492122,34.763207417492,2000
+Eolienne,Roncevaux - Vents du Kempt,Eolienne75,Eolienne82,735kV_line,30261.724048995166,30.261724048995,2000
+Eolienne,Temiscouata - Viger-Denonville,Eolienne81,Eolienne83,735kV_line,32731.57322815627,32.731573228156,2000
+Eolienne,Temiscouata - Saint-Philemon,Eolienne81,Eolienne77,735kV_line,143237.097009415913,143.237097009416,2000
+Eolienne,Le Projet Eoliennes Belle-Riviere (Val-eo) - Saguenay,Eolienne60,Bus23,735kV_line,33994.460189996862,33.994460189997,2000
+Eolienne,Riviere-du-Moulin - Saguenay,Eolienne74,Bus23,735kV_line,48471.49025195284,48.471490251953,2000
+Eolienne,Riviere-du-Moulin - Perigny,Eolienne74,Bus20,735kV_line,63580.852982233962,63.580852982234,2000
+Eolienne,Des Moulins I - Appalaches,Eolienne46,Bus34,735kV_line,5745.100382398093,5.745100382398,2000
+Eolienne,De l'Erable - Appalaches,Eolienne44,Bus34,735kV_line,20348.995533667232,20.348995533667,2000
+Eolienne,De l'Erable - Cantons,Eolienne44,Bus37,735kV_line,63241.721311099522,63.2417213111,2000
+Eolienne,Pierre-De Saurel - Nicolet,Eolienne72,Bus33,735kV_line,53511.292111033916,53.511292111034,2000
+Eolienne,Pierre-De Saurel - Carignan,Eolienne72,Bus32,735kV_line,17592.66768187971,17.59266768188,2000
+Eolienne,Monteregiee - Hertel,Eolienne68,Bus40,735kV_line,20926.584694198998,20.926584694199,2000
+Eolienne,Chateauguay - Monteregiee,Bus39,Eolienne68,735kV_line,18832.800092759629,18.83280009276,2000
+Eolienne,Des Cultures (Parc Eolien) - Monteregiee,Eolienne45,Eolienne68,735kV_line,8164.822465644856,8.164822465645,2000
+Eolienne,Cote-de-Beaupre - Laurentides,Eolienne43,Bus26,735kV_line,59033.719449027973,59.033719449028,2000
+Eolienne,Seigneurie de Beaupre - Perigny,Eolienne79,Bus20,735kV_line,107686.965775253586,107.686965775254,2000
+Solaire,Varennes - Boucherville,Solaire1,Bus36,735kV_line,10628.919047834073,10.628919047834,2000
+Solaire,Hertel - La Prairie,Bus40,Solaire2,735kV_line,5677.257387158165,5.677257387158,2000
+Solaire,Varennes - Bout-de-l'ile,Solaire1,Bus28,735kV_line,7447.567887011394,7.447567887011,2000
+Thermique,Hertel - Autres,Bus40,Thermique2,735kV_line,13822.362499910327,13.82236249991,2000
+Thermique,Becancour - Jacques-Cartier,Thermique1,Bus25,735kV_line,57755.069047255405,57.755069047255,2000
+Thermique,Becancour - Nicolet,Thermique1,Bus33,735kV_line,31275.905610056598,31.275905610057,2000
+Hydro,Beauharnois_Francis - Beauharnois_Kaplan,Hydro5,Hydro6,735kV_line,0,0,2000
+Hydro,Bernard-Landry - Eastmain-1,Hydro18,Hydro23,735kV_line,66.357205857046,0.066357205857,2000
+Hydro,McCormick - Manic-1,Hydro33,Hydro39,735kV_line,247.817511138236,0.247817511138,2000
+Hydro,Shawinigan-2 - Shawinigan-3,Hydro37,Hydro38,735kV_line,407.753367529321,0.407753367529,2000
+Hydro,Manic-5 - Manic-5-PA,Hydro7,Hydro12,735kV_line,419.591323741957,0.419591323742,2000
+Hydro,Churchill-Falls - Churchill Falls,Hydro62,Bus5,735kV_line,433.686869652695,0.433686869653,2000
+Hydro,Robert-Bourassa - La grande-2-A,Hydro1,Hydro4,735kV_line,1112.097247394533,1.112097247395,2000
+Hydro,La Grande-4 - EDU de Francisco,Hydro2,Bus3,735kV_line,1567.090893004065,1.567090893004,2000
+Hydro,La Grande-3 (N002) - La Grande-3 (N064),Hydro3,Bus2,735kV_line,1626.176672939442,1.626176672939,2000
+Hydro,Chelsea - Rapides-Farmer,Hydro41,Hydro47,735kV_line,1884.392752803141,1.884392752803,2000
+Hydro,Chute-Hemmings - Drummondville,Hydro57,Hydro60,735kV_line,3726.951549227928,3.726951549228,2000
+Hydro,Romaine-2 (N019) - Romaine-2 (N074),Bus12,Hydro20,735kV_line,4021.749578809903,4.02174957881,2000
+Hydro,Jean-Lesage - Manicouagan,Hydro10,Bus21,735kV_line,4574.992036510402,4.57499203651,2000
+Hydro,Rapides-des-Iles - Rapides-des-Quinze,Hydro40,Hydro46,735kV_line,4814.708286855969,4.814708286856,2000
+Hydro,Beauharnois_Francis - Chateauguay,Hydro5,Bus39,735kV_line,6699.261931008584,6.699261931009,2000
+Hydro,Outardes-2 - Manic-1,Hydro22,Hydro39,735kV_line,6737.998818851424,6.737998818851,2000
+Hydro,Romaine-1 (N03) - Romaine-1 (N075),Hydro31,Bus13,735kV_line,6944.927365573019,6.944927365573,2000
+Hydro,Rene-Levesque - Outarde,Hydro9,Bus18,735kV_line,7438.622099533922,7.438622099534,2000
+Hydro,Rapides-des-Iles - Premiere-Chute,Hydro40,Hydro44,735kV_line,7774.867339893512,7.774867339894,2000
+Hydro,Riviere-des-Prairies - Duvernay,Hydro55,Bus30,735kV_line,8198.670104777764,8.198670104778,2000
+Hydro,Trenche - Rapide-Blanc,Hydro28,Hydro36,735kV_line,8748.413807476776,8.748413807477,2000
+Hydro,Shawinigan-3 - La Gabelle,Hydro38,Hydro43,735kV_line,9649.932099147263,9.649932099147,2000
+Hydro,Rocher-de-Grand-Mere - Shawinigan-2,Hydro34,Hydro37,735kV_line,10950.499364606465,10.950499364606,2000
+Hydro,Beauharnois_Francis - Les Cedres,Hydro5,Hydro45,735kV_line,11760.590285908391,11.760590285908,2000
+Hydro,McCormick - Manicouagan,Hydro33,Bus21,735kV_line,11988.896419343791,11.988896419344,2000
+Hydro,La tuque - Beaumont,Hydro29,Hydro30,735kV_line,12663.06034773297,12.663060347733,2000
+Hydro,La grande-2-A - Radisson,Hydro4,Bus1,735kV_line,13564.935645949339,13.564935645949,2000
+Hydro,Outardes-4 - Micoua,Hydro17,Bus17,735kV_line,13781.678225282205,13.781678225282,2000
+Hydro,Outardes-3 - Outarde,Hydro13,Bus18,735kV_line,18901.887812299952,18.9018878123,2000
+Hydro,Romaine-2 (N019) - Romaine-1 (N075),Hydro20,Bus13,735kV_line,20219.330705730066,20.21933070573,2000
+Hydro,Trenche - Beaumont,Hydro28,Hydro30,735kV_line,22117.553668761095,22.117553668761,2000
+Hydro,Carillon - Chenier,Hydro19,Bus29,735kV_line,25260.578695661716,25.260578695662,2000
+Hydro,Bersimis-1 - Bersimis-2,Hydro11,Hydro16,735kV_line,26935.008489367076,26.935008489367,2000
+Hydro,Rapide-2 - Rapide-7,Hydro52,Hydro53,735kV_line,27039.078948149025,27.039078948149,2000
+Hydro,Drummondville - Nicolet,Hydro60,Bus33,735kV_line,27942.511628045238,27.942511628045,2000
+Hydro,Rapide-des-Coeurs - Chute-Allard,Hydro49,Hydro50,735kV_line,28370.659301241016,28.370659301241,2000
+Hydro,Chenier - Judith-Jasmin,Bus29,Bus31,735kV_line,29694.970298203054,29.694970298203,2000
+Hydro,Rapide-Blanc - Rapide-des-Coeurs,Hydro36,Hydro49,735kV_line,29917.952001886752,29.917952001887,2000
+Hydro,Les Cedres - Chenier,Hydro45,Bus29,735kV_line,30802.680205594814,30.802680205595,2000
+Hydro,Carillon - Chute-Bell,Hydro19,Hydro61,735kV_line,32671.034094324532,32.671034094325,2000
+Hydro,Chute-Bell - Grand-Brule,Hydro61,Bus27,735kV_line,33162.63447011559,33.162634470116,2000
+Hydro,Paugan - Chelsea,Hydro35,Hydro41,735kV_line,35195.492775468752,35.195492775469,2000
+Hydro,Chelsea - Chute-des-Chats,Hydro41,Hydro48,735kV_line,36155.066996920381,36.15506699692,2000
+Hydro,Eastmain-1 - Muskeg,Hydro23,Bus6,735kV_line,36337.247493615359,36.337247493615,2000
+Hydro,Chute-des-Chats - Bryson,Hydro48,Hydro51,735kV_line,36920.196712391153,36.920196712391,2000
+Hydro,Jean-Lesage - Outardes-3,Hydro10,Hydro13,735kV_line,37689.327984675103,37.689327984675,2000
+Hydro,Rene-Levesque - Toulnustouc,Hydro9,Hydro21,735kV_line,40310.982451109987,40.31098245111,2000
+Hydro,Chute-Hemmings - Monteregie,Hydro57,Bus38,735kV_line,44306.336270192369,44.306336270192,2000
+Hydro,Sept-Chutes - Laurentides,Hydro59,Bus26,735kV_line,47417.699297327868,47.417699297328,2000
+Hydro,Brisay - Laforge-2,Hydro24,Hydro27,735kV_line,50851.530133640437,50.85153013364,2000
+Hydro,Chute-Hemmings - Cantons,Hydro57,Bus37,735kV_line,50888.856864073132,50.888856864073,2000
+Hydro,Sarcelle - Muskeg,Hydro42,Bus6,735kV_line,51250.754789523235,51.250754789523,2000
+Hydro,Boucherville - Monteregie,Bus36,Bus38,735kV_line,51511.499466476169,51.511499466476,2000
+Hydro,Eastmain-1 - Nemiscau,Hydro23,Bus7,735kV_line,52447.762858106718,52.447762858107,2000
+Hydro,Sainte-Marguerite-3 - Arnaud,Hydro14,Bus14,735kV_line,53547.708789169439,53.547708789169,2000
+Hydro,La grande-1 - Radisson,Hydro8,Bus1,735kV_line,55143.917006142503,55.143917006143,2000
+Hydro,La Gabelle - Nicolet,Hydro43,Bus33,735kV_line,55353.549183106057,55.353549183106,2000
+Hydro,Outardes-3 - Bersimis-2,Hydro13,Hydro16,735kV_line,56122.416117921894,56.122416117922,2000
+Hydro,La Grande-4 - Laforge-1,Hydro2,Hydro15,735kV_line,63863.171535555644,63.863171535556,2000
+Hydro,Perigny - Bergeronnes,Bus20,Bus24,735kV_line,63928.288630798634,63.928288630799,2000
+Hydro,Rapides-des-Quinze - Rapide-2,Hydro46,Hydro52,735kV_line,65804.40247628231,65.804402476282,2000
+Hydro,Nicolet - Appalaches,Bus33,Bus34,735kV_line,66358.777001177586,66.358777001178,2000
+Hydro,Perigny - Saguenay,Bus20,Bus23,735kV_line,73935.321093156017,73.935321093156,2000
+Hydro,Manic-5 - Toulnustouc,Hydro7,Hydro21,735kV_line,84621.702407329663,84.62170240733,2000
+Hydro,Rapides-Farmer - Chute-Bell,Hydro47,Hydro61,735kV_line,89279.490241798994,89.279490241799,2000
+Hydro,La tuque - Rocher-de-Grand-Mere,Hydro29,Hydro34,735kV_line,92845.5728252603,92.84557282526,2000
+Hydro,Bersimis-2 - Bergeronnes,Hydro16,Bus24,735kV_line,94353.883488073057,94.353883488073,2000
+Hydro,Rapide-Blanc - Chamouchouane,Hydro36,Bus19,735kV_line,98604.767559257889,98.604767559258,2000
+Hydro,Laforge-1 - Laforge-2,Hydro15,Hydro27,735kV_line,98855.612552654668,98.855612552655,2000
+Hydro,Robert-Bourassa - La Grande-3 (N064),Hydro1,Bus2,735kV_line,100243.625674462848,100.243625674463,2000
+Hydro,Chute-Allard - La Verendrye,Hydro50,Bus22,735kV_line,100737.912745861526,100.737912745862,2000
+Hydro,Paugan - Mercier,Hydro35,Hydro54,735kV_line,101029.019704437902,101.029019704438,2000
+Hydro,Toulnustouc - Arnaud,Hydro21,Bus14,735kV_line,114859.642985781,114.859642985781,2000
+Hydro,Bersimis-1 - Peribonka,Hydro11,Hydro26,735kV_line,120308.906534780079,120.30890653478,2000
+Hydro,La Grande-3 (N002) - Sarcelle,Hydro3,Hydro42,735kV_line,125431.300611543804,125.431300611544,2000
+Hydro,Manic-5 - Hart-Jaune,Hydro7,Hydro56,735kV_line,139403.72475627641,139.403724756276,2000
+Hydro,Romaine-4 (N031) - Lac-Robertson,Hydro32,Hydro58,735kV_line,143937.360397036042,143.937360397036,2000
+Hydro,Hart-Jaune - Montagnais,Hydro56,Bus9,735kV_line,150546.305856646795,150.546305856647,2000
+Hydro,Romaine-2 (N019) - Romaine-4 (N031),Hydro20,Hydro32,735kV_line,183127.927026679041,183.127927026679,2000
+Hydro,Churchill-Falls - Gull-Island,Hydro62,Hydro63,735kV_line,183934.064128959872,183.93406412896,2000
+Hydro,Albanel - Abitibi,Bus8,Bus15,735kV_line,205182.997466746834,205.182997466747,2000
+Hydro,Romaine-3 - Romaine-4,Hydro25,Bus10,735kV_line,26992.485943954121,26.992485943954,2000
+Hydro,Romaine-3 - Romaine-2,Hydro25,Bus12,735kV_line,52462.659179529488,52.462659179529,2000
+Hydro,Rapide-7 - Mercier,Hydro53,Hydro54,735kV_line,210974.90695986012,210.97490695986,2000
+Conso,Laforge-2 - Notre-Dame-du-Nord,Conso68,Conso24,735kV_line,376.990498161935,0.376990498162,2000
+Conso,Gatineau - Frontenac-1,Conso2,Conso62,735kV_line,829.321169652125,0.829321169652,2000
+Conso,Pandora - Mont-Royal,Conso26,Conso19,735kV_line,1595.818601890457,1.59581860189,2000
+Conso,Pandora - Dubuc,Conso26,Conso53,735kV_line,1602.390424787931,1.602390424788,2000
+Conso,Laurentides - Saint-Joseph,Bus26,Conso41,735kV_line,1797.558224838298,1.797558224838,2000
+Conso,Groulx - Pandora,Conso39,Conso26,735kV_line,2389.896394647898,2.389896394648,2000
+Conso,Dubuc - De Lorimier,Conso53,Conso18,735kV_line,2465.317580554512,2.465317580555,2000
+Conso,Nicolet - Anne-Hebert,Bus33,Conso63,735kV_line,2698.927690875506,2.698927690876,2000
+Conso,Rouville - F.F. Soucy S.E.C.,Conso58,Conso44,735kV_line,3869.140284831736,3.869140284832,2000
+Conso,Cournoyer - Usine Beauharnois Alcan,Conso34,Conso43,735kV_line,5941.095158248911,5.941095158249,2000
+Conso,Saint-Joseph - Dorchester,Conso41,Conso20,735kV_line,6502.372422510547,6.502372422511,2000
+Conso,Anjou - Bout-de-l'ile,Conso65,Bus28,735kV_line,6884.706660163702,6.884706660164,2000
+Conso,Lanaudiere - Acton,Conso38,Conso30,735kV_line,7440.988398028858,7.440988398029,2000
+Conso,De Lorimier - Anjou,Conso18,Conso65,735kV_line,7931.684632718308,7.931684632718,2000
+Conso,Duvernay - Sainte-Rose,Bus30,Conso8,735kV_line,8309.730786001126,8.309730786001,2000
+Conso,Carignan - Sorel-Sud,Bus32,Conso11,735kV_line,8478.390051150842,8.478390051151,2000
+Conso,Boucherville - Saint-Bruno-de-Montarville,Bus36,Conso64,735kV_line,8572.045789566853,8.572045789567,2000
+Conso,Levis - Normand,Bus35,Conso55,735kV_line,8660.188091309325,8.660188091309,2000
+Conso,Judith-Jasmin - Sainte-Anne-des-Plaines,Bus31,Conso40,735kV_line,9108.00606061243,9.108006060612,2000
+Conso,Saint-Lazare - Dorion,Conso42,Conso4,735kV_line,10062.055803769477,10.062055803769,2000
+Conso,Sherbrooke - Central-2,Conso13,Conso15,735kV_line,10288.975274302249,10.288975274302,2000
+Conso,Carignan - Outardes-3,Bus32,Conso66,735kV_line,10755.721138327879,10.755721138328,2000
+Conso,Monteregie - Lanaudiere,Bus38,Conso38,735kV_line,10850.685701186267,10.850685701186,2000
+Conso,Templeton - Gatineau,Conso1,Conso2,735kV_line,11218.374327590211,11.21837432759,2000
+Conso,Dorchester - Levis,Conso20,Bus35,735kV_line,11779.918481056449,11.779918481056,2000
+Conso,Quebec Lithium - Chenier,Conso23,Bus29,735kV_line,11968.331891286096,11.968331891286,2000
+Conso,Grand-Brule - Ouimet,Bus27,Conso31,735kV_line,12293.513173369591,12.29351317337,2000
+Conso,Granby - Monteregie,Conso14,Bus38,735kV_line,12315.585180588339,12.315585180588,2000
+Conso,Chateauguay - Hydrogenal Inc,Bus39,Conso35,735kV_line,13372.63135041098,13.372631350411,2000
+Conso,Anjou - Boucherville,Conso65,Bus36,735kV_line,14162.154108979881,14.16215410898,2000
+Conso,Dorion - Landry,Conso4,Conso7,735kV_line,14179.498406397492,14.179498406397,2000
+Conso,Groulx - Hertel,Conso39,Bus40,735kV_line,14352.875452935505,14.352875452936,2000
+Conso,Anne-Hebert - Daveluyville,Conso63,Conso36,735kV_line,16206.167519418424,16.206167519418,2000
+Conso,Companie-Miniere-Quebec-Cartier - Saint-Louis,Conso51,Conso21,735kV_line,16372.047269020975,16.372047269021,2000
+Conso,Landry - Saint-Polycarpe,Conso7,Conso6,735kV_line,16497.863901608114,16.497863901608,2000
+Conso,Daveluyville - Doc-Grignon,Conso36,Conso5,735kV_line,17554.619298350073,17.55461929835,2000
+Conso,Landry - Chateauguay,Conso7,Bus39,735kV_line,17946.129049470743,17.946129049471,2000
+Conso,Cantons - Sherbrooke,Bus37,Conso13,735kV_line,18734.963770418974,18.734963770419,2000
+Conso,Saint-Louis - Carignan,Conso21,Bus32,735kV_line,19120.896968468121,19.120896968468,2000
+Conso,Quebec Lithium - Saint-Lazare,Conso23,Conso42,735kV_line,20113.249192248233,20.113249192248,2000
+Conso,Hydrogenal Inc - Groulx,Conso35,Conso39,735kV_line,20983.487406051358,20.983487406051,2000
+Conso,Landry - Huntingdon,Conso7,Conso17,735kV_line,21725.234812513736,21.725234812514,2000
+Conso,Asbestos - Cantons,Conso10,Bus37,735kV_line,23474.087926361335,23.474087926361,2000
+Conso,Chute-du-diable - Saint-Donat,Conso74,Conso32,735kV_line,23518.891268620595,23.518891268621,2000
+Conso,Hertel - Saint-Blaise,Bus40,Conso27,735kV_line,24677.29426753497,24.677294267535,2000
+Conso,Rouville - Granby,Conso58,Conso14,735kV_line,24819.680563586964,24.819680563587,2000
+Conso,Ouimet - Chute-du-diable,Conso31,Conso74,735kV_line,25042.1978261433,25.042197826143,2000
+Conso,Chute-Hemmings - Companie-Miniere-Quebec-Cartier,Conso9,Conso51,735kV_line,25192.301608255566,25.192301608256,2000
+Conso,Saint-Bruno-de-Montarville - Rouville,Conso64,Conso58,735kV_line,26094.408044549455,26.094408044549,2000
+Conso,Chute-Hemmings - Nicolet,Conso9,Bus33,735kV_line,28613.265658721786,28.613265658722,2000
+Conso,Acton - Chute-Hemmings,Conso30,Conso9,735kV_line,29538.026911516561,29.538026911517,2000
+Conso,Poirier - Grand-Brule,Conso28,Bus27,735kV_line,31994.944514056184,31.994944514056,2000
+Conso,Grondines - Jacques-Cartier,Conso70,Bus25,735kV_line,32894.079348575491,32.894079348575,2000
+Conso,Papiers-Scott Inc - Quebec Lithium,Conso37,Conso23,735kV_line,34716.813087483097,34.716813087483,2000
+Conso,Sainte-Anne-des-Plaines - Poirier,Conso40,Conso28,735kV_line,35000.263092989793,35.00026309299,2000
+Conso,Du Portage - Kamouraska,Conso54,Conso67,735kV_line,35905.566515277089,35.905566515277,2000
+Conso,Doc-Grignon - Asbestos,Conso5,Conso10,735kV_line,36895.448198259757,36.89544819826,2000
+Conso,Jacques-Cartier - LAnnonciation,Bus25,Conso33,735kV_line,39345.526430804115,39.345526430804,2000
+Conso,Sainte-Germaine - Rouyn,Conso46,Conso25,735kV_line,40974.679636623747,40.974679636624,2000
+Conso,Doc-Grignon - Appalaches,Conso5,Bus34,735kV_line,43273.315713910051,43.27331571391,2000
+Conso,Daveluyville - Grondines,Conso36,Conso70,735kV_line,43818.371652893584,43.818371652894,2000
+Conso,Templeton - Perce,Conso1,Conso50,735kV_line,43978.233741841148,43.978233741841,2000
+Conso,Appalaches - Beauceville-Est,Bus34,Conso45,735kV_line,48728.569089232158,48.728569089232,2000
+Conso,Trois-Pistoles - Du Portage,Conso56,Conso54,735kV_line,51323.315536267437,51.323315536267,2000
+Conso,Aluminerie-de-Becancour - Albanel,Conso60,Bus8,735kV_line,347699.204857288511,347.699204857289,2000
+Conso,La Grande-1 - Radisson,Conso48,Bus1,735kV_line,56219.766940626476,56.219766940626,2000
+Conso,Mine Gonzague-Langlois - La Verendrye,Conso47,Bus22,735kV_line,58250.025030689823,58.25002503069,2000
+Conso,Perce - Papiers-Scott Inc,Conso50,Conso37,735kV_line,59124.630440230656,59.124630440231,2000
+Conso,Trois-Pistoles - Jules-A.-Brillant,Conso56,Conso61,735kV_line,60135.816184934803,60.135816184935,2000
+Conso,Plouffe - Mine Gonzague-Langlois,Conso22,Conso47,735kV_line,67842.606637831108,67.842606637831,2000
+Conso,Mine Gonzague-Langlois - Repentigny,Conso47,Conso49,735kV_line,68142.074605539907,68.14207460554,2000
+Conso,Perce - Plouffe,Conso50,Conso22,735kV_line,69454.105388077223,69.454105388077,2000
+Conso,Grondines - Cournoyer,Conso70,Conso34,735kV_line,70054.560459623928,70.054560459624,2000
+Conso,LAnnonciation - Sidbec-Dosco,Conso33,Conso57,735kV_line,70639.98226761118,70.639982267611,2000
+Conso,Maissonneuve - Aluminerie-de-Becancour,Conso16,Conso60,735kV_line,71819.146501246316,71.819146501246,2000
+Conso,Levis - Spruce Falls Inc,Bus35,Conso59,735kV_line,73022.32134325066,73.022321343251,2000
+Conso,Waconichi - Chibougamau,Conso52,Bus16,735kV_line,77149.076512370812,77.149076512371,2000
+Conso,Sidbec-Dosco - Saguenay,Conso57,Bus23,735kV_line,77547.380483178495,77.547380483179,2000
+Conso,Rouyn - Laforge-2,Conso25,Conso68,735kV_line,79357.023898350017,79.35702389835,2000
+Conso,Saguenay - Maissonneuve,Bus23,Conso16,735kV_line,94402.86780432034,94.40286780432,2000
+Conso,Abitibi - Aluminiere Grande-Baie Alcan,Bus15,Conso75,735kV_line,97391.069882312382,97.391069882312,2000
+Conso,Joutel - Sainte-Germaine,Conso29,Conso46,735kV_line,112431.181143400652,112.431181143401,2000
+Conso,Muskeg - Eastmain-1,Bus6,Conso69,735kV_line,114010.061879103712,114.010061879104,2000
+Conso,Argonal Inc - Bowater Gatineau,Conso12,Conso3,735kV_line,115241.535823453029,115.241535823453,2000
+Conso,Micoua - Outardes,Bus17,Conso71,735kV_line,121171.493216585353,121.171493216585,2000
+Conso,EDU de Francisco - Argonal Inc,Bus3,Conso12,735kV_line,137605.984389675519,137.605984389676,2000
+Conso,Aluminerie-de-Becancour - Waconichi,Conso60,Conso52,735kV_line,144978.619926271116,144.978619926271,2000
+Conso,Eastmain-1 - La Grande-1,Conso69,Conso48,735kV_line,168852.316319075035,168.852316319075,2000
+Conso,Waconichi - Albanel,Conso52,Bus8,735kV_line,204776.702845255873,204.776702845256,2000
+Conso,Abitibi - Joutel,Bus15,Conso29,735kV_line,208480.335502233182,208.480335502233,2000
+Conso,Frontenac-1 - Chute-a-Caron,Conso62,Conso73,735kV_line,248329.263592845498,248.329263592846,2000
+Conso,Albanel - Chamouchouane,Conso72,Bus19,735kV_line,31180.587963078655,31.180587963079,2000
+Conso,Albanel - Aluminerie-De-Becancour,Conso72,Conso60,735kV_line,54947.00560476134,54.947005604761,2000
+Conso,Kamouraska - Spruce Falls Inc,Conso67,Conso59,735kV_line,80242.332993103395,80.242332993103,2000

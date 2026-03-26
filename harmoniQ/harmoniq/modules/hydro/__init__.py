@@ -1,6 +1,5 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.core.meteo import Granularity
-from harmoniq.db.schemas import HydroBase, ScenarioBase
+from harmoniq.db.schemas import HydroBase
 from harmoniq.modules.hydro.calcule import (
     get_run_of_river_dam_power,
     estimation_cout_barrage,
@@ -15,6 +14,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List
+from fastapi import HTTPException
 
 CURRENT_DIR = Path(__file__).parent
 DEBIT_DIR = CURRENT_DIR / "debits"
@@ -24,17 +24,12 @@ APPORT_DIR = CURRENT_DIR / "apport_naturel"
 class InfraHydro(Infrastructure):
 
     def __init__(self, donnees: List[HydroBase]):
-        # super().__init__(donnees)
-        self.donnees = donnees
+        super().__init__(donnees)
         self.debit = None
         self.apport = None
         self.cout = None
         self.qualite_ecosysteme = None
         self.daly = None
-        self.production = None
-
-    def charger_scenario(self, scenario):
-        self.scenario: ScenarioBase = scenario
 
     @necessite_scenario
     def charger_debit(self):  # Seulement pour les barrages au fil de l'Eau
@@ -107,10 +102,13 @@ class InfraHydro(Infrastructure):
         ]
 
     def calculer_production(self) -> pd.DataFrame:  # Fonctionne
-
         if self.donnees.type_barrage == "Fil de l'eau":
             self.charger_debit()
             return get_run_of_river_dam_power(self)
+
+        raise HTTPException(
+                status_code=400, detail="Production calculation is only available for run-of-river dams"
+            )
   
     def calculer_energie(self, production):
         return get_energy(production)
@@ -118,8 +116,8 @@ class InfraHydro(Infrastructure):
     def calculer_facteur_charge(self, production):  # Fonctionne
         return get_facteur_de_charge(self, production)
 
-    def calculer_cout_construction(puissance):  # Fonctionne
-        return estimation_cout_barrage(puissance)
+    def calculer_cout_construction(self) -> np.ndarray:  # Fonctionne
+        return estimation_cout_barrage(self)
 
     def PDF_environnement(self, facteur_charge):  # Fonctionne
         return estimer_qualite_ecosysteme_futur(facteur_charge)
@@ -129,6 +127,63 @@ class InfraHydro(Infrastructure):
 
     def emission(self, energie, facteur_charge):  # Fonctionne
         return calculer_emissions_et_ressources(self, energie, facteur_charge)
+
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        CAPACITY_FACTOR = 0.50
+        OPEX_PER_MWH = 20
+
+        HOURS_PER_YEAR = 8760
+
+        availability = 1 - (
+            self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines
+        )
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+            * availability
+        )
+
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
+
+
+    def calculer_co2_eq_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        return self.donnees.puissance_nominal * (CO2_PER_MW := 400)
+
+    def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        if self.donnees.type_barrage == "Fil de l'eau":
+            co2_intensity = 6 / 1000
+        else:
+            co2_intensity = 17 / 1000
+
+        CAPACITY_FACTOR = 0.50
+        HOURS_PER_YEAR = 8760
+        availability = 1 - (
+            self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines
+        )
+
+        annual_energy = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+            * availability
+        )
+
+        annual_co2 = annual_energy * co2_intensity
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_co2 * (hours / HOURS_PER_YEAR)
 
 
 if __name__ == "__main__":
