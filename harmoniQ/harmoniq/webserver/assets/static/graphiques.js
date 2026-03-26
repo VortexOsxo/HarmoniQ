@@ -106,123 +106,125 @@ function generateTemporalPlot() {
 }
 
 function updateTemporalGraph() {
-    // Add production traces
     const productionData = production.production;
-    console.log(productionData);
-    let x = productionData.map(instance => (instance["snapshot"]));
-    let y = productionData.map(instance => (instance["totale"]/ 1000));
-    let eolien = productionData.map(instance => (instance["total_eolien"]/ 1000));
-    let solaire = productionData.map(instance => (instance["total_solaire"]/ 1000));
-    let hydro_fil = productionData.map(instance => (instance["total_hydro_fil"]/ 1000));
-    let hydro_res = productionData.map(instance => (instance["total_hydro_reservoir"]/ 1000));
-    let imports = productionData.map(instance => (instance["total_import"]/ 1000));
-    let nucleaire = productionData.map(instance => (instance["total_nucleaire"]/ 1000));
-    let thermique = productionData.map(instance => (instance["total_thermique"]/ 1000));
+    const x = productionData.map(d => d["snapshot"]);
 
-    let demandeX = Object.keys(demandeTemporal.total_electricity);
-    let demandeY = Object.values(demandeTemporal.total_electricity).map(value => value / 1000000);
+    // Convertit MW → GW. Chaque snapshot hebdomadaire = puissance moyenne sur 168h.
+    const toGW = key => productionData.map(d => ((d[key] ?? 0) / 1000));
 
-    const productionTraces = [
-        {
-            x: x,
-            y: y,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Demande réhaussée',
-            line: { shape: 'spline', color: 'black' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: y,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Production totale',
-            line: { shape: 'spline', color: 'green' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: eolien,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Éolien',
-            line: { shape: 'spline', color: 'orange' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: solaire,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Solaire',
-            line: { shape: 'spline', color: 'yellow' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: hydro_fil,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Hydro (fil)',
-            line: { shape: 'spline', color: 'blue' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: hydro_res,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Hydro (réservoir)',
-            line: { shape: 'spline', color: 'cyan' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: imports,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Importations',
-            line: { shape: 'spline', color: 'purple' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: nucleaire,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Nucléaire',
-            line: { shape: 'spline', color: 'red' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        },
-        {
-            x: x,
-            y: thermique,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Thermique',
-            line: { shape: 'spline', color: 'brown' },
-            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
-        }
+    const traces = [
+        { key: "total_hydro_reservoir", name: "Hydro (réservoir)", color: "#1565C0" },
+        { key: "total_hydro_fil",        name: "Hydro (fil de l'eau)", color: "#2ECAD0" },
+        { key: "total_eolien",           name: "Éolien",               color: "#FF9800" },
+        { key: "total_solaire",          name: "Solaire",               color: "#FDD835" },
+        { key: "total_nucleaire",        name: "Nucléaire",             color: "#E53935" },
+        { key: "total_thermique",        name: "Thermique",             color: "#795548" },
+        { key: "total_import",           name: "Importations",          color: "#9C27B0" },
+        { key: "total_export",           name: "Exportations",          color: "#43A047", dash: "dash" },
+        { key: "totale",                 name: "Production totale",     color: "#212121", dash: "dot" },
     ];
+
+    const productionTraces = traces.map(t => ({
+        x: x,
+        y: toGW(t.key),
+        type: "scatter",
+        mode: "lines",
+        name: t.name,
+        line: { shape: "spline", color: t.color, dash: t.dash || "solid" },
+        hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
+    }));
+
+    // Superposer la demande si disponible (chargée via charger_demande)
+    if (typeof demandeTemporal !== "undefined" && demandeTemporal && demandeTemporal.total_electricity) {
+        productionTraces.unshift({
+            x: Object.keys(demandeTemporal.total_electricity),
+            // kWh/h → GW : kWh ÷ 1 000 = MWh, ÷ 1 000 = GWh ≡ GW (puissance moyenne horaire)
+            y: Object.values(demandeTemporal.total_electricity).map(v => v / 1e6),
+            type: "scatter",
+            mode: "lines",
+            name: "Demande",
+            line: { shape: "spline", color: "#000000", width: 2 },
+            hovertemplate: "%{x}<br>%{y:.2f} GW<extra></extra>"
+        });
+    }
 
     Plotly.purge("temporal-plot");
     Plotly.newPlot("temporal-plot", productionTraces, {
-        title: "Production et Demande pour scénario " + $("#scenario-actif option:selected").text(),
-        xaxis: {
-            title: "Date",
-            tickformat: "%d %b %Y"
-        },
-        yaxis: {
-            title: "Puissance (GW)",
-            autorange: true
-        },
-        legend: {
-            orientation: "h",
-            yanchor: "bottom",
-            y: 1.02,
-            xanchor: "right",
-            x: 1
-        }
+        title: "Production et Demande — " + $("#scenario-actif option:selected").text(),
+        xaxis: { title: "Date", tickformat: "%d %b %Y" },
+        yaxis: { title: "Puissance (GW)", autorange: true },
+        legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 }
     });
+}
+
+function updateResultsPanel(data) {
+    const summary    = data.summary    || {};
+    const violations = data.violations || [];
+    const infraReport = data.infra_report || [];
+    const linkFlows  = data.link_flows  || [];
+
+    // --- KPI cards ---
+    const fmtTWh = v => (v != null) ? (v / 1e6).toFixed(2) + " TWh" : "—";
+    const fmtPct = v => (v != null) ? v.toFixed(2) + " %" : "—";
+
+    document.getElementById("kpi-energie").textContent   = fmtTWh(summary.total_energy_mwh);
+    document.getElementById("kpi-imports").textContent   = fmtTWh(summary.total_import_mwh);
+    document.getElementById("kpi-exports").textContent   = fmtTWh(summary.total_export_mwh);
+    document.getElementById("kpi-pertes").textContent    = fmtPct(summary.losses_percent);
+    document.getElementById("kpi-buses").textContent     = summary.n_buses  ?? "—";
+    document.getElementById("kpi-lignes").textContent    = summary.n_lines  ?? "—";
+    document.getElementById("kpi-violations").textContent = violations.length;
+    document.getElementById("kpi-infra").textContent     = infraReport.length;
+
+    document.getElementById("resultats-vide").style.display  = "none";
+    document.getElementById("resultats-panel").style.display = "";
+
+    // --- Flux d'interconnexions ---
+    const lfBody = document.getElementById("linkflows-body");
+    lfBody.innerHTML = "";
+    linkFlows.forEach(lf => {
+        lfBody.insertAdjacentHTML("beforeend", `<tr>
+            <td>${lf.link}</td>
+            <td>${(lf.total_export_mwh / 1e3).toFixed(1)}</td>
+            <td>${(lf.total_import_mwh / 1e3).toFixed(1)}</td>
+            <td>${(lf.max_export_mw ?? 0).toFixed(0)}</td>
+            <td>${Math.abs(lf.max_import_mw ?? 0).toFixed(0)}</td>
+        </tr>`);
+    });
+    document.getElementById("linkflows-section").style.display = linkFlows.length ? "" : "none";
+
+    // --- Violations ---
+    const vBody = document.getElementById("violations-body");
+    vBody.innerHTML = "";
+    violations.forEach(v => {
+        vBody.insertAdjacentHTML("beforeend", `<tr>
+            <td>${v.line}</td>
+            <td>${(v.max_flow_mw ?? 0).toFixed(0)}</td>
+            <td>${(v.s_nom_mva ?? 0).toFixed(0)}</td>
+            <td class="text-danger fw-bold">${(v.loading_percent ?? 0).toFixed(1)} %</td>
+        </tr>`);
+    });
+    document.getElementById("violations-section").style.display = violations.length ? "" : "none";
+
+    // --- Renforcements ---
+    const iBody = document.getElementById("infra-body");
+    iBody.innerHTML = "";
+    infraReport.forEach(r => {
+        iBody.insertAdjacentHTML("beforeend", `<tr>
+            <td>${r.line}</td>
+            <td class="small">${r.bus0} → ${r.bus1}</td>
+            <td>${r.voltage_kv ?? "—"}</td>
+            <td>${r.nb_circuits_current}</td>
+            <td>${r.nb_circuits_needed}</td>
+            <td class="fw-bold text-warning">+${r.nb_circuits_to_add}</td>
+            <td>${(r.s_nom_current_mva ?? 0).toFixed(0)}</td>
+            <td>${(r.s_nom_needed_mva ?? 0).toFixed(0)}</td>
+            <td>${(r.overload_pct ?? 0).toFixed(1)} %</td>
+        </tr>`);
+    });
+    document.getElementById("infra-section").style.display = infraReport.length ? "" : "none";
+
+    // Basculer automatiquement sur l'onglet Résultats
+    const tab = document.getElementById("resultats-tab");
+    if (tab) bootstrap.Tab.getOrCreateInstance(tab).show();
 }

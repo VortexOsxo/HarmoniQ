@@ -31,6 +31,25 @@ from harmoniq.core.fausse_données import production_aleatoire
 
 from harmoniq.modules.eolienne import InfraParcEolienne
 from harmoniq.modules.reseau import InfraReseau
+from harmoniq.modules.reseau_bis.service import InfraReseauBis
+
+# Cache mémoire des résultats reseau_bis.
+# Clé : "{scenario_id}_{liste_infra_id}_{resolution}_{flow_mode}"
+# Valeur : dict résultat API complet
+# Taille max : 20 entrées (FIFO — la plus ancienne est supprimée)
+_reseau_cache: dict = {}
+_RESEAU_CACHE_MAX = 20
+
+
+def _reseau_cache_key(scenario_id: int, liste_infra_id: int, resolution: str, flow_mode: str) -> str:
+    return f"{scenario_id}_{liste_infra_id}_{resolution}_{flow_mode}"
+
+
+def _reseau_cache_set(key: str, value: dict) -> None:
+    if len(_reseau_cache) >= _RESEAU_CACHE_MAX:
+        oldest = next(iter(_reseau_cache))
+        _reseau_cache.pop(oldest, None)
+    _reseau_cache[key] = value
 from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
@@ -87,7 +106,12 @@ async def delete_scenario_and_purge_cache(
         except OSError:
             pass
 
-    # 4) Delete the scenario record from the database
+    # 4) Invalider le cache mémoire reseau_bis pour ce scénario
+    keys_to_remove = [k for k in _reseau_cache if k.startswith(f"{scenario_id}_")]
+    for k in keys_to_remove:
+        _reseau_cache.pop(k, None)
+
+    # 5) Delete the scenario record from the database
     result = await delete_data(db, Scenario, scenario_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -458,72 +482,92 @@ reseau_router = APIRouter(
 
 @reseau_router.post("/production")
 async def calculer_production_reseau(
-    scenario_id: int, 
-    liste_infra_id: int, 
+    scenario_id: int,
+    liste_infra_id: int,
     is_journalier: bool = False,
+    flow_mode: str = "ac",
+    resolution: str = "hebdomadaire",
     db: Session = Depends(get_db)
 ):
+    """Dispatch optimal (LOPF HiGHS) + flux de puissance AC Newton-Raphson.
+
+    Paramètre resolution :
+        "hebdomadaire" — 52 snapshots hebdomadaires (défaut, ~30s)
+        "horaire"      — 8760 snapshots horaires (étude détaillée, ~5min)
+
+    Paramètre flow_mode :
+        "ac"    — LOPF puis AC Power Flow Newton-Raphson (pertes I²R exactes)
+        "dc"    — LOPF puis LPF linéaire (rapide, pertes estimées P²R/V²)
+        "dc+ac" — alias de "ac"
+
+    Retourne un dict structuré avec production, line_flows, violations,
+    constraint_warnings, link_flows, summary et metadata.
+    Inclut "cached": true dans metadata si le résultat provient du cache mémoire.
+    """
+    # --- Vérification du cache mémoire ---
+    cache_key = _reseau_cache_key(scenario_id, liste_infra_id, resolution, flow_mode)
+    if cache_key in _reseau_cache:
+        cached = _reseau_cache[cache_key]
+        if isinstance(cached.get("metadata"), dict):
+            cached["metadata"]["cached"] = True
+        return cached
+
     timers = {}
     total_start = time.time()
-    
+
     db_start = time.time()
     scenario_task = read_data_by_id(db, schemas.Scenario, scenario_id)
     liste_infra_task = read_data_by_id(db, schemas.ListeInfrastructures, liste_infra_id)
-    
+
     scenario, liste_infra = await asyncio.gather(scenario_task, liste_infra_task)
     timers['1_db_lookups'] = time.time() - db_start
-    
+
     if scenario is None:
         raise HTTPException(status_code=404, detail="Scénario non trouvé")
     if liste_infra is None:
         raise HTTPException(status_code=404, detail="Liste d'infrastructures non trouvée")
-    
+
+    # --- reseau_bis : LOPF + AC PF (synchrone, wrappé en thread) ---
     init_start = time.time()
-    infra_reseau = InfraReseau(liste_infra)
+    infra_reseau = InfraReseauBis(liste_infra)
     infra_reseau.charger_scenario(scenario)
     timers['2_infra_reseau_init'] = time.time() - init_start
-    
+
     calc_start = time.time()
-    production = await infra_reseau.calculer_production(liste_infra, is_journalier)
+    result = await asyncio.to_thread(
+        infra_reseau.calculer_production,
+        db=db,
+        is_journalier=is_journalier,
+        flow_mode=flow_mode,
+        resolution=resolution,
+    )
     timers['3_calculer_production_total'] = time.time() - calc_start
-    
+
     if hasattr(infra_reseau, 'timers'):
         for key, value in infra_reseau.timers.items():
             timers[f'  3.{key}'] = value
-    
-    if production.empty:
+
+    if not result or not result.get("production"):
         raise HTTPException(status_code=500, detail="Calcul de production échoué")
-    
-    format_start = time.time()
-    production_json = production.reset_index().rename(columns={'index': 'timestamp'})
-    
-    if 'timestamp' in production_json.columns:
-        production_json['timestamp'] = production_json['timestamp'].astype(str)
-    timers['4_response_formatting'] = time.time() - format_start
-    
+
     total_time = time.time() - total_start
     timers['TOTAL'] = total_time
-    
+
     print("\n" + "="*60)
-    print("TIMING BREAKDOWN - /reseau/production")
+    print("TIMING BREAKDOWN - /reseau/production (reseau_bis)")
     print("="*60)
     for key, value in sorted(timers.items()):
         pct = (value / total_time * 100) if total_time > 0 else 0
         print(f"{key:40s} : {value:8.3f}s ({pct:5.1f}%)")
     print("="*60 + "\n")
-    
-    response = {
-        "metadata": {
-            "scenario_id": scenario_id,
-            "liste_infra_id": liste_infra_id,
-            "is_journalier": is_journalier,
-            "execution_time_seconds": total_time,
-            "timestamps": len(production)
-        },
-        "production": production_json.to_dict(orient='records')
-    }
-    
-    return response
+
+    # Marquer comme non-caché et stocker dans le cache mémoire
+    if isinstance(result.get("metadata"), dict):
+        result["metadata"]["cached"] = False
+        result["metadata"]["resolution"] = resolution
+    _reseau_cache_set(cache_key, result)
+
+    return result
 
 router.include_router(reseau_router)
 

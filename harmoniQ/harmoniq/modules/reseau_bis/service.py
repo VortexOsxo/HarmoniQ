@@ -48,22 +48,44 @@ class InfraReseauBis:
         if self.scenario is None:
             raise ValueError("Le scenario n'est pas charge")
 
-    def creer_reseau(self, db: Any) -> pypsa.Network:
-        """Construit le reseau PyPSA a partir de la topologie, generation et demande."""
+    def creer_reseau(self, db: Any, resolution: str = "hebdomadaire") -> pypsa.Network:
+        """Construit le reseau PyPSA a partir de la topologie, generation et demande.
+
+        resolution : "horaire" (8760 snapshots) ou "hebdomadaire" (52 moyennes hebdo, défaut).
+        Le mode hebdomadaire réduit le LP-OPF à 1 seul appel solver au lieu de 37.
+        """
         self._ensure_scenario()
 
         t0 = time.time()
-        snapshots = pd.date_range(
-            start=self.scenario.date_de_debut,
-            end=self.scenario.date_de_fin,
-            freq=self.scenario.pas_de_temps,
+
+        # Charger la topologie une seule fois et la passer aux loaders de profils
+        # pour éviter le double chargement du xlsx.
+        topology = self.data_loader.load_topology_from_db(db)
+        buses_df = topology.get("buses", pd.DataFrame())
+
+        gen_profiles = self.data_loader.load_generation_profiles(
+            self.scenario, self.liste_infra, db,
+            resolution=resolution,
+            buses_df=buses_df,
+        )
+        demand_profile = self.data_loader.load_demand_profile(
+            self.scenario, db,
+            resolution=resolution,
+            buses_df=buses_df,
         )
 
-        topology = self.data_loader.load_topology_from_db(db)
-        gen_profiles = self.data_loader.load_generation_profiles(self.scenario, self.liste_infra, db)
-        demand_profile = self.data_loader.load_demand_profile(self.scenario, db)
-
         self.timers["load_data"] = time.time() - t0
+
+        # Dériver les snapshots depuis les profils rééchantillonnés (index réel)
+        p_max_pu = gen_profiles.get("p_max_pu")
+        if isinstance(p_max_pu, pd.DataFrame) and not p_max_pu.empty:
+            snapshots = p_max_pu.index
+        else:
+            snapshots = pd.date_range(
+                start=self.scenario.date_de_debut,
+                end=self.scenario.date_de_fin,
+                freq=self.scenario.pas_de_temps,
+            )
 
         t1 = time.time()
         self.network = build_pypsa_network(
@@ -76,14 +98,24 @@ class InfraReseauBis:
 
         return self.network
 
-    def calculer_production(self, db: Any, is_journalier: bool = False, flow_mode: str = "ac") -> Dict[str, Any]:
-        """Execute optimisation + flux puis retourne une reponse API prete."""
+    def calculer_production(
+        self,
+        db: Any,
+        is_journalier: bool = False,
+        flow_mode: str = "ac",
+        resolution: str = "hebdomadaire",
+    ) -> Dict[str, Any]:
+        """Execute optimisation + flux puis retourne une reponse API prete.
+
+        resolution : "horaire" ou "hebdomadaire" (défaut).
+        is_journalier : conservé pour compatibilité API (non utilisé en interne).
+        """
         self._ensure_scenario()
 
         total_start = time.time()
 
         if self.network is None:
-            self.creer_reseau(db)
+            self.creer_reseau(db, resolution=resolution)
 
         t_opt = time.time()
         optimizer_result = run_dispatch_and_flow(self.network, mode=flow_mode)
@@ -112,8 +144,11 @@ def simulate_network(
     db: Any,
     is_journalier: bool = False,
     flow_mode: str = "ac",
+    resolution: str = "hebdomadaire",
 ) -> Dict[str, Any]:
     """Facade fonctionnelle pour integration route/service."""
     infra_reseau = InfraReseauBis(liste_infra)
     infra_reseau.charger_scenario(scenario)
-    return infra_reseau.calculer_production(db=db, is_journalier=is_journalier, flow_mode=flow_mode)
+    return infra_reseau.calculer_production(
+        db=db, is_journalier=is_journalier, flow_mode=flow_mode, resolution=resolution
+    )

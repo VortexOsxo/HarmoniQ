@@ -197,7 +197,10 @@
                 <button class="nav-link" id="sankey-tab" data-bs-toggle="tab" data-bs-target="#sankey" type="button" role="tab" aria-controls="sankey" aria-selected="false">Demande/Production</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="temporal-tab" data-bs-toggle="tab" data-bs-target="#temporal" type="button" role="tab" aria-controls="temporal" aria-selected="false">Données temporelle</button>
+                <button class="nav-link" id="temporal-tab" data-bs-toggle="tab" data-bs-target="#temporal" type="button" role="tab" aria-controls="temporal" aria-selected="false">Données temporelles</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="resultats-tab" data-bs-toggle="tab" data-bs-target="#resultats" type="button" role="tab" aria-controls="resultats" aria-selected="false">Résultats</button>
             </li>
         </ul>
         <div class="tab-content flex-grow-1" id="myTabContent">
@@ -221,6 +224,141 @@
             <div class="tab-pane show h-100" id="temporal" role="tabpanel" aria-labelledby="temporal-tab">
                 <div id="temporal-plot" style="height: 100%; width: 100%;">
                     Choisi un scénario pour voir des données temporelles
+                </div>
+            </div>
+            <div class="tab-pane h-100 overflow-auto p-3" id="resultats" role="tabpanel" aria-labelledby="resultats-tab">
+                <div id="resultats-vide" class="text-muted text-center mt-5">
+                    <i class="fa-solid fa-chart-bar fa-3x mb-3"></i>
+                    <p>Lancez une simulation pour voir les résultats.</p>
+                </div>
+                <div id="resultats-panel" style="display:none;">
+                    <!-- KPI cards -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-primary" id="kpi-energie">—</div>
+                                    <div class="text-muted small">Énergie totale</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-danger" id="kpi-imports">—</div>
+                                    <div class="text-muted small">Imports totaux</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-success" id="kpi-exports">—</div>
+                                    <div class="text-muted small">Exports totaux</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-warning" id="kpi-pertes">—</div>
+                                    <div class="text-muted small">Pertes réseau</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-secondary" id="kpi-buses">—</div>
+                                    <div class="text-muted small">Nœuds</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-secondary" id="kpi-lignes">—</div>
+                                    <div class="text-muted small">Lignes</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100 border-danger">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-danger" id="kpi-violations">—</div>
+                                    <div class="text-muted small">Violations thermiques</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="card text-center h-100 border-warning">
+                                <div class="card-body py-2">
+                                    <div class="fs-5 fw-bold text-warning" id="kpi-infra">—</div>
+                                    <div class="text-muted small">Renforcements requis</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flux d'interconnexions -->
+                    <div id="linkflows-section" class="mb-4" style="display:none;">
+                        <h6 class="fw-bold mb-2">Flux d'interconnexions</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover">
+                                <thead class="table-info">
+                                    <tr>
+                                        <th>Interconnexion</th>
+                                        <th>Export total (GWh)</th>
+                                        <th>Import total (GWh)</th>
+                                        <th>Export max (MW)</th>
+                                        <th>Import max (MW)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="linkflows-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Violations thermiques -->
+                    <div id="violations-section" class="mb-4" style="display:none;">
+                        <h6 class="fw-bold text-danger mb-2">Lignes surchargées (post-OPF)</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover">
+                                <thead class="table-danger">
+                                    <tr>
+                                        <th>Ligne</th>
+                                        <th>Flux max (MW)</th>
+                                        <th>Capacité (MVA)</th>
+                                        <th>Charge (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="violations-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Renforcements requis -->
+                    <div id="infra-section" class="mb-4" style="display:none;">
+                        <h6 class="fw-bold text-warning mb-2">Renforcements de réseau nécessaires</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover">
+                                <thead class="table-warning">
+                                    <tr>
+                                        <th>Ligne</th>
+                                        <th>Bus 0 → Bus 1</th>
+                                        <th>Tension (kV)</th>
+                                        <th>Circuits actuels</th>
+                                        <th>Circuits requis</th>
+                                        <th>À ajouter</th>
+                                        <th>Cap. actuelle (MVA)</th>
+                                        <th>Cap. requise (MVA)</th>
+                                        <th>Charge (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="infra-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -265,7 +403,7 @@
 <script>
     // Globals
     var demandeSankey;
-    var demandeTemporel;
+    var demandeTemporal;
     var production;
     var map;
 </script>

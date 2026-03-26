@@ -1,5 +1,6 @@
 ﻿"""Extraction des resultats + formatage API avec alias de compatibilite."""
 
+import math
 from typing import Any, Dict, List
 import pandas as pd
 import pypsa
@@ -52,9 +53,24 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
                 gens = network.generators.index[network.generators.carrier == carrier]
                 production[f"total_{canonical}"] = p.reindex(columns=gens, fill_value=0.0).sum(axis=1)
 
-    # Garder la cle legacy total_import meme si le reseau n'a pas d'import
-    if "total_import" not in production.columns:
-        production["total_import"] = 0.0
+    # Import/export par snapshot depuis les Links (interconnexions).
+    # Les imports/exports ne sont PAS des générateurs — ils transitent via des Links PyPSA
+    # et sont donc absents de generators_t.p.  On les extrait de links_t.p0 :
+    #   p0 > 0  → export HQ vers étranger (flux sortant du bus Interco)
+    #   p0 < 0  → import étranger vers HQ  (flux entrant au bus Interco)
+    if hasattr(network, "links_t") and "p0" in network.links_t and not network.links_t.p0.empty:
+        p0_links = network.links_t.p0
+        production["total_import"] = (
+            p0_links.clip(upper=0).abs().sum(axis=1).reindex(production.index, fill_value=0.0)
+        )
+        production["total_export"] = (
+            p0_links.clip(lower=0).sum(axis=1).reindex(production.index, fill_value=0.0)
+        )
+    else:
+        if "total_import" not in production.columns:
+            production["total_import"] = 0.0
+        if "total_export" not in production.columns:
+            production["total_export"] = 0.0
 
     # Le frontend legacy attend total_nucleaire
     if "total_nucleaire" not in production.columns:
@@ -93,16 +109,26 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
         if f["loading_percent"] is not None and f["loading_percent"] > 100.0
     ]
 
+    # Poids temporels : 1h/snapshot en horaire, 168h/snapshot en hebdomadaire
+    snap_weights = network.snapshot_weightings.generators if hasattr(network, "snapshot_weightings") else None
+
     # Import/export via Links (interconnexions frontieres)
     link_flows = []
     if hasattr(network, "links_t") and "p0" in network.links_t and len(network.links_t["p0"].columns) > 0:
         p0_links = network.links_t["p0"]
         for link_name in p0_links.columns:
             vals = p0_links[link_name]
+            if snap_weights is not None:
+                w = snap_weights.reindex(vals.index, fill_value=1.0)
+                export_mwh = float((vals.clip(lower=0) * w).sum())
+                import_mwh = float((vals.clip(upper=0).abs() * w).sum())
+            else:
+                export_mwh = float(vals[vals > 0].sum())
+                import_mwh = float(vals[vals < 0].abs().sum())
             link_flows.append({
                 "link": link_name,
-                "total_export_mwh": float(vals[vals > 0].sum()),
-                "total_import_mwh": float(vals[vals < 0].abs().sum()),
+                "total_export_mwh": export_mwh,
+                "total_import_mwh": import_mwh,
                 "max_export_mw": float(vals.max()),
                 "max_import_mw": float(vals.min()),
             })
@@ -118,17 +144,21 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
     if hasattr(network, "lines_t") and "p0" in network.lines_t and not network.lines_t.p0.empty:
         p0_df = network.lines_t.p0
         if ac_pf_converged and "p1" in network.lines_t and not network.lines_t.p1.empty:
-            # AC PF convergé : pertes exactes (p1 ≠ -p0)
-            total_losses_mwh = float((p0_df + network.lines_t.p1).abs().sum().sum())
+            # AC PF convergé : pertes exactes (p1 ≠ -p0), pondérées par snap_weights
+            losses_per_snap = (p0_df + network.lines_t.p1).abs().sum(axis=1)
+            if snap_weights is not None:
+                total_losses_mwh = float((losses_per_snap * snap_weights).sum())
+            else:
+                total_losses_mwh = float(losses_per_snap.sum())
         else:
             # LPF : p1 = -p0 → estimation DC via P²R/V²
-            total_losses_mwh = _estimate_dc_losses_from_lpf(network, p0_df)
+            total_losses_mwh = _estimate_dc_losses_from_lpf(network, p0_df, snap_weights)
 
     summary = {
         "n_buses": int(len(network.buses)) if hasattr(network, "buses") else 0,
         "n_lines": int(len(network.lines)) if hasattr(network, "lines") else 0,
         "n_generators": int(len(network.generators)) if hasattr(network, "generators") else 0,
-        "total_energy_mwh": float(production["totale"].sum()) if "totale" in production.columns else 0.0,
+        "total_energy_mwh": float((production["totale"] * snap_weights).sum()) if ("totale" in production.columns and snap_weights is not None) else float(production["totale"].sum()) if "totale" in production.columns else 0.0,
         "n_violations": len(violations),
         "total_losses_mwh": total_losses_mwh,
         "total_export_mwh": sum(lf["total_export_mwh"] for lf in link_flows),
@@ -151,6 +181,27 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
     summary["was_relaxed"]          = was_relaxed
     summary["n_constraint_warnings"] = len(constraint_warnings)
 
+    infra_report = _compute_infra_report(network)
+
+    summary["n_infra_additions"] = len(infra_report)
+
+    # --- Niveau moyen des réservoirs (pour viz) ---
+    # Extrait le coût marginal moyen des réservoirs par snapshot → proxy du fill level.
+    # Le coût est l'inverse du fill (calibré via _water_value_cost) :
+    #   coût bas (~3 $/MWh) → réservoir plein ;  coût haut (~80 $/MWh) → réservoir vide.
+    reservoir_cost_ts = None
+    if hasattr(network, "generators_t") and "marginal_cost" in network.generators_t:
+        mc = network.generators_t.marginal_cost
+        reservoir_gens = network.generators.index[
+            network.generators.carrier == "hydro_reservoir"
+        ]
+        rc = [g for g in reservoir_gens if g in mc.columns]
+        if rc:
+            # Moyenne pondérée par p_nom
+            pnoms = network.generators.loc[rc, "p_nom"]
+            weights = pnoms / pnoms.sum() if pnoms.sum() > 0 else pd.Series(1.0, index=pnoms.index)
+            reservoir_cost_ts = (mc[rc] * weights).sum(axis=1)
+
     return {
         "production_df":        production,
         "line_flows":           line_flows,
@@ -159,6 +210,8 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
         "link_flows":           link_flows,
         "summary":              summary,
         "was_relaxed":          was_relaxed,
+        "infra_report":         infra_report,
+        "reservoir_cost_ts":    reservoir_cost_ts,
     }
 
 
@@ -196,10 +249,11 @@ def format_api_response(
         "link_flows":           kpis["link_flows"],
         "summary":              kpis["summary"],
         "was_relaxed":          kpis.get("was_relaxed", False),
+        "infra_report":         kpis.get("infra_report", []),
     }
 
 
-def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame) -> float:
+def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame, snap_weights=None) -> float:
     """Estime les pertes I²R depuis le flux LPF (DC).
 
     Formule 3-phases équilibré :  P_loss [MW] = P0_capped [MW]² × R [Ω] / V_nom [kV]²
@@ -238,10 +292,122 @@ def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame) ->
             p_series = p0_df[line_name].clip(-float(s_nom), float(s_nom))
         else:
             p_series = p0_df[line_name]
-        # Pertes par snapshot [MW], somme → MWh (1 snapshot = 1 heure)
-        total += float((p_series ** 2 * r_ohm / v_nom ** 2).sum())
+        # Pertes par snapshot [MW], pondérées par snap_weights → MWh
+        losses_series = p_series ** 2 * r_ohm / v_nom ** 2
+        if snap_weights is not None:
+            w = snap_weights.reindex(losses_series.index, fill_value=1.0)
+            total += float((losses_series * w).sum())
+        else:
+            total += float(losses_series.sum())
 
     return total
+
+
+def _compute_infra_report(network: pypsa.Network) -> List[Dict[str, Any]]:  # noqa: C901
+    """Rapport d'infrastructure : lignes dont la capacité actuelle (réseau 2026)
+    est insuffisante pour la demande simulée (2035).
+
+    Deux sources :
+    1. auto_scale_line_capacities() — ajustements pré-OPF stockés sur network._infra_scaling_changes.
+       Ces lignes ont été renforcées pour que l'OPF soit faisable ; leurs circuits originaux
+       (s_nom_original) sont inférieurs au requis.
+    2. Flux post-OPF (lines_t.p0) — lignes encore surchargées après dispatch optimal.
+
+    Retourne une liste dédupliquée triée par % de surcharge décroissant.
+    """
+    seen: set = set()
+    report: List[Dict[str, Any]] = []
+
+    has_original = "s_nom_original" in network.lines.columns
+    has_per_circuit = "s_nom_per_circuit" in network.lines.columns
+
+    def _bus_vnom(bus0: str) -> int | None:
+        return int(network.buses.at[bus0, "v_nom"]) if bus0 in network.buses.index else None
+
+    def _line_meta(line_name: str):
+        row = network.lines.loc[line_name] if line_name in network.lines.index else None
+        bus0 = str(row["bus0"]) if row is not None and "bus0" in network.lines.columns else "?"
+        bus1 = str(row["bus1"]) if row is not None and "bus1" in network.lines.columns else "?"
+        ltype = str(row["type"]) if row is not None and "type" in network.lines.columns else "?"
+        return bus0, bus1, ltype
+
+    # --- Source 1 : auto_scale (lignes renforcées avant OPF) ---
+    for ch in getattr(network, "_infra_scaling_changes", []):
+        line_name = ch.get("line", "")
+        if not line_name or line_name not in network.lines.index:
+            continue
+        if line_name in seen:
+            continue
+        seen.add(line_name)
+
+        s_nom_original = ch["old_s_nom"]
+        s_nom_needed   = ch["new_s_nom"]
+        s_nom_pc       = float(network.lines.at[line_name, "s_nom_per_circuit"]) if has_per_circuit else (s_nom_original or 2000.0)
+        nb_current     = max(1, round(s_nom_original / s_nom_pc))
+        nb_needed      = ch["num_parallel"]
+        bus0, bus1, ltype = _line_meta(line_name)
+
+        report.append({
+            "line":                  line_name,
+            "bus0":                  bus0,
+            "bus1":                  bus1,
+            "voltage_kv":            _bus_vnom(bus0),
+            "line_type":             ltype,
+            "nb_circuits_current":   nb_current,
+            "nb_circuits_needed":    nb_needed,
+            "nb_circuits_to_add":    nb_needed - nb_current,
+            "s_nom_per_circuit_mva": round(s_nom_pc, 1),
+            "s_nom_current_mva":     round(s_nom_original, 1),
+            "s_nom_needed_mva":      round(s_nom_needed, 1),
+            "max_flow_mw":           None,
+            "overload_pct":          round(s_nom_needed / max(s_nom_original, 1) * 100.0, 1),
+            "reason": (
+                f"Capacité actuelle {s_nom_original:.0f} MVA ({nb_current} circuit{'s' if nb_current>1 else ''}) "
+                f"insuffisante — {ch['reason']}. "
+                f"Réseau 2026 vs demande 2035 : +{nb_needed - nb_current} circuit(s) requis."
+            ),
+        })
+
+    # --- Source 2 : flux post-OPF encore surchargés ---
+    if hasattr(network, "lines_t") and "p0" in network.lines_t and not network.lines_t.p0.empty:
+        p0 = network.lines_t.p0
+        for line_name in p0.columns:
+            if line_name in seen or line_name not in network.lines.index:
+                continue
+            max_flow    = float(p0[line_name].abs().max())
+            s_nom_total = float(network.lines.at[line_name, "s_nom"])
+            if s_nom_total <= 0 or max_flow <= s_nom_total:
+                continue
+            s_nom_pc    = float(network.lines.at[line_name, "s_nom_per_circuit"]) if has_per_circuit else s_nom_total
+            nb_current  = max(1, round(s_nom_total / max(s_nom_pc, 1)))
+            nb_needed   = math.ceil(max_flow / max(s_nom_pc, 1))
+            if nb_needed <= nb_current:
+                continue
+            seen.add(line_name)
+            bus0, bus1, ltype = _line_meta(line_name)
+            report.append({
+                "line":                  line_name,
+                "bus0":                  bus0,
+                "bus1":                  bus1,
+                "voltage_kv":            _bus_vnom(bus0),
+                "line_type":             ltype,
+                "nb_circuits_current":   nb_current,
+                "nb_circuits_needed":    nb_needed,
+                "nb_circuits_to_add":    nb_needed - nb_current,
+                "s_nom_per_circuit_mva": round(s_nom_pc, 1),
+                "s_nom_current_mva":     round(s_nom_total, 1),
+                "s_nom_needed_mva":      round(nb_needed * s_nom_pc, 1),
+                "max_flow_mw":           round(max_flow, 1),
+                "overload_pct":          round(max_flow / s_nom_total * 100.0, 1),
+                "reason": (
+                    f"Flux simulé {max_flow:.0f} MW > capacité {s_nom_total:.0f} MVA "
+                    f"({nb_current} circuit{'s' if nb_current>1 else ''} × {s_nom_pc:.0f} MVA). "
+                    f"Réseau 2026 insuffisant pour la demande 2035."
+                ),
+            })
+
+    report.sort(key=lambda x: x["overload_pct"], reverse=True)
+    return report
 
 
 def _canonical_carrier(carrier: str) -> str:

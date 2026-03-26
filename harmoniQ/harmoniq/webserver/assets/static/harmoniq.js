@@ -409,11 +409,12 @@ function lancer_simulation() {
         return;
     }
 
-    fetchData(`/api/reseau/production/?scenario_id=${scenario}&liste_infra_id=${groupe}&is_journalier=false`, 'POST')
+    fetchData(`/api/reseau/production/?scenario_id=${scenario}&liste_infra_id=${groupe}&resolution=hebdomadaire`, 'POST')
         .then(data => {
             console.log('Simulation réussie:', data);
             production = data;
             updateTemporalGraph();
+            updateResultsPanel(data);
 
             $("#run").html('Lancer la simulation');
             $("#run").prop('disabled', false);
@@ -431,7 +432,7 @@ function lancer_simulation() {
 
     $("#run").html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>')
     $("#run").prop('disabled', true);
-    alert("Ce processus peut prendre un certain temps (3-5 minutes).")
+    alert("Simulation en cours, veuillez patienter quelques instants...")
 }
 
 function simulate_single(event, infraId, type, name) {
