@@ -293,6 +293,24 @@ async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, i
     
     return response
 
+@reseau_router.post("/cout")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
+    scenario = payload.scenario
+    infra_group = payload.infra_group
+    
+    infra_reseau = InfraReseau(infra_group)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_cout(infra_group)
+
+@reseau_router.post("/emission")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
+    scenario = payload.scenario
+    infra_group = payload.infra_group
+    
+    infra_reseau = InfraReseau(infra_group)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_co2(infra_group)
+
 router.include_router(reseau_router)
 
 #/informativegame/question

@@ -1,22 +1,23 @@
 import { Co2DetailsData, SankeyData } from './sankey-data.types';
+import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
 
 // Placeholder data
 
 
 export const PLACEHOLDER_SANKEY_DATA: SankeyData = {
   demandNodes: [
-    { id: 'industrie',   label: 'Industrie',   value: 16800, color: '#9c6bb5', icon: 'fa-industry' },
-    { id: 'residentiel', label: 'Résidentiel', value: 14700, color: '#5aaa6f', icon: 'fa-house' },
-    { id: 'commercial',  label: 'Commercial',  value: 8400,  color: '#5c9fd6', icon: 'fa-building' },
-    { id: 'pertes',      label: 'Pertes',      value: 2100,  color: '#e8a93c', icon: 'fa-triangle-exclamation' },
+    { id: 'industrie',   label: INFRA_LABELS['industrie'],   value: 16800, color: INFRA_COLORS['industrie'], icon: 'fa-industry' },
+    { id: 'residentiel', label: INFRA_LABELS['residentiel'], value: 14700, color: INFRA_COLORS['residentiel'], icon: 'fa-house' },
+    { id: 'commercial',  label: INFRA_LABELS['commercial'],  value: 8400,  color: INFRA_COLORS['commercial'], icon: 'fa-building' },
+    { id: 'pertes',      label: INFRA_LABELS['pertes'],      value: 2100,  color: INFRA_COLORS['pertes'], icon: 'fa-triangle-exclamation' },
   ],
   productionNodes: [
-    { id: 'hydraulique', label: 'Hydraulique',  value: 0, color: '#4a9dd4', icon: 'fa-droplet',              co2FactorKgMWh: 24  },
-    { id: 'eolien',      label: 'Éolien',       value: 0, color: '#6abbc4', icon: 'fa-wind',                 co2FactorKgMWh: 12  },
-    { id: 'thermique',   label: 'Thermique',    value: 0, color: '#e25c5c', icon: 'fa-bolt',                 co2FactorKgMWh: 820 },
-    { id: 'solaire',     label: 'Solaire',      value: 0, color: '#e8c53c', icon: 'fa-sun',                  co2FactorKgMWh: 48  },
-    { id: 'nucleaire',   label: 'Nucléaire',    value: 0, color: '#e8754a', icon: 'fa-radiation',            co2FactorKgMWh: 12  },
-    { id: 'import',      label: 'Importation',  value: 0, color: '#a0a0c8', icon: 'fa-right-to-bracket',     co2FactorKgMWh: 200 },
+    { id: 'hydraulique', label: INFRA_LABELS['hydraulique'],  value: 0, color: INFRA_COLORS['hydraulique'], icon: 'fa-droplet',              co2FactorKgMWh: 24  },
+    { id: 'eolien',      label: INFRA_LABELS['eolien'],       value: 0, color: INFRA_COLORS['eolien'], icon: 'fa-wind',                 co2FactorKgMWh: 12  },
+    { id: 'thermique',   label: INFRA_LABELS['thermique'],    value: 0, color: INFRA_COLORS['thermique'], icon: 'fa-bolt',                 co2FactorKgMWh: 820 },
+    { id: 'solaire',     label: INFRA_LABELS['solaire'],      value: 0, color: INFRA_COLORS['solaire'], icon: 'fa-sun',                  co2FactorKgMWh: 48  },
+    { id: 'nucleaire',   label: INFRA_LABELS['nucleaire'],    value: 0, color: INFRA_COLORS['nucleaire'], icon: 'fa-radiation',            co2FactorKgMWh: 12  },
+    { id: 'import',      label: INFRA_LABELS['import'],       value: 0, color: INFRA_COLORS['import'], icon: 'fa-right-to-bracket',     co2FactorKgMWh: 200 },
   ],
 };
 
