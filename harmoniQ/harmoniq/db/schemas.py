@@ -44,11 +44,6 @@ Notion de "Enum ou PyEnum" pour les types de données:
 - Type d'objet : Enum
 """
 
-class Optimisme(PyEnum):
-    pessimiste = 1
-    moyen = 2
-    optimiste = 3
-
 
 class Weather(PyEnum):
     warm = 1
@@ -101,8 +96,6 @@ class Scenario(SQLBase):
     pas_de_temps = Column(TimeDeltaString)
     weather = Column(Enum(Weather))
     consomation = Column(Enum(Consomation))
-    optimisme_social = Column(Enum(Optimisme))
-    optimisme_ecologique = Column(Enum(Optimisme))
 
 
 class ScenarioBase(BaseModel):
@@ -119,8 +112,6 @@ class ScenarioBase(BaseModel):
     )
     weather: Weather = Weather.typical
     consomation: Consomation = Consomation.PV
-    optimisme_social: Optimisme = Optimisme.moyen
-    optimisme_ecologique: Optimisme = Optimisme.moyen
 
     @field_validator("date_de_debut", "date_de_fin", mode="before")
     def parse_datetime(cls, value):
@@ -141,71 +132,46 @@ class ScenarioBase(BaseModel):
         return value
 
 
-class ScenarioCreate(ScenarioBase):
-    pass
-
-
 class ScenarioResponse(ScenarioBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
 
-#-----#-----#-----#-----# Liste Infra Base #-----#-----#-----#-----#
-#Stocke les infrastructures actives dans la simulation (celles qui sont cochées) sous forme de chaines de caractères séparées par des virgules
 
-class ListeInfrastructures(SQLBase):
-    __tablename__ = "liste_infrastructures"
-
-    id = Column(Integer, primary_key=True)
-    nom = Column(String)
-    parc_eoliens = Column(String, nullable=True)
-    parc_solaires = Column(String, nullable=True)
-    central_hydroelectriques = Column(String, nullable=True)
-    central_thermique = Column(String, nullable=True)
-    central_nucleaire = Column(String, nullable=True)
-
-    @property
-    def parc_eolien_list(self):
-        return self.parc_eolien.split(",") if self.parc_eolien else []
-
-    @property
-    def parc_solaire_list(self):
-        return self.parc_solaire.split(",") if self.parc_solaire else []
-
-    @property
-    def central_hydroelectriques_list(self):
-        return (
-            self.central_hydroelectriques.split(",")
-            if self.central_hydroelectriques
-            else []
-        )
-
-    @property
-    def central_thermique_list(self):
-        return self.central_thermique.split(",") if self.central_thermique else []
-
-    @property
-    def central_nucleaire_list(self):
-        return self.central_nucleaire.split(",") if self.central_nucleaire else []
-
-
-class ListeInfrastructuresBase(BaseModel):
+# ── Simulation payload models ─────────────────────────────────────────────────
+class InfraPayload(BaseModel):
+    """
+    Minimal representation of a locally-created (user-defined) infrastructure.
+    All type-specific fields are accepted via model_config extra='allow'.
+    """
     nom: str
-    parc_eoliens: Optional[str] = None
-    parc_solaires: Optional[str] = None
-    central_hydroelectriques: Optional[str] = None
-    central_thermique: Optional[str] = None
-    central_nucleaire: Optional[str] = None
+    latitude: float
+    longitude: float
+
+    model_config = ConfigDict(extra="allow")
 
 
-class ListeInfrastructuresCreate(ListeInfrastructuresBase):
-    pass
+class SimulationInfraGroup(BaseModel):
+    """
+    Request body for POST /reseau/production.
 
+    Each field is a list of full infrastructure objects (either DB-sourced or
+    locally created — the backend treats them identically).
+    """
+    nom: str = ""
+    parc_eoliens: Optional[List['EolienneParcBase']] = None
+    parc_solaires: Optional[List['SolaireBase']] = None
+    central_hydroelectriques: Optional[List['HydroBase']] = None
+    central_thermique: Optional[List['ThermiqueBase']] = None
+    central_nucleaire: Optional[List['NucleaireBase']] = None
 
-class ListeInfrastructuresResponse(ListeInfrastructuresBase):
-    id: int
+class InfraSimulationPayload(BaseModel):
+    scenario: ScenarioResponse
+    infra_payload: InfraPayload
 
-    model_config = ConfigDict(from_attributes=True)
+class ReseauSimulationPayload(BaseModel):
+    scenario: ScenarioResponse
+    infra_group: SimulationInfraGroup
 
 #-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
@@ -230,6 +196,7 @@ class TurbineModel(str, PyEnum):
 
 
 class EolienneParcBase(BaseModel):
+    id: int
     nom: str = Field(..., description="Nom du parc éolien")
     latitude: float = Field(..., description="Latitude moyenne des éoliennes (degrés)")
     longitude: float = Field(
@@ -245,14 +212,6 @@ class EolienneParcBase(BaseModel):
     puissance_nominal: float = Field(
         ..., description="Puissance nominale des turbines dans le parc (kW)", json_schema_extra={"suggestion": 2000}
     )
-
-
-class EolienneParcCreate(EolienneParcBase):
-    pass
-
-
-class EolienneParcResponse(EolienneParcBase):
-    id: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -289,6 +248,7 @@ class Solaire(SQLBase):
 
 
 class SolaireBase(BaseModel):
+    id: int
     nom: str = Field(..., description="Nom du parc solaire")
     latitude: float = Field(..., description="Latitude du parc solaire (degrés)")
     longitude: float = Field(..., description="Longitude du parc solaire (degrés)")
@@ -312,17 +272,10 @@ class SolaireBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SolaireCreate(SolaireBase):
-    pass
-
-class SolaireResponse(SolaireBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
-
 #-----#-----#-----#-----# Hydro Base #-----#-----#-----#-----#
 
 class HydroBase(BaseModel):
+    id: int
     nom: str
     longitude: float
     latitude: float
@@ -337,16 +290,6 @@ class HydroBase(BaseModel):
     id_HQ: int
     annee_commission: Optional[int] = None
     materiau_conduite: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class HydroCreate(HydroBase):
-    pass
-
-
-class HydroResponse(HydroBase):
-    id: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -370,12 +313,7 @@ class Hydro(SQLBase):
     annee_commission = Column(Integer, nullable=True)
     materiau_conduite = Column(String, nullable=True)
 
-#-----#-----#-----#-----# Solaire Response #-----#-----#-----#-----#
 
-class SolaireResponse(SolaireBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
 #-----#-----#-----#-----# Thermique Base #-----#-----#-----#-----#
 
 class TypeIntrantThermique(str, PyEnum):
@@ -386,6 +324,7 @@ class TypeIntrantThermique(str, PyEnum):
 
 
 class ThermiqueBase(BaseModel):
+    id: int
     nom: str = Field(..., description="Nom de la centrale thermique")
     latitude: float = Field(
         ..., description="Latitude de la centrale thermique (degrés)"
@@ -410,16 +349,6 @@ class ThermiqueBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ThermiqueCreate(ThermiqueBase):
-    pass
-
-
-class ThermiqueResponse(ThermiqueBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class Thermique(SQLBase):
     __tablename__ = "thermique"
 
@@ -437,6 +366,7 @@ class Thermique(SQLBase):
 #-----#-----#-----#-----# Nucleaire Base #-----#-----#-----#-----#
 
 class NucleaireBase(BaseModel):
+    id: int
     nom: str = Field(..., description="Nom de la centrale nucléaire")
     latitude: float = Field(
         ..., description="Latitude de la centrale nucléaire (degrés)"
@@ -453,16 +383,6 @@ class NucleaireBase(BaseModel):
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
     type_intrant: Optional[int] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class NucleaireCreate(NucleaireBase):
-    pass
-
-
-class NucleaireResponse(NucleaireBase):
-    id: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -504,11 +424,13 @@ class Bus(SQLBase):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    display_name = Column(String, nullable=True)
     v_nom = Column(Integer)
     type = Column(Enum(BusType))
     x = Column(Float)
     y = Column(Float)
     control = Column(Enum(BusControlType))
+    reseau_type = Column(String, nullable=True)
 
     lines_from = relationship(
         "Line", back_populates="bus_from", foreign_keys="Line.bus0"
@@ -518,11 +440,13 @@ class Bus(SQLBase):
 
 class BusBase(BaseModel):
     name: str
+    display_name: Optional[str] = None
     v_nom: int
     type: BusType
     x: float
     y: float
     control: BusControlType
+    reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -580,6 +504,7 @@ class Line(SQLBase):
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)
+    reseau_type = Column(String, nullable=True)
 
     bus_from = relationship("Bus", back_populates="lines_from", foreign_keys=[bus0])
     bus_to = relationship("Bus", back_populates="lines_to", foreign_keys=[bus1])
@@ -594,6 +519,7 @@ class LineBase(BaseModel):
     capital_cost: float
     length: float
     s_nom: float
+    reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -636,3 +562,6 @@ weather_schema = pa.DataFrameSchema(
     index=pa.Index(pa.DateTime, name="datetemps"),
     strict=True,
 )
+
+InfraPayload.update_forward_refs()
+SimulationInfraGroup.update_forward_refs()

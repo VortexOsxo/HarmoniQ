@@ -1,8 +1,12 @@
-import { Injectable, effect } from '@angular/core';
+import { Injectable, effect, signal } from '@angular/core';
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
+import { createClusterIcon } from '@app/utils/cluster-icon';
 import { InfrastruturesService } from './infrastrutures-service';
 import { MapLineService } from './map-line-service';
+import { ProtectedAreasService } from './protected-areas-service';
+import { InfraDetailService } from './infra-detail-service';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 
@@ -13,6 +17,7 @@ export class MapService {
   get map() { return this._map; }
 
   private _map?: L.Map;
+  private clusterGroup?: L.MarkerClusterGroup;
 
   private markers: any = {
     eolienneparc: {},
@@ -22,9 +27,20 @@ export class MapService {
     nucleaire: {},
   }
 
+  // Filter Signals
+  mapFilterName = signal('');
+  mapFilterTypes = signal<Set<string>>(new Set(types));
+  mapFilterMinPower = signal<number | null>(null);
+  mapFilterMaxPower = signal<number | null>(null);
+
+  private previousSelectedType: string | null = null;
+  private previousSelectedId: string | null = null;
+
   constructor(
     private infrasService: InfrastruturesService,
-    private mapLineService: MapLineService
+    private mapLineService: MapLineService,
+    private protectedAreasService: ProtectedAreasService,
+    private infraDetailService: InfraDetailService
   ) {
     effect(() => {
       // reload markers when selected infra group changes
@@ -42,6 +58,49 @@ export class MapService {
         this.reloadMarkers();
       });
     });
+
+    // Auto-reload markers when any filter changes
+    effect(() => {
+      this.mapFilterName();
+      this.mapFilterTypes();
+      this.mapFilterMinPower();
+      this.mapFilterMaxPower();
+      this.reloadMarkers();
+    });
+
+    // Watch for selected infra changes to highlight the marker in blue
+    effect(() => {
+      const selected = this.infraDetailService.selectedInfra();
+
+      // Restore previously selected marker to its normal icon
+      if (this.previousSelectedType && this.previousSelectedId) {
+        const prevMarker = this.markers[this.previousSelectedType]?.[parseInt(this.previousSelectedId)];
+        if (prevMarker) {
+          const isActive = this.infrasService.isInfraSelected(this.previousSelectedType, this.previousSelectedId);
+          const iconName = !isActive ? `${this.previousSelectedType}gris` : this.previousSelectedType;
+          prevMarker.setIcon(map_icons[iconName]);
+          (prevMarker.options as any).infraActive = isActive;
+          if (this.clusterGroup) {
+            this.clusterGroup.refreshClusters();
+          }
+        }
+        this.previousSelectedType = null;
+        this.previousSelectedId = null;
+      }
+
+      // Highlight the newly selected marker in blue
+      if (selected) {
+        const marker = this.markers[selected.type]?.[parseInt(selected.id)];
+        if (marker) {
+          marker.setIcon(map_icons[`${selected.type}bleu`]);
+          if (this.clusterGroup) {
+            this.clusterGroup.refreshClusters();
+          }
+          this.previousSelectedType = selected.type;
+          this.previousSelectedId = selected.id;
+        }
+      }
+    });
   }
 
 
@@ -53,7 +112,7 @@ export class MapService {
 
     const map = L.map('map', {
       zoomControl: true,
-      attributionControl: true,
+      attributionControl: false,
       maxZoom: 12,
       minZoom: 5
     }).setView([52.9399, -67], 4);
@@ -90,9 +149,17 @@ export class MapService {
       infrasService.createInfra(className, type, lat, lng);
     });
 
-    this.mapLineService.addLinesToMap(map);
-
     this._map = map;
+
+    this.clusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 70,
+      disableClusteringAtZoom: 8,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      iconCreateFunction: (cluster) => createClusterIcon(cluster),
+    });
+    map.addLayer(this.clusterGroup);
+
     return map;
   }
 
@@ -102,11 +169,40 @@ export class MapService {
 
     this.map.remove();
     this._map = undefined;
+    this.clusterGroup = undefined;
   }
 
   initMarkers() {
     if (!this.map) return;
-    types.forEach(type => this.addMarkers(type, this.infrasService.getInfrasSignalByType(type)()));
+
+    const searchTerm = this.mapFilterName().trim().toLowerCase();
+    const allowedTypes = this.mapFilterTypes();
+    const minPower = this.mapFilterMinPower();
+    const maxPower = this.mapFilterMaxPower();
+
+    types.forEach(type => {
+      if (!allowedTypes.has(type)) return;
+
+      let infras = this.infrasService.getInfrasSignalByType(type)();
+
+      // Apply Name filter
+      if (searchTerm) {
+        infras = infras.filter(i => (i.nom || '').toLowerCase().includes(searchTerm));
+      }
+
+      // Apply Power filters
+      if (minPower !== null || maxPower !== null) {
+        infras = infras.filter(i => {
+          const p = (i as any).puissance_nominal;
+          if (typeof p !== 'number') return true; // fallback if missing
+          if (minPower !== null && p < minPower) return false;
+          if (maxPower !== null && p > maxPower) return false;
+          return true;
+        });
+      }
+
+      this.addMarkers(type, infras);
+    });
   }
 
   destroyMarkers() {
@@ -126,7 +222,11 @@ export class MapService {
   removeMarkers(type: string) {
     const markers = this.markers[type];
     for (const marker of Object.values(markers)) {
-      (marker as L.Marker).remove();
+      const m = marker as L.Marker;
+      if (this.clusterGroup) {
+        this.clusterGroup.removeLayer(m);
+      }
+      m.remove();
     }
     this.markers[type] = {};
   }
@@ -137,63 +237,28 @@ export class MapService {
     const iconName = !isActive ? `${type}gris` : type;
     const icon = map_icons[iconName];
 
-    // Construire le contenu du popup en fonction du type
-    let popupContent = `<b>${data.nom}</b><br>Catégorie: ${prettyNames[type]}<br>`;
+    const marker = L.marker([data.latitude, data.longitude], {
+      icon: icon,
+      infraType: type,
+      infraActive: isActive,
+    } as any);
 
-    if (type === 'eolienneparc') {
-      popupContent += `
-            Nombre d'éoliennes: ${data.nombre_eoliennes || 'N/A'}<br>
-            Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
-            Capacité totale: ${data.capacite_total || 'N/A'} MW
-        `;
-    } else if (type === 'hydro') {
-      popupContent += `
-            type de barrage: ${data.type_barrage || 'N/A'} <br>
-            Débit nominal: ${data.debits_nominal ? parseFloat(data.debits_nominal).toFixed(1) : 'N/A'} m³/s<br>
-            Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
-            Volume du réservoir: ${data.volume_reservoir
-          ? data.volume_reservoir >= 1e9
-            ? (data.volume_reservoir / 1e9).toFixed(1) + ' Gm³' // Milliards de m³
-            : data.volume_reservoir >= 1e6
-              ? (data.volume_reservoir / 1e6).toFixed(1) + ' Mm³' // Millions de m³
-              : (data.volume_reservoir / 1e3).toFixed(1) + ' km³' // Milliers de m³
-          : 'N/A'
-        }<br>
-        `;
-    } else if (type === 'solaire') {
-      popupContent += `
-            Nombre de panneaux: ${data.nombre_panneau || 'N/A'}<br>
-            Orientation des panneaux: ${data.orientation_panneau || 'N/A'}<br>
-            Puissance nominale: ${data.puissance_nominal || 'N/A'} MW
-        `;
-    } else if (type === 'thermique') {
-      popupContent += `
-            Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
-            Type d'intrant: ${data.type_intrant || 'N/A'}
-        `;
-    } else if (type === 'nucleaire') { // Ajout pour la catégorie nucléaire
-      popupContent += `
-            Puissance nominale: ${data.puissance_nominal || 'N/A'} MW<br>
-            Type d'intrant: ${data.type_intrant || 'N/A'}
-        `;
+    // Open detail panel on marker click instead of popup
+    marker.on('click', () => {
+      this.infraDetailService.openDetail(type, data.id.toString());
+    });
+
+    if (this.clusterGroup) {
+      this.clusterGroup.addLayer(marker);
+    } else {
+      marker.addTo(this.map);
     }
-
-    const marker = L.marker([data.latitude, data.longitude], { icon: icon })
-      .addTo(this.map)
-      .bindPopup(popupContent);
 
     this.markers[type][data.id] = marker;
   }
 
   showMarker(type: string, id: string) {
-    let infraId = parseInt(id);
-    const dict = this.markers[type];
-    const marker = dict[infraId];
-
-    if (marker && this.map) {
-      this.map.setView(marker.getLatLng(), 8);
-      marker.openPopup();
-    }
+    this.infraDetailService.openDetail(type, id);
   }
 
   private updateMarker(type: string, id: string, isActive: boolean) {
@@ -202,5 +267,10 @@ export class MapService {
 
     if (!marker) return;
     marker.setIcon(!isActive ? map_icons[`${type}gris`] : map_icons[type]);
+    (marker.options as any).infraActive = isActive;
+
+    if (this.clusterGroup) {
+      this.clusterGroup.refreshClusters();
+    }
   }
 }

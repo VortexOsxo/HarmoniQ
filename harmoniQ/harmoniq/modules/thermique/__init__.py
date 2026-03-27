@@ -1,10 +1,10 @@
-from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ThermiqueBase, ScenarioBase
+from harmoniq.core.base import Infrastructure
 from harmoniq.modules.thermique.calculs_production_thermique import (
     calculate_thermique_production, assign_maintenance_weeks
 )
 
 import pandas as pd
+import numpy as np
 import logging
 
 logger = logging.getLogger("Thermique")
@@ -27,14 +27,11 @@ class InfraThermique(Infrastructure):
 
     @necessite_scenario
     def calculer_production(self) -> pd.DataFrame:
-        if self.production is not None:
-            return self.production
-
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
 
 
-        self.production = calculate_thermique_production(
+        return calculate_thermique_production(
             power_mw=self.donnees.puissance_nominal,
             maintenance_week=self._maintenance_week,
             date_start=self.scenario.date_de_debut,

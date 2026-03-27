@@ -51,6 +51,32 @@ export const map_icons: any = {
         iconUrl: '/icons/nucelaire_gris.png',
         iconSize: [40, 40],
         iconAnchor: [20, 20]
+    }),
+
+    eolienneparcbleu: L.icon({
+        iconUrl: '/icons/eolienne_bleu.png',
+        iconSize: [30, 30],
+        iconAnchor: [20, 20]
+    }),
+    solairebleu: L.icon({
+        iconUrl: '/icons/solaire_bleu.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+    }),
+    thermiquebleu: L.icon({
+        iconUrl: '/icons/thermique_bleu.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+    }),
+    hydrobleu: L.icon({
+        iconUrl: '/icons/barrage_bleu.png',
+        iconSize: [50, 50],
+        iconAnchor: [20, 20]
+    }),
+    nucleairebleu: L.icon({
+        iconUrl: '/icons/nucelaire_bleu.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
     })
 };
 
