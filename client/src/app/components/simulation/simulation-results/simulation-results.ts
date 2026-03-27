@@ -1,25 +1,41 @@
-import { Component } from '@angular/core';
-import { ScenarioDemandProdSankey } from '@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { ScenarioTemporalDemandGraph } from '@app/components/scenario/scenario-temporal-demand-graph/scenario-temporal-demand-graph';
 import { QuebecMap } from '@app/components/quebec-map/quebec-map';
-import { MapService } from '@app/services/map-service';
-import { ScenarioNetworkResults } from '@app/components/scenario/scenario-network-results/scenario-network-results';
+import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { ReseauService } from '@app/services/reseau-service';
+import { TutorialService } from '@app/services/tutorial-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
+import { InfraDetailModal } from '@app/components/infra-detail-modal/infra-detail-modal';
+import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-results',
-  imports: [NgbNavModule, ScenarioDemandProdSankey, ScenarioTemporalDemandGraph, QuebecMap, ScenarioNetworkResults],
+  imports: [CommonModule, NgbNavModule, QuebecMap, InfraDetailModal],
   templateUrl: './simulation-results.html',
   styleUrl: './simulation-results.css',
-})
-export class SimulationResults {
-  activeTab = 'map';
+}) // TODO: Rename to like QuebecMapWrapper or something
+export class SimulationResults implements OnInit, OnDestroy {
+  private tutorialSub?: Subscription;
 
-  constructor(private mapService: MapService) { }
+  get isDetailOpen() {
+    return this.infraDetailService.isOpen();
+  }
 
-  onTabChange(event: any) {
-    if (event.nextId === 'map') {
-      this.mapService.onMapLoaded();
-    }
+  constructor(
+    public protectedAreasService: ProtectedAreasService,
+    public reseauService: ReseauService,
+    private tutorialService: TutorialService,
+    private infraDetailService: InfraDetailService,
+  ) { }
+
+  ngOnInit(): void {
+    this.tutorialSub = this.tutorialService.tutorialState$.subscribe((s) => {
+      if (s.active && s.showWelcome) this.protectedAreasService.hide();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.tutorialSub?.unsubscribe();
   }
 }

@@ -1,0 +1,240 @@
+#game-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 1rem;
+  gap: 0.5rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+pre {
+  max-width: 100%;
+  font-size: 1.2rem;
+  font-weight: normal;
+  line-height: 1.4;
+  color: #333;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-family: inherit;
+  text-align: center;
+}
+
+#optionBox {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+::ng-deep .optionButton {
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 10px;
+  width: 100%;
+  background-color: #ffffff;
+  text-align: left;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  color: #222;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+:host ::ng-deep .rightAnswerButtonColor {
+  background-color: #2ecc71 !important;
+  border-color: #27ae60 !important;
+  color: white !important;
+}
+
+:host ::ng-deep .wrongAnswerButtonColor {
+  background-color: #e74c3c !important;
+  border-color: #c0392b !important;
+  color: white !important;
+}
+
+#questionContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  padding-top: 2rem;
+}
+
+#questionText {
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: left;
+  margin: 0.75rem 0 0.5rem;
+  line-height: 1.35;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.quizButton {
+  min-width: 160px;
+  max-width: 260px;
+  height: 2.6rem;
+  padding: 0 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #4361ee, #3a56d4);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+  white-space: nowrap;
+}
+
+.quizButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+  color: #fff;
+}
+
+.quizButton:active {
+  transform: translateY(0);
+}
+
+#quizButtons {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  min-height: 4rem;
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+::ng-deep .optionButton:not(.answered):hover {
+  background-color: #f0f4ff !important;
+  border-color: #3498db !important;
+  color: #3498db;
+}
+
+::ng-deep .optionButton:not(.answered) {
+  cursor: pointer;
+}
+
+::ng-deep .optionButton.answered {
+  cursor: default;
+  transform: none;
+}
+
+.draggable.dragging {
+  opacity: 0.5;
+  background-color: #f0f4ff;
+  border: 2px dashed #3498db;
+}
+
+#questonInformation {
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: 0.2rem;
+  padding: 0.4rem 0.8rem;
+  box-sizing: border-box;
+  transition: opacity 0.3s ease;
+}
+
+#questonInformation:not(:has(h1:not(:empty))) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#questonInformation:has(h1:not(:empty)) {
+  opacity: 1;
+  background-color: #f8f9fa;
+  border-left: 3px solid #3498db;
+  border-radius: 4px;
+}
+
+#questonInformation h1 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #555;
+  line-height: 1.5;
+  text-align: left;
+  margin: 0;
+}
+
+#quizHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 1rem 0.4rem;
+  box-sizing: border-box;
+}
+
+#headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-icon {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-category {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.question-counter-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+}
+
+#progressBar {
+  width: 100%;
+  height: 5px;
+  background-color: #e0e0e0;
+  border-radius: 0;
+}
+
+#progressFill {
+  height: 100%;
+  background: #3498db;
+  border-radius: 0 3px 3px 0;
+  transition: width 0.4s ease;
+}

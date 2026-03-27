@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SimulationService } from '@app/services/simulation-service';
-import { Subscription } from 'rxjs';
+import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
+import { SimulationStepService } from '@app/services/simulation-step-service';
 import * as Plotly from 'plotly.js-dist-min';
 
 const NETWORK_MIX_CHART_ID = 'network-mix-donut-id';
@@ -27,30 +27,27 @@ export class ScenarioNetworkResults implements AfterViewInit, OnDestroy {
   violations: any[] = [];
   linkFlows: any[] = [];
 
-  private subscription?: Subscription;
-
-  constructor(private simulationService: SimulationService) {
-    this.subscription = this.simulationService.simulationResultsReceived.subscribe(() => {
-      this.loadData();
-    });
-  }
+  constructor(
+    private simulationTemporalGraphService: SimulationTemporalGraphService,
+    private stepService: SimulationStepService,
+  ) { }
 
   ngAfterViewInit(): void {
-    if (this.simulationService.hasSimulationResults()) {
+    if (this.hasResults()) {
       this.loadData();
     }
   }
 
-  ngOnDestroy(): void {
-    this.subscription?.unsubscribe();
-  }
+  ngOnDestroy(): void { }
 
   hasResults(): boolean {
-    return this.simulationService.hasSimulationResults();
+    const steps = this.stepService.steps();
+    const myStep = steps.find(s => s.name === this.simulationTemporalGraphService.getStepName());
+    return myStep?.status === 'completed';
   }
 
   private loadData(): void {
-    const result = this.simulationService.getSimulationResult();
+    const result = this.simulationTemporalGraphService.getCachedSimulationResult();
     if (!result) return;
 
     this.summary = result.summary ?? null;

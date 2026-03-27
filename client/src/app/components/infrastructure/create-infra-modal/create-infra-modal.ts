@@ -1,10 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OpenApiService } from '@app/services/open-api-service';
+import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { prettyNames } from '@app/utils/map-utils';
 
 @Component({
@@ -22,16 +23,23 @@ export class CreateInfraModal {
   form!: FormGroup;
   fields: any[] = [];
   prettyName = '';
+  protectedAreaName: string | null = null;
 
   constructor(
     public activeModal: NgbActiveModal,
     private fb: FormBuilder,
-    private openApiService: OpenApiService
+    private openApiService: OpenApiService,
+    private protectedAreasService: ProtectedAreasService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
     this.processPrettyName();
     this.buildForm();
+    this.protectedAreasService.checkProtectedArea(this.lat, this.lon).then(name => {
+      this.protectedAreaName = name;
+      this.cdr.detectChanges();
+    });
   }
 
   processPrettyName() {
