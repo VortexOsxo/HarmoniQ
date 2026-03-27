@@ -1253,9 +1253,25 @@ def load_demand_profile(scenario: Any, db: Any) -> pd.DataFrame:
 
 
 def _parse_ids(raw_value: Any) -> list[int] | None:
+    """Parse IDs from either a comma-separated string ('1,2,3') or a list of
+    Pydantic objects (each having an `.id` attribute) sent by the frontend."""
     if not raw_value:
         return None
-    return [int(x) for x in str(raw_value).split(",") if str(x).strip()]
+    # List of objects (e.g. EolienneParcBase instances from SimulationInfraGroup)
+    if isinstance(raw_value, list):
+        ids = []
+        for item in raw_value:
+            if hasattr(item, "id"):
+                ids.append(int(item.id))
+            else:
+                try:
+                    ids.append(int(item))
+                except (TypeError, ValueError):
+                    pass
+        return ids or None
+    # Comma-separated string fallback ('1,2,3')
+    parts = [x.strip() for x in str(raw_value).split(",") if x.strip().lstrip("-").isdigit()]
+    return [int(x) for x in parts] or None
 
 
 def _build_snapshots_from_scenario(scenario: Any) -> pd.DatetimeIndex:
