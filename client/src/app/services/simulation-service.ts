@@ -7,6 +7,8 @@ import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '@app/services/graph-service';
 import { DemandeTemporalDataService } from './data-services/demande-temporal-data-service';
 import { forkJoin, Subject } from 'rxjs';
+import { scenarioToJson } from '@app/models/scenario';
+import { infrastructureGroupToJson } from '@app/models/infrastructure-group';
 
 @Injectable({
   providedIn: 'root',
@@ -44,16 +46,24 @@ export class SimulationService {
 
     if (!scenario || !infraGroup) return;
 
-    const url = `${environment.apiUrl}/reseau/production/?scenario_id=${scenario.id}&liste_infra_id=${infraGroup.id}&is_journalier=false`;
+    const url = `${environment.apiUrl}/reseau/production/`;
+    const body = {
+      scenario: { ...scenarioToJson(scenario), id: scenario.id },
+      infra_group: { ...infrastructureGroupToJson(infraGroup), id: infraGroup.id }
+    };
 
     forkJoin({
       demande: this.demandeTemporalDataService.fetch(scenario.id),
-      production: this.http.post(url, {})
+      production: this.http.post(url, body)
     }).subscribe((result) => {
       this.cachedDemandeTemporal = result.demande;
       this.cachedSimulationResult = result.production;
       this.simulationResultsReceived.next();
     });
+  }
+
+  getSimulationResult(): any {
+    return this.cachedSimulationResult;
   }
 
   generateSimulationDemandeGraph() {

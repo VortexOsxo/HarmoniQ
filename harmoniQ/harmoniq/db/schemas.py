@@ -207,6 +207,12 @@ class ListeInfrastructuresResponse(ListeInfrastructuresBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+class ReseauSimulationPayload(BaseModel):
+    """Payload POST /api/reseau/production — scénario + groupe d'infra."""
+    scenario: ScenarioResponse
+    infra_group: ListeInfrastructuresResponse
+
 #-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
 class TurbineModel(str, PyEnum):

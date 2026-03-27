@@ -1,0 +1,25 @@
+.network-results-container {
+  overflow-y: auto;
+  height: 100%;
+}
+
+.kpi-card {
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.kpi-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.table-responsive {
+  max-height: 260px;
+  overflow-y: auto;
+}

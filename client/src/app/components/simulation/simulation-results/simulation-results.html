@@ -20,6 +20,13 @@
                 <app-scenario-temporal-demand-graph />
             </ng-template>
         </li>
+
+        <li [ngbNavItem]="'reseau'">
+            <button ngbNavLink>Résultats réseau</button>
+            <ng-template ngbNavContent>
+                <app-scenario-network-results />
+            </ng-template>
+        </li>
     </ul>
 
     <div [ngbNavOutlet]="nav" class="flex-grow-1 w-100"></div>

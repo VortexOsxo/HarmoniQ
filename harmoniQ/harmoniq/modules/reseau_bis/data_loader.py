@@ -1169,6 +1169,10 @@ def _load_demand_from_demande_db(
 
         # Aligner sur les snapshots du scénario
         aligned = result.reindex(snapshots, method="nearest", tolerance="1H").fillna(0.0)
+
+        # +7% uplift pour représenter les pertes de transport et distribution (T&D)
+        aligned = aligned * 1.07
+
         _DEMAND_CACHE[_dcache_key] = aligned
         # Sauvegarder en parquet pour les runs suivants (évite la requête SQL de 2 min)
         try:
