@@ -449,7 +449,13 @@ def build_pypsa_network(
         )
 
     if isinstance(demand_profile, pd.DataFrame):
-        network.loads_t.p_set = demand_profile.reindex(index=network.snapshots).fillna(0.0)
+        # Filtrer aux loads existants (après _remove_isolated_buses certains bus Conso
+        # peuvent avoir été retirés). Sans ce filtre, les colonnes orphelines ont le même
+        # nom que des Bus → linopy confond les dimensions 'Load' et 'Bus' → erreur xarray.
+        network.loads_t.p_set = demand_profile.reindex(
+            index=network.snapshots,
+            columns=[c for c in demand_profile.columns if c in network.loads.index],
+        ).fillna(0.0)
 
     # Diagnostic de connectivité : détecter les composantes déconnectées qui ont
     # de la demande mais aucun générateur / link.  De telles composantes rendent

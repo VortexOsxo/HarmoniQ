@@ -375,10 +375,14 @@ def _compute_infra_report(network: pypsa.Network) -> List[Dict[str, Any]]:  # no
             if line_name in seen or line_name not in network.lines.index:
                 continue
             max_flow    = float(p0[line_name].abs().max())
+            if math.isnan(max_flow):
+                continue  # OPF non convergé pour cette ligne
             s_nom_total = float(network.lines.at[line_name, "s_nom"])
             if s_nom_total <= 0 or max_flow <= s_nom_total:
                 continue
             s_nom_pc    = float(network.lines.at[line_name, "s_nom_per_circuit"]) if has_per_circuit else s_nom_total
+            if math.isnan(s_nom_pc) or s_nom_pc <= 0:
+                continue
             nb_current  = max(1, round(s_nom_total / max(s_nom_pc, 1)))
             nb_needed   = math.ceil(max_flow / max(s_nom_pc, 1))
             if nb_needed <= nb_current:
