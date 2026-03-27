@@ -32,7 +32,7 @@ export class SimulationPage implements AfterViewInit {
 
   constructor(private bootstrap: NgbModal) { }
 
-  @ViewChild(ScenarioTemporalSimulation) temporalSim!: ScenarioTemporalSimulation;
+  @ViewChild(ScenarioTemporalSimulation) temporalSim?: ScenarioTemporalSimulation;
 
   simulationService = inject(SimulationService);
   stepService      = inject(SimulationStepService);
@@ -70,6 +70,14 @@ export class SimulationPage implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.simulationService.launchSimulation();
+  }
+
+  get temporalGranularity(): string {
+    return this.temporalSim?.selectedGranularity ?? 'original';
+  }
+
+  onTemporalGranularityChange(granularity: string): void {
+    this.temporalSim?.onGranularityChange(granularity);
   }
 
   scrollTo(id: string) {
