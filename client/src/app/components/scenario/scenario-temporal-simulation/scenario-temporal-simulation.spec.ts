@@ -2,7 +2,6 @@ import { render } from '@testing-library/angular';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ScenarioTemporalSimulation } from './scenario-temporal-simulation';
 import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
-import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
 
 vi.mock('leaflet', () => ({
@@ -34,11 +33,6 @@ const mockGraphService = {
   getProductionNodes: vi.fn().mockReturnValue([]),
 };
 
-const mockDemandeGraphService = {
-  cachedData: null as any,
-  getStepName: vi.fn().mockReturnValue('Generation de la demande temporelle'),
-};
-
 const mockStepService = {
   steps: signal([] as any[]),
   currentStepIndex: signal(-1),
@@ -50,7 +44,6 @@ async function renderComponent() {
   return render(ScenarioTemporalSimulation, {
     providers: [
       { provide: SimulationTemporalGraphService, useValue: mockGraphService },
-      { provide: DemandeTemporalGraphService, useValue: mockDemandeGraphService },
       { provide: SimulationStepService, useValue: mockStepService },
     ],
     schemas: [NO_ERRORS_SCHEMA],
@@ -61,7 +54,6 @@ describe('ScenarioTemporalSimulation', () => {
   beforeEach(() => {
     mockGraphService.cachedSimulationResult = null;
     mockGraphService.cachedDemandeResult = null;
-    mockDemandeGraphService.cachedData = null;
     mockStepService.steps.set([]);
   });
 
@@ -92,7 +84,7 @@ describe('ScenarioTemporalSimulation', () => {
 
     it('should call renderDemandPreview when only demand data is available', async () => {
       mockGraphService.cachedSimulationResult = null;
-      mockDemandeGraphService.cachedData = MOCK_DEMANDE_RESULT;
+      mockGraphService.cachedDemandeResult = MOCK_DEMANDE_RESULT;
       const { fixture } = await renderComponent();
       fixture.componentInstance.onGranularityChange('daily');
       expect(mockGraphService.renderDemandPreview).toHaveBeenCalledWith(MOCK_DEMANDE_RESULT, 'daily');
@@ -101,7 +93,6 @@ describe('ScenarioTemporalSimulation', () => {
     it('should not call handleData or renderDemandPreview when no data is available', async () => {
       mockGraphService.cachedSimulationResult = null;
       mockGraphService.cachedDemandeResult = null;
-      mockDemandeGraphService.cachedData = null;
       const { fixture } = await renderComponent();
       fixture.componentInstance.onGranularityChange('weekly');
       expect(mockGraphService.handleData).not.toHaveBeenCalled();
@@ -122,17 +113,25 @@ describe('ScenarioTemporalSimulation', () => {
       expect(fixture.componentInstance.hasDemandData).toBe(false);
     });
 
-    it('should return false when the demand step is not completed', async () => {
+    it('should return false when the simulation step is pending', async () => {
       mockStepService.steps.set([
-        { name: 'Generation de la demande temporelle', status: 'loading' },
+        { name: 'Simulation du reseau complet', status: 'pending' },
       ]);
       const { fixture } = await renderComponent();
       expect(fixture.componentInstance.hasDemandData).toBe(false);
     });
 
-    it('should return true when the demand step is completed', async () => {
+    it('should return true when the simulation step is loading (demand arrived)', async () => {
       mockStepService.steps.set([
-        { name: 'Generation de la demande temporelle', status: 'completed' },
+        { name: 'Simulation du reseau complet', status: 'loading' },
+      ]);
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.hasDemandData).toBe(true);
+    });
+
+    it('should return true when the simulation step is completed', async () => {
+      mockStepService.steps.set([
+        { name: 'Simulation du reseau complet', status: 'completed' },
       ]);
       const { fixture } = await renderComponent();
       expect(fixture.componentInstance.hasDemandData).toBe(true);

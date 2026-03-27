@@ -5,7 +5,6 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import { Subject } from 'rxjs';
 import { ProductionNode } from '@app/components/scenario/scenario-demand-prod-sankey/sankey-data.types';
-import { DemandeTemporalGraphService } from './graph-services/demande-temporal-graph-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from './simulation-step-service';
@@ -32,7 +31,6 @@ export class SimulationService {
         private scenariosService: ScenariosService,
         private infrastructuresService: InfrastruturesService,
         private http: HttpClient,
-        private demandeTemporalGraphService: DemandeTemporalGraphService,
         private demandeSankeyGraphService: DemandeSankeyGraphService,
         private simulationTemporalGraphService: SimulationTemporalGraphService,
         private simulationCostGraphService: SimulationCostGraphService,
@@ -87,7 +85,6 @@ export class SimulationService {
             this.simulationCostGraphService,
             this.simulationCo2GraphService,
             this.demandeSankeyGraphService,
-            this.demandeTemporalGraphService,
             this.simulationTemporalGraphService,
         ];
 

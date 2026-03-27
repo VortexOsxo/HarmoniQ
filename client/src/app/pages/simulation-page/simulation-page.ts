@@ -73,7 +73,7 @@ export class SimulationPage implements AfterViewInit {
   }
 
   get temporalGranularity(): string {
-    return this.temporalSim?.selectedGranularity ?? 'original';
+    return this.temporalSim?.selectedGranularity ?? 'daily';
   }
 
   onTemporalGranularityChange(granularity: string): void {
