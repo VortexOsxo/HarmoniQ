@@ -173,12 +173,6 @@ class ReseauSimulationPayload(BaseModel):
     scenario: ScenarioResponse
     infra_group: SimulationInfraGroup
 
-
-class ReseauSimulationPayload(BaseModel):
-    """Payload POST /api/reseau/production — scénario + groupe d'infra."""
-    scenario: ScenarioResponse
-    infra_group: ListeInfrastructuresResponse
-
 #-----#-----#-----#-----# Eolienne Base #-----#-----#-----#-----#
 
 class TurbineModel(str, PyEnum):
