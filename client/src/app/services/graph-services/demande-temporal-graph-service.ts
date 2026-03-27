@@ -34,6 +34,8 @@ export class DemandeTemporalGraphService implements SimulationStep {
     }
 
     public handleData(apidata: any, granularity: string = 'original') {
+        if (!document.getElementById(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID)) return;
+
         let xval = Object.keys(apidata.total_electricity);
         let yval = Object.values(apidata.total_electricity).map((value: any) => value / 1000);
 
@@ -55,7 +57,7 @@ export class DemandeTemporalGraphService implements SimulationStep {
             'Demande Électrique Totale',
             'Demande (MW)',
             granularity,
-            { margin: { t: 80 }, height: 800 }
+            { margin: { t: 80 }, height: Math.floor(window.innerHeight * 0.65) }
         );
 
         Plotly.newPlot(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID, [trace], layout as any, { responsive: true });

@@ -2,44 +2,210 @@
     <app-simulation-top-bar />
 
     <div class="main-layout">
-
         <aside class="sidebar">
             <div class="sidebar-content">
-                <div class="sidebar-header d-flex align-items-center justify-content-between bg-primary text-white p-3">
-                    <h3 class="m-0 fs-5 fw-bold">Étapes de Simulation</h3>
+                <div class="sidebar-header">
+                    <h3 class="sidebar-title">Sections</h3>
                 </div>
-                <div class="step-list">
-                    @for (step of stepService.steps(); track step.name; let i = $index) {
-                    <div class="step-item" [class.active]="stepService.currentStepIndex() === i"
-                        [class.completed]="step.status === 'completed'" (click)="scrollToGraph(i)">
-                        <div class="step-status-icon">
-                            @if (step.status === 'completed') {
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                            } @else if (step.status === 'loading') {
-                            <i class="fa-solid fa-circle-notch fa-spin text-primary"></i>
-                            } @else {
-                            <i class="fa-regular fa-circle text-muted"></i>
-                            }
-                        </div>
-                        <span class="step-name">{{ step.name }}</span>
+
+                @if (isSimulating) {
+                    <div class="loading-banner">
+                        <i class="fa-solid fa-circle-notch fa-spin me-2"></i>
+                        <span>{{ currentStepName }}…</span>
                     </div>
+                }
+
+                <nav class="section-list">
+                    @for (section of sections; track section.id) {
+                        <button class="section-item" (click)="scrollTo(section.id)">
+                            <i class="fa-solid {{ section.icon }} section-icon"></i>
+                            <div class="section-text">
+                                <span class="section-title">{{ section.title }}</span>
+                                <span class="section-desc">{{ section.desc }}</span>
+                            </div>
+                            <span class="section-indicator">
+                                <i
+                                    class="fa-solid {{ getSectionIndicator(section).icon }}"
+                                    [style.color]="getSectionIndicator(section).color"
+                                ></i>
+                            </span>
+                        </button>
                     }
-                </div>
-                <div class="sidebar-footer mt-auto p-3">
+                </nav>
+
+                <div class="sidebar-footer">
+                    <button
+                        class="btn btn-export w-100 mb-2"
+                        (click)="simulationService.exportSimulationToCSV()"
+                    >
+                        <i class="fa-solid fa-file-arrow-down me-2"></i>Exporter
+                    </button>
                     <button class="btn btn-quiz w-100" (click)="openQuiz()">
-                        Lancer le Quiz
+                        <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
                     </button>
                 </div>
             </div>
         </aside>
 
         <main class="page-content">
-            <div class="graph-content">
-                <app-scenario-cost-simulation id="step-0" />
-                <app-scenario-co2-simulation id="step-1" />
-                <app-scenario-demand-prod-sankey id="step-2" />
-                <app-scenario-temporal-demand-graph id="step-3" />
-                <app-scenario-temporal-simulation id="step-4" />
+            <!-- Hidden Plotly target for DemandeTemporalGraphService (merged into temporal simulation card) -->
+            <div id="temporal-demande-production-id" style="display: none" aria-hidden="true"></div>
+
+            <div class="dashboard-grid">
+                <!-- Cost -->
+                <div class="dashboard-card card-half" id="section-cost">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-coins card-header-icon"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="card-header-title">Coût du réseau</h5>
+                            <p class="card-header-desc">
+                                Estimation du coût total d'exploitation du réseau énergétique
+                            </p>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
+                                [class.active]="costService.costMode === 'annuel'"
+                                (click)="costService.setCostMode('annuel')"
+                            >
+                                Coût Annuel
+                            </button>
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
+                                [class.active]="costService.costMode === 'construction'"
+                                (click)="costService.setCostMode('construction')"
+                            >
+                                Construction
+                            </button>
+                        </div>
+                    </div>
+                    <app-scenario-cost-simulation />
+                </div>
+
+                <!-- CO2 -->
+                <div class="dashboard-card card-half" id="section-co2">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-cloud card-header-icon"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="card-header-title">Émissions CO₂</h5>
+                            <p class="card-header-desc">
+                                Bilan carbone des sources de production du scénario
+                            </p>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
+                                [class.active]="co2Service.costMode === 'annuel'"
+                                (click)="co2Service.setCostMode('annuel')"
+                            >
+                                Émissions Annuelles
+                            </button>
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
+                                [class.active]="co2Service.costMode === 'construction'"
+                                (click)="co2Service.setCostMode('construction')"
+                            >
+                                Construction
+                            </button>
+                        </div>
+                    </div>
+                    <app-scenario-co2-simulation />
+                </div>
+
+                <!-- Sankey -->
+                <div class="dashboard-card card-full" id="section-sankey">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-diagram-project card-header-icon"></i>
+                        <div>
+                            <h5 class="card-header-title">Flux de production</h5>
+                            <p class="card-header-desc">
+                                Répartition des flux d'énergie entre les sources de production et la
+                                demande
+                            </p>
+                        </div>
+                    </div>
+                    <app-scenario-demand-prod-sankey />
+                </div>
+
+                <!-- Temporal simulation -->
+                <div class="dashboard-card card-full" id="section-temporal">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-chart-line card-header-icon"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="card-header-title">Production &amp; Demande</h5>
+                            <p class="card-header-desc">
+                                Évolution temporelle de la production par source et de la demande
+                                électrique
+                            </p>
+                        </div>
+                        @if (temporalSim?.hasDemandData ?? false) {
+                            <app-granularity-selector
+                                [selected]="temporalSim.selectedGranularity"
+                                (granularityChange)="temporalSim.onGranularityChange($event)">
+                            </app-granularity-selector>
+                        }
+                    </div>
+                    <app-scenario-temporal-simulation />
+                </div>
+
+                <!-- Surproduction placeholder -->
+                <div class="dashboard-card card-full" id="section-overprod">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-bolt-lightning card-header-icon"></i>
+                        <div>
+                            <h5 class="card-header-title">
+                                Surproduction / Sous-production des infrastructures
+                            </h5>
+                            <p class="card-header-desc">
+                                Quantité de surproduction et de sous-production pour l'ensemble des
+                                infrastructures du réseau énergétique
+                            </p>
+                        </div>
+                    </div>
+                    <div class="not-implemented-area">
+                        <i class="fa-solid fa-clock not-implemented-icon"></i>
+                        <p class="not-implemented-text">Graphique à venir</p>
+                    </div>
+                </div>
+
+                <!-- Transport + Eco side-by-side -->
+                <div class="dashboard-card card-half" id="section-transport">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-triangle-exclamation card-header-icon"></i>
+                        <div>
+                            <h5 class="card-header-title">Problèmes de transport du réseau</h5>
+                            <p class="card-header-desc">
+                                Problèmes liés aux limites de transport, congestions et dépassements
+                                de capacité
+                            </p>
+                        </div>
+                    </div>
+                    <div class="not-implemented-area">
+                        <i class="fa-solid fa-clock not-implemented-icon"></i>
+                        <p class="not-implemented-text">Indicateurs à venir</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card card-half" id="section-eco">
+                    <div class="card-header-label">
+                        <i class="fa-solid fa-leaf card-header-icon"></i>
+                        <div>
+                            <h5 class="card-header-title">Impact écologique &amp; rétroaction</h5>
+                            <p class="card-header-desc">
+                                Indicateurs d'impact écologique et messages de rétroaction
+                                contextuels basés sur le scénario
+                            </p>
+                        </div>
+                    </div>
+                    <div class="not-implemented-area">
+                        <i class="fa-solid fa-clock not-implemented-icon"></i>
+                        <p class="not-implemented-text">Indicateurs à venir</p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>

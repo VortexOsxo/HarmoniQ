@@ -52,6 +52,8 @@ export class SimulationCostGraphService implements SimulationStep {
     }
 
     public handleData(simulationResult: any) {
+        if (!document.getElementById(graphServiceConfig.COST_SIMULATION_ID)) return;
+
         const costs: any[] = [];
         const titles: any[] = [];
         const colors: string[] = [];
@@ -89,7 +91,7 @@ export class SimulationCostGraphService implements SimulationStep {
             yaxis: { 
                 title: { text: this.costMode === 'annuel' ? "Cout annuel (Milliards $)" : "Cout de construction (Milliards $)", font: { size: 14, color: '#7f8c8d' } }
             },
-            height: 800,
+            height: Math.floor(window.innerHeight * 0.55),
             margin: { t: 80, b: 100, l: 100, r: 40 }
         };
 
