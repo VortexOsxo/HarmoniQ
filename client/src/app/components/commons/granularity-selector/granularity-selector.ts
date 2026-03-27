@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
     <div class="w-100 mb-2 d-flex align-items-center justify-content-end">
         <label class="me-2 small font-weight-bold text-muted text-uppercase">Granularité:</label>
         <select class="form-select form-select-sm w-auto shadow-sm" [value]="selected" (change)="onChange($event)">
-            <option value="original">Horaires (Défaut)</option>
-            <option value="daily">Journalier</option>
+            <option value="original">Horaires</option>
+            <option value="daily">Journalier (Défaut)</option>
             <option value="weekly">Hebdomadaire</option>
             <option value="monthly">Mensuel</option>
         </select>
@@ -29,7 +29,7 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class GranularitySelectorComponent {
-  @Input() selected: string = 'original';
+  @Input() selected: string = 'daily';
   @Output() granularityChange = new EventEmitter<string>();
 
   onChange(event: any) {
