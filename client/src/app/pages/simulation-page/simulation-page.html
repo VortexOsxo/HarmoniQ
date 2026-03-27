@@ -142,10 +142,11 @@
                                 électrique
                             </p>
                         </div>
-                        @if (temporalSim?.hasDemandData ?? false) {
+                        @if (temporalSim?.hasDemandData) {
                             <app-granularity-selector
-                                [selected]="temporalSim.selectedGranularity"
-                                (granularityChange)="temporalSim.onGranularityChange($event)">
+                                [selected]="temporalGranularity"
+                                (granularityChange)="onTemporalGranularityChange($event)"
+                            >
                             </app-granularity-selector>
                         }
                     </div>
@@ -178,10 +179,7 @@
                         <i class="fa-solid fa-triangle-exclamation card-header-icon"></i>
                         <div>
                             <h5 class="card-header-title">Problèmes de transport du réseau</h5>
-                            <p class="card-header-desc">
-                                Problèmes liés aux limites de transport, congestions et dépassements
-                                de capacité
-                            </p>
+                            <p class="card-header-desc">...</p>
                         </div>
                     </div>
                     <div class="not-implemented-area">
@@ -195,10 +193,7 @@
                         <i class="fa-solid fa-leaf card-header-icon"></i>
                         <div>
                             <h5 class="card-header-title">Impact écologique &amp; rétroaction</h5>
-                            <p class="card-header-desc">
-                                Indicateurs d'impact écologique et messages de rétroaction
-                                contextuels basés sur le scénario
-                            </p>
+                            <p class="card-header-desc">...</p>
                         </div>
                     </div>
                     <div class="not-implemented-area">
