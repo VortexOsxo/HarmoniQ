@@ -1,4 +1,4 @@
-import { Injectable, effect } from '@angular/core';
+import { Injectable, effect, signal } from '@angular/core';
 declare const L: any;
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
@@ -27,6 +27,12 @@ export class MapService {
     nucleaire: {},
   }
 
+  // Filter Signals
+  mapFilterName = signal('');
+  mapFilterTypes = signal<Set<string>>(new Set(types));
+  mapFilterMinPower = signal<number | null>(null);
+  mapFilterMaxPower = signal<number | null>(null);
+
   private previousSelectedType: string | null = null;
   private previousSelectedId: string | null = null;
 
@@ -51,6 +57,15 @@ export class MapService {
         this.infrasService.getInfrasSignalByType(type)();
         this.reloadMarkers();
       });
+    });
+
+    // Auto-reload markers when any filter changes
+    effect(() => {
+      this.mapFilterName();
+      this.mapFilterTypes();
+      this.mapFilterMinPower();
+      this.mapFilterMaxPower();
+      this.reloadMarkers();
     });
 
     // Watch for selected infra changes to highlight the marker in blue
@@ -134,8 +149,6 @@ export class MapService {
       infrasService.createInfra(className, type, lat, lng);
     });
 
-    this.mapLineService.addLinesToMap(map);
-
     this._map = map;
 
     this.clusterGroup = (L as any).markerClusterGroup({
@@ -161,7 +174,35 @@ export class MapService {
 
   initMarkers() {
     if (!this.map) return;
-    types.forEach(type => this.addMarkers(type, this.infrasService.getInfrasSignalByType(type)()));
+
+    const searchTerm = this.mapFilterName().trim().toLowerCase();
+    const allowedTypes = this.mapFilterTypes();
+    const minPower = this.mapFilterMinPower();
+    const maxPower = this.mapFilterMaxPower();
+
+    types.forEach(type => {
+      if (!allowedTypes.has(type)) return;
+
+      let infras = this.infrasService.getInfrasSignalByType(type)();
+
+      // Apply Name filter
+      if (searchTerm) {
+        infras = infras.filter(i => (i.nom || '').toLowerCase().includes(searchTerm));
+      }
+
+      // Apply Power filters
+      if (minPower !== null || maxPower !== null) {
+        infras = infras.filter(i => {
+          const p = (i as any).puissance_nominal;
+          if (typeof p !== 'number') return true; // fallback if missing
+          if (minPower !== null && p < minPower) return false;
+          if (maxPower !== null && p > maxPower) return false;
+          return true;
+        });
+      }
+
+      this.addMarkers(type, infras);
+    });
   }
 
   destroyMarkers() {

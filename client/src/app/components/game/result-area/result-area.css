@@ -1,0 +1,213 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+#resultsContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  max-height: calc(100vh - 6rem);
+  gap: 1rem;
+  background-color: #f9fafb;
+  border-radius: 20px;
+  padding: 0.8rem;
+}
+
+#scoreHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0;
+}
+
+#scoreHeader h1 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0;
+}
+
+#scoreMessage {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  max-width: 80%;
+}
+
+#finalScore .fraction {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111827;
+  display: block;
+}
+
+#scoreDashboard {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.3rem;
+}
+
+.scoreCard {
+  flex: 1 1 130px;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  gap: 0.1rem;
+  cursor: pointer;
+  background-color: #d1fae5;
+}
+
+.scoreCard .cardLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.scoreCard .cardValue {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+#answersReview {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+#answersReview h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+#answerReviewBox {
+  max-height: 38vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+::ng-deep .reviewItem {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.8rem;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+::ng-deep .reviewItem:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+::ng-deep .reviewContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+::ng-deep .reviewQuestion {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.4;
+}
+
+::ng-deep .reviewUserAnswer,
+::ng-deep .reviewCorrectAnswer {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+::ng-deep .reviewUserAnswer.red {
+  color: #ef4444 !important;
+}
+
+::ng-deep .reviewUserAnswer.green {
+  color: #10b981 !important;
+}
+
+::ng-deep .reviewUserAnswer.orange {
+  color: #f97316 !important;
+}
+
+#resultActions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.resultButton {
+  min-width: 160px;
+  padding: 0.6rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #4361ee, #3a56d4);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+.resultButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+  color: #fff;
+}
+
+.resultButton:active {
+  transform: translateY(0);
+}
+
+.infoMessage {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #888;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+img {
+  height: 1em;
+  width: auto;
+  max-width: 1em;
+  vertical-align: -0.125em;
+  display: inline-block;
+}

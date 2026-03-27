@@ -74,7 +74,7 @@ export class TutorialService {
         {
             title: 'Paramètres du Scénario',
             icon: 'fa-solid fa-sliders',
-            description: 'Le scénario détermine la durée de la simulation, le pas de temps, les conditions météorologiques et d\'autres paramètres socio-économiques comme l\'optimisme.',
+            description: 'Le scénario détermine la durée de la simulation, le pas de temps et les conditions météorologiques.',
             targetSelector: 'app-scenario-selector',
             position: 'right',
             delayBeforePosition: 350,
@@ -104,9 +104,9 @@ export class TutorialService {
             position: 'right',
         },
         {
-            title: 'Conditions et Optimisme',
+            title: 'Conditions',
             icon: 'fa-solid fa-cloud-sun',
-            description: 'Configurez la météo, le modèle de consommation, ainsi que l\'optimisme social et écologique pour votre scénario.',
+            description: 'Configurez la météo ainsi que le modèle de consommation pour votre scénario.',
             targetSelector: '#scenario-conditions-group',
             position: 'right',
         },

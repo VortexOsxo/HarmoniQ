@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -224,6 +224,20 @@ async def calculer_cout(
     }
     return results
 
+@router.post("/emission/{infra_type}")
+async def calculer_emission(
+    infra_type: str, 
+    payload: schemas.InfraSimulationPayload
+):
+    scenario = hydrate_model(schemas.Scenario, payload.scenario)
+    infra = get_infra_object(infra_type, payload)
+    infra.charger_scenario(scenario)
+    results = {
+        'co2_annuel': infra.calculer_co2_eq_pas_de_temps(timedelta(days=365)),
+        'co2_construction': infra.calculer_co2_eq_construction(),
+    }
+    return results
+
 
 #-----#-----#-----#-----#-----#  Fake Data  #-----#-----#-----#-----#-----#
 
@@ -279,7 +293,48 @@ async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, i
     
     return response
 
+@reseau_router.post("/cout")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
+    scenario = payload.scenario
+    infra_group = payload.infra_group
+    
+    infra_reseau = InfraReseau(infra_group)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_cout(infra_group)
+
+@reseau_router.post("/emission")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
+    scenario = payload.scenario
+    infra_group = payload.infra_group
+    
+    infra_reseau = InfraReseau(infra_group)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_co2(infra_group)
+
 router.include_router(reseau_router)
+
+#/informativegame/question
+#-----#-----#-----#-----#-----#-----#  Ludification   #-----#-----#-----#-----#-----#-----#
+from .Ludification import selectQuestion
+
+game_router = APIRouter(
+    prefix="/jeux-informatifs",
+    tags=["Jeux"],
+    responses={404: {"description": "Not found"}},
+)
+
+@game_router.get("/quiz")
+async def fetch_question(
+    answeredQuestionList: List[int] = Query(default=[])
+):
+    quiz, answeredQuestionList = selectQuestion(answeredQuestionList)
+
+    return {       
+        "questions": quiz,
+    "answeredQuestionList": answeredQuestionList
+    }
+
+router.include_router(game_router)
 
 #-----#-----#-----#-----#-----#  Ajout de toutes les routes  #-----#-----#-----#-----#-----#
 

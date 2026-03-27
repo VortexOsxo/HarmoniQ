@@ -9,7 +9,7 @@ COPY harmoniq.sql /docker-entrypoint-initdb.d/harmoniq.sql
 RUN set -eux; \
     docker-entrypoint.sh postgres & \
     SERVER_PID=$!; \
-    timeout 7200 bash -c 'until pg_isready -h localhost -U user; do sleep 5; done'; \
+    timeout 7200 bash -c 'until pg_isready -h localhost -U harmoniq > /dev/null 2>&1; do echo "processing harmoniq.sql DB Size: $(du -sh $PGDATA 2>/dev/null | cut -f1)"; sleep 15; done'; \
     gosu postgres pg_ctl -D "$PGDATA" -m fast stop; \
     wait $SERVER_PID || true; \
     rm -f /docker-entrypoint-initdb.d/harmoniq.sql

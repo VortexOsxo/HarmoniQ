@@ -1,17 +1,15 @@
-@if (graphState() === GraphState.Unavailable) {
-  <p>Choisis un scénario pour voir des données</p>
-} @else if (graphState() === GraphState.Loading) {
-  <p>Chargement des données...</p>
-} @else if (graphState() === GraphState.Displayable) {
-  <div class="sankey-wrapper">
-    <h2 class="sankey-title">Détails de l'impact CO<sub>2</sub> de la production au Québec.</h2>
-    <div class="sankey-view">
-      <div class="sankey-diagram-wrapper">
-        <app-sankey-diagram [data]="sankeyData" />
-      </div>
-      <div class="co2-panel-wrapper">
-        <app-co2-details-panel [data]="co2Data" />
-      </div>
+@if (selectedScenario()) {
+    <div class="sankey-wrapper">
+        <div class="sankey-view">
+            <div class="sankey-diagram-wrapper">
+                <h2 class="sankey-title">
+                    Détails de l'impact CO<sub>2</sub> de la production au Québec
+                </h2>
+                <app-sankey-diagram [data]="sankeyData" [showProduction]="simulationRan" />
+            </div>
+            <div class="co2-panel-wrapper">
+                <app-co2-details-panel [data]="co2Data" [loading]="!simulationRan" />
+            </div>
+        </div>
     </div>
-  </div>
 }
