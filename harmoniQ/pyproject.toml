@@ -42,6 +42,8 @@ dependencies = [
     "pypsa[hdf5]",
     "pyarrow",
     "fastparquet",
+    "xarray",
+    "cdsapi",
     "openmeteo-requests",
     "requests-cache",
     "retry-requests"
@@ -51,6 +53,11 @@ dependencies = [
 init-db = "harmoniq.scripts.init_database:main"
 load-db = "harmoniq.scripts.load_database:main"
 launch-app = "harmoniq.scripts.lance_webserver:main"
+migrate-weibull = "harmoniq.scripts.migrate_add_weibull_columns:main"
+migrate-weibull-v2 = "harmoniq.scripts.migrate_add_weibull_v2_columns:main"
+backfill-weibull = "harmoniq.scripts.backfill_weibull_eolien:main"
+fetch-era5-qc-2024 = "harmoniq.scripts.fetch_era5_quebec_2024:main"
+select-wind-sites-2035 = "harmoniq.scripts.select_wind_sites_2035:main"
 
 [project.optional-dependencies]
 dev = [

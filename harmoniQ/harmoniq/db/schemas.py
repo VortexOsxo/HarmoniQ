@@ -247,6 +247,36 @@ class EolienneParcBase(BaseModel):
     puissance_nominal: float = Field(
         ..., description="Puissance nominale des turbines dans le parc (kW)", suggestion=2000
     )
+    weibull_k: Optional[float] = Field(
+        None, description="Coefficient de forme Weibull k (optionnel)"
+    )
+    weibull_c: Optional[float] = Field(
+        None, description="Coefficient d'echelle Weibull c en m/s (optionnel)"
+    )
+    weibull_ref_year: Optional[int] = Field(
+        None, description="Annee de reference utilisee pour le fit Weibull"
+    )
+    weibull_sample_count: Optional[int] = Field(
+        None, description="Nombre d'echantillons utilises pour estimer Weibull"
+    )
+    weibull_updated_at: Optional[str] = Field(
+        None, description="Horodatage ISO de la derniere mise a jour des coefficients"
+    )
+    weibull_ref_year_start: Optional[int] = Field(
+        None, description="Annee de debut utilisee pour le fit Weibull multi-annees"
+    )
+    weibull_ref_year_end: Optional[int] = Field(
+        None, description="Annee de fin utilisee pour le fit Weibull multi-annees"
+    )
+    weibull_granularity: Optional[str] = Field(
+        None, description="Granularite du fit Weibull (ex: annual_v1, seasonal_v1)"
+    )
+    weibull_weighting: Optional[str] = Field(
+        None, description="Strategie de ponderation temporelle du fit Weibull"
+    )
+    weibull_fit_details: Optional[str] = Field(
+        None, description="Details JSON du fit Weibull (annual + seasonal)"
+    )
 
 
 class EolienneParcCreate(EolienneParcBase):
@@ -272,6 +302,16 @@ class EolienneParc(SQLBase):
     hauteur_moyenne = Column(Float)
     modele_turbine = Column(String)
     puissance_nominal = Column(Float)
+    weibull_k = Column(Float, nullable=True)
+    weibull_c = Column(Float, nullable=True)
+    weibull_ref_year = Column(Integer, nullable=True)
+    weibull_sample_count = Column(Integer, nullable=True)
+    weibull_updated_at = Column(String, nullable=True)
+    weibull_ref_year_start = Column(Integer, nullable=True)
+    weibull_ref_year_end = Column(Integer, nullable=True)
+    weibull_granularity = Column(String, nullable=True)
+    weibull_weighting = Column(String, nullable=True)
+    weibull_fit_details = Column(String, nullable=True)
 
 #-----#-----#-----#-----# Solaire Base #-----#-----#-----#-----#
 
