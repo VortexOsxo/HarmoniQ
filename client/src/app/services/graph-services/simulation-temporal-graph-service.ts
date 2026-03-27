@@ -58,6 +58,8 @@ export class SimulationTemporalGraphService implements SimulationStep {
     }
 
     public handleData(simulationResult: any, demandeResult: any, granularity: string = 'original') {
+        if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;
+
         const productionData = simulationResult.production;
         let x = productionData.map((instance: any) => (instance["snapshot"]));
 
@@ -124,7 +126,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
             `Production et Demande (${this.scenariosService.selectedScenario()?.nom})`,
             'Puissance (MW)',
             granularity,
-            { height: 800 }
+            { height: Math.floor(window.innerHeight * 0.70) }
         );
 
         Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, traces, layout as any, { responsive: true });
@@ -148,6 +150,34 @@ export class SimulationTemporalGraphService implements SimulationStep {
             ['import', avg('total_import')],
         ];
         return carriers.map(([carrier, value]) => ({ ...CARRIER_NODE_DEFS[carrier], value: Math.round(value) }));
+    }
+
+    renderDemandPreview(demandeResult: any, granularity: string = 'original') {
+        if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;
+
+        let demandeX = Object.keys(demandeResult.total_electricity);
+        let demandeY = Object.values(demandeResult.total_electricity).map((value: any) => (value as number) / 1000);
+
+        if (granularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(demandeX, demandeY, granularity);
+            demandeX = aggregated.x;
+            demandeY = aggregated.y;
+        }
+
+        const demandTrace = {
+            ...this.graphService.getStandardTrace('Demande', demandeX, demandeY, '#2c3e50', `<b>%{y:.2f} MW</b>`),
+            line: { shape: 'spline', color: '#2c3e50', width: 2 },
+            fill: 'none'
+        };
+
+        const layout = this.graphService.getStandardLayout(
+            `Demande (${this.scenariosService.selectedScenario()?.nom})`,
+            'Puissance (MW)',
+            granularity,
+            { height: Math.floor(window.innerHeight * 0.70) }
+        );
+
+        Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, [demandTrace], layout as any, { responsive: true });
     }
 
     clear() {

@@ -52,6 +52,8 @@ export class SimulationCo2GraphService implements SimulationStep {
     }
 
     public handleData(simulationResult: any) {
+        if (!document.getElementById(graphServiceConfig.CO2_SIMULATION_ID)) return;
+
         const emissions: any[] = [];
         const titles: any[] = [];
         const colors: string[] = [];
@@ -89,7 +91,7 @@ export class SimulationCo2GraphService implements SimulationStep {
             yaxis: { 
                 title: { text: this.costMode === 'annuel' ? "CO2 annuel (Mt)" : "CO2 de construction (Mt)", font: { size: 14, color: '#7f8c8d' } }
             },
-            height: 800,
+            height: Math.floor(window.innerHeight * 0.55),
             margin: { t: 80, b: 100, l: 100, r: 40 }
         };
 
