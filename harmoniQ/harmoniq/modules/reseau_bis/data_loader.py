@@ -1,7 +1,7 @@
 """Chargeur de donnees pour `reseau_bis`.
 
 Sources:
-- Topologie  : Nouveau Reseau/bus_db_2026.xlsx + lines_db_2026.xlsx
+- Topologie  : DB (bus_db_03_26.csv + lines_db_03_26.csv chargés via init-db)
 - Demande    : harmoniq/db/demande.db (99 MRC québécoises, horaire)
 - Génération : DB via CRUD async + modules de production
 """
@@ -381,39 +381,67 @@ class NetworkDataLoaderBis:
         self.nucleaire_ids = _parse_ids(getattr(liste_infra, "central_nucleaire", None))
 
     def load_topology_from_db(self, db: Any) -> Dict[str, pd.DataFrame]:
-        """Charge la topologie.
+        """Charge la topologie depuis la DB (bus_db_03_26.csv / lines_db_03_26.csv via init-db).
 
-        Priorité 1 : bus_db_2026.xlsx + lines_db_2026.xlsx (Nouveau Réseau).
-        Priorité 2 : db.sqlite via CRUD async (fallback).
+        Les bus sont stockés avec :
+            name         = identifiant interne "Bus1", "Bus2", ...
+            display_name = nom géographique "Radisson", "La Grande-3", ...
+
+        Les lignes utilisent les identifiants internes (bus0="Bus1").
+        Ce loader remplace les identifiants par les noms géographiques (display_name)
+        pour que PyPSA et le reste du code voient "Radisson" partout.
         """
-        # --- Priorité 1 : xlsx Nouveau Réseau ---
-        if _BUS_XLSX.exists() and _LINES_XLSX.exists():
-            try:
-                return _load_topology_from_xlsx()
-            except Exception as exc:
-                logger.warning("Echec chargement xlsx Nouveau Reseau, fallback DB: %s", exc)
-
-        # --- Priorité 2 : DB sqlite ---
         buses_df = pd.DataFrame(columns=["name", "v_nom", "type", "x", "y", "control"])
         lines_df = pd.DataFrame(columns=["name", "bus0", "bus1", "type", "length", "s_nom"])
         line_types_df = _make_line_types_df()
 
         if not DB_INTEGRATION_AVAILABLE or db is None:
+            logger.warning("DB non disponible — topologie vide.")
             return {"buses": buses_df, "lines": lines_df, "line_types": line_types_df}
 
-        buses = _run_async(read_all_bus_async(db))
-        lines = _run_async(read_all_line_async(db))
-        line_types = _run_async(read_all_line_type_async(db))
+        buses_raw = _run_async(read_all_bus_async(db))
+        lines_raw = _run_async(read_all_line_async(db))
+        line_types_raw = _run_async(read_all_line_type_async(db))
 
-        if buses is not None:
-            buses_df = _select_columns(_records_to_df(buses), ["name", "v_nom", "type", "x", "y", "control"])
-        if lines is not None:
-            lines_df = _select_columns(_records_to_df(lines), ["name", "bus0", "bus1", "type", "length", "s_nom"])
-        if line_types is not None:
+        if buses_raw is not None:
+            raw_df = _records_to_df(buses_raw)
+
+            # Construire le mapping id_interne → nom_géographique AVANT de modifier raw_df["name"]
+            # (les clés du mapping sont les identifiants internes originaux "Bus1", "Bus2", …)
+            id_to_name: Dict[str, str] = {}
+            if "display_name" in raw_df.columns:
+                for _, row in raw_df.iterrows():
+                    internal = str(row.get("name", ""))
+                    display  = str(row.get("display_name", "")) if row.get("display_name") else ""
+                    id_to_name[internal] = display if display else internal
+                # Utiliser display_name comme nom PyPSA si disponible, sinon name
+                raw_df["name"] = raw_df["display_name"].where(
+                    raw_df["display_name"].notna() & (raw_df["display_name"] != ""),
+                    raw_df["name"],
+                )
+            buses_df = _select_columns(raw_df, ["name", "v_nom", "type", "x", "y", "control"])
+        else:
+            id_to_name = {}
+
+        if lines_raw is not None:
+            lines_df = _select_columns(
+                _records_to_df(lines_raw),
+                ["name", "bus0", "bus1", "type", "length", "s_nom"],
+            )
+            # Remplacer les identifiants internes par les noms géographiques
+            if id_to_name:
+                lines_df["bus0"] = lines_df["bus0"].map(lambda x: id_to_name.get(str(x), str(x)))
+                lines_df["bus1"] = lines_df["bus1"].map(lambda x: id_to_name.get(str(x), str(x)))
+
+        if line_types_raw is not None:
             line_types_df = _select_columns(
-                _records_to_df(line_types), ["name", "f_nom", "r_per_length", "x_per_length"]
+                _records_to_df(line_types_raw), ["name", "f_nom", "r_per_length", "x_per_length"]
             )
 
+        logger.info(
+            "Topologie chargée depuis DB : %d bus, %d lignes, %d types.",
+            len(buses_df), len(lines_df), len(line_types_df),
+        )
         return {"buses": buses_df, "lines": lines_df, "line_types": line_types_df}
 
     def load_generation_profiles(
