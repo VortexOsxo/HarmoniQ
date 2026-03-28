@@ -21,6 +21,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+# Water value cost — importé depuis reservoir_tracker pour éviter la duplication de logique.
+# Importé ici en module-level (pas de dépendance circulaire : reservoir_tracker n'importe pas data_loader).
+from .utils.reservoir_tracker import water_value_cost as _reservoir_water_value_cost
+
 # Pandas 3.0+ utilise ArrowStringArray par défaut → incompatible avec xarray/PyPSA 1.0.
 # On force le stockage Python classique pour toutes les colonnes string afin
 # d'éviter un TypeError lors de la construction du modèle linopy/xarray.
@@ -70,8 +74,6 @@ _BUS_XLSX           = _NOUVEAU_RESEAU_DIR / "bus_db_2026.xlsx"
 _LINES_XLSX         = _NOUVEAU_RESEAU_DIR / "lines_db_2026.xlsx"
 _DEMANDE_DB_PATH    = _HARMONIQ_DIR / "db" / "demande.db"
 _MRC_BUSES_CSV      = _HARMONIQ_DIR / "db" / "CSVs" / "buses.csv"
-_INFO_BARRAGES_CSV  = _HARMONIQ_DIR / "db" / "CSVs" / "Info_Barrages.csv"
-_APPORT_NATUREL_DIR = _HARMONIQ_DIR / "modules" / "hydro" / "apport_naturel"
 
 logger = logging.getLogger("ReseauBisDataLoader")
 
@@ -176,6 +178,33 @@ def _apply_winter_premium(costs: np.ndarray, snapshots: pd.DatetimeIndex) -> np.
     """
     premium = np.array([_WINTER_RESERVOIR_PREMIUM[ts.month - 1] for ts in snapshots])
     return costs + premium
+
+
+def _compute_initial_reservoir_pmax(
+    initial_fills: Dict[str, float],
+    reservoir_gen_names: List[str],
+    snapshots: pd.DatetimeIndex,
+) -> pd.DataFrame:
+    """Contrainte de réserve stratégique basée sur le fill initial (statique pour le 1er chunk).
+
+    L'optimiseur met à jour ce p_max_pu chunk par chunk via le feed-forward hydraulique.
+
+    Interpolation continue fill → p_max_pu :
+        fill ≥ 70 % → 0.95  (libre)
+        fill = 45 % → 0.50  (prudence)
+        fill ≤ 30 % → 0.15  (réserve stratégique — force import)
+    """
+    reservoir_pmax = pd.DataFrame(index=snapshots)
+    for gname in reservoir_gen_names:
+        fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
+        pmax_val = float(np.interp(fill, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]))
+        pmax_val = float(np.clip(pmax_val, 0.15, 0.95))
+        reservoir_pmax[gname] = pmax_val
+        logger.debug(
+            "Réserve stratégique %s : fill initial=%.0f%% → p_max_pu=%.2f",
+            gname, fill * 100, pmax_val,
+        )
+    return reservoir_pmax
 
 
 def _apply_hydro_fil_seasonal_profile(
@@ -508,22 +537,25 @@ class NetworkDataLoaderBis:
                 carrier = str(gen.get("carrier", ""))
                 if name:
                     marginal_cost_cols[name] = MARGINAL_COSTS.get(carrier, 10.0)
-            # --- Water value dynamique : trajectoire de fill par snapshot ---
+            # --- Water value initiale : coût basé sur le niveau initial du réservoir ---
+            # Le feed-forward dans l'optimiseur met à jour le coût chunk par chunk.
             reservoir_gen_names = [
                 gen.get("name") for _, gen in generators_df.iterrows()
                 if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
             ]
             reservoir_pmax_df = None
             if reservoir_gen_names:
-                fill_traj, reservoir_pmax_df = _compute_fill_trajectory(snapshots, reservoir_gen_names, generators_df, scenario)
+                initial_fills = _get_initial_reservoir_fill(scenario)
+                reservoir_pmax_df = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots)
                 for gname in reservoir_gen_names:
-                    if gname in fill_traj.columns:
-                        costs = _water_value_cost_vectorized(fill_traj[gname].values)
-                        costs = _apply_winter_premium(costs, snapshots)
-                        marginal_cost_cols[gname] = pd.Series(costs, index=snapshots)
-                    else:
-                        fill = _get_initial_reservoir_fill(scenario).get(gname, 0.70)
-                        marginal_cost_cols[gname] = _water_value_cost(fill)
+                    fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
+                    base_cost = float(_reservoir_water_value_cost(np.array([fill]))[0])
+                    costs = _apply_winter_premium(np.full(len(snapshots), base_cost), snapshots)
+                    marginal_cost_cols[gname] = pd.Series(costs, index=snapshots)
+                    logger.info(
+                        "Barrage %s : fill initial=%.0f%% → coût de base %.1f $/MWh (incl. prime hiver)",
+                        gname, fill * 100, base_cost,
+                    )
             mc_df = pd.DataFrame(
                 {n: [v] * len(snapshots) if not isinstance(v, pd.Series) else v
                  for n, v in marginal_cost_cols.items()},
@@ -551,31 +583,27 @@ class NetworkDataLoaderBis:
             if name:
                 marginal_cost_cols[name] = MARGINAL_COSTS.get(carrier, 10.0)
 
-        # --- Water value dynamique : trajectoire de fill par snapshot ---
-        # Le coût marginal d'un barrage réservoir dépend du remplissage saisonnier.
-        # On calcule une trajectoire de fill pré-LP via bilan hydrique simplifié
-        # (apports naturels CSV − turbinage estimé), puis on applique la courbe
-        # de coût continue _water_value_cost() à chaque snapshot.
+        # --- Water value initiale : coût basé sur le niveau initial du réservoir ---
+        # Pas de trajectoire pré-OPF fictive : le coût de départ est calculé depuis
+        # le fill initial uniquement. L'optimiseur met à jour chunk par chunk via le
+        # feed-forward hydraulique (ReservoirDamFeed + _update_reservoir_costs_and_pmax).
         reservoir_gen_names = [
             gen.get("name") for _, gen in generators_df.iterrows()
             if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
         ]
         _reservoir_pmax_for_later = None
         if reservoir_gen_names:
-            fill_traj, _reservoir_pmax_for_later = _compute_fill_trajectory(snapshots, reservoir_gen_names, generators_df, scenario)
+            initial_fills = _get_initial_reservoir_fill(scenario)
+            _reservoir_pmax_for_later = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots)
             for gname in reservoir_gen_names:
-                if gname in fill_traj.columns:
-                    costs = _water_value_cost_vectorized(fill_traj[gname].values)
-                    costs = _apply_winter_premium(costs, snapshots)
-                    marginal_cost_cols[gname] = pd.Series(costs, index=snapshots)
-                    logger.info(
-                        "Barrage %s : fill min=%.0f%% max=%.0f%% → coût %.1f–%.1f $/MWh (incl. prime hiver)",
-                        gname, fill_traj[gname].min() * 100, fill_traj[gname].max() * 100,
-                        costs.min(), costs.max(),
-                    )
-                else:
-                    fill = _get_initial_reservoir_fill(scenario).get(gname, 0.70)
-                    marginal_cost_cols[gname] = _water_value_cost(fill)
+                fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
+                base_cost = float(_reservoir_water_value_cost(np.array([fill]))[0])
+                costs = _apply_winter_premium(np.full(len(snapshots), base_cost), snapshots)
+                marginal_cost_cols[gname] = pd.Series(costs, index=snapshots)
+                logger.info(
+                    "Barrage %s : fill initial=%.0f%% → coût de base %.1f $/MWh (incl. prime hiver)",
+                    gname, fill * 100, base_cost,
+                )
 
         # --- Eolien (parallèle via ThreadPoolExecutor) ---
         # InfraParcEolienne.charger_scenario() est async mais appelle WeatherHelper.load()
@@ -1488,65 +1516,8 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
 
 
 # ---------------------------------------------------------------------------
-# Valeur de l'eau — coût marginal dynamique hydro réservoir
+# Niveau initial des réservoirs
 # ---------------------------------------------------------------------------
-
-def _water_value_cost(fill_level: float) -> float:
-    """Coût marginal de l'eau ($/MWh) — courbe continue en fonction du fill%.
-
-    Inspiré de EnergyUtils.calcul_cout_reservoir() (module reseau legacy)
-    mais recalibré pour le marché d'export (prix spot NE = 30 $/MWh).
-
-    Paramètres de la courbe :
-        cout_min       = 5 $/MWh   — réservoir plein (>85%), eau abondante
-        cout_max       = 80 $/MWh  — réservoir quasi-vide (<20%), réserve d'urgence
-        seuil_critique = 0.30      — sous ce niveau, croissance exponentielle
-
-    Logique de calibration (alignée sur prix import saisonnier hiver=15 $/MWh) :
-        - À fill > 85% :  ~5 $/MWh  → LP exporte librement (5 << 12 prix export)
-        - À fill = 70% : ~16 $/MWh  → LP commence à importer en hiver (16 > 15)
-        - À fill = 55% : ~22 $/MWh  → LP importe massivement en hiver
-        - À fill = 40% : ~40 $/MWh  → LP importe toute l'année
-        - À fill < 25% : ~80 $/MWh  → Réserve d'urgence
-
-    Sources :
-        - Sigholm Nordic Analysis — "water value ≈ marginal cost of displaced thermal"
-        - arXiv 2508.04854 — "Baseline hydropower offer curves" (MDP approach)
-        - HQ prix export moyen ~30 $/MWh (contrats NE/NY/Ontario)
-    """
-    cout_min = 5.0
-    cout_max = 80.0
-    seuil_critique = 0.30
-    fill = max(0.0, min(1.0, fill_level))
-
-    if fill < seuil_critique:
-        # Sous le seuil critique : exponentielle (urgence)
-        facteur = (seuil_critique - fill) / seuil_critique
-        return cout_min + (cout_max - cout_min) * math.exp(2.0 * facteur) / math.exp(2.0)
-    else:
-        # Au-dessus : linéaire décroissante (pente plus raide)
-        facteur = (1.0 - fill) / (1.0 - seuil_critique)
-        return cout_min + (cout_max / 2.5 - cout_min) * facteur
-
-
-def _water_value_cost_vectorized(fill_levels: np.ndarray) -> np.ndarray:
-    """Version vectorisée de _water_value_cost() pour appliquer sur un array."""
-    cout_min = 5.0
-    cout_max = 80.0
-    seuil_critique = 0.30
-    fills = np.clip(fill_levels, 0.0, 1.0)
-    costs = np.zeros_like(fills, dtype=np.float64)
-
-    below = fills < seuil_critique
-    facteur_below = (seuil_critique - fills[below]) / seuil_critique
-    costs[below] = cout_min + (cout_max - cout_min) * np.exp(2.0 * facteur_below) / np.exp(2.0)
-
-    above = ~below
-    facteur_above = (1.0 - fills[above]) / (1.0 - seuil_critique)
-    costs[above] = cout_min + (cout_max / 2.5 - cout_min) * facteur_above
-
-    return np.round(costs, 2)
-
 
 def _get_initial_reservoir_fill(scenario: Any) -> Dict[str, float]:
     """Retourne le niveau de remplissage initial des réservoirs par barrage.
@@ -1572,185 +1543,9 @@ def _get_initial_reservoir_fill(scenario: Any) -> Dict[str, float]:
     return fill
 
 
-# ---------------------------------------------------------------------------
-# Trajectoire de remplissage des réservoirs (bilan hydrique pré-LP)
-# ---------------------------------------------------------------------------
-# Même physique que reservoir_infill() dans harmoniq/modules/hydro/calcule.py :
-#   fill(t+1) = (volume × fill(t) + apport(t) × Δt − turbinage_estimé × Δt) / volume
-#
-# Différences vs l'original :
-#   1. Pas de dépendance à HydroGenerate (calculate_hp_potential)
-#   2. Pas d'appel DB (on charge Info_Barrages.csv directement)
-#   3. Traite tous les snapshots d'un coup (vs 1 timestep à la fois)
-#   4. Turbinage estimé via capacity_factor moyen (le LP décidera du vrai dispatch)
-#
-# Données utilisées (identiques à calcule.py) :
-#   - apport_naturel/{id_HQ}.csv → streamflow journalier (m³/s), 1961-2100
-#   - Info_Barrages.csv → volume_reservoir (m³), catch_coefficient, id_HQ
-# ---------------------------------------------------------------------------
+# NOTE : _water_value_cost() et _compute_fill_trajectory() ont été supprimés.
+# La courbe water_value_cost() est désormais importée depuis utils.reservoir_tracker.
+# Le coût initial est calculé depuis le fill initial du scénario (pas une trajectoire fictive).
+# La mise à jour chunk par chunk est faite par optimizer._update_reservoir_costs_and_pmax()
+# via ReservoirDamFeed (bilan hydraulique post-dispatch réel).
 
-_RESERVOIR_INFO_CACHE: Optional[pd.DataFrame] = None
-
-
-def _load_reservoir_info() -> pd.DataFrame:
-    """Charge Info_Barrages.csv et retourne les barrages à réservoir (volume > 0)."""
-    global _RESERVOIR_INFO_CACHE
-    if _RESERVOIR_INFO_CACHE is not None:
-        return _RESERVOIR_INFO_CACHE
-    if not _INFO_BARRAGES_CSV.exists():
-        logger.warning("Info_Barrages.csv introuvable : %s", _INFO_BARRAGES_CSV)
-        _RESERVOIR_INFO_CACHE = pd.DataFrame()
-        return _RESERVOIR_INFO_CACHE
-    info = pd.read_csv(_INFO_BARRAGES_CSV)
-    reservoirs = info[info["Volume_reservoir"] > 0].copy()
-    _RESERVOIR_INFO_CACHE = reservoirs
-    return reservoirs
-
-
-_APPORT_MONTHLY_CACHE: Dict[Tuple[int, int], np.ndarray] = {}
-
-
-def _load_apport_monthly_avg(id_hq: int, year: int) -> np.ndarray:
-    """Charge les apports naturels et retourne la moyenne mensuelle (12 valeurs, m³/s).
-
-    Utilise les données historiques proches de l'année cible si disponible,
-    sinon la moyenne sur toutes les années. Résultat caché en mémoire (CSV immuables).
-    """
-    cache_key = (id_hq, year)
-    if cache_key in _APPORT_MONTHLY_CACHE:
-        return _APPORT_MONTHLY_CACHE[cache_key]
-
-    csv_path = _APPORT_NATUREL_DIR / f"{id_hq}.csv"
-    if not csv_path.exists():
-        result = np.full(12, 100.0)  # fallback 100 m³/s
-        _APPORT_MONTHLY_CACHE[cache_key] = result
-        return result
-
-    df = pd.read_csv(csv_path)
-    df["time"] = pd.to_datetime(df["time"])
-
-    # Chercher des données proches de l'année cible (±5 ans)
-    mask = (df["time"].dt.year >= year - 5) & (df["time"].dt.year <= year + 5)
-    subset = df[mask] if mask.sum() > 100 else df  # fallback sur tout si peu de données
-
-    monthly = subset.groupby(subset["time"].dt.month)["streamflow"].mean()
-    result = np.zeros(12)
-    for m in range(1, 13):
-        result[m - 1] = monthly.get(m, 100.0)
-    _APPORT_MONTHLY_CACHE[cache_key] = result
-    return result
-
-
-def _compute_fill_trajectory(
-    snapshots: pd.DatetimeIndex,
-    reservoir_gen_names: List[str],
-    generators_df: pd.DataFrame,
-    scenario: Any,
-) -> pd.DataFrame:
-    """Calcule la trajectoire de remplissage pré-LP pour chaque réservoir.
-
-    Bilan hydrique simplifié (même physique que calcule.py/reservoir_infill) :
-        fill(t+1) = fill(t) + (apport - turbinage_estimé) × Δt / volume
-
-    Le turbinage est estimé comme : p_nom × capacity_factor_moyen (0.50).
-    C'est une heuristique pré-LP : le vrai dispatch sera décidé par l'optimiseur.
-    L'objectif est de donner le bon signal saisonnier au coût marginal.
-
-    Returns
-    -------
-    pd.DataFrame
-        Index = snapshots, colonnes = noms des générateurs réservoir.
-        Valeurs = fill% ∈ [0.05, 1.0]
-    """
-    reservoirs_info = _load_reservoir_info()
-    initial_fills = _get_initial_reservoir_fill(scenario)
-    year = snapshots[0].year if len(snapshots) > 0 else 2035
-
-    fill_data: Dict[str, np.ndarray] = {}
-
-    for gen_name in reservoir_gen_names:
-        # Trouver le barrage correspondant dans Info_Barrages.csv
-        match = reservoirs_info[reservoirs_info["Nom"] == gen_name]
-        if match.empty:
-            # Fallback : fill constant
-            fill_init = initial_fills.get(gen_name, initial_fills.get("_global", 0.70))
-            fill_data[gen_name] = np.full(len(snapshots), fill_init)
-            continue
-
-        dam = match.iloc[0]
-        volume_m3 = float(dam["Volume_reservoir"])
-        id_hq = int(dam["id_HQ"])
-        catch_coeff = float(dam.get("catch_coefficient", 1.0))
-
-        # p_nom du générateur dans le réseau
-        gen_match = generators_df[generators_df["name"] == gen_name]
-        p_nom_mw = float(gen_match.iloc[0].get("p_nom", 500.0)) if not gen_match.empty else 500.0
-
-        # Apports mensuels moyens (m³/s)
-        monthly_inflow = _load_apport_monthly_avg(id_hq, year) * catch_coeff
-
-        # Turbinage estimé : convertir p_nom MW en m³/s approximatif
-        # P = ρ × g × Q × h × η  →  Q ≈ P / (ρ × g × h × η)
-        # Approx simplifiée : capacity_factor 50% → turbinage moyen
-        hauteur = float(dam.get("Hauteur_de_chute_m", 50.0))
-        eta = float(dam.get("eta_turb", 0.90))
-        if hauteur > 0 and eta > 0:
-            # Q_turb (m³/s) pour la puissance moyenne dispatchée
-            # P_moyen = p_nom × 0.50 (capacity factor estimé)
-            # Q = P / (ρ×g×h×η) = P_MW × 1e6 / (1000 × 9.81 × h × η)
-            q_turb_avg = (p_nom_mw * 0.50 * 1e6) / (1000.0 * 9.81 * hauteur * eta)
-        else:
-            debit_nom = float(dam.get("Debits_nom_m3s", 500.0))
-            q_turb_avg = debit_nom * 0.50
-
-        # Boucle temporelle : bilan hydrique par snapshot
-        fill_init = initial_fills.get(gen_name, initial_fills.get("_global", 0.70))
-        fills = np.zeros(len(snapshots))
-        current_fill = fill_init
-
-        for i, ts in enumerate(snapshots):
-            month_idx = ts.month - 1  # 0-based
-            q_in = monthly_inflow[month_idx]  # m³/s apport
-
-            # Δt en secondes (hebdo = 168h = 604800s, horaire = 3600s)
-            if i < len(snapshots) - 1:
-                dt_seconds = (snapshots[i + 1] - snapshots[i]).total_seconds()
-            else:
-                dt_seconds = 168 * 3600  # dernière semaine
-
-            # Bilan : volume_delta = (apport - turbinage) × Δt
-            net_flow_m3 = (q_in - q_turb_avg) * dt_seconds
-            current_fill = current_fill + net_flow_m3 / volume_m3
-            current_fill = max(0.05, min(1.0, current_fill))
-            fills[i] = current_fill
-
-        fill_data[gen_name] = fills
-        logger.debug(
-            "Trajectoire fill %s : init=%.0f%% → min=%.0f%% max=%.0f%% fin=%.0f%%",
-            gen_name, fill_init * 100,
-            fills.min() * 100, fills.max() * 100, fills[-1] * 100,
-        )
-
-    fill_df = pd.DataFrame(fill_data, index=snapshots)
-
-    # --- Contrainte de réserve stratégique (Régie de l'énergie) ---
-    # HQ maintient ~64 TWh de réserve (36% fill) + 50 TWh pour l'hiver.
-    # Seuil opérationnel confortable : 56-64% fill (100-114 TWh sur 178 TWh).
-    # On limite le p_max_pu des réservoirs quand le fill est bas pour forcer l'import.
-    # Sources : Rapport Annuel HQ, Plan d'approvisionnement 2023-2032, Régie D-2023-109.
-    reservoir_pmax = pd.DataFrame(index=snapshots)
-    for col in fill_df.columns:
-        fills = fill_df[col].values
-        # Interpolation linéaire continue : fill% → p_max_pu
-        # fill ≥ 70% → 0.95 (libre)
-        # fill = 45% → 0.50 (prudence)
-        # fill ≤ 30% → 0.15 (réserve stratégique dure → force import)
-        pmax = np.interp(fills, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95])
-        pmax = np.clip(pmax, 0.15, 0.95)
-        reservoir_pmax[col] = pmax
-        logger.debug(
-            "Réserve %s : fill %.0f-%.0f%% → p_max_pu %.2f-%.2f",
-            col, fills.min() * 100, fills.max() * 100, pmax.min(), pmax.max(),
-        )
-
-    return fill_df, reservoir_pmax

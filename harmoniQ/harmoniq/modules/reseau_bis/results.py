@@ -22,7 +22,11 @@ def get_results_todo_list() -> List[str]:
     ]
 
 
-def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def extract_kpis(
+    network: pypsa.Network,
+    optimizer_result: Dict[str, Any] | None = None,
+    reservoir_levels: "pd.DataFrame | None" = None,
+) -> Dict[str, Any]:
     """Extrait la production, les métriques lignes et les KPI de synthèse.
 
     Paramètres
@@ -79,7 +83,7 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
     line_flows = []
     if hasattr(network, "lines_t") and "p0" in network.lines_t and len(network.lines_t["p0"].columns) > 0:
         p0 = network.lines_t["p0"]
-        max_flow = p0.abs().max()
+        max_flow = p0.abs().max().fillna(0.0)
 
         for line_name, value in max_flow.items():
             s_nom = None
@@ -212,6 +216,7 @@ def extract_kpis(network: pypsa.Network, optimizer_result: Dict[str, Any] | None
         "was_relaxed":          was_relaxed,
         "infra_report":         infra_report,
         "reservoir_cost_ts":    reservoir_cost_ts,
+        "reservoir_levels":     reservoir_levels if reservoir_levels is not None else pd.DataFrame(),
     }
 
 
@@ -234,6 +239,21 @@ def format_api_response(
         # Alias de compatibilite pour les clients qui utilisaient `snapshot`
         production_json["snapshot"] = production_json["timestamp"]
 
+    # Sérialiser reservoir_levels : DataFrame → liste de records JSON
+    # {snapshot, Robert-Bourassa: 0.72, La Grande-4: 0.65, ...}
+    reservoir_df = kpis.get("reservoir_levels", pd.DataFrame())
+    if isinstance(reservoir_df, pd.DataFrame) and not reservoir_df.empty:
+        reservoir_json = (
+            reservoir_df
+            .fillna(0.0)
+            .reset_index()
+            .rename(columns={"snapshot": "timestamp", "index": "timestamp"})
+        )
+        reservoir_json["timestamp"] = reservoir_json["timestamp"].astype(str)
+        reservoir_levels_records = reservoir_json.to_dict(orient="records")
+    else:
+        reservoir_levels_records = []
+
     return {
         "metadata": {
             "scenario_id":            scenario_id,
@@ -241,6 +261,7 @@ def format_api_response(
             "is_journalier":          is_journalier,
             "execution_time_seconds": execution_time_seconds,
             "timestamps":             len(production_df),
+            "n_reservoirs":           len(reservoir_df.columns) if isinstance(reservoir_df, pd.DataFrame) else 0,
         },
         "production":           production_json.to_dict(orient="records"),
         "line_flows":           kpis["line_flows"],
@@ -250,6 +271,7 @@ def format_api_response(
         "summary":              kpis["summary"],
         "was_relaxed":          kpis.get("was_relaxed", False),
         "infra_report":         kpis.get("infra_report", []),
+        "reservoir_levels":     reservoir_levels_records,
     }
 
 

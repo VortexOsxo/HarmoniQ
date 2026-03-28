@@ -15,12 +15,19 @@ import gc
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pypsa
+
+from .utils.reservoir_tracker import ReservoirDamFeed, water_value_cost
 
 logger = logging.getLogger(__name__)
 
 _RELAX_SNOM = 99_999.0   # MVA non-contraignant
+
+# Prime hivernale sur la valeur de l'eau ($/MWh) — Jan à Déc
+# Dupliquée depuis data_loader pour éviter l'import circulaire.
+_WINTER_PREMIUM = [3.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 3.0]
 
 
 def get_optimizer_todo_list() -> List[str]:
@@ -36,6 +43,7 @@ def run_dispatch_and_flow(
     network: pypsa.Network,
     mode: str = "dc+ac",
     solver_name: str = "highs",
+    reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Dict[str, Any]:
     """Exécute le dispatch LP-DC puis l'écoulement de puissance.
 
@@ -57,7 +65,7 @@ def run_dispatch_and_flow(
 
     # --- Dispatch LP-OPF avec fallback ---
     opt_status, opt_detail, was_relaxed, original_snoms = _run_dispatch_with_fallback(
-        network, solver_name=solver_name
+        network, solver_name=solver_name, reservoir_feed=reservoir_feed
     )
 
     # --- Écoulement de puissance ---
@@ -89,6 +97,7 @@ def run_dispatch_and_flow(
 def _run_dispatch_with_fallback(
     network: pypsa.Network,
     solver_name: str = "highs",
+    reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Tuple[str, str, bool, Optional[pd.Series]]:
     """LP-OPF avec fallback automatique si infaisable.
 
@@ -103,7 +112,7 @@ def _run_dispatch_with_fallback(
     original_snoms est la Series des s_nom AVANT relâchement (None si pas relâché).
     """
     # Premier essai avec les vrais s_nom
-    status, condition = _run_dispatch(network, solver_name)
+    status, condition = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
 
     if status == "ok":
         return status, condition, False, None
@@ -120,7 +129,7 @@ def _run_dispatch_with_fallback(
         network.lines["s_nom"] = _RELAX_SNOM
     _relax_interco_export(network)
 
-    status2, condition2 = _run_dispatch(network, solver_name)
+    status2, condition2 = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
 
     if status2 == "ok":
         logger.info(
@@ -189,9 +198,109 @@ def _restore_interco_limits(
         network.generators.loc[gen_pmin.index, "p_min_pu"] = gen_pmin
 
 
+def _patch_zero_reactance_lines(network: pypsa.Network) -> None:
+    """Force x = max(x, 1e-4) sur les lignes avec réactance nulle.
+
+    x=0 donne B=1/x=∞ → matrice Kirchhoff singulière → crash linopy.
+    Typique pour les jeux de barres coupleurs (même emplacement géographique,
+    length=0). Une réactance de 1e-4 pu n'affecte pas le dispatch.
+    """
+    if len(network.lines) == 0:
+        return
+    zero_x = network.lines["x"] <= 0
+    if not zero_x.any():
+        return
+    logger.warning(
+        "Patch réactance nulle : %d ligne(s) avec x≤0 → x=1e-4. Lignes : %s",
+        zero_x.sum(), list(network.lines.index[zero_x]),
+    )
+    network.lines.loc[zero_x, "x"] = 1e-4
+    zero_r = zero_x & (network.lines["r"] <= 0)
+    if zero_r.any():
+        network.lines.loc[zero_r, "r"] = 1e-4
+
+
+def _update_reservoir_costs_and_pmax(
+    network: pypsa.Network,
+    chunk_start_idx: int,
+    chunk_end_idx: int,
+    reservoir_feed: List[ReservoirDamFeed],
+) -> None:
+    """Bilan hydraulique du chunk terminé → mise à jour coût + p_max_pu pour le prochain chunk.
+
+    Pour chaque barrage réservoir :
+        1. Applique le bilan V[t+1] = V[t] + apport×Δt − dispatch×Δt sur le chunk
+        2. Calcule le nouveau niveau [0-1] en fin de chunk
+        3. Écrit water_value_cost(niveau) dans generators_t.marginal_cost[gname][next_chunk_sns]
+        4. Écrit la contrainte de réserve dans generators_t.p_max_pu[gname][next_chunk_sns]
+
+    Ne fait rien si reservoir_feed est vide ou si le chunk est le dernier.
+    """
+    snapshots   = network.snapshots
+    n_total     = len(snapshots)
+    next_start  = chunk_end_idx
+    next_end    = min(next_start + (chunk_end_idx - chunk_start_idx), n_total)
+
+    if next_start >= n_total:
+        return  # dernier chunk : pas de prochain chunk à mettre à jour
+
+    chunk_sns = snapshots[chunk_start_idx:chunk_end_idx]
+    next_sns  = snapshots[next_start:next_end]
+
+    gen_p = network.generators_t.get("p", pd.DataFrame())
+    if gen_p.empty:
+        return
+
+    dt_seconds = (network.snapshot_weightings.generators.loc[chunk_sns] * 3600.0).values
+    mc_df   = network.generators_t.get("marginal_cost", pd.DataFrame())
+    pmax_df = network.generators_t.get("p_max_pu",      pd.DataFrame())
+
+    for dam in reservoir_feed:
+        if dam.nom not in gen_p.columns:
+            continue
+
+        dispatch_mw = gen_p[dam.nom].reindex(chunk_sns, fill_value=0.0).values
+        volume_current = dam.current_level * dam.volume_max_m3
+
+        for i in range(len(chunk_sns)):
+            apport_idx   = chunk_start_idx + i
+            inflow_m3    = dam.apport_m3s[apport_idx] * dt_seconds[i]
+            fraction     = float(np.clip(
+                (dispatch_mw[i] / dam.p_max_mw) if dam.p_max_mw > 0 else 0.0,
+                0.0, 1.0,
+            ))
+            discharge_m3 = dam.debit_max_m3s * fraction * dt_seconds[i]
+            volume_current = float(np.clip(
+                volume_current + inflow_m3 - discharge_m3, 0.0, dam.volume_max_m3
+            ))
+
+        dam.current_level = volume_current / dam.volume_max_m3  # persisté pour le chunk suivant
+
+        # Coût marginal pour le prochain chunk (avec prime hivernale)
+        new_cost = float(water_value_cost(np.array([dam.current_level]))[0])
+        if not mc_df.empty and dam.nom in mc_df.columns:
+            premium = np.array([_WINTER_PREMIUM[ts.month - 1] for ts in next_sns])
+            mc_df.loc[next_sns, dam.nom] = new_cost + premium
+
+        # Contrainte de réserve stratégique (p_max_pu) pour le prochain chunk
+        new_pmax = float(np.clip(
+            np.interp(dam.current_level, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]),
+            0.15, 0.95,
+        ))
+        if not pmax_df.empty and dam.nom in pmax_df.columns:
+            pmax_df.loc[next_sns, dam.nom] = new_pmax
+
+        logger.debug(
+            "Feed-forward %s : chunk [%d:%d] → niveau=%.1f%% → coût=%.1f $/MWh, p_max_pu=%.2f",
+            dam.nom, chunk_start_idx, chunk_end_idx,
+            dam.current_level * 100, new_cost, new_pmax,
+        )
+
+
 def _run_dispatch(
     network: pypsa.Network,
     solver_name: str = "highs",
+    reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Tuple[str, str]:
     """LP-OPF DC via rolling horizon avec gc.collect() inter-chunks (PyPSA 1.x).
 
@@ -241,6 +350,7 @@ def _run_dispatch(
         )
 
         try:
+            _patch_zero_reactance_lines(network)
             status, condition = network.optimize(chunk_sns, solver_name=solver_name)
             ok = (status == "ok") or (str(condition).lower() in ("optimal", "ok"))
 
@@ -258,6 +368,11 @@ def _run_dispatch(
                     gen_chunks.append(
                         pd.DataFrame(0.0, index=chunk_sns, columns=gen_cols)
                     )
+                # Feed-forward hydraulique : mettre à jour le coût et le p_max_pu
+                # des barrages réservoirs pour le prochain chunk, basé sur le
+                # dispatch réel de ce chunk.
+                if reservoir_feed:
+                    _update_reservoir_costs_and_pmax(network, start, end, reservoir_feed)
                 if len(link_cols) > 0:
                     if "p0" in network.links_t and not network.links_t.p0.empty:
                         link_chunks.append(

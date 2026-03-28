@@ -17,6 +17,7 @@ from .data_loader import NetworkDataLoaderBis, get_loader_todo_list
 from .network_builder import build_pypsa_network, get_builder_todo_list
 from .optimizer import run_dispatch_and_flow, get_optimizer_todo_list
 from .results import extract_kpis, format_api_response, get_results_todo_list
+from .utils.reservoir_tracker import compute_reservoir_levels, build_reservoir_feed_data
 
 
 def get_reseau_bis_todo_list():
@@ -117,12 +118,30 @@ class InfraReseauBis:
         if self.network is None:
             self.creer_reseau(db, resolution=resolution)
 
+        # Pré-charger les métadonnées des barrages réservoirs pour le feed-forward OPF.
+        # Doit être fait APRÈS creer_reseau() (snapshots connus) et AVANT l'optimiseur.
+        t_feed = time.time()
+        reservoir_feed = build_reservoir_feed_data(self.network, db)
+        self.timers["reservoir_feed_build"] = time.time() - t_feed
+
         t_opt = time.time()
-        optimizer_result = run_dispatch_and_flow(self.network, mode=flow_mode)
+        optimizer_result = run_dispatch_and_flow(
+            self.network,
+            mode=flow_mode,
+            reservoir_feed=reservoir_feed,
+        )
         self.timers["dispatch_and_flow"] = time.time() - t_opt
 
+        t_res = time.time()
+        reservoir_levels = compute_reservoir_levels(self.network, db)
+        self.timers["reservoir_tracker"] = time.time() - t_res
+
         t_kpi = time.time()
-        kpis = extract_kpis(self.network, optimizer_result=optimizer_result)
+        kpis = extract_kpis(
+            self.network,
+            optimizer_result=optimizer_result,
+            reservoir_levels=reservoir_levels,
+        )
         self.timers["extract_kpis"] = time.time() - t_kpi
 
         total_time = time.time() - total_start
