@@ -525,6 +525,7 @@ class Line(SQLBase):
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)
+    nb_ligne = Column(Integer, nullable=True)
     reseau_type = Column(String, nullable=True)
 
     bus_from = relationship("Bus", back_populates="lines_from", foreign_keys=[bus0])
@@ -540,6 +541,7 @@ class LineBase(BaseModel):
     capital_cost: float
     length: float
     s_nom: float
+    nb_ligne: Optional[int] = None
     reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
