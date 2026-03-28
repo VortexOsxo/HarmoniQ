@@ -9,6 +9,8 @@ import { DemandeTemporalGraphService } from './graph-services/demande-temporal-g
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from './simulation-step-service';
+import { SimulationCostGraphService } from './graph-services/simulation-cost-graph-service';
+import { SimulationCo2GraphService } from './graph-services/simulation-co2-graph-service';
 
 @Injectable({
     providedIn: 'root',
@@ -33,6 +35,8 @@ export class SimulationService {
         private demandeTemporalGraphService: DemandeTemporalGraphService,
         private demandeSankeyGraphService: DemandeSankeyGraphService,
         private simulationTemporalGraphService: SimulationTemporalGraphService,
+        private simulationCostGraphService: SimulationCostGraphService,
+        private simulationCo2GraphService: SimulationCo2GraphService,
     ) {
         effect(() => {
             this.scenariosService.selectedScenario(); // track scenario changes
@@ -80,6 +84,8 @@ export class SimulationService {
         if (!scenario || !infraGroup) return;
 
         const steps = [
+            this.simulationCostGraphService,
+            this.simulationCo2GraphService,
             this.demandeSankeyGraphService,
             this.demandeTemporalGraphService,
             this.simulationTemporalGraphService,

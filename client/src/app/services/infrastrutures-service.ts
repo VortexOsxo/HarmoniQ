@@ -115,7 +115,7 @@ export class InfrastruturesService {
   deleteLocalInfra(type: string, id: number): void {
     this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
     this.infrasContainer.get(type)?.removeLocal(id);
-    
+
     const key = typeKeyMap[type];
     if (key) {
       let groupsChanged = false;

@@ -9,14 +9,15 @@ import { firstValueFrom } from 'rxjs';
 import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import { ProductionNode } from '@app/components/scenario/scenario-demand-prod-sankey/sankey-data.types';
+import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
 
 const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
-    hydro: { id: 'hydraulique', label: 'Hydraulique', color: '#4a9dd4', icon: 'fa-droplet', co2FactorKgMWh: 24 },
-    eolien: { id: 'eolien', label: 'Éolien', color: '#6abbc4', icon: 'fa-wind', co2FactorKgMWh: 12 },
-    solaire: { id: 'solaire', label: 'Solaire', color: '#e8c53c', icon: 'fa-sun', co2FactorKgMWh: 48 },
-    thermique: { id: 'thermique', label: 'Thermique', color: '#e25c5c', icon: 'fa-bolt', co2FactorKgMWh: 820 },
-    nucleaire: { id: 'nucleaire', label: 'Nucléaire', color: '#e8754a', icon: 'fa-radiation', co2FactorKgMWh: 12 },
-    import: { id: 'import', label: 'Importation', color: '#a0a0c8', icon: 'fa-right-to-bracket', co2FactorKgMWh: 200 },
+    hydro: { id: 'hydraulique', label: INFRA_LABELS['hydraulique'], color: INFRA_COLORS['hydro'], icon: 'fa-droplet', co2FactorKgMWh: 24 },
+    eolien: { id: 'eolien', label: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'], icon: 'fa-wind', co2FactorKgMWh: 12 },
+    solaire: { id: 'solaire', label: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'], icon: 'fa-sun', co2FactorKgMWh: 48 },
+    thermique: { id: 'thermique', label: INFRA_LABELS['thermique'], color: INFRA_COLORS['thermique'], icon: 'fa-bolt', co2FactorKgMWh: 820 },
+    nucleaire: { id: 'nucleaire', label: INFRA_LABELS['nucleaire'], color: INFRA_COLORS['nucleaire'], icon: 'fa-radiation', co2FactorKgMWh: 12 },
+    import: { id: 'import', label: INFRA_LABELS['import'], color: INFRA_COLORS['import'], icon: 'fa-right-to-bracket', co2FactorKgMWh: 200 },
 };
 
 @Injectable({
@@ -57,17 +58,19 @@ export class SimulationTemporalGraphService implements SimulationStep {
     }
 
     public handleData(simulationResult: any, demandeResult: any, granularity: string = 'original') {
+        if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;
+
         const productionData = simulationResult.production;
         let x = productionData.map((instance: any) => (instance["snapshot"]));
 
         const components = [
-            { key: 'total_eolien', name: 'Éolien', color: '#f39c12' },
-            { key: 'total_solaire', name: 'Solaire', color: '#f1c40f' },
-            { key: 'total_hydro_fil', name: 'Hydro (fil)', color: '#3498db' },
-            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: '#1abc9c' },
-            { key: 'total_nucleaire', name: 'Nucléaire', color: '#e74c3c' },
-            { key: 'total_thermique', name: 'Thermique', color: '#95a5a6' },
-            { key: 'total_import', name: 'Importations', color: '#9b59b6' }
+            { key: 'total_eolien', name: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'] },
+            { key: 'total_solaire', name: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'] },
+            { key: 'total_hydro_fil', name: 'Hydro (fil)', color: INFRA_COLORS['hydro'] },
+            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: INFRA_COLORS['hydro'] },
+            { key: 'total_nucleaire', name: INFRA_LABELS['nucleaire'], color: INFRA_COLORS['nucleaire'] },
+            { key: 'total_thermique', name: INFRA_LABELS['thermique'], color: INFRA_COLORS['thermique'] },
+            { key: 'total_import', name: INFRA_LABELS['import'], color: INFRA_COLORS['import'] }
         ];
 
         let traces: any[] = [];
@@ -123,7 +126,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
             `Production et Demande (${this.scenariosService.selectedScenario()?.nom})`,
             'Puissance (MW)',
             granularity,
-            { height: 800 }
+            { height: Math.floor(window.innerHeight * 0.70) }
         );
 
         Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, traces, layout as any, { responsive: true });
@@ -147,6 +150,34 @@ export class SimulationTemporalGraphService implements SimulationStep {
             ['import', avg('total_import')],
         ];
         return carriers.map(([carrier, value]) => ({ ...CARRIER_NODE_DEFS[carrier], value: Math.round(value) }));
+    }
+
+    renderDemandPreview(demandeResult: any, granularity: string = 'original') {
+        if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;
+
+        let demandeX = Object.keys(demandeResult.total_electricity);
+        let demandeY = Object.values(demandeResult.total_electricity).map((value: any) => (value as number) / 1000);
+
+        if (granularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(demandeX, demandeY, granularity);
+            demandeX = aggregated.x;
+            demandeY = aggregated.y;
+        }
+
+        const demandTrace = {
+            ...this.graphService.getStandardTrace('Demande', demandeX, demandeY, '#2c3e50', `<b>%{y:.2f} MW</b>`),
+            line: { shape: 'spline', color: '#2c3e50', width: 2 },
+            fill: 'none'
+        };
+
+        const layout = this.graphService.getStandardLayout(
+            `Demande (${this.scenariosService.selectedScenario()?.nom})`,
+            'Puissance (MW)',
+            granularity,
+            { height: Math.floor(window.innerHeight * 0.70) }
+        );
+
+        Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, [demandTrace], layout as any, { responsive: true });
     }
 
     clear() {

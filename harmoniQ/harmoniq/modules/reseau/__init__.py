@@ -1,3 +1,4 @@
+from harmoniq.db.schemas import SimulationInfraGroup
 from harmoniq.core.base import Infrastructure, necessite_scenario
 from harmoniq.db.engine import get_db
 
@@ -11,6 +12,7 @@ import logging
 from pathlib import Path
 import os
 import hashlib
+from datetime import timedelta
 
 logger = logging.getLogger("Reseau")
 
@@ -445,6 +447,43 @@ class InfraReseau(Infrastructure):
                 logger.info(f"Énergie {carrier}: {carrier_total:.2f} MWh ({percentage:.2f}%)")
         
         return production
+    
+    def calculer_cout(self, infra_group: SimulationInfraGroup):
+        results = self._get_infras(infra_group)
+        for key in results.keys():
+            results[key] = [{
+                "id": infra.donnees.id,
+                "cout_construction": infra.calculer_cout_construction(),
+                "cout_annuel": infra.calculer_cout_pas_de_temps(timedelta(days=365))
+            } for infra in results[key]]
+        return results
+
+    def calculer_co2(self, infra_group: SimulationInfraGroup):
+        results = self._get_infras(infra_group)
+        for key in results.keys():
+            results[key] = [{
+                "id": infra.donnees.id,
+                "co2_annuel": infra.calculer_co2_eq_pas_de_temps(timedelta(days=365)),
+                "co2_construction": infra.calculer_co2_eq_construction(),
+            } for infra in results[key]]
+        return results
+
+    def _get_infras(self, infra_group: SimulationInfraGroup):
+        from harmoniq.modules.eolienne import InfraParcEolienne
+        from harmoniq.modules.solaire import InfraSolaire
+        from harmoniq.modules.thermique import InfraThermique
+        from harmoniq.modules.nucleaire import InfraNucleaire
+        from harmoniq.modules.hydro import InfraHydro
+        from harmoniq.db import schemas
+        from harmoniq.db.CRUD import hydrate_model
+
+        return {
+            'hydro': [InfraHydro(hydrate_model(schemas.Hydro, item)) for item in (infra_group.central_hydroelectriques or [])],
+            'nucleaire': [InfraNucleaire(hydrate_model(schemas.Nucleaire, item)) for item in (infra_group.central_nucleaire or [])],
+            'thermique': [InfraThermique(hydrate_model(schemas.Thermique, item)) for item in (infra_group.central_thermique or [])],
+            'eolienneparc': [InfraParcEolienne(hydrate_model(schemas.EolienneParc, item)) for item in (infra_group.parc_eoliens or [])],
+            'solaire': [InfraSolaire(hydrate_model(schemas.Solaire, item)) for item in (infra_group.parc_solaires or [])]
+        }
 
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_data_by_id, read_all_scenario

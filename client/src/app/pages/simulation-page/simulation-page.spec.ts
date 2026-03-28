@@ -6,6 +6,8 @@ import { Subject } from 'rxjs';
 import { SimulationPage } from './simulation-page';
 import { SimulationService } from '@app/services/simulation-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
+import { SimulationCostGraphService } from '@app/services/graph-services/simulation-cost-graph-service';
+import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
 
 vi.mock('leaflet', () => ({
     default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
@@ -34,8 +36,24 @@ const mockSimulationService = {
 const mockStepService = {
     steps: signal([] as any[]),
     currentStepIndex: signal(-1),
-    currentStepName: signal('Initialisation'),
+    currentStepName: vi.fn().mockReturnValue('Initialisation'),
     runSteps: vi.fn(),
+};
+
+const mockCostService = {
+    costMode: 'annuel',
+    setCostMode: vi.fn(),
+    cachedData: null,
+    handleData: vi.fn(),
+    getStepName: vi.fn().mockReturnValue('Simulation du cout du reseau'),
+};
+
+const mockCo2Service = {
+    costMode: 'annuel',
+    setCostMode: vi.fn(),
+    cachedData: null,
+    handleData: vi.fn(),
+    getStepName: vi.fn().mockReturnValue('Simulation des emissions du reseau'),
 };
 
 const STUB_TEMPLATE = `<div data-testid="simulation-page">Simulation Page</div>`;
@@ -49,6 +67,8 @@ async function renderComponent() {
         providers: [
             { provide: SimulationService, useValue: mockSimulationService },
             { provide: SimulationStepService, useValue: mockStepService },
+            { provide: SimulationCostGraphService, useValue: mockCostService },
+            { provide: SimulationCo2GraphService, useValue: mockCo2Service },
         ],
         schemas: [NO_ERRORS_SCHEMA],
     });
@@ -76,13 +96,13 @@ describe('SimulationPage', () => {
         });
     });
 
-    describe('scrollToGraph', () => {
+    describe('scrollTo', () => {
         it('should call scrollIntoView when element exists', async () => {
             const { fixture } = await renderComponent();
             const mockElement = { scrollIntoView: vi.fn() };
             vi.spyOn(document, 'getElementById').mockReturnValue(mockElement as any);
 
-            fixture.componentInstance.scrollToGraph(0);
+            fixture.componentInstance.scrollTo('section-cost');
 
             expect(mockElement.scrollIntoView).toHaveBeenCalledWith({
                 behavior: 'smooth',
@@ -94,7 +114,7 @@ describe('SimulationPage', () => {
             const { fixture } = await renderComponent();
             vi.spyOn(document, 'getElementById').mockReturnValue(null);
 
-            expect(() => fixture.componentInstance.scrollToGraph(99)).not.toThrow();
+            expect(() => fixture.componentInstance.scrollTo('nonexistent')).not.toThrow();
         });
     });
 });
