@@ -383,13 +383,17 @@ class NetworkDataLoaderBis:
     def load_topology_from_db(self, db: Any) -> Dict[str, pd.DataFrame]:
         """Charge la topologie depuis la DB (bus_db_03_26.csv / lines_db_03_26.csv via init-db).
 
-        Les bus sont stockés avec :
-            name         = identifiant interne "Bus1", "Bus2", ...
-            display_name = nom géographique "Radisson", "La Grande-3", ...
+        Les bus conservent leurs identifiants internes ("Bus1", "Bus2", …) comme nom PyPSA.
+        Utiliser display_name ("Radisson", "La Grande-3", …) comme nom de bus causerait
+        77 collisions avec les noms de générateurs hydro, ce qui brise le LOPF PyPSA 1.x
+        (xarray CoordinateValidationError dans define_nodal_balance_constraints).
 
-        Les lignes utilisent les identifiants internes (bus0="Bus1").
-        Ce loader remplace les identifiants par les noms géographiques (display_name)
-        pour que PyPSA et le reste du code voient "Radisson" partout.
+        La topologie 03_26 positionne chaque bus aux coordonnées exactes de sa centrale :
+        la recherche par proximité dans _fetch_generators_from_db trouve naturellement
+        "Bus2" pour La Grande-3, "Bus1" pour Radisson, etc., sans besoin de mapping nominal.
+
+        display_name est conservé comme colonne auxiliaire dans buses_df pour la visu.
+        Les lignes utilisent déjà les IDs internes en DB (bus0="Bus1") — aucune traduction.
         """
         buses_df = pd.DataFrame(columns=["name", "v_nom", "type", "x", "y", "control"])
         lines_df = pd.DataFrame(columns=["name", "bus0", "bus1", "type", "length", "s_nom"])
@@ -405,33 +409,26 @@ class NetworkDataLoaderBis:
 
         if buses_raw is not None:
             raw_df = _records_to_df(buses_raw)
-
-            # Construire le mapping id_interne → nom_géographique AVANT de modifier raw_df["name"]
-            # (les clés du mapping sont les identifiants internes originaux "Bus1", "Bus2", …)
-            id_to_name: Dict[str, str] = {}
-            if "display_name" in raw_df.columns:
-                for _, row in raw_df.iterrows():
-                    internal = str(row.get("name", ""))
-                    display  = str(row.get("display_name", "")) if row.get("display_name") else ""
-                    id_to_name[internal] = display if display else internal
-                # Utiliser display_name comme nom PyPSA si disponible, sinon name
-                raw_df["name"] = raw_df["display_name"].where(
-                    raw_df["display_name"].notna() & (raw_df["display_name"] != ""),
-                    raw_df["name"],
-                )
-            buses_df = _select_columns(raw_df, ["name", "v_nom", "type", "x", "y", "control"])
-        else:
-            id_to_name = {}
+            # Garder name = identifiant interne "Bus1" comme clé PyPSA.
+            # display_name = nom géographique conservé comme attribut auxiliaire.
+            # Normaliser les enums SQLAlchemy : "BusType.conso" → "conso", "BusControlType.PQ" → "PQ".
+            for col in ("type", "control"):
+                if col in raw_df.columns:
+                    raw_df[col] = raw_df[col].astype(str).str.split(".").str[-1]
+            # bus_db_03_26.csv stocke x=longitude, y=latitude.
+            # La convention interne du data_loader est x=latitude, y=longitude (héritage xlsx).
+            # On échange x ↔ y ici pour homogénéité avec _find_bus_for_generator et
+            # _build_mrc_to_conso_mapping qui assument tous deux x=lat, y=lon.
+            if "x" in raw_df.columns and "y" in raw_df.columns:
+                raw_df = raw_df.rename(columns={"x": "y", "y": "x"})
+            buses_df = _select_columns(raw_df, ["name", "v_nom", "type", "x", "y", "control", "display_name"])
 
         if lines_raw is not None:
+            # bus0/bus1 sont déjà en identifiants internes en DB — aucune traduction.
             lines_df = _select_columns(
                 _records_to_df(lines_raw),
                 ["name", "bus0", "bus1", "type", "length", "s_nom"],
             )
-            # Remplacer les identifiants internes par les noms géographiques
-            if id_to_name:
-                lines_df["bus0"] = lines_df["bus0"].map(lambda x: id_to_name.get(str(x), str(x)))
-                lines_df["bus1"] = lines_df["bus1"].map(lambda x: id_to_name.get(str(x), str(x)))
 
         if line_types_raw is not None:
             line_types_df = _select_columns(
