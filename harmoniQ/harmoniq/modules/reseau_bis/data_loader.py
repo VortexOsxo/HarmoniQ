@@ -1489,7 +1489,16 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
             type_barrage = str(row.get("type_barrage", "")).strip().lower()
             carrier = "hydro_reservoir" if type_barrage == "reservoir" else "hydro_fil"
             p_nom = float(row.get("puissance_nominal", 0.0))
+            nb_turbines = max(1, int(row.get("nb_turbines", 1)))
             bus = _resolve_generator_bus(row.get("bus"), row.get("latitude"), row.get("longitude"), buses_df, row.get("nom"))
+
+            # p_min_pu : au moins 1 turbine doit toujours tourner pour les barrages réservoirs.
+            # Physiquement : les turbines Francis/Kaplan ne peuvent pas être toutes à l'arrêt
+            # simultanément (débit minimum légal + équipements auxiliaires).
+            # p_min_pu = 1/nb_turbines → puissance minimale = p_nom / nb_turbines (1 turbine).
+            # Pour le fil de l'eau : déjà géré par _HYDRO_FIL_MIN_PU_FRACTION dans network_builder.
+            p_min_pu = (1.0 / nb_turbines) if carrier == "hydro_reservoir" else 0.0
+
             rows.append(
                 {
                     "name": row.get("nom"),
@@ -1502,6 +1511,7 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
                     "p_nom_extendable": False,
                     "p_nom_min": 0.0,
                     "p_nom_max": None,
+                    "p_min_pu": p_min_pu,
                     "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.1,
                 }
             )

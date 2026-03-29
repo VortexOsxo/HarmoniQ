@@ -700,7 +700,7 @@ def _add_generators(network: pypsa.Network, generators_df: Any) -> None:
 
         kwargs = {
             k: row[k]
-            for k in ["carrier", "p_nom", "p_nom_extendable", "p_nom_min", "p_nom_max", "marginal_cost"]
+            for k in ["carrier", "p_nom", "p_nom_extendable", "p_nom_min", "p_nom_max", "marginal_cost", "p_min_pu"]
             if k in generators_df.columns
         }
         network.add("Generator", name=name, bus=bus, **kwargs)
