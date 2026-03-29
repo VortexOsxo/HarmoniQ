@@ -27,7 +27,10 @@ _RELAX_SNOM = 99_999.0   # MVA non-contraignant
 
 # Prime hivernale sur la valeur de l'eau ($/MWh) — Jan à Déc
 # Dupliquée depuis data_loader pour éviter l'import circulaire.
-_WINTER_PREMIUM = [3.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 3.0]
+# Relevée pour que le water value hivernal (base ~6.5 $/MWh + prime) dépasse
+# le prix import Ontario (15 $/MWh) → LP importe en pointe jan/fév/déc
+# plutôt que de dépléter les réservoirs stratégiques.
+_WINTER_PREMIUM = [12.0, 12.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 5.0, 12.0]
 
 
 def get_optimizer_todo_list() -> List[str]:

@@ -167,7 +167,10 @@ _FIL_MONTHLY_CF = [0.4, 0.32, 0.37, 0.68, 0.75, 0.7, 0.6, 0.6, 0.6, 0.5, 0.5, 0.
 # Sources : IESO Annual Imports/Exports by Jurisdiction, HQ Rapport Annuel,
 #           IESO Ontario-Quebec Interconnection Capability Report (2017).
 #                                Jan  Fév  Mar  Avr  Mai  Jun  Jul  Aoû  Sep  Oct  Nov  Déc
-_WINTER_RESERVOIR_PREMIUM = [3.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 3.0]
+# Prime relevée pour que le water value hivernal dépasse le prix import Ontario (15 $/MWh).
+# À fill=70% : base=6.5 $/MWh + prime → 18.5 $/MWh (jan) > Ontario 15 $/MWh.
+# → LP préfère importer en pointe hivernale plutôt que dépléter les réservoirs.
+_WINTER_RESERVOIR_PREMIUM = [12.0, 12.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 5.0, 12.0]
 
 
 def _apply_winter_premium(costs: np.ndarray, snapshots: pd.DatetimeIndex) -> np.ndarray:
@@ -693,10 +696,17 @@ class NetworkDataLoaderBis:
                         if prod_col is not None:
                             prod_ts = prod.set_index("date") if "date" in prod.columns else prod
                             series = prod_ts[prod_col]
-                            # Déterminer le pic réel du module pour normaliser en p.u.
-                            peak_val = series.max()
-                            if peak_val > 0:
-                                cf_hourly = (series / peak_val).clip(0.0, 1.0)
+                            # Normaliser en p.u. par rapport au p_nom du parc (comme pour l'éolien).
+                            # p_nom_kw = puissance_nominal (kW/panneau) × nombre_panneau.
+                            # Si la colonne est "production_horaire_wh" (Wh/h = W moyen),
+                            # on divise par 1000 pour passer en kW avant normalisation.
+                            p_nom_kw = float(parc.puissance_nominal) * float(parc.nombre_panneau)
+                            if prod_col == "production_horaire_wh":
+                                series_kw = series / 1000.0  # W → kW
+                            else:
+                                series_kw = series  # déjà en kW
+                            if p_nom_kw > 0:
+                                cf_hourly = (series_kw / p_nom_kw).clip(0.0, 1.0).fillna(0.0)
                                 # Agréger en moyenne hebdomadaire si snapshots sont hebdo
                                 snap_freq = pd.infer_freq(snapshots) if len(snapshots) > 2 else None
                                 if snap_freq and "W" in str(snap_freq):
@@ -707,7 +717,8 @@ class NetworkDataLoaderBis:
                                     cf_aligned = cf_hourly.reindex(snapshots, method="nearest",
                                                                    tolerance=pd.Timedelta("1h")).fillna(0.0)
                                 p_max_pu_cols[nom] = cf_aligned
-                                logger.info("Profil solaire %s : CF moyen=%.2f (module OK)", nom, cf_aligned.mean())
+                                logger.info("Profil solaire %s : CF moyen=%.2f (p_nom=%.0f kW, module OK)",
+                                            nom, cf_aligned.mean(), p_nom_kw)
                     except Exception as exc:
                         logger.warning("Echec p_max_pu solaire %s: %s", parc.nom, exc)
             except Exception as exc:
@@ -1495,9 +1506,11 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
             # p_min_pu : au moins 1 turbine doit toujours tourner pour les barrages réservoirs.
             # Physiquement : les turbines Francis/Kaplan ne peuvent pas être toutes à l'arrêt
             # simultanément (débit minimum légal + équipements auxiliaires).
-            # p_min_pu = 1/nb_turbines → puissance minimale = p_nom / nb_turbines (1 turbine).
+            # On plafonne à 0.10 pour garantir que p_min_pu < p_max_pu_min (= 0.15 à 30% fill).
+            # Sans plafond, un barrage à 1 turbine aurait p_min_pu=1.0 > p_max_pu=0.95 → LP bloqué
+            # et le dispatch deviendrait fixe (aucune latitude entre p_min et p_max).
             # Pour le fil de l'eau : déjà géré par _HYDRO_FIL_MIN_PU_FRACTION dans network_builder.
-            p_min_pu = (1.0 / nb_turbines) if carrier == "hydro_reservoir" else 0.0
+            p_min_pu = min(1.0 / nb_turbines, 0.10) if carrier == "hydro_reservoir" else 0.0
 
             rows.append(
                 {

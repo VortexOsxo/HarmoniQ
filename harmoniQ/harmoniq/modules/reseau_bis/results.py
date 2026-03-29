@@ -49,7 +49,16 @@ def extract_kpis(
 
     if hasattr(network, "generators_t") and "p" in network.generators_t:
         p = network.generators_t["p"]
-        production["totale"] = p.sum(axis=1)
+        # Exclure les générateurs import/export (market_*) du total de production.
+        # Les market generators d'export ont p < 0 (puits) et causeraient une
+        # annulation du total (production - export ≈ demande, ou 0 en surplus printanier).
+        # Le frontend attend "totale" = somme des sources de production HQ uniquement.
+        if len(network.generators) > 0 and "carrier" in network.generators.columns:
+            prod_mask = ~network.generators.carrier.isin(["import", "export"])
+            prod_gens = network.generators.index[prod_mask]
+            production["totale"] = p.reindex(columns=prod_gens, fill_value=0.0).sum(axis=1)
+        else:
+            production["totale"] = p.sum(axis=1)
 
         if len(network.generators) > 0 and "carrier" in network.generators.columns:
             for carrier in network.generators.carrier.unique():
