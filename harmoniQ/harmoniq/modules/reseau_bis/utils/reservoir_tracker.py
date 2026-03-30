@@ -35,8 +35,11 @@ logger = logging.getLogger("ReservoirTracker")
 # CSV d'apport naturel : harmoniq/modules/hydro/apport_naturel/{id_HQ}.csv
 _APPORT_DIR = Path(__file__).parent.parent.parent.parent / "hydro" / "apport_naturel"
 
-# Niveau initial par défaut si non fourni (70% plein — pratique opérationnelle HQ)
-_DEFAULT_INITIAL_LEVEL = 0.70
+# Niveau initial par défaut si non fourni.
+# 80% correspond au niveau typique HQ en début d'année (après automne humide,
+# avant le tirage hivernal). Valeur consensuelle retenue faute de données
+# temps-réel publiques sur le remplissage des réservoirs.
+_DEFAULT_INITIAL_LEVEL = 0.80
 
 # Apport naturel par défaut si le CSV est absent (m³/s)
 _DEFAULT_INFLOW_M3S = 15.0
@@ -327,11 +330,19 @@ def _load_inflow(dam: Any, snapshots: pd.DatetimeIndex) -> np.ndarray:
 
     try:
         df = pd.read_csv(apport_path, parse_dates=["time"]).set_index("time")["streamflow"]
-        # Aligner chaque snapshot sur le jour correspondant (résolution journalière)
-        dates = pd.DatetimeIndex([ts.normalize() for ts in snapshots])
-        aligned = df.reindex(dates, method="nearest").values
+        # Aligner par JOUR DE L'ANNÉE (month + day) pour être indépendant de l'année
+        # de simulation. Les CSV vont jusqu'à ~2022 ; un scénario 2035 ne peut pas
+        # être aligné par date absolue (method="nearest" donnerait dec-2022 partout).
+        # On calcule la moyenne climatologique par (mois, jour) sur tout l'historique,
+        # puis on réindexe chaque snapshot sur son (mois, jour).
+        df_clim = df.groupby([df.index.month, df.index.day]).mean()
+        df_clim.index.names = ["month", "day"]
+        aligned = np.array([
+            df_clim.get((ts.month, ts.day), _DEFAULT_INFLOW_M3S)
+            for ts in snapshots
+        ], dtype=float)
         aligned = np.where(np.isnan(aligned), _DEFAULT_INFLOW_M3S, aligned)
-        return aligned.astype(float)
+        return aligned
     except Exception as exc:
         logger.warning(
             "Erreur chargement apport '%s' : %s — défaut %.0f m³/s.",

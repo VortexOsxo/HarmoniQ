@@ -1567,13 +1567,23 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
 # Niveau initial des réservoirs
 # ---------------------------------------------------------------------------
 
+# Niveau initial par défaut : 80 % du volume utile.
+# Correspond au niveau typique HQ en entrée d'année (après l'automne humide,
+# avant le tirage hivernal). Faute de données temps-réel publiques sur le
+# remplissage (la DB Hydro stocke volume_reservoir max en m³ mais pas le
+# niveau courant), cette valeur fixe est plus simple et suffisamment réaliste.
+# Le feed-forward hydraulique (ReservoirDamFeed) fera évoluer les niveaux
+# chunk par chunk en fonction du dispatch OPF réel.
+_DEFAULT_RESERVOIR_FILL = 0.80
+
+
 def _get_initial_reservoir_fill(scenario: Any) -> Dict[str, float]:
     """Retourne le niveau de remplissage initial des réservoirs par barrage.
 
     Sources (priorité décroissante) :
     1. scenario.pourcentage_reservoir_initial : dict {nom_barrage: float} ∈ [0, 1]
     2. scenario.pourcentage_reservoir_initial : float (niveau global)
-    3. Valeur par défaut : 70 % (niveau estival typique HQ, au-dessus du seuil 50%)
+    3. _DEFAULT_RESERVOIR_FILL = 80 %
 
     Le niveau global est stocké sous la clé spéciale "_global" et utilisé comme
     fallback pour les barrages non listés individuellement.
@@ -1583,11 +1593,11 @@ def _get_initial_reservoir_fill(scenario: Any) -> Dict[str, float]:
     if isinstance(reservoir_attr, dict):
         fill = {k: float(v) for k, v in reservoir_attr.items()}
         if "_global" not in fill:
-            fill["_global"] = 0.70
+            fill["_global"] = _DEFAULT_RESERVOIR_FILL
     elif isinstance(reservoir_attr, (int, float)):
         fill["_global"] = max(0.0, min(1.0, float(reservoir_attr)))
     else:
-        fill["_global"] = 0.70  # niveau estival typique HQ
+        fill["_global"] = _DEFAULT_RESERVOIR_FILL
     return fill
 
 
