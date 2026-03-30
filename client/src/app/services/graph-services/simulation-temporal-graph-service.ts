@@ -96,7 +96,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
         }
     }
 
-    public handleData(simulationResult: any, demandeResult: any, granularity: string = 'original') {
+    public handleData(simulationResult: any, demandeResult: any, granularity: string = 'weekly') {
         if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;
 
         const productionData = simulationResult.production;
@@ -105,12 +105,8 @@ export class SimulationTemporalGraphService implements SimulationStep {
         const components = [
             { key: 'total_eolien', name: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'] },
             { key: 'total_solaire', name: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'] },
-            { key: 'total_hydro_fil', name: 'Hydro (fil)', color: INFRA_COLORS['hydro'] },
-            {
-                key: 'total_hydro_reservoir',
-                name: 'Hydro (réservoir)',
-                color: INFRA_COLORS['hydro'],
-            },
+            { key: 'total_hydro_fil', name: 'Hydro (fil de l\'eau)', color: '#7bbfe8' },
+            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: '#2b6fa8' },
             {
                 key: 'total_nucleaire',
                 name: INFRA_LABELS['nucleaire'],
@@ -136,18 +132,35 @@ export class SimulationTemporalGraphService implements SimulationStep {
                 y = aggregated.y;
             }
 
-            const trace = this.graphService.getStandardTrace(
-                comp.name,
-                xLocal,
-                y,
-                comp.color,
-                `<b>%{y:.2f} MW</b>`,
-            );
             traces.push({
-                ...trace,
-                line: { ...trace.line, width: 2 },
-                fill: 'none',
+                x: xLocal,
+                y: y,
+                type: 'scatter',
+                mode: 'none',
+                name: comp.name,
+                stackgroup: 'one',
+                fillcolor: this.graphService.hexToRgba(comp.color, 0.7),
+                hovertemplate: `<b>%{y:.2f} MW</b>`,
             });
+        });
+
+        // Total production line on top of the stack
+        let totalY = productionData.map((instance: any) => instance['totale'] || 0);
+        let totalX = x;
+        if (granularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(x, totalY, granularity);
+            totalX = aggregated.x;
+            totalY = aggregated.y;
+        }
+        traces.push({
+            x: totalX,
+            y: totalY,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Production Totale',
+            line: { color: '#27ae60', width: 2, dash: 'solid' },
+            fill: 'none',
+            hovertemplate: `<b>%{y:.2f} MW</b>`,
         });
 
         let demandeX = Object.keys(demandeResult.total_electricity);
@@ -161,36 +174,15 @@ export class SimulationTemporalGraphService implements SimulationStep {
             demandeY = aggregated.y;
         }
 
-        const demandTrace = this.graphService.getStandardTrace(
-            'Demande',
-            demandeX,
-            demandeY,
-            '#2c3e50',
-            `<b>%{y:.2f} MW</b>`,
-        );
         traces.push({
-            ...demandTrace,
-            line: { shape: 'spline', color: '#2c3e50', width: 2 },
+            x: demandeX,
+            y: demandeY,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Demande',
+            line: { color: '#000000', width: 2, dash: 'dot' },
             fill: 'none',
-        });
-
-        let totalY = productionData.map((instance: any) => instance['totale'] || 0);
-        let totalX = x;
-        if (granularity !== 'original') {
-            const aggregated = this.graphService.aggregateData(x, totalY, granularity);
-            totalX = aggregated.x;
-            totalY = aggregated.y;
-        }
-        traces.push({
-            ...this.graphService.getStandardTrace(
-                'Production Totale',
-                totalX,
-                totalY,
-                '#27ae60',
-                `<b>%{y:.2f} MW</b>`,
-            ),
-            line: { shape: 'spline', color: '#27ae60', width: 2 },
-            fill: 'none',
+            hovertemplate: `<b>%{y:.2f} MW</b>`,
         });
 
         const layout = this.graphService.getStandardLayout(
@@ -233,7 +225,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
         }));
     }
 
-    renderDemandPreview(demandeResult: any, granularity: string = 'original') {
+    renderDemandPreview(demandeResult: any, granularity: string = 'weekly') {
         if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;
 
         let demandeX = Object.keys(demandeResult.total_electricity);

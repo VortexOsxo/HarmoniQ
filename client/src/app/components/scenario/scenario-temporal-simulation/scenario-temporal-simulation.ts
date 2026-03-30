@@ -10,7 +10,7 @@ import { SimulationStepService } from '@app/services/simulation-step-service';
 })
 export class ScenarioTemporalSimulation {
   config = graphServiceConfig;
-  selectedGranularity = 'daily';
+  selectedGranularity = 'weekly';
 
   constructor(
     private graphService: SimulationTemporalGraphService,
