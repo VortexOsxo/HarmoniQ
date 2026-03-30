@@ -63,3 +63,9 @@ dev = [
 
 [tool.setuptools]
 packages = ["harmoniq"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: tests nécessitant une vraie DB (exécuter manuellement avec --run-integration)",
+]
