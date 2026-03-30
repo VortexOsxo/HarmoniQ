@@ -4,7 +4,7 @@ Test d'intégration RÉEL — reseau_bis avec tous les modules connectés.
 
 Utilise :
   - Scénario 2035 complet (8760h, année entière) depuis la DB
-  - ListeInfrastructures #1 (toutes les infras)
+  - SimulationInfraGroup (toutes les infras DB)
   - Vrais profils : InfraParcEolienne, InfraSolaire, InfraHydro, InfraThermique
   - Vraie demande depuis demande.db (99 MRC)
   - LOPF HiGHS + AC PF Newton-Raphson interne
@@ -63,7 +63,12 @@ log = logging.getLogger("test_integration")
 # ---------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Test intégration reseau_bis")
 parser.add_argument("--scenario_id", type=int, default=1, help="ID du scénario (1=2035, 2=2050)")
-parser.add_argument("--liste_infra_id", type=int, default=1, help="ID de la liste d'infras")
+parser.add_argument(
+    "--liste_infra_id",
+    type=int,
+    default=1,
+    help="(Legacy) ID de la liste d'infras — ignoré, le test charge toutes les infras DB.",
+)
 parser.add_argument("--flow_mode", type=str, default="ac", choices=["ac", "dc", "dc+ac"],
                     help="Mode de flux de puissance")
 parser.add_argument("--resolution", type=str, default="hebdomadaire", choices=["horaire", "hebdomadaire"],
@@ -72,7 +77,8 @@ parser.add_argument("--plot", action="store_true",
                     help="Ouvrir le dashboard interactif après l'optimisation")
 parser.add_argument("--save_plot", type=str, default=None, metavar="FICHIER.html",
                     help="Sauvegarder le dashboard HTML (ex: resultats_2035.html)")
-args = parser.parse_args()
+# Pytest passes extra CLI args (e.g., -q); ignore unknowns to avoid SystemExit.
+args, _unknown = parser.parse_known_args()
 
 # ---------------------------------------------------------------------------
 # Chargement depuis la vraie DB
@@ -81,7 +87,15 @@ log.info("=" * 70)
 log.info("TEST INTÉGRATION reseau_bis — Scénario #%d, flow_mode=%s, resolution=%s", args.scenario_id, args.flow_mode, args.resolution)
 log.info("=" * 70)
 
-from harmoniq.db.schemas import Scenario, ListeInfrastructures
+from harmoniq.db.schemas import (
+    Scenario,
+    SimulationInfraGroup,
+    EolienneParc,
+    Solaire,
+    Hydro,
+    Thermique,
+    Nucleaire,
+)
 from harmoniq.db.engine import get_db
 
 db = next(get_db())
@@ -91,23 +105,31 @@ if scenario is None:
     log.error("Scénario #%d introuvable dans la DB", args.scenario_id)
     sys.exit(1)
 
-liste_infra = db.query(ListeInfrastructures).filter(
-    ListeInfrastructures.id == args.liste_infra_id
-).first()
-if liste_infra is None:
-    log.error("ListeInfrastructures #%d introuvable dans la DB", args.liste_infra_id)
-    sys.exit(1)
+parcs_eoliens = db.query(EolienneParc).all()
+parcs_solaires = db.query(Solaire).all()
+centrales_hydro = db.query(Hydro).all()
+centrales_thermique = db.query(Thermique).all()
+centrales_nucleaire = db.query(Nucleaire).all()
+
+liste_infra = SimulationInfraGroup(
+    nom="InfraGroup (DB all)",
+    parc_eoliens=parcs_eoliens,
+    parc_solaires=parcs_solaires,
+    central_hydroelectriques=centrales_hydro,
+    central_thermique=centrales_thermique,
+    central_nucleaire=centrales_nucleaire,
+)
 
 log.info("  Scénario    : %s (%s → %s)", scenario.nom, scenario.date_de_debut, scenario.date_de_fin)
 log.info("  Pas de temps: %s", scenario.pas_de_temps)
 log.info("  Météo       : %s | Conso : %s", scenario.weather, scenario.consomation)
-log.info("  Liste infra : %s (id=%d)", liste_infra.nom, liste_infra.id)
+log.info("  Infra group : %s (DB all)", liste_infra.nom)
 
-n_eol = len((liste_infra.parc_eoliens or "").split(",")) if liste_infra.parc_eoliens else 0
-n_hyd = len((liste_infra.central_hydroelectriques or "").split(",")) if liste_infra.central_hydroelectriques else 0
-n_sol = len((liste_infra.parc_solaires or "").split(",")) if liste_infra.parc_solaires else 0
-n_thm = len((liste_infra.central_thermique or "").split(",")) if liste_infra.central_thermique else 0
-n_nuc = len((liste_infra.central_nucleaire or "").split(",")) if liste_infra.central_nucleaire else 0
+n_eol = len(liste_infra.parc_eoliens or [])
+n_hyd = len(liste_infra.central_hydroelectriques or [])
+n_sol = len(liste_infra.parc_solaires or [])
+n_thm = len(liste_infra.central_thermique or [])
+n_nuc = len(liste_infra.central_nucleaire or [])
 log.info("  Infras      : %d éolien | %d hydro | %d solaire | %d thermique | %d nucléaire",
          n_eol, n_hyd, n_sol, n_thm, n_nuc)
 
