@@ -203,8 +203,10 @@ def get_run_of_river_dam_power(barrage):
                 annual_maintenance_flag=False,
             )            
             
+        # nb_turbines = total - nb_turb_maintenance (déjà soustrait ligne 165)
+        # Il ne faut PAS soustraire à nouveau ici → multiplication par nb_turbines seulement.
         hp.dataframe_output["power_MW"] = (
-            hp.dataframe_output["power_kW"] * (nb_turbines - nb_turb_maintenance)
+            hp.dataframe_output["power_kW"] * nb_turbines
         ) / 1000
         barrage.production = hp.dataframe_output["power_MW"]
         return hp.dataframe_output["power_MW"]

@@ -1503,14 +1503,11 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
             nb_turbines = max(1, int(row.get("nb_turbines", 1)))
             bus = _resolve_generator_bus(row.get("bus"), row.get("latitude"), row.get("longitude"), buses_df, row.get("nom"))
 
-            # p_min_pu : au moins 1 turbine doit toujours tourner pour les barrages réservoirs.
-            # Physiquement : les turbines Francis/Kaplan ne peuvent pas être toutes à l'arrêt
-            # simultanément (débit minimum légal + équipements auxiliaires).
-            # On plafonne à 0.10 pour garantir que p_min_pu < p_max_pu_min (= 0.15 à 30% fill).
-            # Sans plafond, un barrage à 1 turbine aurait p_min_pu=1.0 > p_max_pu=0.95 → LP bloqué
-            # et le dispatch deviendrait fixe (aucune latitude entre p_min et p_max).
-            # Pour le fil de l'eau : déjà géré par _HYDRO_FIL_MIN_PU_FRACTION dans network_builder.
-            p_min_pu = min(1.0 / nb_turbines, 0.10) if carrier == "hydro_reservoir" else 0.0
+            # p_min_pu :
+            # - Hydro réservoir : 0.0 (dispatchable). Le déversement n'est PAS modélisé
+            #   ici et ne doit pas être assimilé à une production minimale obligatoire.
+            # - Hydro fil de l'eau : géré via _HYDRO_FIL_MIN_PU_FRACTION dans network_builder.
+            p_min_pu = 0.0
 
             rows.append(
                 {

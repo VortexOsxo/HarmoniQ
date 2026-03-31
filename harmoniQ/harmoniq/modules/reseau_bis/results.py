@@ -1,9 +1,14 @@
 ﻿"""Extraction des resultats + formatage API avec alias de compatibilite."""
 
+import logging
 import math
 from typing import Any, Dict, List
 import pandas as pd
 import pypsa
+
+logger = logging.getLogger(__name__)
+
+_BALANCE_TOLERANCE_MW = 1.0
 
 
 CARRIER_ALIAS_MAP = {
@@ -56,15 +61,18 @@ def extract_kpis(
         if len(network.generators) > 0 and "carrier" in network.generators.columns:
             prod_mask = ~network.generators.carrier.isin(["import", "export"])
             prod_gens = network.generators.index[prod_mask]
-            production["totale"] = p.reindex(columns=prod_gens, fill_value=0.0).sum(axis=1)
+            totale_series = p.reindex(columns=prod_gens, fill_value=0.0).sum(axis=1)
+            production["totale"] = totale_series.reindex(production.index, fill_value=0.0)
         else:
-            production["totale"] = p.sum(axis=1)
+            totale_series = p.sum(axis=1)
+            production["totale"] = totale_series.reindex(production.index, fill_value=0.0)
 
         if len(network.generators) > 0 and "carrier" in network.generators.columns:
             for carrier in network.generators.carrier.unique():
                 canonical = _canonical_carrier(str(carrier))
                 gens = network.generators.index[network.generators.carrier == carrier]
-                production[f"total_{canonical}"] = p.reindex(columns=gens, fill_value=0.0).sum(axis=1)
+                series = p.reindex(columns=gens, fill_value=0.0).sum(axis=1)
+                production[f"total_{canonical}"] = series.reindex(production.index, fill_value=0.0)
 
     # Import/export par snapshot depuis les Links (interconnexions).
     # Les imports/exports ne sont PAS des générateurs — ils transitent via des Links PyPSA
@@ -84,6 +92,19 @@ def extract_kpis(
             production["total_import"] = 0.0
         if "total_export" not in production.columns:
             production["total_export"] = 0.0
+
+    # Demande totale par snapshot (MW)
+    if hasattr(network, "loads_t") and hasattr(network.loads_t, "p_set") and not network.loads_t.p_set.empty:
+        demand_series = network.loads_t.p_set.sum(axis=1).reindex(production.index, fill_value=0.0)
+    else:
+        demand_series = pd.Series(0.0, index=production.index)
+    production["demande_mw"] = demand_series
+
+    if demand_series.abs().sum() == 0:
+        logger.warning("Demande totale nulle dans extract_kpis (loads_t.p_set vide ou mal align?).")
+
+    if production["totale"].abs().sum() == 0:
+        logger.warning("Production totale nulle dans extract_kpis (generators_t.p vide ou mal align?).")
 
     # Le frontend legacy attend total_nucleaire
     if "total_nucleaire" not in production.columns:
@@ -146,26 +167,59 @@ def extract_kpis(
                 "max_import_mw": float(vals.min()),
             })
 
-    # Pertes réseau :
-    #   - AC PF (pf_done / pf_internal_done) : p0 + p1 ≠ 0  → pertes exactes I²R
+    # Pertes r?seau :
+    #   - AC PF (pf_done / pf_internal_done) : p0 + p1 ? 0  ? pertes exactes I?R
     #   - LPF (lpf_*)                        : p0 + p1 = 0 par construction (DC lossless)
-    #                                          → estimation via P²R/V² (DC approximation)
+    #                                          ? estimation via P?R/V? (DC approximation)
     total_losses_mwh = 0.0
+    losses_series = pd.Series(0.0, index=production.index)
     flow_status = optimizer_result.get("flow_status", "") if optimizer_result else ""
     ac_pf_converged = flow_status in ("pf_done", "pf_internal_done")
 
     if hasattr(network, "lines_t") and "p0" in network.lines_t and not network.lines_t.p0.empty:
         p0_df = network.lines_t.p0
         if ac_pf_converged and "p1" in network.lines_t and not network.lines_t.p1.empty:
-            # AC PF convergé : pertes exactes (p1 ≠ -p0), pondérées par snap_weights
-            losses_per_snap = (p0_df + network.lines_t.p1).abs().sum(axis=1)
+            # AC PF converg? : pertes exactes (p1 ? -p0), pond?r?es par snap_weights
+            losses_series = (p0_df + network.lines_t.p1).abs().sum(axis=1).reindex(production.index, fill_value=0.0)
             if snap_weights is not None:
-                total_losses_mwh = float((losses_per_snap * snap_weights).sum())
+                total_losses_mwh = float((losses_series * snap_weights).sum())
             else:
-                total_losses_mwh = float(losses_per_snap.sum())
+                total_losses_mwh = float(losses_series.sum())
         else:
-            # LPF : p1 = -p0 → estimation DC via P²R/V²
-            total_losses_mwh = _estimate_dc_losses_from_lpf(network, p0_df, snap_weights)
+            # LPF : p1 = -p0 ? estimation DC via P?R/V?
+            losses_series = _estimate_dc_losses_series_from_lpf(network, p0_df).reindex(production.index, fill_value=0.0)
+            if snap_weights is not None:
+                total_losses_mwh = float((losses_series * snap_weights).sum())
+            else:
+                total_losses_mwh = float(losses_series.sum())
+
+    # Bilan ?nerg?tique par snapshot (MW)
+    total_prod = production["totale"] if "totale" in production.columns else pd.Series(0.0, index=production.index)
+    total_import = production["total_import"].reindex(production.index, fill_value=0.0)
+    total_export = production["total_export"].reindex(production.index, fill_value=0.0)
+
+    total_supply_to_quebec = total_prod + total_import - total_export
+    balance_error_mw = total_supply_to_quebec - demand_series - losses_series
+
+    production["total_supply_to_quebec"] = total_supply_to_quebec
+    production["losses_mw"] = losses_series
+    production["balance_error_mw"] = balance_error_mw
+    production["residual_demand_mw"] = balance_error_mw
+
+    abs_balance = balance_error_mw.abs()
+    max_abs_balance_error_mw = float(abs_balance.max()) if not abs_balance.empty else 0.0
+    mean_abs_balance_error_mw = float(abs_balance.mean()) if not abs_balance.empty else 0.0
+    n_balance_violations = int((abs_balance > _BALANCE_TOLERANCE_MW).sum()) if not abs_balance.empty else 0
+
+    if n_balance_violations > 0:
+        worst = abs_balance.sort_values(ascending=False).head(10)
+        for ts, val in worst.items():
+            logger.warning(
+                "Bilan ?nerg?tique: snapshot %s error=%.2f MW (supply=%.2f, demand=%.2f, losses=%.2f)",
+                ts, balance_error_mw.loc[ts], total_supply_to_quebec.loc[ts], demand_series.loc[ts], losses_series.loc[ts],
+            )
+        if n_balance_violations > len(worst):
+            logger.warning("Bilan ?nerg?tique: %d autres snapshots au-del? de ?%.1f MW", n_balance_violations - len(worst), _BALANCE_TOLERANCE_MW)
 
     summary = {
         "n_buses": int(len(network.buses)) if hasattr(network, "buses") else 0,
@@ -184,6 +238,10 @@ def extract_kpis(
         round(total_losses_mwh / summary["total_energy_mwh"] * 100, 2)
         if summary["total_energy_mwh"] > 0 else 0.0
     )
+    summary["max_abs_balance_error_mw"] = max_abs_balance_error_mw
+    summary["mean_abs_balance_error_mw"] = mean_abs_balance_error_mw
+    summary["n_balance_violations"] = n_balance_violations
+
 
     # Intégrer les résultats de l'optimizer si fournis
     was_relaxed         = False
@@ -285,23 +343,20 @@ def format_api_response(
 
 
 def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame, snap_weights=None) -> float:
-    """Estime les pertes I²R depuis le flux LPF (DC).
+    """Estime les pertes I?R depuis le flux LPF (DC)."""
+    losses_series = _estimate_dc_losses_series_from_lpf(network, p0_df)
+    if snap_weights is not None:
+        w = snap_weights.reindex(losses_series.index, fill_value=1.0)
+        return float((losses_series * w).sum())
+    return float(losses_series.sum())
 
-    Formule 3-phases équilibré :  P_loss [MW] = P0_capped [MW]² × R [Ω] / V_nom [kV]²
 
-    Notes :
-    - R [Ω] est calculé par PyPSA lors du PF (r_per_length × length / num_parallel).
-    - Le flux LPF est PLAFONNÉ à s_nom avant le calcul : le LPF distribue sans
-      contraintes thermiques (contrairement à l'OPF), ce qui peut donner des flux
-      35× supérieurs à s_nom sur les lignes de collecte → pertes absurdes sans cap.
-    - Cette estimation reste une approximation DC ; les pertes AC réelles nécessitent
-      un AC Newton-Raphson convergé (flow_status == "pf_done").
-    - La somme sur tous les snapshots donne des MWh.
-    """
+def _estimate_dc_losses_series_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame) -> pd.Series:
+    """Estime les pertes I?R par snapshot depuis le flux LPF (DC)."""
     if "r" not in network.lines.columns:
-        return 0.0
+        return pd.Series(0.0, index=p0_df.index)
 
-    total = 0.0
+    losses_total = pd.Series(0.0, index=p0_df.index)
     for line_name in p0_df.columns:
         if line_name not in network.lines.index:
             continue
@@ -314,24 +369,15 @@ def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame, sn
         v_nom = float(network.buses.at[bus0, "v_nom"])
         if v_nom <= 0:
             continue
-        # Plafonner le flux LPF à s_nom pour éviter l'explosion des pertes
-        # sur les lignes de collecte (LPF distribue sans contraintes thermiques,
-        # certaines lignes 230kV reçoivent 35× leur capacité nominale).
-        # On exclut aussi les liens Interco↔Étranger (hors territoire).
         s_nom = network.lines.at[line_name, "s_nom"] if "s_nom" in network.lines.columns else None
         if s_nom is not None and s_nom > 0:
             p_series = p0_df[line_name].clip(-float(s_nom), float(s_nom))
         else:
             p_series = p0_df[line_name]
-        # Pertes par snapshot [MW], pondérées par snap_weights → MWh
         losses_series = p_series ** 2 * r_ohm / v_nom ** 2
-        if snap_weights is not None:
-            w = snap_weights.reindex(losses_series.index, fill_value=1.0)
-            total += float((losses_series * w).sum())
-        else:
-            total += float(losses_series.sum())
+        losses_total = losses_total.add(losses_series, fill_value=0.0)
 
-    return total
+    return losses_total
 
 
 def _compute_infra_report(network: pypsa.Network) -> List[Dict[str, Any]]:  # noqa: C901

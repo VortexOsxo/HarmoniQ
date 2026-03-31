@@ -120,86 +120,175 @@ def _run_dispatch_with_fallback(
     if status == "ok":
         return status, condition, False, None
 
-    # Infaisable ou erreur → relâcher contraintes thermiques ET capacités d'export
+    # Infaisable ou erreur ? rel?cher contraintes thermiques + fallback interco cibl?
     logger.warning(
-        "OPF infaisable (status=%s, %s) — relâchement des contraintes thermiques et d'export…",
+        "OPF infaisable (status=%s, %s) ? rel?chement des contraintes thermiques et fallback interco?",
         status, condition,
     )
     original_snoms = network.lines["s_nom"].copy() if len(network.lines) > 0 else None
-    original_link_pmax, original_gen_pmax, original_gen_pmin = _save_interco_limits(network)
+    original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin = _save_interco_limits(network)
 
     if original_snoms is not None:
         network.lines["s_nom"] = _RELAX_SNOM
-    _relax_interco_export(network)
 
-    status2, condition2 = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
+    fallback_modes = _build_interco_fallback_plan(network)
 
-    if status2 == "ok":
-        logger.info(
-            "OPF convergé après relâchement des contraintes thermiques + export interco. "
-            "Vérifier constraint_warnings pour les lignes/liens surchargés."
-        )
-        return status2, condition2, True, original_snoms
+    for mode in fallback_modes:
+        _restore_interco_limits(network, original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin)
 
-    # Si même sans contraintes ça ne converge pas → restaurer et retourner l'erreur
-    logger.error("OPF toujours infaisable après relâchement : %s / %s", status2, condition2)
+        if mode == "export":
+            logger.warning("Fallback interco: relaxation EXPORT uniquement (surplus ? ?vacuer).")
+            _relax_interco_for_surplus(network)
+        elif mode == "import":
+            logger.warning("Fallback interco: relaxation IMPORT uniquement (d?ficit ? couvrir).")
+            _relax_interco_for_deficit(network)
+        else:
+            logger.warning("Fallback interco: relaxation IMPORT + EXPORT (secours ultime).")
+            _relax_interco_for_surplus(network)
+            _relax_interco_for_deficit(network)
+
+        status2, condition2 = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
+
+        if status2 == "ok":
+            logger.info(
+                "OPF converg? apr?s rel?chement des contraintes thermiques + fallback interco (%s). "
+                "V?rifier constraint_warnings pour les lignes/liens surcharg?s.",
+                mode,
+            )
+            return status2, condition2, True, original_snoms
+
+    # Si m?me sans contraintes ?a ne converge pas ? restaurer et retourner l'erreur
+    logger.error("OPF toujours infaisable apr?s rel?chement : %s / %s", status2, condition2)
     if original_snoms is not None:
         network.lines["s_nom"] = original_snoms
-    _restore_interco_limits(network, original_link_pmax, original_gen_pmax, original_gen_pmin)
+    _restore_interco_limits(network, original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin)
     return status2, condition2, False, None
 
 
 def _save_interco_limits(
     network: pypsa.Network,
-) -> Tuple[Optional[pd.Series], Optional[pd.Series], Optional[pd.Series]]:
-    """Sauvegarde p_max_pu des Links et des market generators Étranger."""
+) -> Tuple[Optional[pd.Series], Optional[pd.Series], Optional[pd.Series], Optional[pd.Series]]:
+    """Sauvegarde p_min_pu/p_max_pu des Links et des market generators ?tranger."""
     link_pmax = network.links["p_max_pu"].copy() if len(network.links) > 0 else None
+    link_pmin = network.links["p_min_pu"].copy() if len(network.links) > 0 else None
     market_mask = (
         network.generators.index.str.startswith("market_")
         if len(network.generators) > 0 else pd.Series(dtype=bool)
     )
     gen_pmax = network.generators.loc[market_mask, "p_max_pu"].copy() if market_mask.any() else None
     gen_pmin = network.generators.loc[market_mask, "p_min_pu"].copy() if market_mask.any() else None
-    return link_pmax, gen_pmax, gen_pmin
+    return link_pmax, link_pmin, gen_pmax, gen_pmin
 
 
-def _relax_interco_export(network: pypsa.Network) -> None:
-    """Relâche les capacités d'interconnexion pour évacuer un surplus de production.
 
-    - Links : p_max_pu → 1.0 (export), p_min_pu → -1.0 (import)
-    - Générateurs market_*_import (p_max_pu > 0) : relâche uniquement p_max_pu → 1.0
-    - Générateurs market_*_export (p_max_pu = 0) : relâche uniquement p_min_pu → -1.0
-    Ne jamais croiser les champs : le générateur d'export ne doit jamais produire (p>0).
+
+def _relax_interco_for_surplus(network: pypsa.Network) -> None:
+    """Rel?che UNIQUEMENT les capacit?s d'export pour ?vacuer un surplus.
+
+    - Links : p_max_pu ? 1.0 (export). p_min_pu inchang? (import limit?).
+    - market_*_export : p_min_pu ? -1.0 (puits d'export plus large).
+    - market_*_import : inchang? (ne doit pas fournir en surplus).
     """
     if len(network.links) > 0:
-        network.links["p_max_pu"] = 1.0   # export illimité (direction positive)
-        network.links["p_min_pu"] = -1.0  # import illimité (direction négative)
+        network.links["p_max_pu"] = 1.0
+    if len(network.generators) == 0:
+        return
+    market_indices = [idx for idx in network.generators.index if idx.startswith("market_")]
+    for idx in market_indices:
+        if network.generators.at[idx, "p_max_pu"] <= 0:
+            network.generators.at[idx, "p_min_pu"] = -1.0
+
+
+def _relax_interco_for_deficit(network: pypsa.Network) -> None:
+    """Rel?che UNIQUEMENT les capacit?s d'import pour couvrir un d?ficit.
+
+    - Links : p_min_pu ? -1.0 (import). p_max_pu inchang? (export limit?).
+    - market_*_import : p_max_pu ? 1.0 (import ?largi).
+    - market_*_export : inchang? (ne doit pas absorber en d?ficit).
+    """
+    if len(network.links) > 0:
+        network.links["p_min_pu"] = -1.0
     if len(network.generators) == 0:
         return
     market_indices = [idx for idx in network.generators.index if idx.startswith("market_")]
     for idx in market_indices:
         if network.generators.at[idx, "p_max_pu"] > 0:
-            # Générateur d'import : relâcher la capacité maximale d'import
             network.generators.at[idx, "p_max_pu"] = 1.0
-        else:
-            # Puits d'export : relâcher la capacité maximale d'export (direction négative)
-            network.generators.at[idx, "p_min_pu"] = -1.0
 
 
 def _restore_interco_limits(
     network: pypsa.Network,
     link_pmax: Optional[pd.Series],
+    link_pmin: Optional[pd.Series],
     gen_pmax: Optional[pd.Series],
     gen_pmin: Optional[pd.Series],
 ) -> None:
     """Restaure les capacités d'interconnexion originales."""
     if link_pmax is not None:
         network.links["p_max_pu"] = link_pmax
+    if link_pmin is not None:
+        network.links["p_min_pu"] = link_pmin
     if gen_pmax is not None:
         network.generators.loc[gen_pmax.index, "p_max_pu"] = gen_pmax
     if gen_pmin is not None:
         network.generators.loc[gen_pmin.index, "p_min_pu"] = gen_pmin
 
+
+
+
+def _build_interco_fallback_plan(network: pypsa.Network) -> List[str]:
+    """D?termine l'ordre de fallback interco selon le risque d?ficit/surplus."""
+    min_gap, max_gap = _estimate_supply_demand_gap(network)
+    tol = 1.0  # MW
+    modes: List[str] = []
+
+    has_deficit = min_gap < -tol
+    has_surplus = max_gap > tol
+
+    if has_deficit and has_surplus:
+        modes = ["export", "import", "both"]
+    elif has_deficit:
+        modes = ["import", "both"]
+    elif has_surplus:
+        modes = ["export", "both"]
+    else:
+        modes = ["export", "import", "both"]
+
+    logger.info(
+        "Fallback interco planifi?: min_gap=%.1f MW, max_gap=%.1f MW ? %s",
+        min_gap, max_gap, " ? ".join(modes),
+    )
+    return modes
+
+
+def _estimate_supply_demand_gap(network: pypsa.Network) -> Tuple[float, float]:
+    """Estime l'?cart offre-demande potentiel (MW) en ignorant import/export."""
+    if len(network.snapshots) == 0:
+        return 0.0, 0.0
+
+    # Demande
+    if hasattr(network, "loads_t") and hasattr(network.loads_t, "p_set") and not network.loads_t.p_set.empty:
+        demand = network.loads_t.p_set.sum(axis=1)
+    else:
+        demand = pd.Series(0.0, index=network.snapshots)
+
+    # Offre interne max (hors import/export)
+    if len(network.generators) == 0:
+        supply = pd.Series(0.0, index=network.snapshots)
+    else:
+        prod_mask = ~network.generators.carrier.isin(["import", "export"])
+        gens = network.generators.index[prod_mask]
+        if hasattr(network, "generators_t") and hasattr(network.generators_t, "p_max_pu") and not network.generators_t.p_max_pu.empty:
+            p_max_pu = network.generators_t.p_max_pu.reindex(index=network.snapshots, columns=gens).fillna(0.0)
+        else:
+            p_max_pu = pd.DataFrame(1.0, index=network.snapshots, columns=gens)
+        p_nom = network.generators.loc[gens, "p_nom"].fillna(0.0)
+        supply = p_max_pu.multiply(p_nom, axis=1).sum(axis=1)
+
+    gap = supply.reindex(demand.index, fill_value=0.0) - demand
+    if gap.empty:
+        return 0.0, 0.0
+    return float(gap.min()), float(gap.max())
 
 def _patch_zero_reactance_lines(network: pypsa.Network) -> None:
     """Force x = max(x, 1e-4) sur les lignes avec réactance nulle.
@@ -410,17 +499,36 @@ def _run_dispatch(
             # "bad allocation" vers le chunk 19 sur une machine 16 Go.
             gc.collect()
 
-    # Consolider et stocker dans le réseau
+    # Consolider et stocker dans le r?seau
     gen_p   = pd.concat(gen_chunks,  axis=0) if gen_chunks  else pd.DataFrame(0.0, index=snapshots, columns=gen_cols)
     link_p0 = pd.concat(link_chunks, axis=0) if link_chunks else None
+    gen_p = gen_p.fillna(0.0)
     network.generators_t["p"] = gen_p
     if link_p0 is not None:
         network.links_t["p0"] = link_p0
 
-    # Évaluer la couverture : > 5% des heures sans dispatch → fallback
-    total_gen = gen_p.sum(axis=1)
-    n_total   = len(total_gen)
-    n_zero    = int((total_gen < 1.0).sum())
+    # ?valuer la couverture : > 5% des heures sans activit? de dispatch ? fallback
+    # On utilise la somme absolue pour ?viter une annulation artificielle
+    # lorsque des exportations (p<0) compensent la production interne (p>0).
+    total_activity = gen_p.abs().sum(axis=1)
+    total_net = gen_p.sum(axis=1)
+    total_supply = gen_p.clip(lower=0).sum(axis=1)
+    n_total = len(total_activity)
+    n_zero = int((total_activity < 1.0).sum())
+
+    if n_total > 0:
+        logger.info(
+            "Dispatch stats: activity[min=%.2f, max=%.2f] MW | net[min=%.2f, max=%.2f] MW | supply[min=%.2f, max=%.2f] MW",
+            float(total_activity.min()), float(total_activity.max()),
+            float(total_net.min()), float(total_net.max()),
+            float(total_supply.min()), float(total_supply.max()),
+        )
+        if hasattr(network, "loads_t") and hasattr(network.loads_t, "p_set") and not network.loads_t.p_set.empty:
+            demand = network.loads_t.p_set.sum(axis=1).reindex(gen_p.index, fill_value=0.0)
+            logger.info(
+                "Demand stats: min=%.2f MW, max=%.2f MW",
+                float(demand.min()), float(demand.max()),
+            )
 
     if n_zero > int(0.05 * n_total):
         logger.warning(
