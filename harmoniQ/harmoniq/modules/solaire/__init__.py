@@ -51,22 +51,13 @@ class InfraSolaire(Infrastructure):
 
 
     def calculer_co2_eq_construction(self) -> np.ndarray:
-        # Really rought estimate, need to be improved
-        return self.donnees.puissance_nominal * (CO2_PER_MW := 80)
+        # 14 gCO2e/kWh lifetime × 8760 h × CF 0.15 × 25 yr / 1000 = 460 tCO2/MW
+        CO2_PER_MW = 460  # tCO2/MW
+        return self.donnees.puissance_nominal * CO2_PER_MW
 
-    def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
-        if pas_de_temps is None:
-            pas_de_temps = self.scenario.pas_de_temps
-
-        co2_intensity = 48 / 1000
-
-        CAPACITY_FACTOR = 0.15
-        HOURS_PER_YEAR = 8760
-        annual_energy = self.donnees.puissance_nominal * HOURS_PER_YEAR * CAPACITY_FACTOR
-        annual_co2 = annual_energy * co2_intensity
-        hours = pas_de_temps.total_seconds() / 3600
-        return annual_co2 * (hours / HOURS_PER_YEAR)
+    def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:  # noqa: ARG002
+        # 0 gCO2e/kWh in operation — no combustion
+        return 0.0
 
 
 if __name__ == "__main__":

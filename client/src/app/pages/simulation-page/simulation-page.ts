@@ -12,6 +12,7 @@ import { ScenarioCostSimulation } from '@app/components/scenario/scenario-cost-s
 import { SimulationCostGraphService } from '@app/services/graph-services/simulation-cost-graph-service';
 import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 interface Section {
   id: string;
@@ -34,10 +35,28 @@ export class SimulationPage implements AfterViewInit {
 
   @ViewChild(ScenarioTemporalSimulation) temporalSim?: ScenarioTemporalSimulation;
 
-  simulationService = inject(SimulationService);
-  stepService      = inject(SimulationStepService);
-  costService      = inject(SimulationCostGraphService);
-  co2Service       = inject(SimulationCo2GraphService);
+  simulationService    = inject(SimulationService);
+  stepService          = inject(SimulationStepService);
+  costService          = inject(SimulationCostGraphService);
+  co2Service           = inject(SimulationCo2GraphService);
+  infrasService        = inject(InfrastruturesService);
+
+  private static readonly INFRA_DEFS = [
+    { key: 'parc_eoliens',            label: 'Éolien',     icon: 'fa-wind',  color: '#6abbc4' },
+    { key: 'central_hydroelectriques', label: 'Hydro',      icon: 'fa-water', color: '#4a9dd4' },
+    { key: 'parc_solaires',           label: 'Solaire',    icon: 'fa-sun',   color: '#e8c53c' },
+    { key: 'central_nucleaire',       label: 'Nucléaire',  icon: 'fa-atom',  color: '#e8754a' },
+    { key: 'central_thermique',       label: 'Thermique',  icon: 'fa-fire',  color: '#e25c5c' },
+  ];
+
+  get infraSummary() {
+    const group: any = this.infrasService.selectedInfraGroup();
+    const breakdown = SimulationPage.INFRA_DEFS.map(def => ({
+      ...def,
+      count: (group?.[def.key] ?? []).length,
+    }));
+    return { breakdown, total: breakdown.reduce((s, d) => s + d.count, 0) };
+  }
 
   readonly sections: Section[] = [
     { id: 'section-cost',      title: 'Coût du réseau',       desc: 'Estimation du coût total d\'exploitation',  icon: 'fa-coins',                waitForSimulation: false },
