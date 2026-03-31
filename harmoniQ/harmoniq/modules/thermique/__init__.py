@@ -39,23 +39,14 @@ class InfraThermique(Infrastructure):
         return annual_cost * (hours / HOURS_PER_YEAR)
 
     def calculer_co2_eq_construction(self) -> np.ndarray:
-        # Really rought estimate, need to be improved
-        CO2_PER_MW = 150
+        CO2_PER_MW = 27.5  # tCO2/MW installé
         return self.donnees.puissance_nominal * CO2_PER_MW
 
     def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
-        EMISSION_FACTORS = {
-            "Gaz naturel": 490,
-            "Charbon": 820,
-            "Diesel": 740,
-            "Biomasse": 230
-        }
-
-        co2_intensity = EMISSION_FACTORS.get(self.donnees.type_intrant, 490) / 1000
+        co2_intensity = 1.2 / 1000  # 1.2 gCO2e/kWh → tCO2/MWh
 
         CAPACITY_FACTOR = 0.60
         HOURS_PER_YEAR = 8760

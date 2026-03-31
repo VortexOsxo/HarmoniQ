@@ -57,7 +57,7 @@ class InfraNucleaire(Infrastructure):
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
-        co2_intensity = 12 / 1000
+        co2_intensity = 9 / 1000  # 9 gCO2e/kWh lifecycle (IPCC median)
 
         CAPACITY_FACTOR = 0.90
         HOURS_PER_YEAR = 8760

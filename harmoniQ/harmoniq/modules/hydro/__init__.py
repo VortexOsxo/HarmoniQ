@@ -149,14 +149,14 @@ class InfraHydro(Infrastructure):
         return self.donnees.puissance_nominal * (CO2_PER_MW := 400)
 
     def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
+        # 8 gCO2e/kWh fil de l'eau, 20 gCO2e/kWh réservoir → tCO2/MWh = g/kWh / 1000
         if self.donnees.type_barrage == "Fil de l'eau":
-            co2_intensity = 6 / 1000
+            co2_intensity = 8 / 1000
         else:
-            co2_intensity = 17 / 1000
+            co2_intensity = 20 / 1000
 
         CAPACITY_FACTOR = 0.50
         HOURS_PER_YEAR = 8760
