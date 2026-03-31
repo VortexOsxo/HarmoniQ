@@ -45,8 +45,6 @@ export class SimulationPage implements AfterViewInit {
     { id: 'section-sankey',    title: 'Flux de production',   desc: 'Répartition entre production et demande',   icon: 'fa-diagram-project',      waitForSimulation: true  },
     { id: 'section-temporal',  title: 'Production & Demande', desc: 'Évolution temporelle de la production',     icon: 'fa-chart-line',           waitForSimulation: true  },
     { id: 'section-overprod',  title: 'Surproduction',        desc: 'Surplus et déficit des infrastructures',    icon: 'fa-bolt-lightning',       waitForSimulation: true  },
-    { id: 'section-transport', title: 'Transport du réseau',  desc: 'Problèmes de capacité et congestion',       icon: 'fa-triangle-exclamation', waitForSimulation: false },
-    { id: 'section-eco',       title: 'Impact écologique',    desc: 'Indicateurs et rétroaction contextuelle',   icon: 'fa-leaf',                 waitForSimulation: false },
   ];
 
   get isSimulating(): boolean {
@@ -73,7 +71,7 @@ export class SimulationPage implements AfterViewInit {
   }
 
   get temporalGranularity(): string {
-    return this.temporalSim?.selectedGranularity ?? 'original';
+    return this.temporalSim?.selectedGranularity ?? 'daily';
   }
 
   onTemporalGranularityChange(granularity: string): void {
