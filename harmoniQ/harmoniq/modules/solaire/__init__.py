@@ -35,28 +35,17 @@ class InfraSolaire(Infrastructure):
         return self.couts
     
     def calculer_cout_construction(self) -> np.ndarray:
-        # Really rought estimate, need to be improved
-        COST_PER_MW = 1_300_000  # CAD par MW
+        COST_PER_MW = 3_570_000  # $/MW
         return self.donnees.puissance_nominal * COST_PER_MW
 
-
     def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
-        CAPACITY_FACTOR = 0.15
-        OPEX_PER_MWH = 15
-
+        OPEX_PER_MW_PER_YEAR = 18_000  # $/MW/year
         HOURS_PER_YEAR = 8760
 
-        annual_energy = (
-            self.donnees.puissance_nominal
-            * HOURS_PER_YEAR
-            * CAPACITY_FACTOR
-        )
-
-        annual_cost = annual_energy * OPEX_PER_MWH
+        annual_cost = self.donnees.puissance_nominal * OPEX_PER_MW_PER_YEAR
         hours = pas_de_temps.total_seconds() / 3600
         return annual_cost * (hours / HOURS_PER_YEAR)
 
