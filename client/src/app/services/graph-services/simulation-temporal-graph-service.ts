@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { ScenariosService } from '../scenarios-service';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
@@ -27,6 +27,21 @@ export class SimulationTemporalGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedSimulationResult: any;
     public cachedDemandeResult: any;
+
+    /**
+     * Bilan énergétique sur toute la période de simulation (TWh par source + demande).
+     * Peuplé après chaque appel à generate() / handleData().
+     * null si la simulation n'a pas encore été lancée.
+     */
+    energySummaryTWh = signal<{
+        demand: number;
+        hydro: number;
+        wind: number;
+        solar: number;
+        thermal: number;
+        nuclear: number;
+        imported: number;
+    } | null>(null);
 
     constructor(
         private scenariosService: ScenariosService,
@@ -120,6 +135,22 @@ export class SimulationTemporalGraphService implements SimulationStep {
             ...this.graphService.getStandardTrace('Production Totale', totalX, totalY, '#27ae60', `<b>%{y:.2f} MW</b>`),
             line: { shape: 'spline', color: '#27ae60', width: 2 },
             fill: 'none'
+        });
+
+        // --- Bilan énergétique (TWh) sur la période complète ---
+        // Chaque snapshot est horaire → MW × 1h = MWh → /1e6 = TWh
+        const sumMWh = (key: string) =>
+            productionData.reduce((s: number, r: any) => s + (r[key] ?? 0), 0);
+        const demandKwh = Object.values(demandeResult.total_electricity as Record<string, number>)
+            .reduce((s, v) => s + v, 0);
+        this.energySummaryTWh.set({
+            demand:   Math.round(demandKwh / 1e9 * 10) / 10,
+            hydro:    Math.round((sumMWh('total_hydro_reservoir') + sumMWh('total_hydro_fil')) / 1e6 * 10) / 10,
+            wind:     Math.round(sumMWh('total_eolien')    / 1e6 * 10) / 10,
+            solar:    Math.round(sumMWh('total_solaire')   / 1e6 * 10) / 10,
+            thermal:  Math.round(sumMWh('total_thermique') / 1e6 * 10) / 10,
+            nuclear:  Math.round(sumMWh('total_nucleaire') / 1e6 * 10) / 10,
+            imported: Math.round(sumMWh('total_import')    / 1e6 * 10) / 10,
         });
 
         const layout = this.graphService.getStandardLayout(

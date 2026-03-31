@@ -454,3 +454,282 @@ def estimer_daly_futur(facteur_charge):
     daly_futur = X[0] * production_future
 
     return daly_futur
+<<<<<<< Updated upstream
+=======
+
+
+# =============================================================================
+# Nouvelle fonction : trajectoire de volumes sur toute la période de simulation
+# =============================================================================
+
+def get_reservoir_volumes_timeline(
+    delta_t,
+    start_date,
+    end_date,
+    power_required_mw=None,
+    initial_levels=None,
+):
+    """
+    Simule le volume (m³) de chaque barrage-réservoir à chaque pas de temps.
+
+    La fonction itère de start_date à end_date par pas de delta_t et calcule,
+    pour chaque réservoir, le bilan hydrique :
+
+        V[t + Δt] = clamp(V[t] + apport[t] × Δt_s − décharge[t] × Δt_s,  0,  V_max)
+
+    où :
+        apport[t]  = débit naturel journalier (m³/s) × catch_coefficient  [pour le jour de t]
+        décharge[t]= debits_nominal × nb_turbines_disponibles × fraction[t]  (m³/s)
+        Δt_s       = delta_t en secondes
+        V_max      = volume_reservoir  (m³, capacité totale du réservoir)
+
+    La fraction de turbinage est déduite de power_required_mw : la puissance demandée
+    est distribuée proportionnellement au niveau de remplissage courant de chaque réservoir
+    (dispatch pondéré par le niveau). Cela évite de vider certains réservoirs pendant que
+    d'autres restent pleins — les réservoirs les plus remplis turbinent davantage.
+    Pour une simulation couplée au dispatch réel pas à pas, utiliser reservoir_infill()
+    depuis reseau/utils/energy_utils.py.
+
+    Paramètres
+    ----------
+    delta_t : timedelta ou pd.Timedelta ou str
+        Durée d'un pas de temps. Exemples : timedelta(hours=1), "1H", "1D".
+        Pour une simulation 2020–2035 horaire : delta_t=timedelta(hours=1) produit
+        ~131 400 lignes (15 ans × 365 jours × 24 h).
+    start_date : str, datetime ou pd.Timestamp
+        Début de la période de simulation (inclus).
+    end_date : str, datetime ou pd.Timestamp
+        Fin de la période de simulation (inclus si multiple entier de delta_t).
+    power_required_mw : float, array-like ou None, optionnel
+        Puissance totale (MW) que les réservoirs doivent fournir à chaque pas de temps.
+        - None           → décharge par défaut à 50 % du débit nominal (trajectoire neutre)
+        - float scalaire → puissance constante sur toute la période
+        - array-like     → puissance variable, longueur doit correspondre au nombre de
+                           pas de temps (len(timestamps))
+        La puissance est distribuée proportionnellement au niveau de remplissage courant
+        de chaque réservoir pondéré par sa puissance nominale disponible :
+            poids[i] = (V_courant[i] / V_max[i]) × P_max[i]
+        Un réservoir plein à 80 % contribue plus qu'un réservoir à 20 % de même capacité.
+        Si power_required_mw dépasse la capacité maximale combinée, le débit est plafonné
+        au débit de conception maximal.
+    initial_levels : dict, optionnel
+        Niveau initial de chaque réservoir {nom_barrage: fraction [0, 1]}.
+        Les barrages absents utilisent la valeur par défaut de 0.7 (70 % plein).
+
+    Retourne
+    --------
+    pd.DataFrame
+        - Index  : pd.DatetimeIndex de start_date à end_date, pas = delta_t
+        - Colonnes : nom (str) de chaque barrage-réservoir présent dans la DB
+        - Valeurs  : volume en m³ [0, volume_reservoir]
+
+    Utilisation depuis le module reseau
+    ------------------------------------
+    from harmoniq.modules.hydro.calcule import get_reservoir_volumes_timeline
+    from datetime import timedelta
+
+    # Puissance constante requise de 2000 MW sur toute la période :
+    volumes = get_reservoir_volumes_timeline(
+        delta_t=timedelta(hours=1),
+        start_date=scenario.date_de_debut,
+        end_date=scenario.date_de_fin,
+        power_required_mw=2000.0,
+    )
+    # volumes["NomDuBarrage"] est une Series avec le volume (m³) heure par heure.
+    # Pour convertir en fraction [0, 1], diviser par volume_reservoir du barrage.
+
+    Notes
+    -----
+    - Les données d'apport naturel (apport_naturel/*.csv) ont une résolution journalière.
+      Pour un pas de temps inférieur à un jour, la valeur quotidienne est répétée
+      à chaque pas de temps de la même journée (bilan journalier constant).
+    - Si le fichier CSV d'apport d'un barrage n'existe pas ou ne couvre pas la période,
+      l'apport est supposé nul pour les pas de temps manquants.
+    - Le coefficient d'apport (catch_coeff_map) est appliqué à l'apport naturel.
+    - La complexité est O(N × M) où N = nombre de pas de temps et M = nombre de
+      réservoirs. Pour 15 ans à 1 h, N ≈ 131 400 ; l'exécution prend quelques secondes.
+    - Les barrages "Fil de l'eau" sont ignorés (seuls les "Reservoir" ont un volume utile).
+    """
+    db = next(get_db())
+    barrages = read_all_hydro(db)
+    reservoir_dams = [b for b in barrages if b.type_barrage == "Reservoir"]
+
+    if not reservoir_dams:
+        return pd.DataFrame()
+
+    # --- Normalisation des types d'entrée ---
+    delta_t    = pd.Timedelta(delta_t)
+    start_date = pd.Timestamp(start_date)
+    end_date   = pd.Timestamp(end_date)
+    dt_seconds = delta_t.total_seconds()
+
+    if initial_levels is None:
+        initial_levels = {}
+
+    timestamps = pd.date_range(start=start_date, end=end_date, freq=delta_t)
+    n_steps    = len(timestamps)
+    n_dams     = len(reservoir_dams)
+    dates_jour = timestamps.normalize()
+
+    # --- Constantes par barrage (numpy arrays, shape = n_dams) ---
+    def _max_power_mw(dam) -> float:
+        nb_dispo = dam.nb_turbines - dam.nb_turbines_maintenance
+        return float(dam.puissance_nominal) * nb_dispo / max(dam.nb_turbines, 1)
+
+    names         = [d.nom for d in reservoir_dams]
+    volumes_max   = np.array([float(d.volume_reservoir) for d in reservoir_dams])
+    max_power_mw  = np.array([_max_power_mw(d) for d in reservoir_dams])
+    # Débit maximal (m³/s) = débit nominal × turbines disponibles
+    max_flow_m3s  = np.array([
+        float(d.debits_nominal) * (d.nb_turbines - d.nb_turbines_maintenance)
+        for d in reservoir_dams
+    ])
+
+    # --- Chargement de tous les apports en une passe (shape = n_dams × n_steps) ---
+    all_inflows = np.zeros((n_dams, n_steps))
+    for i, dam in enumerate(reservoir_dams):
+        apport_path = APPORT_DIR / (str(dam.id_HQ) + ".csv")
+        if apport_path.exists():
+            apport = pd.read_csv(apport_path)
+            apport["time"] = pd.to_datetime(apport["time"])
+            apport = apport.set_index("time")["streamflow"] * catch_coeff_map.get(dam.nom, 1.0)
+            aligned = apport.reindex(dates_jour).ffill().fillna(0.0)
+            all_inflows[i] = np.nan_to_num(aligned.values, nan=0.0) * dt_seconds  # m³/pas
+
+    # --- Vecteur de puissance demandée (MW, shape = n_steps) ---
+    if power_required_mw is None:
+        req_array = None                          # décharge neutre à 50 %
+    else:
+        req_array = np.asarray(power_required_mw, dtype=float)
+        if req_array.ndim == 0:
+            req_array = np.full(n_steps, float(req_array))
+        if len(req_array) != n_steps:
+            raise ValueError(
+                f"power_required_mw a {len(req_array)} valeurs mais la période contient "
+                f"{n_steps} pas de temps."
+            )
+
+    # --- Simulation pas à pas (boucle sur le temps) ---
+    # La boucle doit être temporelle (pas par barrage) car la fraction de décharge
+    # dépend du niveau courant de chaque réservoir à l'instant t.
+    volumes_current = np.array([
+        initial_levels.get(d.nom, 0.7) * float(d.volume_reservoir)
+        for d in reservoir_dams
+    ])
+    volumes_result = np.empty((n_steps, n_dams))
+
+    for t in range(n_steps):
+        inflows_t = all_inflows[:, t]           # m³ apportés à ce pas de temps
+
+        if req_array is None:
+            # Trajectoire neutre : 50 % du débit maximal de chaque réservoir
+            discharges_t = max_flow_m3s * 0.5 * dt_seconds
+        else:
+            # Dispatch pondéré par le niveau : réservoirs plus pleins turbinent plus.
+            # poids[i] = (V_courant[i] / V_max[i]) × P_max[i]
+            # Cela équilibre naturellement les niveaux entre réservoirs.
+            fill_frac = volumes_current / volumes_max          # ∈ [0, 1]
+            weights   = fill_frac * max_power_mw               # MW pondérés
+            total_w   = weights.sum()
+
+            if total_w > 0:
+                # Part de puissance allouée à chaque barrage
+                dam_powers = req_array[t] * weights / total_w  # MW
+            else:
+                # Tous les réservoirs vides : aucune production possible
+                dam_powers = np.zeros(n_dams)
+
+            # Fraction de décharge ∈ [0, 1] : puissance_allouée / puissance_max
+            flow_fracs    = np.where(max_power_mw > 0,
+                                     np.clip(dam_powers / max_power_mw, 0.0, 1.0),
+                                     0.0)
+            discharges_t  = max_flow_m3s * flow_fracs * dt_seconds  # m³
+
+        # Bilan hydrique + clamp physique [0, V_max]
+        volumes_current = np.clip(
+            volumes_current + inflows_t - discharges_t,
+            0.0,
+            volumes_max,
+        )
+        volumes_result[t] = volumes_current
+
+    return pd.DataFrame(volumes_result, index=timestamps, columns=names)
+
+
+if __name__ == "__main__":
+    import asyncio
+    from datetime import timedelta
+    from harmoniq.db.demande import read_demande_data_temporal
+    from harmoniq.db.schemas import Weather, Consomation
+
+    DT         = timedelta(hours=1)
+    START      = "2035-01-01"
+    END_SHORT  = "2035-01-07"   # une semaine — rapide
+    END_FULL   = "2035-12-31"   # année complète
+
+    # Objet scénario minimal attendu par read_demande_data_temporal
+    class _Scenario:
+        weather      = Weather.typical   # météo typique
+        consomation  = Consomation.PV    # consommation normale
+        date_de_debut = START
+        date_de_fin   = END_FULL         # charge tout 2035
+
+    # --- Chargement de la demande réelle depuis la base SQLite ---
+    print("Chargement de la demande depuis demande.db …")
+    df_demande = asyncio.run(read_demande_data_temporal(_Scenario()))
+    # df_demande : index DatetimeIndex horaire, colonne "total_electricity" en kW
+
+    print(f"  Période DB : {df_demande.index.min()}  →  {df_demande.index.max()}")
+    print(f"  Pointe     : {df_demande['total_electricity'].max() / 1000:.0f} MW")
+    print(f"  Moyenne    : {df_demande['total_electricity'].mean() / 1000:.0f} MW")
+
+    # --- Cas 1 : une semaine, décharge par défaut (50 %) ---
+    print("\n=== Cas 1 : décharge par défaut (50 % débit nominal) — 1 semaine ===")
+    volumes_default = get_reservoir_volumes_timeline(
+        delta_t=DT,
+        start_date=START,
+        end_date=END_SHORT,
+    )
+    print(volumes_default.describe().loc[["min", "max"]])
+
+    # --- Cas 2 : une semaine, puissance constante 2 000 MW ---
+    print("\n=== Cas 2 : puissance constante 2 000 MW — 1 semaine ===")
+    volumes_2000 = get_reservoir_volumes_timeline(
+        delta_t=DT,
+        start_date=START,
+        end_date=END_SHORT,
+        power_required_mw=2000.0,
+    )
+    print(volumes_2000.describe().loc[["min", "max"]])
+
+    # --- Cas 3 : demande réelle issue de la DB (année complète 2035) ---
+    print("\n=== Cas 3 : demande réelle DB 2035 (année complète) ===")
+
+    # Alignement de la demande sur l'axe temporel de la simulation
+    timestamps_full = pd.date_range(start=START, end=END_FULL, freq=DT)
+    demande_mw = (
+        (df_demande["total_electricity"] / 1000)        # kW → MW
+        .reindex(timestamps_full)
+        .ffill()
+        .bfill()
+        .fillna(0.0)
+    )
+    print(f"  Pas de temps : {len(demande_mw)}")
+
+    volumes_reel = get_reservoir_volumes_timeline(
+        delta_t=DT,
+        start_date=START,
+        end_date=END_FULL,
+        power_required_mw=demande_mw.values,
+    )
+    print(volumes_reel.describe().loc[["min", "max"]])
+
+    # Niveau de remplissage moyen en fin d'année (fraction [0, 1])
+    db_tmp = next(get_db())
+    barrages_tmp = read_all_hydro(db_tmp)
+    vmax = {b.nom: float(b.volume_reservoir) for b in barrages_tmp if b.type_barrage == "Reservoir"}
+    niveaux_fin = {nom: volumes_reel[nom].iloc[-1] / vmax[nom] for nom in volumes_reel.columns if nom in vmax}
+    print("\nNiveau de remplissage en fin d'année :")
+    for nom, lvl in sorted(niveaux_fin.items(), key=lambda x: x[1]):
+        print(f"  {nom:<30} {lvl:.1%}")
+>>>>>>> Stashed changes

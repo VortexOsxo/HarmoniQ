@@ -1,4 +1,4 @@
-import { Component, computed, effect, untracked, ChangeDetectorRef } from '@angular/core';
+import { Component, computed, effect, untracked, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
@@ -20,6 +20,30 @@ export class InfraDetailModal {
 
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
+
+  // Hydro power slider
+  sliderValue = signal<number>(0);
+  private basePuissance = signal<number>(0);
+
+  isNewDam = computed(() => {
+    const infra = this.infra();
+    return infra?.type === 'hydro' && !!infra.data?.nom?.endsWith('_new');
+  });
+
+  pMin = computed(() => {
+    const infra = this.infra();
+    const base = this.basePuissance();
+    if (!infra || infra.type !== 'hydro' || base === 0) return 0;
+    if (this.isNewDam()) return Math.round(base / (infra.data.nb_turbines || 1));
+    return base;
+  });
+
+  pMax = computed(() => {
+    const base = this.basePuissance();
+    if (base === 0) return 0;
+    return this.isNewDam() ? Math.round(base * 1.15) : Math.round(base * 1.10);
+  });
+
 
   protectedAreaName: string | null = null;
   loadingProtectionStatus: boolean = false;
@@ -65,6 +89,12 @@ export class InfraDetailModal {
         this.closeExplanation();
         
         if (currentInfra && currentInfra.data) {
+            if (currentInfra.type === 'hydro' && currentInfra.data.puissance_nominal) {
+                const p = parseFloat(currentInfra.data.puissance_nominal);
+                this.basePuissance.set(p);
+                const override = this.infrasService.hydroPuissanceOverrides().get(currentInfra.data.id);
+                this.sliderValue.set(override ?? p);
+            }
             this.lat = parseFloat(currentInfra.data.latitude || currentInfra.data.lat);
             this.lon = parseFloat(currentInfra.data.longitude || currentInfra.data.lng);
             
@@ -99,6 +129,19 @@ export class InfraDetailModal {
         }
       }).catch(() => { }); // Dismissal ignored
     }
+  }
+
+  onPuissanceSliderInput(event: Event) {
+    const val = parseFloat((event.target as HTMLInputElement).value);
+    this.sliderValue.set(val);
+  }
+
+  onPuissanceSliderChange(event: Event) {
+    const val = parseFloat((event.target as HTMLInputElement).value);
+    this.sliderValue.set(val);
+    const infra = this.infra();
+    if (!infra || infra.type !== 'hydro') return;
+    this.infrasService.overrideHydroPuissance(infra.data.id, val);
   }
 
   close() {

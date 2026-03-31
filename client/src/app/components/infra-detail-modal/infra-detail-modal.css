@@ -638,3 +638,64 @@
     color: #555;
     line-height: 1.5;
 }
+
+/* ── Hydro Power Slider ── */
+.hydro-power-slider-card {
+    background: #fff;
+    border: 1px solid #d0e8ff;
+    border-radius: 10px;
+    padding: 14px 16px 12px;
+    margin-top: 12px;
+}
+
+.slider-card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1a6fa8;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    color: #555;
+}
+
+.slider-label-min,
+.slider-label-max {
+    opacity: 0.7;
+}
+
+.slider-current {
+    font-weight: 700;
+    color: #1a6fa8;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.slider-current.saving {
+    opacity: 0.6;
+}
+
+.hydro-range-slider {
+    width: 100%;
+    accent-color: #1a6fa8;
+    cursor: pointer;
+    height: 6px;
+}
+
+.slider-hint {
+    font-size: 0.72rem;
+    color: #888;
+    margin: 6px 0 0 0;
+    font-style: italic;
+}
