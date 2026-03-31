@@ -95,15 +95,6 @@ export class SimulationService {
         this.productionNodes.set(this.simulationTemporalGraphService.getProductionNodes());
     }
 
-    /** Expose cached reseau simulation result for sub-components. */
-    getSimulationResult(): any {
-        return this.simulationTemporalGraphService.getCachedSimulationResult();
-    }
-
-    hasSimulationResults(): boolean {
-        return !!this.simulationTemporalGraphService.getCachedSimulationResult();
-    }
-
     hasExportableData(): boolean {
         return (
             !!this.simulationTemporalGraphService.getCachedSimulationResult() ||
