@@ -28,15 +28,13 @@ class InfraNucleaire(Infrastructure):
 
 
     def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
+        OPEX_PER_MWH = 20  # $/MWh
         CAPACITY_FACTOR = 0.90
-        OPEX_PER_MWH = 100
-
         HOURS_PER_YEAR = 8760
-        MAINTENANCE_HOURS = 7 * 24
+        MAINTENANCE_HOURS = self.donnees.semaine_maintenance * 7 * 24
 
         annual_energy = (
             self.donnees.puissance_nominal
