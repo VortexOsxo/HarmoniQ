@@ -224,7 +224,7 @@ describe('SimulationTemporalGraphService', () => {
 
             const nodes = service.getProductionNodes();
             expect(nodes.length).toBeGreaterThan(0);
-            expect(nodes.find((n) => n.id === 'hydraulique')).toBeDefined();
+            expect(nodes.find((n) => n.id === 'hydro_fil' || n.id === 'hydro_res')).toBeDefined();
         });
     });
 });
