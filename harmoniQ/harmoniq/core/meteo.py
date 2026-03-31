@@ -45,7 +45,7 @@ _CURRENT_YEAR = datetime.now().year
 _REFERENCE_YEAR = 2024
 
 
-class _Meteo:
+class Meteo:
     existing_df = None
     client = None
 

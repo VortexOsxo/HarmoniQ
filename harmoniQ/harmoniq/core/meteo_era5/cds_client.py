@@ -7,18 +7,19 @@ from typing import Any
 class Era5CdsClient:
     def __init__(self, dataset: str):
         self.dataset = dataset
-        self._client = self._build_client()
+        self._client = None
 
-    @staticmethod
-    def _build_client():
-        try:
-            import cdsapi  # type: ignore
-        except ImportError as exc:
-            raise ImportError(
-                "cdsapi n'est pas installe. Installez la dependance pour utiliser ERA5."
-            ) from exc
-        return cdsapi.Client()
+    def _get_client(self):
+        if self._client is None:
+            try:
+                import cdsapi  # type: ignore
+            except ImportError as exc:
+                raise ImportError(
+                    "cdsapi n'est pas installe. Installez la dependance pour utiliser ERA5."
+                ) from exc
+            self._client = cdsapi.Client()
+        return self._client
 
     def retrieve(self, request: dict[str, Any], target: Path) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
-        self._client.retrieve(self.dataset, request, str(target))
+        self._get_client().retrieve(self.dataset, request, str(target))

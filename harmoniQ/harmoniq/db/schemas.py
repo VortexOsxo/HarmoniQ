@@ -242,6 +242,9 @@ class EolienneParcBase(BaseModel):
     weibull_fit_details: Optional[str] = Field(
         None, description="Details JSON du fit Weibull (annual + seasonal)"
     )
+    surface_roughness_z0_m: Optional[float] = Field(
+        0.03, description="Longueur de rugosite de surface (m) - Onshore: 0.03, Offshore: 0.0001"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -268,6 +271,7 @@ class EolienneParc(SQLBase):
     weibull_granularity = Column(String, nullable=True)
     weibull_weighting = Column(String, nullable=True)
     weibull_fit_details = Column(String, nullable=True)
+    surface_roughness_z0_m = Column(Float, nullable=True, default=0.03)
 
 #-----#-----#-----#-----# Solaire Base #-----#-----#-----#-----#
 
