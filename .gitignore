@@ -17,10 +17,15 @@ __pycache__/
 
 # Remove build files
 build/
+dist/
 
 # remove the data cache
 cache/
+n_cache/
 
 .cache.sqlite
 
 */.DS_Store
+
+# Profiler Logs
+profile_logs

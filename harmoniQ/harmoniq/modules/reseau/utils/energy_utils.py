@@ -182,11 +182,41 @@ class EnergyUtils:
             cout = cout_minimum + (cout_maximum/4 - cout_minimum) * facteur
         
         return round(cout, 2)
+    
+    @staticmethod
+    def calcul_cout_reservoir_vectorized(niveaux: np.ndarray) -> np.ndarray:
+        """
+        Calcule le coût marginal en fonction du niveau du réservoir (version vectorisée).
+        
+        Args:
+            niveaux: Array numpy de niveaux de réservoir (0-1)
+            
+        Returns:
+            np.ndarray: Coûts marginaux calculés
+        """
+        cout_minimum = 5.0     # Coût quand le réservoir est plein
+        cout_maximum = 35.0    # Coût quand le réservoir est presque vide
+        niveau_critique = 0.25
+        
+        niveaux = np.clip(niveaux, 0, 1)
+        
+        couts = np.zeros_like(niveaux, dtype=np.float64)
+        
+        below_critical = niveaux < niveau_critique
+        
+        facteur_below = (niveau_critique - niveaux[below_critical]) / niveau_critique
+        couts[below_critical] = cout_minimum + (cout_maximum - cout_minimum) * np.exp(2 * facteur_below)
+        
+        above_critical = ~below_critical
+        facteur_above = (1 - niveaux[above_critical]) / (1 - niveau_critique)
+        couts[above_critical] = cout_minimum + (cout_maximum/4 - cout_minimum) * facteur_above
+        
+        return np.round(couts, 2)
         
     @staticmethod
     def generer_faux_niveaux_reservoirs(snapshots, barrages_reservoir, seed=None):
         """
-        Génère des niveaux de réservoirs simulés.
+        Génère des niveaux de réservoirs simulés (version optimisée).
         
         Args:
             snapshots: DatetimeIndex avec les pas de temps du scénario
@@ -199,24 +229,25 @@ class EnergyUtils:
         if seed is not None:
             np.random.seed(seed)
         
-        niveaux_df = pd.DataFrame(index=snapshots)
+        n_snapshots = len(snapshots)
+        n_barrages = len(barrages_reservoir)
         
-        for barrage in barrages_reservoir:
-            # Niveau initial entre 0.4 et 0.8
-            niveau_initial = np.random.uniform(0.4, 0.8)
-            
-            # Variations aléatoires et saisonnalité
-            variations = np.random.normal(0, 0.01, size=len(snapshots))
-            mois = pd.DatetimeIndex(snapshots).month
-            saisonnalite = np.sin((mois - 3) * np.pi / 6) * 0.2  # Max en juin, min en décembre
-            
-            niveaux = niveau_initial + np.cumsum(variations)
-            
-            for i, timestamp in enumerate(snapshots):
-                idx = min(i, len(saisonnalite)-1)
-                niveaux[i] += saisonnalite[idx]
-            
-            niveaux_df[barrage] = np.clip(niveaux, 0.1, 1.0)
+        mois = pd.DatetimeIndex(snapshots).month.values
+        saisonnalite = np.sin((mois - 3) * np.pi / 6) * 0.2
+        
+        # Niveau initial entre 0.4 et 0.8
+        niveaux_initiaux = np.random.uniform(0.4, 0.8, size=n_barrages)
+        
+         # Variations aléatoires et saisonnalité
+        variations = np.random.normal(0, 0.01, size=(n_snapshots, n_barrages))
+        
+        niveaux = niveaux_initiaux + np.cumsum(variations, axis=0)
+        
+        niveaux = niveaux + saisonnalite[:, np.newaxis]
+        
+        niveaux = np.clip(niveaux, 0.1, 1.0)
+        
+        niveaux_df = pd.DataFrame(niveaux, index=snapshots, columns=barrages_reservoir)
         
         return niveaux_df
     
@@ -430,72 +461,59 @@ class EnergyUtils:
                         type="virtual_line_type",
                         s_nom=1000000
                     )
-        
-        # Vérifier la capacité totale de génération à chaque pas de temps
+    
         if hasattr(network.generators_t, 'p_max_pu'):
-            new_pmax_cols = {}
-            # Pour chaque pas de temps, vérifier si la capacité est suffisante
-            for timestamp in network.snapshots:
-                # Vérifier si le timestamp existe dans p_set
-                try:
-                    if timestamp in network.loads_t.p_set.index:
-                        total_demand_t = network.loads_t.p_set.loc[timestamp].sum()
+            snapshots = network.snapshots
+
+            if not network.loads_t.p_set.empty:
+                total_demand = (
+                    network.loads_t.p_set
+                    .reindex(snapshots)
+                    .fillna(network.loads_t.p_set.mean())
+                    .sum(axis=1)
+                )
+            else:
+                total_demand = pd.Series(0.0, index=snapshots)
+
+            p_nom = network.generators['p_nom']
+            p_max_pu_full = (
+                network.generators_t.p_max_pu
+                .reindex(index=snapshots, columns=network.generators.index, fill_value=1.0)
+            )
+            available_capacity = p_max_pu_full.multiply(p_nom, axis=1).sum(axis=1)
+
+            gap_series = total_demand - available_capacity
+            shortage_timestamps = gap_series[gap_series > 0]
+
+            if not shortage_timestamps.empty:
+                new_pmax_cols = {}
+                for timestamp, capacity_gap in shortage_timestamps.items():
+                    gen_name = f"emergency_gen_{timestamp.strftime('%Y%m%d')}"
+
+                    if gen_name not in network.generators.index:
+                        network.add(
+                            "Generator",
+                            gen_name,
+                            bus=reference_bus,
+                            p_nom=capacity_gap * 1.1,
+                            marginal_cost=800,
+                            carrier="import"
+                        )
+
+                    if gen_name not in network.generators_t.p_max_pu.columns and gen_name not in new_pmax_cols:
+                        new_pmax_cols[gen_name] = pd.Series(0.0, index=snapshots)
+
+                    if gen_name in new_pmax_cols:
+                        new_pmax_cols[gen_name].at[timestamp] = 1.0
                     else:
-                        logger.warning(f"Timestamp {timestamp} non trouvé dans network.loads_t.p_set. Utilisation de valeur par défaut.")
-                        if not network.loads_t.p_set.empty:
-                            total_demand_t = network.loads_t.p_set.mean().sum()  # Moyenne comme valeur par défaut
-                        else:
-                            total_demand_t = 0  # Aucune demande si aucune donnée disponible
-                    
-                    # Calculer la capacité de génération disponible
-                    available_capacity = 0
-                    for gen in network.generators.index:
-                        p_nom = network.generators.loc[gen, 'p_nom']
-                        p_max_pu = 1.0  # Par défaut
-                        
-                        if gen in network.generators_t.p_max_pu.columns:
-                            if timestamp in network.generators_t.p_max_pu.index:
-                                p_max_pu = network.generators_t.p_max_pu.loc[timestamp, gen]
-                        
-                        available_capacity += p_nom * p_max_pu
-                    
-                    # Si la capacité est insuffisante, ajouter un générateur d'urgence
-                    if available_capacity < total_demand_t:
-                        capacity_gap = total_demand_t - available_capacity
-                        gen_name = f"emergency_gen_{timestamp.strftime('%Y%m%d')}"
-                        
-                        if gen_name not in network.generators.index:
-                            network.add(
-                                "Generator",
-                                gen_name,
-                                bus=reference_bus,
-                                p_nom=capacity_gap * 1.1,  # 10% de marge
-                                marginal_cost=800,  # Très coûteux
-                                carrier="import"
-                            )
-                        
-                        if gen_name not in network.generators_t.p_max_pu.columns and gen_name not in new_pmax_cols:
-                            s = pd.Series(0.0, index=network.snapshots)
-                            new_pmax_cols[gen_name] = s
+                        network.generators_t.p_max_pu.at[timestamp, gen_name] = 1.0
 
-                        # Mettre 1.0 au timestamp du gap
-                        if gen_name in network.generators_t.p_max_pu.columns:
-                            network.generators_t.p_max_pu.at[timestamp, gen_name] = 1.0
-                        else:
-                            new_pmax_cols[gen_name].at[timestamp] = 1.0
-                except KeyError as e:
-                    logger.error(f"Erreur lors du traitement du timestamp {timestamp}: {str(e)}")
-                    # Continuer avec le timestamp suivant
-                    continue
-                        
-            if new_pmax_cols:
-                add_df = pd.DataFrame(new_pmax_cols, index=network.snapshots)
-                network.generators_t.p_max_pu = pd.concat([network.generators_t.p_max_pu, add_df], axis=1)
+                if new_pmax_cols:
+                    add_df = pd.DataFrame(new_pmax_cols, index=snapshots)
+                    network.generators_t.p_max_pu = pd.concat([network.generators_t.p_max_pu, add_df], axis=1)
 
-            # Optionnel: défragmenter définitivement
             network.generators_t.p_max_pu = network.generators_t.p_max_pu.copy()
-        
-        # 6. Créer une matrice "safety_factor" pour tous les générateurs
+
         network.generators.p_nom_extendable = True
         network.generators.p_nom_max = network.generators.p_nom * 1.5  # 50% de flexibilité 
         

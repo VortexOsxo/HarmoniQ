@@ -1,6 +1,12 @@
 import { Infra, InfraFactory } from "./infra";
 
 export class ThermalPowerPlant extends Infra<ThermalPowerPlant> {
+
+    constructor(init?: Partial<ThermalPowerPlant>) {
+        super();
+        Object.assign(this, init);
+    }
+
     type_intrant!: string;
     puissance_nominal!: number;
     semaine_maintenance!: number;

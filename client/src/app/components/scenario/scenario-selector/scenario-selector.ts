@@ -5,6 +5,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from '@app/components/scenario/scenario-creation-modal/scenario-creation-modal';
+import { WeatherLabels } from '@app/models/weather';
+import { ConsumptionLabels } from '@app/models/consumption';
+import { TutorialService } from '@app/services/tutorial-service';
 
 @Component({
   selector: 'app-scenario-selector',
@@ -13,6 +16,9 @@ import { ScenarioCreationModal } from '@app/components/scenario/scenario-creatio
   styleUrl: './scenario-selector.css',
 })
 export class ScenarioSelector {
+  public WeatherLabels = WeatherLabels;
+  public ConsumptionLabels = ConsumptionLabels;
+
   get scenarios(): Scenario[] {
     return this.scenariosService.scenarios();
   }
@@ -21,18 +27,30 @@ export class ScenarioSelector {
     return this.scenariosService.selectedScenario();
   }
 
+  get canDeleteSelected(): boolean {
+    const id = this.scenariosService.selectedScenario()?.id;
+    return !!id && id !== 1 && id !== 2;
+  }
+
   set selectedScenario(scenario: Scenario | null) {
     this.scenariosService.selectedScenario.set(scenario);
   }
 
-  constructor(private scenariosService: ScenariosService, private modalService: NgbModal) { }
+  constructor(
+    private scenariosService: ScenariosService,
+    private modalService: NgbModal,
+    private tutorialService: TutorialService,
+  ) { }
 
   openModal() {
-    this.modalService.open(ScenarioCreationModal);
+    const options = this.tutorialService.currentState.active
+      ? { backdrop: 'static' as const, keyboard: false }
+      : {};
+    this.modalService.open(ScenarioCreationModal, options);
   }
 
   deleteScenario(scenario: Scenario) {
-    this.scenariosService.deleteScenario(scenario).subscribe();
+    this.scenariosService.deleteScenario(scenario);
   }
 
   compareScenarios(s1: Scenario, s2: Scenario): boolean {

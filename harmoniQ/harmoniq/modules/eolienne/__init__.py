@@ -1,10 +1,11 @@
-from harmoniq.core.base import Infrastructure, necessite_scenario
+from harmoniq.core.base import Infrastructure
 from harmoniq.core.meteo import WeatherHelper, Granularity, EnergyType
-from harmoniq.db.schemas import ScenarioBase, EolienneParcBase, PositionBase
+from harmoniq.db.schemas import ScenarioBase, PositionBase
 from harmoniq.modules.eolienne.calcule import get_parc_power
 from harmoniq.modules.eolienne.turbine_data import turbine_models
 
 import pandas as pd
+import numpy as np
 import numpy as np
 import logging
 from pathlib import Path
@@ -21,9 +22,6 @@ WEATHER_TIMEZONE_OUT = "UTC"  # Mainly used for the ERA5 branch.
 
 
 class InfraParcEolienne(Infrastructure):
-    def __init__(self, donnees: EolienneParcBase):
-        super().__init__(donnees)
-
     def _charger_meteo(self, scenario: ScenarioBase):
         # Bloc de preparation meteo:
         # on recupere la position du parc, la granularite du scenario,
@@ -65,21 +63,55 @@ class InfraParcEolienne(Infrastructure):
 
         return helper.load()
 
-    async def charger_scenario(self, scenario):
-        # Bloc "scenario charge":
-        # on attache le scenario a l'infra et on charge la meteo associee.
-        self.scenario: ScenarioBase = scenario
+    def charger_scenario(self, scenario):
+        super().charger_scenario(scenario)
         self.meteo: pd.DataFrame = self._charger_meteo(scenario)
 
-    @necessite_scenario
     def calculer_production(self) -> pd.DataFrame:
         # Bloc de calcul principal pour un parc:
         # conversion meteo -> puissance horaire via get_parc_power.
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
-        parc_data = get_parc_power(self.donnees, self.meteo)
+        return get_parc_power(self.donnees, self.meteo)
 
-        return parc_data
+    def calculer_cout_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        COST_PER_MW = 1_600_000  # CAD par MW
+        return self.donnees.capacite_total * COST_PER_MW
+
+    def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        CAPACITY_FACTOR = 0.35
+        OPEX_PER_MWH = 30
+        HOURS_PER_YEAR = 8760
+
+        annual_energy = self.donnees.capacite_total * HOURS_PER_YEAR * CAPACITY_FACTOR
+        annual_cost = annual_energy * OPEX_PER_MWH
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_cost * (hours / HOURS_PER_YEAR)
+
+
+    def calculer_co2_eq_construction(self) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        CO2_PER_MW = 100
+        return self.donnees.capacite_total * CO2_PER_MW
+
+    def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
+        # Really rought estimate, need to be improved
+        if pas_de_temps is None:
+            pas_de_temps = self.scenario.pas_de_temps
+
+        co2_intensity = 11 / 1000
+
+        CAPACITY_FACTOR = 0.35
+        HOURS_PER_YEAR = 8760
+        annual_energy = self.donnees.capacite_total * HOURS_PER_YEAR * CAPACITY_FACTOR
+        annual_co2 = annual_energy * co2_intensity
+        hours = pas_de_temps.total_seconds() / 3600
+        return annual_co2 * (hours / HOURS_PER_YEAR)
 
 
 if __name__ == "__main__":

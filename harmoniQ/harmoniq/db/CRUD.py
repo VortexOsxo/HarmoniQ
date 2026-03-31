@@ -3,12 +3,39 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
 
-from harmoniq.db.engine import sql_tables
 from harmoniq.db import schemas
 
 # CRUD.py : Ce fichier contient des fonctions utilitaires pour effectuer des opérations CRUD (Create, Read, Update, Delete) sur les tables SQLAlchemy.
 # Ces fonctions sont conçues pour être génériques et peuvent être utilisées pour n'importe quelle table de la base de données.
 # They are designed to be generic and can be used for any table in the database.
+
+def hydrate_model(model_class, infra_pydantic_obj):
+    if infra_pydantic_obj is None:
+        return None
+        
+    model_kwargs = {}
+    
+    if hasattr(infra_pydantic_obj, "model_dump"):
+         infra_dict = infra_pydantic_obj.model_dump()
+    elif hasattr(infra_pydantic_obj, "dict"):
+        infra_dict = infra_pydantic_obj.dict()
+    elif isinstance(infra_pydantic_obj, dict):
+        infra_dict = infra_pydantic_obj
+    else:
+        infra_dict = getattr(infra_pydantic_obj, "__dict__", {})
+
+    for column in model_class.__table__.columns:
+        col_name = column.name
+        if col_name in infra_dict:
+            model_kwargs[col_name] = infra_dict[col_name]
+            
+    if "puissance_nominale" in infra_dict and "puissance_nominal" not in model_kwargs:
+        model_kwargs["puissance_nominal"] = infra_dict["puissance_nominale"]
+
+    if "nom" not in model_kwargs and "nom" in infra_dict:
+        model_kwargs["nom"] = infra_dict["nom"]
+        
+    return model_class(**model_kwargs)
 
 
 async def read_all_data(db: Session, table: Table):
@@ -16,7 +43,7 @@ async def read_all_data(db: Session, table: Table):
 
 
 async def create_data(db: Session, table: Table, data: BaseModel):
-    db_data = table(**data.dict())
+    db_data = table(**data.model_dump())
     db.add(db_data)
     db.commit()
     db.refresh(db_data)
@@ -36,7 +63,7 @@ async def update_data(db: Session, table: Table, id: int, data: BaseModel):
     db_data = db.query(table).filter(table.id == id).first()
     if db_data is None:
         return None
-    for key, value in data.dict().items():
+    for key, value in data.model_dump(exclude_none=True).items():
         setattr(db_data, key, value)
     db.commit()
     db.refresh(db_data)

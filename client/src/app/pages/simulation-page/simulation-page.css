@@ -1,75 +1,338 @@
-div#main {
-    padding: 1em;
-    gap: 1rem;
-    height: calc(100vh - 5em);
-    display: grid;
-    grid-template-areas:
-        "gestion  infra plot"
-        "scenario infra plot";
-    grid-template-columns: 1fr 1fr 2fr;
-    grid-template-rows: auto 1fr;
-    overflow: hidden;
+:host {
+    display: block;
+    height: 100vh;
+    width: 100vw;
 }
 
-@media (max-width: 1250px) {
-    div#main {
-        grid-template-areas:
-            "gestion     plot"
-            "scenario    plot"
-            "infra       plot"
-            "infra       plot";
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto auto 1fr 2fr;
-    }
-
-    table#gestion-table {
-        display: none;
-    }
-}
-
-@media (max-width: 768px) {
-    div#main {
-        height: auto;
-        overflow: auto;
-        grid-template-areas:
-            "gestion"
-            "scenario"
-            "infra"
-            "choix-infra"
-            "plot";
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto 1fr auto 1fr;
-    }
-}
-
-app-simulation-launcher {
-    grid-area: gestion;
-}
-
-app-infrastructure-selector {
-    grid-area: infra;
-}
-
-app-scenario-selector {
-    grid-area: scenario;
-}
-
-app-simulation-results {
-    grid-area: plot;
-}
-
-app-simulation-launcher,
-app-infrastructure-selector,
-app-scenario-selector,
-app-simulation-results {
+.simulation-view {
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    height: 100%;
+    width: 100%;
+    background: #f0f2f5;
 }
 
-app-simulation-launcher>div,
-app-infrastructure-selector>div,
-app-scenario-selector>div {
+/* ── Layout ────────────────────────────────────────────────── */
+
+.main-layout {
+    display: flex;
+    flex-direction: row;
     flex: 1;
     overflow: hidden;
 }
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+
+.sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    height: 100%;
+}
+
+.sidebar-content {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    border-radius: 0 16px 16px 0;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    flex-shrink: 0;
+}
+
+.sidebar-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #adb5bd;
+    margin: 0;
+}
+
+/* ── Loading banner ────────────────────────────────────────── */
+
+.loading-banner {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1.25rem;
+    background: #eef3fb;
+    border-bottom: 1px solid #d0e0f7;
+    font-size: 0.78rem;
+    color: #3d6fd8;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+/* ── Section nav ───────────────────────────────────────────── */
+
+.section-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.65rem 1rem 0.65rem 1.1rem;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    width: 100%;
+}
+
+.section-item:hover {
+    background: #f8f9fa;
+    border-left-color: #d0e0f7;
+}
+
+.section-icon {
+    font-size: 0.85rem;
+    color: #adb5bd;
+    margin-top: 2px;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+}
+
+.section-item:hover .section-icon {
+    color: #3d6fd8;
+}
+
+.section-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.section-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #343a40;
+    line-height: 1.3;
+}
+
+.section-desc {
+    font-size: 0.72rem;
+    color: #868e96;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.section-indicator {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    margin-top: 3px;
+}
+
+/* ── Sidebar footer ────────────────────────────────────────── */
+
+.sidebar-footer {
+    flex-shrink: 0;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.btn-export {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #20c997, #12b886);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 10px rgba(32, 201, 151, 0.3);
+}
+
+.btn-export:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(32, 201, 151, 0.4);
+    color: #fff;
+}
+
+.btn-quiz {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #4361ee, #3a56d4);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 10px rgba(67, 97, 238, 0.3);
+}
+
+.btn-quiz:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(67, 97, 238, 0.4);
+    color: #fff;
+}
+
+.btn-quiz:active,
+.btn-export:active {
+    transform: translateY(0);
+}
+
+/* ── Main content ─────────────────────────────────────────── */
+
+.page-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+}
+
+/* ── Dashboard grid ────────────────────────────────────────── */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.dashboard-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.card-half { grid-column: span 1; }
+.card-full  { grid-column: span 2; }
+
+/* ── Card header ───────────────────────────────────────────── */
+
+.card-header-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #f0f2f5;
+}
+
+.card-header-icon {
+    font-size: 1.1rem;
+    color: #adb5bd;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.card-header-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 2px;
+    line-height: 1.3;
+}
+
+.card-header-desc {
+    font-size: 0.76rem;
+    color: #868e96;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ── Mode toggle buttons (in card header) ──────────────────── */
+
+.card-mode-btn {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 0;
+    color: #6c757d;
+    background: #fff;
+    white-space: nowrap;
+    transition: all 0.15s;
+}
+
+.card-mode-btn:first-child { border-radius: 6px 0 0 6px; }
+.card-mode-btn:last-child  { border-radius: 0 6px 6px 0; }
+
+.card-mode-btn.active {
+    background: #4361ee;
+    border-color: #4361ee;
+    color: #fff;
+}
+
+.card-mode-btn:not(.active):hover {
+    background: #f8f9fa;
+    color: #343a40;
+}
+
+/* ── Not-implemented area (shared by all placeholder sections) */
+
+.not-implemented-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 2rem;
+}
+
+.not-implemented-icon {
+    font-size: 2rem;
+    color: #ced4da;
+    margin-bottom: 0.25rem;
+}
+
+.not-implemented-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.not-implemented-sub {
+    font-size: 0.78rem;
+    color: #adb5bd;
+    margin: 0;
+    text-align: center;
+    max-width: 320px;
+    line-height: 1.5;
+}
+
+/* ── Status colors ─────────────────────────────────────────── */
+
+.text-success { color: #2ecc71; }
+.text-primary { color: #3498db; }
+.text-danger  { color: #e74c3c; }
+.text-muted   { color: #95a5a6; }
+.text-warning { color: #f39c12; }

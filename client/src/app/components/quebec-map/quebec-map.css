@@ -6,18 +6,25 @@
     overflow: hidden;
 }
 
-/* Map */
+:host ::ng-deep .leaflet-top.leaflet-left {
+    top: 130px;
+}
+
 div.map-overlay {
     position: absolute;
     bottom: 0;
     right: 0;
-    /* Hacky since the map is usually on the right (if not uh-oh */
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+div.map-overlay.detail-open {
+    right: 400px;
 }
 
 div.map-overlay p {
@@ -28,4 +35,450 @@ div.map-overlay img.icon-draggable {
     width: 2.5em;
     height: 2.5em;
     cursor: grab;
+}
+
+.pa-legend-reopen {
+    position: absolute;
+    top: 76px;
+    left: 64px;
+    z-index: 1100;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #27ae60;
+    transition: background 0.15s, box-shadow 0.15s, left 0.3s ease;
+}
+
+.pa-legend-reopen:hover {
+    background: #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Infrastructure Filters Panel (Bottom Left) ── */
+.infra-filter-reopen {
+    position: absolute;
+    top: 76px;
+    left: 16px;
+    z-index: 1100;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #000;
+    transition: background 0.15s, box-shadow 0.15s, left 0.3s ease;
+}
+
+.infra-filter-reopen:hover {
+    background: #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.infra-filter-reopen.offset-right {
+    left: 390px;
+}
+
+.infra-filter-legend {
+    position: absolute;
+    top: 76px;
+    left: 16px;
+    z-index: 1100;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    width: 300px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: left 0.3s ease;
+}
+
+.infra-filter-legend.offset-right {
+    left: 390px;
+}
+
+.infra-filter-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 8px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #eee;
+    color: #000;
+}
+
+.infra-filter-header strong {
+    flex: 1;
+    color: #333;
+}
+
+.infra-filter-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.infra-filter-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.infra-filter-body {
+    overflow-y: auto;
+    padding: 12px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.filter-section-title {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.filter-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.filter-input-wrapper .filter-icon {
+    position: absolute;
+    left: 10px;
+    color: #95a5a6;
+    font-size: 0.75rem;
+    pointer-events: none;
+}
+
+.filter-input-wrapper input {
+    padding-left: 28px;
+}
+
+.infra-layer-item {
+    padding: 3px 0;
+}
+
+.infra-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #333;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.infra-checkbox-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: white;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 0;
+}
+
+.infra-checkbox-label input[type="checkbox"]:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.infra-color-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.infra-cat-label {
+    flex: 1;
+}
+
+/* ── Protected Areas Panel (Bottom Left) ── */
+.pa-legend-reopen.offset-right {
+    left: 330px;
+}
+
+.protected-areas-legend {
+    position: absolute;
+    top: 76px;
+    left: 16px;
+    z-index: 1100;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    width: 360px;
+    max-height: 55vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: left 0.3s ease;
+}
+
+.protected-areas-legend.offset-right {
+    left: 330px;
+}
+
+.pa-legend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 8px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #eee;
+}
+
+.pa-legend-header strong {
+    flex: 1;
+}
+
+.pa-legend-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.pa-legend-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.pa-legend-controls {
+    display: flex;
+    gap: 6px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.pa-legend-controls .btn {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+}
+
+.pa-legend-body {
+    overflow-y: auto;
+    padding: 6px 10px 12px;
+    flex: 1;
+}
+
+.pa-layer-item {
+    padding: 3px 0;
+}
+
+.pa-group-parent>.pa-checkbox-label {
+    font-weight: 600;
+}
+
+.pa-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #333;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.pa-checkbox-label input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: #27ae60;
+}
+
+.pa-color-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    margin-right: 8px;
+    vertical-align: middle;
+    margin-bottom: 2px;
+    flex-shrink: 0;
+}
+
+.pa-layer-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.reseau-legend-reopen {
+    position: absolute;
+    bottom: 112px;
+    left: 16px;
+    z-index: 1100;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #4A90D9;
+    transition: background 0.15s, box-shadow 0.15s, left 0.3s ease;
+}
+
+.reseau-legend-reopen:hover {
+    background: #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.reseau-legend-reopen.offset-right {
+    left: 390px;
+}
+
+.reseau-legend {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    z-index: 1100;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    width: 300px;
+    max-height: 55vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.reseau-legend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 8px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #eee;
+    color: #4A90D9;
+}
+
+.reseau-legend-header strong {
+    flex: 1;
+    color: #333;
+}
+
+.reseau-legend-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.reseau-legend-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.reseau-legend-controls {
+    display: flex;
+    gap: 6px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.reseau-legend-controls .btn {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+}
+
+.reseau-legend-body {
+    overflow-y: auto;
+    padding: 6px 10px 12px;
+    flex: 1;
+}
+
+.reseau-section-title {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #666;
+    padding: 4px 0 2px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 4px;
+}
+
+.reseau-layer-item {
+    padding: 2px 0;
+}
+
+.reseau-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #333;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.reseau-checkbox-label input[type="checkbox"] {
+    margin-top: 0;
+    flex-shrink: 0;
+    accent-color: #4A90D9;
+}
+
+.reseau-color-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.reseau-cat-icon {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.reseau-cat-label {
+    flex: 1;
 }

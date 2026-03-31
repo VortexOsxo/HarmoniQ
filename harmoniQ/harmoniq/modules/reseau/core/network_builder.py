@@ -68,11 +68,9 @@ class NetworkBuilder:
             >>> scenario = read_scenario_by_id(db, 1)
             >>> network = builder.create_network(scenario, '2024')
         """
-        # Chargement des données statiques
-        self.data_loader.set_infrastructure_ids(liste_infra)
+        self.data_loader.set_infras(liste_infra)
         network = await self.data_loader.load_network_data()
         
-        # Ajout des séries temporelles
         network = await self.data_loader.load_timeseries_data(
             network=network, 
             scenario=scenario,

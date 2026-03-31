@@ -1,14 +1,12 @@
 
 export enum Weather {
-    Hot = 'Chaude',
-    Typical = 'Typique',
-    Cold = 'Froide',
+    Hot = 1,
+    Typical = 2,
+    Cold = 3,
 }
 
-export function weatherFromNumber(value: number): Weather {
-    return value == 1 ? Weather.Hot : value == 2 ? Weather.Typical : Weather.Cold;
-}
-
-export function weatherToNumber(value: Weather): number {
-    return value == Weather.Hot ? 1 : value == Weather.Typical ? 2 : 3;
-}
+export const WeatherLabels: Record<number, string> = {
+    [Weather.Hot]: 'Chaud',
+    [Weather.Typical]: 'Typique',
+    [Weather.Cold]: 'Froid',
+};

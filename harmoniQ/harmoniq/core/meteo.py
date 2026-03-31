@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Optional
+import pandas as pd
 import logging
 import math
 from typing import TYPE_CHECKING, Optional
@@ -43,21 +45,27 @@ _CURRENT_YEAR = datetime.now().year
 _REFERENCE_YEAR = 2024
 
 
-class Meteo:
-    def __init__(self):
-        self.cache_session = requests_cache.CachedSession(".cache", expire_after=-1)
-        self.retry_session = retry(self.cache_session, retries=5, backoff_factor=0.2)
-        self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
-        try:
-            self.existing_df = pd.read_csv(METEO_DATA_PATH)
-            self.existing_df["date"] = pd.to_datetime(self.existing_df["date"])
-        except Exception as exc:
-            print(f"Impossible de charger data.csv : {exc}")
-            self.existing_df = None
+class _Meteo:
+    existing_df = None
+    client = None
 
-    @staticmethod
-    def haversine(lat1, lon1, lat2, lon2):
-        radius_km = 6371
+    @classmethod
+    def _initialize(cls):
+        cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
+        retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+        
+        cls.client = openmeteo_requests.Client(session=retry_session)
+        
+        try:
+            cls.existing_df = pd.read_csv(METEO_DATA_PATH)
+            cls.existing_df["date"] = pd.to_datetime(cls.existing_df["date"])
+        except Exception as e:
+            logger.warning("Impossible de charger data.csv : %s", e)
+            cls.existing_df = None
+
+    @classmethod
+    def _haversine(cls, lat1, lon1, lat2, lon2):
+        R = 6371  # Radius of Earth in km
         dlat = math.radians(lat2 - lat1)
         dlon = math.radians(lon2 - lon1)
         a = (
@@ -68,7 +76,8 @@ class Meteo:
         )
         return 2 * radius_km * math.asin(math.sqrt(a))
 
-    def get_weather_data(self, latitude, longitude, start_date, end_date):
+    @classmethod
+    def _get_weather_data(cls, Latitude, Longitude, start_date, end_date):
         url = "https://archive-api.open-meteo.com/v1/archive"
         params = {
             "latitude": latitude,
@@ -110,70 +119,63 @@ class Meteo:
             "timezone": "America/New_York",
             "wind_speed_unit": "ms",
         }
-        responses = self.openmeteo.weather_api(url, params=params)
+        responses = cls.client.weather_api(url, params=params)
         response = responses[0]
         hourly = response.Hourly()
-        hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
-        hourly_wind_speed_100m = hourly.Variables(13).ValuesAsNumpy()
-        hourly_wind_direction_100m = hourly.Variables(15).ValuesAsNumpy()
-        hourly_surface_pressure = hourly.Variables(19).ValuesAsNumpy()
 
         hourly_data = {
             "date": pd.date_range(
                 start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
                 end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
                 freq=pd.Timedelta(seconds=hourly.Interval()),
-                inclusive="left",
-            )
+                inclusive="left"
+            ),
+            "temperature_C" : hourly.Variables(0).ValuesAsNumpy(),
+            "vitesse_vent_kmh" : hourly.Variables(13).ValuesAsNumpy() * 3.6,
+            "direction_vent" : hourly.Variables(15).ValuesAsNumpy(),
+            "pression" : hourly.Variables(19).ValuesAsNumpy() / 10,
         }
-        hourly_data["temperature_C"] = hourly_temperature_2m
-        # Keep raw Open-Meteo wind speed in m/s here.
-        # Conversion to km/h is handled once in WeatherHelper._load_from_openmeteo.
-        hourly_data["vitesse_vent_kmh"] = hourly_wind_speed_100m
-        hourly_data["__wind_unit"] = "ms"
-        hourly_data["direction_vent"] = hourly_wind_direction_100m
-        hourly_data["pression"] = hourly_surface_pressure / 10
 
         df = pd.DataFrame(data=hourly_data)
         df["date"] = df["date"] - pd.Timedelta(hours=4)
         return df
 
-    def get_weather_or_nearest(self, latitude, longitude, start_date, end_date):
-        print(f"Recherche meteo pour {latitude}, {longitude} de {start_date} a {end_date}")
+    @classmethod
+    def get_weather_or_nearest(cls, Latitude, Longitude, start_date, end_date):
+        if cls.client is None: cls._initialize()
 
-        if self.existing_df is None:
-            print("Pas de base de donnees locale, appel a l'API...")
+        logger.debug("Recherche météo pour %s, %s de %s à %s", Latitude, Longitude, start_date, end_date)
+
+        if cls.existing_df is None:
+            logger.info("Pas de base de données locale, appel à l’API")
             start_str = start_date.strftime("%Y-%m-%d")
             end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
-            return self.get_weather_data(latitude, longitude, start_str, end_str)
+            return cls._get_weather_data(latitude, longitude, start_str, end_str)
 
-        unique_coords = self.existing_df[["lat", "lon"]].drop_duplicates()
+        # Trouver la station la plus proche
+        unique_coords = cls.existing_df[["lat", "lon"]].drop_duplicates()
         unique_coords["distance"] = unique_coords.apply(
-            lambda row: self.haversine(latitude, longitude, row["lat"], row["lon"]),
-            axis=1,
+            lambda row: cls._haversine(Latitude, Longitude, row["lat"], row["lon"]), axis=1
         )
         nearest = unique_coords.sort_values("distance").iloc[0]
 
         if nearest["distance"] > 50:
-            print(f"Station la plus proche a {nearest['distance']:.1f} km - appel API")
+            logger.info("Station la plus proche à %.1f km — appel API", nearest["distance"])
             start_str = start_date.strftime("%Y-%m-%d")
             end_str = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
-            return self.get_weather_data(latitude, longitude, start_str, end_str)
+            return cls._get_weather_data(Latitude, Longitude, start_str, end_str)
 
-        print(f"Utilisation de la station a {nearest['distance']:.1f} km")
-        start = pd.to_datetime(start_date)
-        end = pd.to_datetime(end_date)
-        if start.tzinfo is None:
-            start = start.tz_localize("UTC")
-        if end.tzinfo is None:
-            end = end.tz_localize("UTC")
+        logger.debug("Utilisation de la station à %.1f km", nearest["distance"])
+
+        # Conversion des dates en UTC avec seulement 00h00 inclus pour la date de fin
+        start = pd.to_datetime(start_date).tz_localize("UTC") if pd.to_datetime(start_date).tzinfo is None else pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date).tz_localize("UTC") if pd.to_datetime(end_date).tzinfo is None else pd.to_datetime(end_date)
         end = end.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        df_filtered = self.existing_df[
-            (self.existing_df["lat"] == nearest["lat"])
-            & (self.existing_df["lon"] == nearest["lon"])
-            & (self.existing_df["date"] >= start)
-            & (self.existing_df["date"] <= end)
+        df_filtered = cls.existing_df[
+            (cls.existing_df["lat"] == nearest["lat"]) &
+            (cls.existing_df["lon"] == nearest["lon"]) &
+            (cls.existing_df["date"] >= start) &
+            (cls.existing_df["date"] <= end)
         ].copy()
         df_filtered["date"] = pd.to_datetime(df_filtered["date"], utc=True)
         df_filtered = df_filtered.sort_values("date")
@@ -339,9 +341,10 @@ class WeatherHelper:
             self.start_time = self.start_time.replace(year=_REFERENCE_YEAR)
             self.end_time = self.end_time.replace(year=_REFERENCE_YEAR)
 
-        df = self.meteo_client.get_weather_or_nearest(
-            latitude=self.position.latitude,
-            longitude=self.position.longitude,
+        # Open-Meteo demande un end_date exclusif => ajouter 1 jour
+        df = _Meteo.get_weather_or_nearest(
+            Latitude=self.position.latitude,
+            Longitude=self.position.longitude,
             start_date=self.start_time,
             end_date=self.end_time,
         )

@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -11,10 +12,11 @@ from harmoniq.db import schemas
 # engine.py : Ce fichier est responsable de la création de l'engine SQLAlchemy et de la session de base de données.
 # Il est utilisé pour se connecter à la base de données et exécuter des requêtes.
 
-DATABASE__URL = f"sqlite:///{DB_PATH}"
+DATABASE__URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
 engine = create_engine(DATABASE__URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+non_table_class = {'Scenario'}
 
 def _get_sql_tables(schemas_module) -> Dict[type, Dict[str, type]]:
     all_classes = [member for _, member in inspect.getmembers(schemas_module, inspect.isclass)]
@@ -27,13 +29,15 @@ def _get_sql_tables(schemas_module) -> Dict[type, Dict[str, type]]:
     # Get corresponding pydantic, create and response classes
     sql_tables = {}
     for cls in base_classes:
+        if cls.__name__ in non_table_class: continue
         base_class = [c for c in all_classes if c.__name__ == f"{cls.__name__}Base"][0]
-        create_class = [
-            c for c in all_classes if c.__name__ == f"{cls.__name__}Create"
-        ][0]
-        response_class = [
-            c for c in all_classes if c.__name__ == f"{cls.__name__}Response"
-        ][0]
+        
+        create_class_matches = [c for c in all_classes if c.__name__ == f"{cls.__name__}Create"]
+        create_class = create_class_matches[0] if create_class_matches else base_class
+        
+        response_class_matches = [c for c in all_classes if c.__name__ == f"{cls.__name__}Response"]
+        response_class = response_class_matches[0] if response_class_matches else base_class
+        
         sql_tables[cls] = {
             "base": base_class,
             "create": create_class,

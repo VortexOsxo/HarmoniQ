@@ -1,12 +1,9 @@
 export enum Consumption {
-    Normal = 'Normal',
-    Conservative = 'Conservateur',
+    Normal = 1,
+    Conservative = 2,
 }
 
-export function consumptionFromNumber(value: number): Consumption {
-    return value == 1 ? Consumption.Normal : Consumption.Conservative;
-}
-
-export function consumptionToNumber(value: Consumption): number {
-    return value == Consumption.Normal ? 1 : 2;
-}
+export const ConsumptionLabels: Record<number, string> = {
+    [Consumption.Normal]: 'Normal',
+    [Consumption.Conservative]: 'Conservateur',
+};
