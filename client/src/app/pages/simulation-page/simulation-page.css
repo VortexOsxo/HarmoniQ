@@ -387,9 +387,15 @@
     white-space: nowrap;
 }
 
-.infra-chip i {
-    font-size: 0.72rem;
-    color: var(--chip-color);
+.chip-img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.chip-img[src*="barrage"] {
+    width: 20px;
+    height: 20px;
 }
 
 .chip-count {

@@ -12,12 +12,19 @@ import { ProductionNode } from '@app/components/scenario/scenario-demand-prod-sa
 import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
 
 const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
-    hydro: {
-        id: 'hydraulique',
-        label: INFRA_LABELS['hydraulique'],
-        color: INFRA_COLORS['hydro'],
+    hydro_fil: {
+        id: 'hydro_fil',
+        label: "Hydro (fil de l'eau)",
+        color: '#7bbfe8',
         icon: 'fa-droplet',
-        co2FactorKgMWh: 24,
+        co2FactorKgMWh: 8,
+    },
+    hydro_res: {
+        id: 'hydro_res',
+        label: 'Hydro (réservoir)',
+        color: '#2b6fa8',
+        icon: 'fa-droplet',
+        co2FactorKgMWh: 20,
     },
     eolien: {
         id: 'eolien',
@@ -204,15 +211,35 @@ export class SimulationTemporalGraphService implements SimulationStep {
         return this.cachedDemandeResult();
     }
 
-    getProductionNodes(): ProductionNode[] {
+    getProductionNodes(co2Data?: any): ProductionNode[] {
         if (!this.cachedSimulationResult?.production?.length) return [];
         const data: any[] = this.cachedSimulationResult.production;
         const n = data.length;
         const avg = (key: string) =>
             data.reduce((sum: number, row: any) => sum + (row[key] ?? 0), 0) / n;
-        const hydro = avg('total_hydro_reservoir') + avg('total_hydro_fil');
+
+        // Compute real t CO₂/h from backend annual values (co2_annuel is tonnes/year)
+        const HOURS_PER_YEAR = 8760;
+        const sumCo2Annual = (items: any[]): number =>
+            (items ?? []).reduce((s: number, i: any) => s + (i.co2_annuel ?? 0), 0);
+
+        let co2Tph: Record<string, number> = {};
+        if (co2Data) {
+            const hydroItems: any[] = co2Data['hydro'] ?? [];
+            co2Tph = {
+                hydro_fil: sumCo2Annual(hydroItems.filter((h: any) => h.type_barrage === "Fil de l'eau")) / HOURS_PER_YEAR,
+                hydro_res: sumCo2Annual(hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau")) / HOURS_PER_YEAR,
+                eolien:    sumCo2Annual(co2Data['eolienneparc']) / HOURS_PER_YEAR,
+                solaire:   sumCo2Annual(co2Data['solaire'])      / HOURS_PER_YEAR,
+                thermique: sumCo2Annual(co2Data['thermique'])    / HOURS_PER_YEAR,
+                nucleaire: sumCo2Annual(co2Data['nucleaire'])    / HOURS_PER_YEAR,
+                // import has no backend CO2 data — fallback to factor
+            };
+        }
+
         const carriers: [string, number][] = [
-            ['hydro', hydro],
+            ['hydro_fil', avg('total_hydro_fil')],
+            ['hydro_res', avg('total_hydro_reservoir')],
             ['eolien', avg('total_eolien')],
             ['solaire', avg('total_solaire')],
             ['thermique', avg('total_thermique')],
@@ -222,6 +249,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
         return carriers.map(([carrier, value]) => ({
             ...CARRIER_NODE_DEFS[carrier],
             value: Math.round(value),
+            ...(co2Data ? { co2Tph: co2Tph[carrier] } : {}),
         }));
     }
 

@@ -42,19 +42,30 @@ export class SimulationPage implements AfterViewInit {
   infrasService        = inject(InfrastruturesService);
 
   private static readonly INFRA_DEFS = [
-    { key: 'parc_eoliens',            label: 'Éolien',     icon: 'fa-wind',  color: '#6abbc4' },
-    { key: 'central_hydroelectriques', label: 'Hydro',      icon: 'fa-water', color: '#4a9dd4' },
-    { key: 'parc_solaires',           label: 'Solaire',    icon: 'fa-sun',   color: '#e8c53c' },
-    { key: 'central_nucleaire',       label: 'Nucléaire',  icon: 'fa-atom',  color: '#e8754a' },
-    { key: 'central_thermique',       label: 'Thermique',  icon: 'fa-fire',  color: '#e25c5c' },
+    { key: 'parc_eoliens',            label: 'Éolien',             img: '/icons/eolienne.png',  color: '#6abbc4', hydroFilter: null },
+    { key: 'central_hydroelectriques', label: "Hydro (fil de l'eau)", img: '/icons/barrage.png', color: '#7bbfe8', hydroFilter: "Fil de l'eau" },
+    { key: 'central_hydroelectriques', label: 'Hydro (réservoir)', img: '/icons/barrage.png',   color: '#2b6fa8', hydroFilter: 'Réservoir' },
+    { key: 'parc_solaires',           label: 'Solaire',            img: '/icons/solaire.png',   color: '#e8c53c', hydroFilter: null },
+    { key: 'central_nucleaire',       label: 'Nucléaire',          img: '/icons/nucelaire.png', color: '#e8754a', hydroFilter: null },
+    { key: 'central_thermique',       label: 'Thermique',          img: '/icons/thermique.png', color: '#e25c5c', hydroFilter: null },
   ];
 
   get infraSummary() {
     const group: any = this.infrasService.selectedInfraGroup();
-    const breakdown = SimulationPage.INFRA_DEFS.map(def => ({
-      ...def,
-      count: (group?.[def.key] ?? []).length,
-    }));
+    const hydroIds: string[] = group?.central_hydroelectriques ?? [];
+    const allHydro: any[] = this.infrasService.getInfrasSignalByType('hydro')();
+    const selectedHydro = allHydro.filter((h: any) => hydroIds.includes(String(h.id)));
+
+    const breakdown = SimulationPage.INFRA_DEFS.map(def => {
+      if (def.hydroFilter) {
+        const isFil = def.hydroFilter === "Fil de l'eau";
+        const count = selectedHydro.filter((h: any) =>
+          isFil ? h.type_barrage === "Fil de l'eau" : h.type_barrage !== "Fil de l'eau"
+        ).length;
+        return { ...def, count };
+      }
+      return { ...def, count: (group?.[def.key] ?? []).length };
+    });
     return { breakdown, total: breakdown.reduce((s, d) => s + d.count, 0) };
   }
 

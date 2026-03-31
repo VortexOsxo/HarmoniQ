@@ -100,7 +100,7 @@ export class SimulationService {
         ];
 
         await this.simulationStepService.runSteps(steps, scenario);
-        this.productionNodes.set(this.simulationTemporalGraphService.getProductionNodes());
+        this.productionNodes.set(this.simulationTemporalGraphService.getProductionNodes(this.simulationCo2GraphService.cachedData));
     }
 
     hasExportableData(): boolean {
