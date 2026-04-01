@@ -1,11 +1,12 @@
 import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OpenApiService } from '@app/services/open-api-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { prettyNames } from '@app/utils/map-utils';
 
 @Component({
@@ -30,6 +31,7 @@ export class CreateInfraModal {
     private fb: FormBuilder,
     private openApiService: OpenApiService,
     private protectedAreasService: ProtectedAreasService,
+    private infrasService: InfrastruturesService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -56,8 +58,11 @@ export class CreateInfraModal {
     const props = this.schema.properties;
     const required = this.schema.required || [];
 
+    const typeKey = this.type.split('/').pop() || '';
+
     for (const key in props) {
       if (!required.includes(key)) continue;
+      if (key === 'id') continue;
 
       const prop = props[key];
       const suggestion = prop.suggestion;
@@ -81,7 +86,18 @@ export class CreateInfraModal {
         enumValues = prop.enum;
       }
 
-      controls[key] = [initialValue, Validators.required];
+      const validators = [Validators.required];
+      if (key === 'nom') {
+        validators.push((control: AbstractControl): ValidationErrors | null => {
+          const name = control.value?.trim().toLowerCase();
+          if (!name) return null;
+          const exists = this.infrasService.getInfrasSignalByType(typeKey)()
+            .some((i: any) => i.nom?.trim().toLowerCase() === name);
+          return exists ? { duplicateName: true } : null;
+        });
+      }
+
+      controls[key] = [initialValue, validators];
 
       this.fields.push({
         key,
