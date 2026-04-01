@@ -19,7 +19,7 @@ coordinates_residential = [
     (48.0703, -77.7600, "Abitibi-Temiscamingue", 0, "Etc/GMT+5"),
     (50.0340, -66.9141, "Cote-Nord", 0, "Etc/GMT+5"),
     (53.4667, -76.0000, "Nord-du-Quebec", 0, "Etc/GMT+5"),
-    (48.8360, -64.4931, "Gaspesie–Iles-de-la-Madeleine", 0, "Etc/GMT+5"),
+    (48.8360, -64.4931, "Gaspesie-Iles-de-la-Madeleine", 0, "Etc/GMT+5"),
     (46.5000, -70.9000, "Chaudiere-Appalaches", 0, "Etc/GMT+5"),
     (45.6066, -73.7124, "Laval", 0, "Etc/GMT+5"),
     (46.0270, -73.4360, "Lanaudiere", 0, "Etc/GMT+5"),
@@ -132,24 +132,325 @@ coordinates_residential_MRC = [
 
 population_relative = {
     "Bas-Saint-Laurent": 0.0226,
-    "Saguenay-Lac-Saint-Jean": 0.0317,
-    "Capitale-Nationale": 0.0897,
-    "Mauricie": 0.0318,
-    "Estrie": 0.0580,
-    "Montreal": 0.2430,
-    "Outaouais": 0.0472,
+    "Saguenay-Lac-Saint-Jean": 0.0316,
+    "Capitale-Nationale": 0.0899,
+    "Mauricie": 0.0320,
+    "Estrie": 0.0582,
+    "Montreal": 0.2398,
+    "Outaouais": 0.0473,
     "Abitibi-Temiscamingue": 0.0165,
     "Cote-Nord": 0.0099,
     "Nord-du-Quebec": 0.0052,
-    "Gaspesie–Iles-de-la-Madeleine": 0.0102,
-    "Chaudiere-Appalaches": 0.0503,
-    "Laval": 0.0508,
-    "Lanaudiere": 0.0620,
-    "Laurentides": 0.0744,
-    "Monteregie": 0.1675,
-    "Centre-du-Quebec": 0.0291,
+    "Gaspesie-Iles-de-la-Madeleine": 0.0102,
+    "Chaudiere-Appalaches": 0.0507,
+    "Laval": 0.0509,
+    "Lanaudiere": 0.0629,
+    "Laurentides": 0.0750,
+    "Monteregie": 0.1681,
+    "Centre-du-Quebec": 0.0292,
 }
 
-population_relative_MRC = {
 
+# ===========================================================================
+#  FACTEUR TOITURE PAR RA
+# ---------------------------------------------------------------------------
+#  Surface de toit utilisable par habitant (m²/hab).
+#  Formule : S_toit_util = (S_hab_par_hab / N_étages) × η_toit
+#
+#  Sources / hypothèses :
+#    S_hab_par_hab : ~35-50 m²/hab selon le type de bâti régional
+
+#    N_étages      : estimé par paliers de densité (hab/km²)
+#                    < 100 → 1.5  |  100-1000 → 2.0  |  1000-3000 → 3.0
+#                    3000-5000 → 4.5  |  > 5000 → 7.0
+
+# https://oee.nrcan.gc.ca/organisme/statistiques/bnce/apd/showTable.cfm?type=SHCMA&sector=aaa&juris=ca&year=2015&rn=9&page=1
+
+#    η_toit = 0.35 : orientation, ombrage, HVAC, pente, neige
+#
+#  Le facteur toiture F_toit est calculé dynamiquement dans
+#  calculs_production_solaire.py en fonction du scénario :
+#    F_toit = min(S_toit_util / surface_panneau, panneaux_scenario) / panneaux_scenario
+# ===========================================================================
+surface_toit_utilisable_par_hab = {
+    "Bas-Saint-Laurent":              9.33,
+    "Saguenay-Lac-Saint-Jean":        9.80,
+    "Capitale-Nationale":             8.87,
+    "Mauricie":                       9.33,
+    "Estrie":                         9.33,
+    "Montreal":                       2.18,
+    "Outaouais":                      8.87,
+    "Abitibi-Temiscamingue":         10.50,
+    "Cote-Nord":                     10.50,
+    "Nord-du-Quebec":                11.67,
+    "Gaspesie-Iles-de-la-Madeleine":  9.80,
+    "Chaudiere-Appalaches":           9.80,
+    "Laval":                          3.73,
+    "Lanaudiere":                     8.87,
+    "Laurentides":                    8.87,
+    "Monteregie":                     6.30,
+    "Centre-du-Quebec":               9.80,
+}
+
+# ===========================================================================
+#  MAPPING MRC → RA
+# ---------------------------------------------------------------------------
+#  Clés = noms exacts de coordinates_residential_MRC
+#  Valeurs = noms exacts de coordinates_residential / population_relative
+#
+#  Notes :
+#   - "Le Saguenay-et-son-Fjord" regroupe Saguenay + Le Fjord-du-Saguenay
+#   - "Sept-Rivières--Caniapiscau" regroupe 2 MRC ISQ
+#   - "Minganie--Le Golfe-du-Saint-Laurent" regroupe 2 MRC ISQ
+#   - "Nord-du-Québec" regroupe Jamésie + Kativik + Eeyou Istchee
+#   - "Francheville" = ancien nom (Trois-Rivières + Les Chenaux)
+#   - "Robert-Cliche" = ancien nom (Beauce-Centre)
+#   - "Matane" = La Matanie (ISQ)
+# ===========================================================================
+mrc_to_ra = {
+    # --- Bas-Saint-Laurent ---
+    "La Matapédia":           "Bas-Saint-Laurent",
+    "Matane":                 "Bas-Saint-Laurent",
+    "La Mitis":               "Bas-Saint-Laurent",
+    "Rimouski-Neigette":      "Bas-Saint-Laurent",
+    "Les Basques":            "Bas-Saint-Laurent",
+    "Rivière-du-Loup":        "Bas-Saint-Laurent",
+    "Témiscouata":            "Bas-Saint-Laurent",
+    "Kamouraska":             "Bas-Saint-Laurent",
+    # --- Saguenay–Lac-Saint-Jean ---
+    "Le Domaine-du-Roy":         "Saguenay-Lac-Saint-Jean",
+    "Maria-Chapdelaine":         "Saguenay-Lac-Saint-Jean",
+    "Lac-Saint-Jean-Est":        "Saguenay-Lac-Saint-Jean",
+    "Le Saguenay-et-son-Fjord":  "Saguenay-Lac-Saint-Jean",
+    # --- Capitale-Nationale ---
+    "Charlevoix-Est":         "Capitale-Nationale",
+    "Charlevoix":             "Capitale-Nationale",
+    "L'Île-d'Orléans":        "Capitale-Nationale",
+    "La Côte-de-Beaupré":     "Capitale-Nationale",
+    "La Jacques-Cartier":     "Capitale-Nationale",
+    "Québec":                 "Capitale-Nationale",
+    "Portneuf":               "Capitale-Nationale",
+    # --- Mauricie ---
+    "Mékinac":                "Mauricie",
+    "Shawinigan":             "Mauricie",
+    "Francheville":           "Mauricie",
+    "Maskinongé":             "Mauricie",
+    "La Tuque":               "Mauricie",
+    # --- Estrie ---
+    "Le Granit":              "Estrie",
+    "Les Sources":            "Estrie",
+    "Le Haut-Saint-François": "Estrie",
+    "Le Val-Saint-François":  "Estrie",
+    "Sherbrooke":             "Estrie",
+    "Coaticook":              "Estrie",
+    "Memphrémagog":           "Estrie",
+    "Brome-Missisquoi":       "Estrie",
+    "La Haute-Yamaska":       "Estrie",
+    # --- Montréal ---
+    "Montréal":               "Montreal",
+    # --- Outaouais ---
+    "Papineau":                       "Outaouais",
+    "Gatineau":                       "Outaouais",
+    "Les Collines-de-l'Outaouais":    "Outaouais",
+    "La Vallée-de-la-Gatineau":       "Outaouais",
+    "Pontiac":                        "Outaouais",
+    # --- Abitibi-Témiscamingue ---
+    "Témiscamingue":          "Abitibi-Temiscamingue",
+    "Rouyn-Noranda":          "Abitibi-Temiscamingue",
+    "Abitibi-Ouest":          "Abitibi-Temiscamingue",
+    "Abitibi":                "Abitibi-Temiscamingue",
+    "La Vallée-de-l'Or":      "Abitibi-Temiscamingue",
+    # --- Côte-Nord ---
+    "La Haute-Côte-Nord":                   "Cote-Nord",
+    "Manicouagan":                          "Cote-Nord",
+    "Sept-Rivières--Caniapiscau":           "Cote-Nord",
+    "Minganie--Le Golfe-du-Saint-Laurent":  "Cote-Nord",
+    # --- Nord-du-Québec ---
+    "Nord-du-Québec":         "Nord-du-Quebec",
+    # --- Gaspésie–Îles-de-la-Madeleine ---
+    "Les Îles-de-la-Madeleine":  "Gaspesie–Iles-de-la-Madeleine",
+    "Le Rocher-Percé":           "Gaspesie–Iles-de-la-Madeleine",
+    "La Côte-de-Gaspé":          "Gaspesie–Iles-de-la-Madeleine",
+    "La Haute-Gaspésie":         "Gaspesie–Iles-de-la-Madeleine",
+    "Bonaventure":               "Gaspesie–Iles-de-la-Madeleine",
+    "Avignon":                   "Gaspesie–Iles-de-la-Madeleine",
+    # --- Chaudière-Appalaches ---
+    "L'Islet":                "Chaudiere-Appalaches",
+    "Montmagny":              "Chaudiere-Appalaches",
+    "Bellechasse":            "Chaudiere-Appalaches",
+    "Lévis":                  "Chaudiere-Appalaches",
+    "La Nouvelle-Beauce":     "Chaudiere-Appalaches",
+    "Robert-Cliche":          "Chaudiere-Appalaches",
+    "Les Etchemins":          "Chaudiere-Appalaches",
+    "Beauce-Sartigan":        "Chaudiere-Appalaches",
+    "Les Appalaches":         "Chaudiere-Appalaches",
+    "Lotbinière":             "Chaudiere-Appalaches",
+    # --- Laval ---
+    "Laval":                  "Laval",
+    # --- Lanaudière ---
+    "D'Autray":               "Lanaudiere",
+    "L'Assomption":           "Lanaudiere",
+    "Joliette":               "Lanaudiere",
+    "Matawinie":              "Lanaudiere",
+    "Montcalm":               "Lanaudiere",
+    "Les Moulins":            "Lanaudiere",
+    # --- Laurentides ---
+    "Deux-Montagnes":         "Laurentides",
+    "Thérèse-De Blainville":  "Laurentides",
+    "Mirabel":                "Laurentides",
+    "La Rivière-du-Nord":     "Laurentides",
+    "Argenteuil":             "Laurentides",
+    "Les Pays-d'en-Haut":     "Laurentides",
+    "Les Laurentides":        "Laurentides",
+    "Antoine-Labelle":        "Laurentides",
+    # --- Montérégie ---
+    "Acton":                         "Monteregie",
+    "Pierre-De Saurel":              "Monteregie",
+    "Les Maskoutains":               "Monteregie",
+    "Rouville":                      "Monteregie",
+    "Le Haut-Richelieu":             "Monteregie",
+    "La Vallée-du-Richelieu":        "Monteregie",
+    "Longueuil":                     "Monteregie",
+    "Marguerite-D'Youville":         "Monteregie",
+    "Roussillon":                    "Monteregie",
+    "Les Jardins-de-Napierville":    "Monteregie",
+    "Le Haut-Saint-Laurent":         "Monteregie",
+    "Beauharnois-Salaberry":         "Monteregie",
+    "Vaudreuil-Soulanges":           "Monteregie",
+    # --- Centre-du-Québec ---
+    "L'Érable":               "Centre-du-Quebec",
+    "Bécancour":              "Centre-du-Quebec",
+    "Arthabaska":             "Centre-du-Quebec",
+    "Drummond":               "Centre-du-Quebec",
+    "Nicolet-Yamaska":        "Centre-du-Quebec",
+}
+
+# ===========================================================================
+#  POPULATION RELATIVE PAR MRC  (F_intra = pop_MRC / pop_RA)
+# ---------------------------------------------------------------------------
+#  Source : ISQ, estimations au 1er juillet 2025
+#  Clés = noms exacts de coordinates_residential_MRC
+#  Les MRC fusionnées cumulent les populations ISQ :
+#   - Le Saguenay-et-son-Fjord = Saguenay + Le Fjord-du-Saguenay
+#   - Sept-Rivières--Caniapiscau = Sept-Rivières + Caniapiscau
+#   - Minganie--Le Golfe-du-St-Laurent = Minganie + Le Golfe-du-St-Laurent
+#   - Nord-du-Québec = Jamésie + Kativik + Eeyou Istchee
+#   - Francheville = Trois-Rivières + Les Chenaux
+# ===========================================================================
+population_relative_MRC = {
+    # --- Bas-Saint-Laurent (pop RA = 204 755) ---
+    "La Matapédia":           0.08683,
+    "Matane":                 0.10345,
+    "La Mitis":               0.09058,
+    "Rimouski-Neigette":      0.29435,
+    "Les Basques":            0.04383,
+    "Rivière-du-Loup":        0.17797,
+    "Témiscouata":            0.09787,
+    "Kamouraska":             0.10513,
+    # --- Saguenay–Lac-Saint-Jean (pop RA = 286 395) ---
+    "Le Domaine-du-Roy":         0.10929,
+    "Maria-Chapdelaine":         0.08496,
+    "Lac-Saint-Jean-Est":        0.18795,
+    "Le Saguenay-et-son-Fjord":  0.61780,   # Saguenay + Le Fjord
+    # --- Capitale-Nationale (pop RA = 814 004) ---
+    "Charlevoix-Est":         0.01904,
+    "Charlevoix":             0.01757,
+    "L'Île-d'Orléans":        0.00829,
+    "La Côte-de-Beaupré":     0.04016,
+    "La Jacques-Cartier":     0.06349,
+    "Québec":                 0.77872,
+    "Portneuf":               0.07272,
+    # --- Mauricie (pop RA = 289 722) ---
+    "Mékinac":                0.04548,
+    "Shawinigan":             0.17858,
+    "Francheville":           0.58827,   # Trois-Rivières + Les Chenaux
+    "Maskinongé":             0.13389,
+    "La Tuque":               0.05379,
+    # --- Estrie (pop RA = 527 340) ---
+    "Le Granit":              0.04148,
+    "Les Sources":            0.02862,
+    "Le Haut-Saint-François": 0.04617,
+    "Le Val-Saint-François":  0.06327,
+    "Sherbrooke":             0.34918,
+    "Coaticook":              0.03732,
+    "Memphrémagog":           0.11412,
+    "Brome-Missisquoi":       0.13351,
+    "La Haute-Yamaska":       0.18632,
+    # --- Montréal (pop RA = 2 172 259) ---
+    "Montréal":               1.00000,
+    # --- Outaouais (pop RA = 428 751) ---
+    "Papineau":                       0.06329,
+    "Gatineau":                       0.71395,
+    "Les Collines-de-l'Outaouais":    0.13691,
+    "La Vallée-de-la-Gatineau":       0.05090,
+    "Pontiac":                        0.03496,
+    # --- Abitibi-Témiscamingue (pop RA = 149 441) ---
+    "Témiscamingue":          0.10850,
+    "Rouyn-Noranda":          0.28955,
+    "Abitibi-Ouest":          0.13662,
+    "Abitibi":                0.16841,
+    "La Vallée-de-l'Or":      0.29692,
+    # --- Côte-Nord (pop RA = 89 621) ---
+    "La Haute-Côte-Nord":                   0.11210,
+    "Manicouagan":                          0.33663,
+    "Sept-Rivières--Caniapiscau":           0.42618,   # Sept-Rivières + Caniapiscau
+    "Minganie--Le Golfe-du-Saint-Laurent":  0.12508,   # Minganie + Le Golfe
+    # --- Nord-du-Québec (pop RA = 47 541) ---
+    "Nord-du-Québec":         1.00000,   # Jamésie + Kativik + Eeyou Istchee
+    # --- Gaspésie–Îles-de-la-Madeleine (pop RA = 92 084) ---
+    "Les Îles-de-la-Madeleine":  0.13991,
+    "Le Rocher-Percé":           0.18516,
+    "La Côte-de-Gaspé":          0.19492,
+    "La Haute-Gaspésie":         0.11883,
+    "Bonaventure":               0.19576,
+    "Avignon":                   0.16544,
+    # --- Chaudière-Appalaches (pop RA = 459 158) ---
+    "L'Islet":                0.03879,
+    "Montmagny":              0.05006,
+    "Bellechasse":            0.08624,
+    "Lévis":                  0.35038,
+    "La Nouvelle-Beauce":     0.08943,
+    "Robert-Cliche":          0.04353,
+    "Les Etchemins":          0.03844,
+    "Beauce-Sartigan":        0.12230,
+    "Les Appalaches":         0.09857,
+    "Lotbinière":             0.08225,
+    # --- Laval (pop RA = 461 509) ---
+    "Laval":                  1.00000,
+    # --- Lanaudière (pop RA = 569 335) ---
+    "D'Autray":               0.08364,
+    "L'Assomption":           0.23897,
+    "Joliette":               0.13262,
+    "Matawinie":              0.10710,
+    "Montcalm":               0.11489,
+    "Les Moulins":            0.32278,
+    # --- Laurentides (pop RA = 679 190) ---
+    "Deux-Montagnes":         0.16163,
+    "Thérèse-De Blainville":  0.24928,
+    "Mirabel":                0.10081,
+    "La Rivière-du-Nord":     0.22163,
+    "Argenteuil":             0.05664,
+    "Les Pays-d'en-Haut":     0.07403,
+    "Les Laurentides":        0.07975,
+    "Antoine-Labelle":        0.05621,
+    # --- Montérégie (pop RA = 1 522 372) ---
+    "Acton":                         0.01076,
+    "Pierre-De Saurel":              0.03554,
+    "Les Maskoutains":               0.06206,
+    "Rouville":                      0.02588,
+    "Le Haut-Richelieu":             0.08259,
+    "La Vallée-du-Richelieu":        0.08979,
+    "Longueuil":                     0.30096,
+    "Marguerite-D'Youville":         0.05494,
+    "Roussillon":                    0.13695,
+    "Les Jardins-de-Napierville":    0.02143,
+    "Le Haut-Saint-Laurent":         0.01748,
+    "Beauharnois-Salaberry":        0.04953,
+    "Vaudreuil-Soulanges":           0.11209,
+    # --- Centre-du-Québec (pop RA = 264 820) ---
+    "L'Érable":               0.09270,
+    "Bécancour":              0.08470,
+    "Arthabaska":             0.29319,
+    "Drummond":               0.43689,
+    "Nicolet-Yamaska":        0.09252,
 }

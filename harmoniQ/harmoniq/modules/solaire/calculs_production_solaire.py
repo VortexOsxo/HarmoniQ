@@ -3,11 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from harmoniq.modules.solaire.data_solaire import (
-    coordinates_centrales,
-    coordinates_residential,
-    population_relative,
-)
 from typing import List
 
 
@@ -113,7 +108,8 @@ date_end = pd.Timestamp("2037-06-01")
 
 # Scénarios résidentiels : nombre de panneaux par client
 PANELS_PAR_SCENARIO = {"pessimiste": 2, "neutre": 4, "optimiste": 6}
-
+# Surface d'un panneau résidentiel standard [m²]
+SURFACE_PAR_PANNEAU_M2 = 1.7
 
 def calculate_energy_solar_plants(
     nom: str,
@@ -249,6 +245,7 @@ def calculate_energy_solar_plants(
             "production": production_kw,
         }
     )
+
 # Version précédente (sans ModelChain, moins précise) --- IGNORE ---
 def calculate_energy_solar_plants_old( 
     nom : str,
@@ -339,117 +336,221 @@ def calculate_energy_solar_plants_old(
     )
     resultats_centrales_df.set_index("datetime", inplace=True)
     return resultats_centrales_df
-    
 
-def calculate_regional_residential_solar(
-    coordinates_residential: List[tuple],
-    population_relative: dict,
-    total_clients: int,
-    surface_tilt: float,
-    surface_orientation: float,
-    date_start: pd.Timestamp,
-    date_end: pd.Timestamp,
-    scenario: str = "neutre",
-) -> tuple:
+
+def distribute_base_to_mrc(
+    ra_base_df: pd.DataFrame,
+    mrc_to_ra_mapping: dict,
+) -> pd.DataFrame:
     """
-    Estime la production horaire solaire résidentielle pour plusieurs régions.
+    Distribue le profil W/m² calculé par RA vers chaque MRC de la RA.
 
-    Arguments :
-        coordinates_residential : liste de tuples (lat, lon, nom_region, altitude, timezone)
-        population_relative     : dict {nom_region: part relative de population (0-1)}
-        total_clients           : nombre total de clients résidentiels
-        surface_tilt            : inclinaison des panneaux [degrés]
-        surface_orientation     : azimut des panneaux [degrés, 180=sud]
-        date_start, date_end    : période horaire
-        scenario                : "pessimiste" (2 pan./client) | "neutre" (4) | "optimiste" (6)
+    Chaque MRC hérite directement du profil W/m² de sa RA parente —
+    pas de pondération, W/m² est déjà normalisé (indépendant de la surface).
 
-    Retour :
-        production_df : profil horaire — colonnes : date, nom, Latitude, Longitude,
-                        puissance_installee_kw, production [kW]
-        summary_df    : une ligne par région — colonnes : nom_region, latitude, longitude,
-                        puissance_installee_kw, surface_installee_m2, energie_annuelle_kwh
+    Arguments:
+        ra_base_df        : DataFrame (datetime, mrc=nom_ra, production_w_per_m2)
+                            issu de calculate_base_production_per_m2() avec coordinates_residential
+        mrc_to_ra_mapping : dict {nom_mrc: nom_ra} (ex: data_solaire.mrc_to_ra)
+
+    Retour:
+        DataFrame (datetime, mrc, production_w_per_m2) au niveau MRC
     """
-    if scenario not in PANELS_PAR_SCENARIO:
-        raise ValueError(f"scenario doit être l'un de {list(PANELS_PAR_SCENARIO)}")
+    regions_in_df = set(ra_base_df["mrc"].unique())
+    frames = []
+    for nom_mrc, nom_ra in mrc_to_ra_mapping.items():
+        if nom_ra not in regions_in_df:
+            continue
+        ra_slice = ra_base_df[ra_base_df["mrc"] == nom_ra].copy()
+        ra_slice["mrc"] = nom_mrc
+        frames.append(ra_slice)
+    return pd.concat(frames, ignore_index=True)
 
-    num_panels_per_client = PANELS_PAR_SCENARIO[scenario]
 
-    # Puissance et surface dérivées du module Sandia de référence
+def calculate_base_production_per_m2(
+    coordinates: list,
+    surface_tilt: float = 30.0,
+    surface_orientation: float = 180.0,
+    albedo_saisonnier: bool = True,
+    bifacial: bool = False,
+    bifaciality_factor: float = 0.70,
+    gcr: float = 0.40, # utilisé si Bifacial=True 
+    hauteur_montage: float = 1.0, #utilisé si Bifacial=True
+    espacement_rangees: float = 5.0, #tilisé si Bifacial=True, espacement entre les rangées de panneaux (m), utilisé pour le modèle bifacial
+    reference_year: int = 2021,
+) -> pd.DataFrame:
+    """
+    Calcule le profil horaire TMY de production en W/m² pour chaque MRC/région.
+
+    Conceptuellement, chaque MRC est traitée comme une "centrale virtuelle" d'un
+    seul module de référence placé au centre de la MRC. Le résultat est normalisé
+    en W/m² en réutilisant calculate_energy_solar_plants() avec nombre_panneau=1,
+    ce qui évite de dupliquer la logique pvlib.
+
+    Arguments:
+        coordinates         : liste de tuples (lat, lon, nom, altitude, timezone)
+        surface_tilt        : inclinaison des panneaux [degrés]
+        surface_orientation : azimut [degrés, 180=sud]
+        albedo_saisonnier   : True = neige hiver (0.60) / herbe été (0.20)
+        bifacial            : True = modèle bifacial (infinite_sheds) -> non utilisé pour l'instant mais disponible.
+        reference_year      : année TMY de référence pour le DatetimeIndex
+
+    Retour:
+        DataFrame (datetime, mrc, production_w_per_m2) — 8760 lignes par MRC
+    """
     sandia_modules = pvlib.pvsystem.retrieve_sam("SandiaMod")
-    module_ref = sandia_modules["Canadian_Solar_CS5P_220M___2009_"]
-    puissance_panneau_kw = module_ref["Impo"] * module_ref["Vmpo"] / 1000  # ~0.221 kW
-    surface_par_panneau_m2 = module_ref["Area"]
+    module = sandia_modules["Canadian_Solar_CS5P_220M___2009_"]
+    puissance_module_kw = module["Impo"] * module["Vmpo"] / 1000  # ~0.221 kW
+    module_area_m2 = module["Area"]                               # ~1.244 m²
 
-    production_list = []
-    summary_list = []
+    date_start = pd.Timestamp(f"{reference_year}-01-01")
+    date_end   = pd.Timestamp(f"{reference_year}-12-31 23:00:00")
 
-    for (latitude, longitude, nom_region, altitude, timezone) in coordinates_residential:
-        pop_weight = population_relative.get(nom_region, 0)
-        nb_panneaux = int(total_clients * pop_weight * num_panels_per_client)
-        puissance_installee_kw = nb_panneaux * puissance_panneau_kw
-        surface_installee_m2 = nb_panneaux * surface_par_panneau_m2
+    frames = []
+    for coord in coordinates:
+        latitude, longitude, nom = coord[0], coord[1], coord[2]
+        print(f"  Base W/m² → {nom}...")
 
+        # Centrale virtuelle d'un seul module → scaling_factor = 1
         df = calculate_energy_solar_plants(
-            nom=nom_region,
+            nom=nom,
             latitude=latitude,
             longitude=longitude,
             angle_panneau=surface_tilt,
             orientation_panneau=surface_orientation,
-            puissance_nominal=puissance_panneau_kw,
-            nombre_panneau=nb_panneaux,
+            puissance_nominal=puissance_module_kw,
+            nombre_panneau=1,
             date_start=date_start,
             date_end=date_end,
+            albedo_saisonnier=albedo_saisonnier,
+            bifacial=bifacial,
+            bifaciality_factor=bifaciality_factor,
+            gcr=gcr,
+            hauteur_montage=hauteur_montage,
+            espacement_rangees=espacement_rangees,
         )
-        df["puissance_installee_kw"] = puissance_installee_kw
-        production_list.append(df)
 
-        summary_list.append({
-            "nom_region": nom_region,
-            "latitude": latitude,
-            "longitude": longitude,
-            "puissance_installee_kw": puissance_installee_kw,
-            "surface_installee_m2": surface_installee_m2,
-            "energie_annuelle_kwh": df["production"].sum(),
-        })
+        # kW → W puis normaliser par la surface du module → W/m²
+        frames.append(pd.DataFrame({
+            "datetime": df["date"],
+            "mrc": nom,
+            "production_w_per_m2": df["production"] * 1000 / module_area_m2,
+        }))
 
-    production_df = pd.concat(production_list, ignore_index=True)
-    summary_df = pd.DataFrame(summary_list)
-
-    return production_df, summary_df
+    return pd.concat(frames, ignore_index=True)
 
 
-def precalculate_residential_scenarios(
-    coordinates_residential: List[tuple],
-    population_relative: dict,
-    total_clients: int,
-    surface_tilt: float,
-    surface_orientation: float,
-    date_start: pd.Timestamp,
-    date_end: pd.Timestamp,
-) -> dict:
+# ===========================================================================
+#  PARTIE 2 — Application du scénario sur la base W/m²  (à implémenter côté réseau)
+# ---------------------------------------------------------------------------
+#  La base W/m² est multipliée par :
+#    - m2_par_client   : surface de panneaux par client (scénario)
+#    - nb_clients(mrc) : total_clients × population(mrc) / population_totale
+#    - f_densite(mrc)  : facteur limitant calculé dynamiquement depuis une BD
+#                        (population et superficie_km2 par MRC)
+# ===========================================================================
+
+def compute_facteur_densite(
+    population: int,
+    superficie_km2: float,
+    m2_par_client: float,
+    surface_hab_par_hab: float = 42.0, # surface habitable par habitant
+    eta_toit: float = 0.30, # fraction de toit utilisable (HCVC, ombrage, orientation, etc.)
+) -> float:
     """
-    Pré-calcule les 3 scénarios résidentiels d'un coup (pessimiste/neutre/optimiste).
+    Calcule le facteur de limitation toiture basé sur la densité de population.
 
-    Retour :
-        dict {
-            "pessimiste": (production_df, summary_df),
-            "neutre":   (production_df, summary_df),
-            "optimiste":  (production_df, summary_df),
-        }
+    Logique :
+        densite = population / superficie_km2                   [hab/km²]
+        nb_etages = paliers selon densite (< 100 → 1.5 ... > 5000 → 7.0)
+        s_toit_util = (surface_hab_par_hab / nb_etages) × eta_toit  [m²/hab]
+        f_densite = min(s_toit_util, m2_par_client) / m2_par_client
+
+    Vaut 1.0 dans les zones rurales (le toit n'est pas limitant).
+    Vaut < 1.0 dans les zones denses (ex : Montréal).
+
+    Arguments:
+        population          : population de la MRC
+        superficie_km2      : superficie de la MRC [km²]
+        m2_par_client       : surface totale de panneaux par client [m²]
+        surface_hab_par_hab : surface habitable par habitant (défaut 42 m²)
+        eta_toit            : fraction de toit utilisable (orientation, ombrage, etc.)
     """
-    return {
-        s: calculate_regional_residential_solar(
-            coordinates_residential=coordinates_residential,
-            population_relative=population_relative,
-            total_clients=total_clients,
-            surface_tilt=surface_tilt,
-            surface_orientation=surface_orientation,
-            date_start=date_start,
-            date_end=date_end,
-            scenario=s,
+    densite = population / max(superficie_km2, 1.0)
+
+    if densite < 100:
+        nb_etages = 1.5
+    elif densite < 1000:
+        nb_etages = 2.0
+    elif densite < 3000:
+        nb_etages = 3.0
+    elif densite < 5000:
+        nb_etages = 4
+    else:
+        nb_etages = 7.0
+
+    s_toit_util = (surface_hab_par_hab / nb_etages) * eta_toit
+    return min(s_toit_util, m2_par_client) / m2_par_client
+
+
+def apply_residential_scenario(
+    base_df: pd.DataFrame,
+    m2_par_client: float,
+    mrc_data_df: pd.DataFrame,
+    total_clients: int = 125_000,
+) -> pd.DataFrame:
+    """
+    Applique un scénario résidentiel sur la base de production W/m².
+
+    Arguments:
+        base_df        : DataFrame (datetime, mrc, production_w_per_m2)
+                         Issu de calculate_base_production_per_m2()
+        m2_par_client  : surface totale de panneaux par client [m²]
+                         Ex : 2 panneaux × 1.7 m²/panneau = 3.4 m²
+        mrc_data_df    : DataFrame avec colonnes (mrc, population, superficie_km2)
+                         Chargé depuis la base de données
+        total_clients  : nombre total de clients résidentiels (défaut 125 000)
+
+    Retour:
+        DataFrame avec colonnes : datetime, mrc, production_kw, nb_clients_actifs
+
+    Formule :
+        part_mrc      = population(mrc) / sum(population)
+        nb_clients    = total_clients × part_mrc
+        production_kW = production_w_per_m2 × m2_par_client × nb_clients × f_densite / 1000
+    """
+    pop_totale = mrc_data_df["population"].sum()
+
+    mrc_factors = {}
+    for _, row in mrc_data_df.iterrows():
+        mrc = row["mrc"]
+        f = compute_facteur_densite(
+            population=int(row["population"]),
+            superficie_km2=float(row["superficie_km2"]),
+            m2_par_client=m2_par_client,
         )
-        for s in PANELS_PAR_SCENARIO
-    }
+        nb_clients = int(total_clients * row["population"] / pop_totale)
+        mrc_factors[mrc] = {"f_densite": f, "nb_clients": nb_clients}
+
+    result_frames = []
+    for mrc, factors in mrc_factors.items():
+        mrc_slice = base_df[base_df["mrc"] == mrc].copy()
+        if mrc_slice.empty:
+            continue
+
+        mrc_slice["production_kw"] = (
+            mrc_slice["production_w_per_m2"]
+            * m2_par_client
+            * factors["nb_clients"]
+            * factors["f_densite"]
+            / 1000.0
+        )
+        mrc_slice["nb_clients_actifs"] = int(factors["nb_clients"] * factors["f_densite"])
+        result_frames.append(
+            mrc_slice[["datetime", "mrc", "production_kw", "nb_clients_actifs"]]
+        )
+
+    return pd.concat(result_frames, ignore_index=True)
 
 
 def cost_solar_powerplant(puissance_mw):
@@ -576,6 +677,7 @@ def co2_emissions_solar(
 
 # Exemple d'utilisation
 if __name__ == "__main__":
+    from harmoniq.modules.solaire.data_solaire import coordinates_centrales
 
     DATE_START = pd.Timestamp("2035-01-01")
     DATE_END   = pd.Timestamp("2035-12-31 23:00:00")

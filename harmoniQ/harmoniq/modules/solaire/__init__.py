@@ -1,17 +1,21 @@
 from harmoniq.core.base import Infrastructure, necessite_scenario
 from harmoniq.modules.solaire.calculs_production_solaire import (
     calculate_energy_solar_plants,
-    calculate_regional_residential_solar,
-    precalculate_residential_scenarios,
     PANELS_PAR_SCENARIO,
+    SURFACE_PAR_PANNEAU_M2,
     calculate_installation_cost,
     co2_emissions_solar,
     cost_solar_powerplant,
     calculate_lifetime,
+    calculate_base_production_per_m2,
+    distribute_base_to_mrc,
+    compute_facteur_densite,
+    apply_residential_scenario,
 )
 from harmoniq.modules.solaire.data_solaire import (
+    coordinates_residential_MRC,
     coordinates_residential,
-    population_relative,
+    mrc_to_ra,
 )
 
 
@@ -50,92 +54,109 @@ class InfraSolaire(Infrastructure):
         self.couts  = cost_solar_powerplant(puissance_mw=self.donnees.puissance_nominal)
         return self.couts
 
-
 class InfraSolaireResidentielle:
     """
-    Encapsule la production solaire résidentielle pour tous les scénarios.
+    Pipeline résidentiel en deux étapes :
 
-    Utilisation :
-        infra = InfraSolaireResidentielle(total_clients=150_000)
-        infra.charger_scenario(scenario)
-        infra.calculer_production()          # pré-calcule pessimiste/neutre/optimiste
+      Étape 1 — Base W/m² (calculée une seule fois, indépendante du scénario)
+        infra = InfraSolaireResidentielle()
+        infra.calculer_base()           # ~99 appels PVGIS, résultat mis en cache
+        infra.exporter_base_csv()       # sauvegarde pour réutilisation
 
-        df = infra.get_production("optimiste")   # profil horaire pour le frontend
-        summary = infra.get_summary("neutre")  # récapitulatif par région
+      Étape 2 — Application du scénario (instantanée, nécessite la BD MRC)
+        df = infra.get_production(
+            scenario="neutre",          # "pessimiste" | "neutre" | "optimiste"
+            mrc_data_df=...,            # DataFrame (mrc, population, superficie_km2)
+            taux_adoption=0.05,
+        )
+        # df : (datetime, mrc, production_kw, nb_clients_actifs)
     """
 
     def __init__(
         self,
-        total_clients: int = 150_000,
         surface_tilt: float = 30.0,
         surface_orientation: float = 180.0,
     ):
-        self.total_clients = total_clients
         self.surface_tilt = surface_tilt
         self.surface_orientation = surface_orientation
-        self.scenario = None
-        self._productions: dict = {}   # {"pessimiste": (prod_df, summary_df), ...}
+        self._base_production: pd.DataFrame | None = None
 
-    def charger_scenario(self, scenario):
-        self.scenario = scenario
-        self._productions = {}  # reset du cache si le scénario change
+    def calculer_base(self, methode: str = "mrc") -> pd.DataFrame:
+        """
+        Calcule et met en cache le profil TMY en W/m² pour toutes les MRC.
+        À appeler une seule fois ; les appels suivants retournent le cache.
 
-    @necessite_scenario
-    def calculer_production(self) -> dict:
+        Arguments :
+            methode : "mrc" (défaut) → 99 appels PVGIS, profil solaire local par MRC
+                      "ra"           → 17 appels PVGIS + distribution aux MRCs (plus rapide,
+                                       toutes les MRCs d'une même RA partagent le même profil)
+
+        Retour : DataFrame (datetime, mrc, production_w_per_m2) — 8760 lignes par MRC
         """
-        Pré-calcule les 3 scénarios (pessimiste/neutre/optimiste) une seule fois.
-        Les résultats sont mis en cache — appels suivants retournent le cache.
-        Retour : dict {"pessimiste": (prod_df, summary_df), ...}
-        """
-        if not self._productions:
-            logger.info(
-                f"Pre-calcul des 3 scenarios residentiels ({self.total_clients} clients)..."
-            )
-            self._productions = precalculate_residential_scenarios(
-                coordinates_residential=coordinates_residential,
-                population_relative=population_relative,
-                total_clients=self.total_clients,
+        if self._base_production is not None:
+            return self._base_production
+
+        if methode == "mrc":
+            logger.info("Calcul base W/m² — méthode directe MRC (99 appels PVGIS)...")
+            self._base_production = calculate_base_production_per_m2(
+                coordinates=coordinates_residential_MRC,
                 surface_tilt=self.surface_tilt,
                 surface_orientation=self.surface_orientation,
-                date_start=self.scenario.date_de_debut,
-                date_end=self.scenario.date_de_fin + pd.DateOffset(days=1),
             )
-            logger.info("Pre-calcul termine.")
-        return self._productions
+        elif methode == "ra":
+            logger.info("Calcul base W/m² — méthode RA → MRC (17 appels PVGIS)...")
+            ra_base = calculate_base_production_per_m2(
+                coordinates=coordinates_residential,
+                surface_tilt=self.surface_tilt,
+                surface_orientation=self.surface_orientation,
+            )
+            self._base_production = distribute_base_to_mrc(ra_base, mrc_to_ra)
+        else:
+            raise ValueError(f"methode doit être 'mrc' ou 'ra', reçu: {methode!r}")
 
-    def get_production(self, scenario: str = "neutre") -> pd.DataFrame:
-        """
-        Retourne le profil horaire (production kW) pour un scénario donné.
-        Déclenche le pré-calcul si ce n'est pas déjà fait.
-        """
-        if not self._productions:
-            self.calculer_production()
-        prod_df, _ = self._productions[scenario]
-        return prod_df
+        logger.info("Base W/m² calculée.")
+        return self._base_production
 
-    def get_summary(self, scenario: str = "neutre") -> pd.DataFrame:
+    def get_production(
+        self,
+        scenario: str,
+        mrc_data_df: pd.DataFrame,
+        total_clients: int = 125_000,
+    ) -> pd.DataFrame:
         """
-        Retourne le récapitulatif par région (puissance installée, énergie annuelle)
-        pour un scénario donné.
-        """
-        if not self._productions:
-            self.calculer_production()
-        _, summary_df = self._productions[scenario]
-        return summary_df
+        Applique un scénario sur la base W/m².
 
-    def exporter_csv(self, dossier: str = ".") -> None:
+        Arguments :
+            scenario      : "pessimiste" | "neutre" | "optimiste"
+            mrc_data_df   : DataFrame (mrc, population, superficie_km2) depuis la BD
+            total_clients : nombre total de clients résidentiels (défaut 125 000)
+
+        Retour : DataFrame (datetime, mrc, production_kw, nb_clients_actifs)
+
+        Formule :
+            nb_clients(mrc) = total_clients × population(mrc) / population_totale
+            production_kW   = production_w_per_m2 × nb_panneaux × 1.7 m² × nb_clients × f_densite / 1000
         """
-        Exporte un CSV de production horaire par scénario (pessimiste/neutre/optimiste).
-        Fichiers générés : resid_production_pessimiste.csv, resid_production_neutre.csv,
-                           resid_production_optimiste.csv
+        if self._base_production is None:
+            self.calculer_base()
+
+        m2_par_client = PANELS_PAR_SCENARIO[scenario] * SURFACE_PAR_PANNEAU_M2
+        return apply_residential_scenario(
+            base_df=self._base_production,
+            m2_par_client=m2_par_client,
+            mrc_data_df=mrc_data_df,
+            total_clients=total_clients,
+        )
+
+    def exporter_base_csv(self, path: str = "base_production_mrc.csv") -> None:
         """
-        import os
-        if not self._productions:
-            self.calculer_production()
-        for sc, (prod_df, _) in self._productions.items():
-            path = os.path.join(dossier, f"resid_production_{sc}.csv")
-            prod_df.to_csv(path, index=False)
-            logger.info(f"Exporte {path}")
+        Exporte la base W/m² en CSV (une seule fois, réutilisable sans recalcul).
+        Colonnes : datetime, mrc, production_w_per_m2
+        """
+        if self._base_production is None:
+            self.calculer_base()
+        self._base_production.to_csv(path, index=False)
+        logger.info(f"Base exportée → {path}")
 
 
 if __name__ == "__main__":
