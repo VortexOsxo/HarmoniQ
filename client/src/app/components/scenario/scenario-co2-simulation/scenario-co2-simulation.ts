@@ -6,6 +6,7 @@ import { SimulationCo2GraphService } from '@app/services/graph-services/simulati
   selector: 'app-scenario-co2-simulation',
   imports: [],
   templateUrl: './scenario-co2-simulation.html',
+  styleUrl: './scenario-co2-simulation.css',
 })
 export class ScenarioCo2Simulation {
   config = graphServiceConfig;

@@ -71,7 +71,7 @@ export class SimulationPage implements AfterViewInit {
 
   readonly sections: Section[] = [
     { id: 'section-cost',      title: 'Coût du réseau',       desc: 'Estimation du coût total d\'exploitation',  icon: 'fa-coins',                waitForSimulation: false },
-    { id: 'section-co2',       title: 'Émissions CO₂',        desc: 'Bilan carbone des sources de production',   icon: 'fa-cloud',                waitForSimulation: false },
+    { id: 'section-co2',       title: 'Émissions CO₂',        desc: 'Bilan carbone des sources de production',   icon: 'fa-cloud',                waitForSimulation: true  },
     { id: 'section-sankey',    title: 'Flux de production',   desc: 'Répartition entre production et demande',   icon: 'fa-diagram-project',      waitForSimulation: true  },
     { id: 'section-temporal',  title: 'Production & Demande', desc: 'Évolution temporelle de la production',     icon: 'fa-chart-line',           waitForSimulation: true  },
     { id: 'section-overprod',  title: 'Surproduction',        desc: 'Surplus et déficit des infrastructures',    icon: 'fa-bolt-lightning',       waitForSimulation: true  },

@@ -211,31 +211,34 @@ export class SimulationTemporalGraphService implements SimulationStep {
         return this.cachedDemandeResult();
     }
 
-    getProductionNodes(co2Data?: any): ProductionNode[] {
+    getProductionNodes(): ProductionNode[] {
         if (!this.cachedSimulationResult?.production?.length) return [];
         const data: any[] = this.cachedSimulationResult.production;
         const n = data.length;
         const avg = (key: string) =>
             data.reduce((sum: number, row: any) => sum + (row[key] ?? 0), 0) / n;
 
-        // Compute real t CO₂/h from backend annual values (co2_annuel is tonnes/year)
-        const HOURS_PER_YEAR = 8760;
-        const sumCo2Annual = (items: any[]): number =>
-            (items ?? []).reduce((s: number, i: any) => s + (i.co2_annuel ?? 0), 0);
+        // tCO2/MWh per simulation production key
+        const CO2_INTENSITY: Record<string, number> = {
+            total_hydro_fil:       8    / 1000,
+            total_hydro_reservoir: 20   / 1000,
+            total_eolien:          0,
+            total_solaire:         0,
+            total_thermique:       1.2  / 1000,
+            total_nucleaire:       9    / 1000,
+            total_import:          200  / 1000,
+        };
 
-        let co2Tph: Record<string, number> = {};
-        if (co2Data) {
-            const hydroItems: any[] = co2Data['hydro'] ?? [];
-            co2Tph = {
-                hydro_fil: sumCo2Annual(hydroItems.filter((h: any) => h.type_barrage === "Fil de l'eau")) / HOURS_PER_YEAR,
-                hydro_res: sumCo2Annual(hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau")) / HOURS_PER_YEAR,
-                eolien:    sumCo2Annual(co2Data['eolienneparc']) / HOURS_PER_YEAR,
-                solaire:   sumCo2Annual(co2Data['solaire'])      / HOURS_PER_YEAR,
-                thermique: sumCo2Annual(co2Data['thermique'])    / HOURS_PER_YEAR,
-                nucleaire: sumCo2Annual(co2Data['nucleaire'])    / HOURS_PER_YEAR,
-                // import has no backend CO2 data — fallback to factor
-            };
-        }
+        // co2Tph = avg MW × tCO2/MWh = tCO2/h
+        const co2Tph: Record<string, number> = {
+            hydro_fil:  avg('total_hydro_fil')       * CO2_INTENSITY['total_hydro_fil'],
+            hydro_res:  avg('total_hydro_reservoir') * CO2_INTENSITY['total_hydro_reservoir'],
+            eolien:     0,
+            solaire:    0,
+            thermique:  avg('total_thermique')       * CO2_INTENSITY['total_thermique'],
+            nucleaire:  avg('total_nucleaire')       * CO2_INTENSITY['total_nucleaire'],
+            import:     avg('total_import')          * CO2_INTENSITY['total_import'],
+        };
 
         const carriers: [string, number][] = [
             ['hydro_fil', avg('total_hydro_fil')],
@@ -249,7 +252,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
         return carriers.map(([carrier, value]) => ({
             ...CARRIER_NODE_DEFS[carrier],
             value: Math.round(value),
-            ...(co2Data ? { co2Tph: co2Tph[carrier] } : {}),
+            co2Tph: co2Tph[carrier],
         }));
     }
 

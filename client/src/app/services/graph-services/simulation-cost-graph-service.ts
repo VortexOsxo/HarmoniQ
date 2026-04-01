@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
@@ -23,7 +23,8 @@ const SEGMENTS = [
 export class SimulationCostGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedData: any;
-    public costMode: 'annuel' | 'construction' = 'annuel';
+    public costMode: 'annuel' | 'construction' = 'construction';
+    public isLoading = signal(true);
 
     constructor(
         private infrastructuresService: InfrastruturesService,
@@ -115,6 +116,7 @@ export class SimulationCostGraphService implements SimulationStep {
         };
 
         Plotly.newPlot(graphServiceConfig.COST_SIMULATION_ID, data, layout);
+        this.isLoading.set(false);
     }
 
     public setCostMode(mode: 'annuel' | 'construction') {
