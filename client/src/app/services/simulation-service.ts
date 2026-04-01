@@ -47,8 +47,11 @@ export class SimulationService {
             this.simulationTemporalGraphService.cachedSimulationResult = undefined;
             this.simulationCostGraphService.cachedScenarioId = undefined;
             this.simulationCostGraphService.cachedData = undefined;
+            this.simulationCostGraphService.isLoading.set(true);
             this.simulationCo2GraphService.cachedScenarioId = undefined;
             this.simulationCo2GraphService.cachedData = undefined;
+            this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
+            this.simulationCo2GraphService.isLoading.set(true);
             this.productionNodes.set(null);
         });
     }
@@ -100,7 +103,14 @@ export class SimulationService {
         ];
 
         await this.simulationStepService.runSteps(steps, scenario);
-        this.productionNodes.set(this.simulationTemporalGraphService.getProductionNodes(this.simulationCo2GraphService.cachedData));
+
+        // Compute annual CO2 from actual simulation production now that temporal is done
+        const simResult = this.simulationTemporalGraphService.getCachedSimulationResult();
+        if (simResult) {
+            this.simulationCo2GraphService.updateAnnuelFromSimulation(simResult);
+        }
+
+        this.productionNodes.set(this.simulationTemporalGraphService.getProductionNodes());
     }
 
     hasExportableData(): boolean {
