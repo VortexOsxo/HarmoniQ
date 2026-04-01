@@ -38,6 +38,17 @@ export class SimulationService {
     ) {
         effect(() => {
             this.scenariosService.selectedScenario(); // track scenario changes
+            this.simulationTemporalGraphService.cachedScenarioId = undefined;
+            this.simulationTemporalGraphService.cachedSimulationResult = undefined;
+            this.simulationCostGraphService.cachedScenarioId = undefined;
+            this.simulationCostGraphService.cachedData = undefined;
+            this.simulationCostGraphService.costMode = 'annuel';
+            this.simulationCostGraphService.isLoading.set(true);
+            this.simulationCo2GraphService.cachedScenarioId = undefined;
+            this.simulationCo2GraphService.cachedData = undefined;
+            this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
+            this.simulationCo2GraphService.costMode = 'construction';
+            this.simulationCo2GraphService.isLoading.set(true);
             this.productionNodes.set(null);
         });
 
@@ -47,10 +58,12 @@ export class SimulationService {
             this.simulationTemporalGraphService.cachedSimulationResult = undefined;
             this.simulationCostGraphService.cachedScenarioId = undefined;
             this.simulationCostGraphService.cachedData = undefined;
+            this.simulationCostGraphService.costMode = 'annuel';
             this.simulationCostGraphService.isLoading.set(true);
             this.simulationCo2GraphService.cachedScenarioId = undefined;
             this.simulationCo2GraphService.cachedData = undefined;
             this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
+            this.simulationCo2GraphService.costMode = 'construction';
             this.simulationCo2GraphService.isLoading.set(true);
             this.productionNodes.set(null);
         });
