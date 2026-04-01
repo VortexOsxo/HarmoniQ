@@ -1,0 +1,8 @@
+.readonly-field {
+    background-color: #f0f0f0;
+    color: #777;
+    cursor: default;
+    border-color: #ddd;
+    pointer-events: none;
+    user-select: none;
+}
