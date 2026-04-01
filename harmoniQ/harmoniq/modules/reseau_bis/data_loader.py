@@ -187,25 +187,33 @@ def _compute_initial_reservoir_pmax(
     initial_fills: Dict[str, float],
     reservoir_gen_names: List[str],
     snapshots: pd.DatetimeIndex,
+    ratio_dispo_map: Dict[str, float] | None = None,
 ) -> pd.DataFrame:
     """Contrainte de réserve stratégique basée sur le fill initial (statique pour le 1er chunk).
 
     L'optimiseur met à jour ce p_max_pu chunk par chunk via le feed-forward hydraulique.
 
-    Interpolation continue fill → p_max_pu :
+    Interpolation continue fill → p_max_pu (avant maintenance) :
         fill ≥ 70 % → 0.95  (libre)
         fill = 45 % → 0.50  (prudence)
         fill ≤ 30 % → 0.15  (réserve stratégique — force import)
+
+    Puis multiplication par ratio_dispo = (nb_turbines - nb_maintenance) / nb_turbines
+    pour être cohérent avec le bilan hydraulique du reservoir_tracker.
     """
+    if ratio_dispo_map is None:
+        ratio_dispo_map = {}
     reservoir_pmax = pd.DataFrame(index=snapshots)
     for gname in reservoir_gen_names:
         fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
         pmax_val = float(np.interp(fill, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]))
         pmax_val = float(np.clip(pmax_val, 0.15, 0.95))
+        ratio = float(ratio_dispo_map.get(gname, 1.0))
+        pmax_val = float(np.clip(pmax_val * ratio, 0.0, ratio))
         reservoir_pmax[gname] = pmax_val
         logger.debug(
-            "Réserve stratégique %s : fill initial=%.0f%% → p_max_pu=%.2f",
-            gname, fill * 100, pmax_val,
+            "Réserve stratégique %s : fill=%.0f%% ratio_dispo=%.2f → p_max_pu=%.2f",
+            gname, fill * 100, ratio, pmax_val,
         )
     return reservoir_pmax
 
@@ -571,10 +579,15 @@ class NetworkDataLoaderBis:
                 gen.get("name") for _, gen in generators_df.iterrows()
                 if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
             ]
+            _ratio_dispo_map = {
+                gen.get("name"): float(gen.get("ratio_dispo", 1.0))
+                for _, gen in generators_df.iterrows()
+                if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
+            }
             reservoir_pmax_df = None
             if reservoir_gen_names:
                 initial_fills = _get_initial_reservoir_fill(scenario)
-                reservoir_pmax_df = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots)
+                reservoir_pmax_df = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map)
                 for gname in reservoir_gen_names:
                     fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
                     base_cost = float(_reservoir_water_value_cost(np.array([fill]))[0])
@@ -619,10 +632,15 @@ class NetworkDataLoaderBis:
             gen.get("name") for _, gen in generators_df.iterrows()
             if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
         ]
+        _ratio_dispo_map = {
+            gen.get("name"): float(gen.get("ratio_dispo", 1.0))
+            for _, gen in generators_df.iterrows()
+            if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
+        }
         _reservoir_pmax_for_later = None
         if reservoir_gen_names:
             initial_fills = _get_initial_reservoir_fill(scenario)
-            _reservoir_pmax_for_later = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots)
+            _reservoir_pmax_for_later = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map)
             for gname in reservoir_gen_names:
                 fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
                 base_cost = float(_reservoir_water_value_cost(np.array([fill]))[0])
@@ -1501,6 +1519,9 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
             carrier = "hydro_reservoir" if type_barrage == "reservoir" else "hydro_fil"
             p_nom = float(row.get("puissance_nominal", 0.0))
             nb_turbines = max(1, int(row.get("nb_turbines", 1)))
+            nb_turb_maint = max(0, int(row.get("nb_turbines_maintenance", 0)))
+            nb_dispo = max(1, nb_turbines - nb_turb_maint)
+            ratio_dispo = nb_dispo / nb_turbines
             bus = _resolve_generator_bus(row.get("bus"), row.get("latitude"), row.get("longitude"), buses_df, row.get("nom"))
 
             # p_min_pu :
@@ -1523,6 +1544,9 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
                     "p_nom_max": None,
                     "p_min_pu": p_min_pu,
                     "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.1,
+                    # ratio_dispo : fraction de turbines disponibles (hors maintenance).
+                    # Utilisé par _compute_initial_reservoir_pmax pour borner p_max_pu.
+                    "ratio_dispo": ratio_dispo,
                 }
             )
     elif source_type == "thermique":

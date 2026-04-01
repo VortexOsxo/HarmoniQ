@@ -374,10 +374,12 @@ def _update_reservoir_costs_and_pmax(
             premium = np.array([_WINTER_PREMIUM[ts.month - 1] for ts in next_sns])
             mc_df.loc[next_sns, dam.nom] = new_cost + premium
 
-        # Contrainte de réserve stratégique (p_max_pu) pour le prochain chunk
+        # Contrainte de réserve stratégique (p_max_pu) pour le prochain chunk.
+        # Multiplié par ratio_dispo pour être cohérent avec le bilan hydraulique :
+        # si 1 turbine sur 10 est en maintenance, le plafond max est 0.95 × 0.9 = 0.855.
         new_pmax = float(np.clip(
-            np.interp(dam.current_level, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]),
-            0.15, 0.95,
+            np.interp(dam.current_level, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]) * dam.ratio_dispo,
+            0.0, dam.ratio_dispo,
         ))
         if not pmax_df.empty and dam.nom in pmax_df.columns:
             pmax_df.loc[next_sns, dam.nom] = new_pmax

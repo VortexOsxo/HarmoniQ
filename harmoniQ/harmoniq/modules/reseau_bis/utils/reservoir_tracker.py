@@ -223,6 +223,7 @@ class ReservoirDamFeed:
     volume_max_m3: float
     apport_m3s: np.ndarray      # un m³/s par snapshot (toute l'année, aligné positionellement)
     current_level: float = 0.70  # niveau courant [0-1], mis à jour chunk par chunk
+    ratio_dispo: float = 1.0     # (nb_turbines - nb_maintenance) / nb_turbines
 
 
 def build_reservoir_feed_data(
@@ -293,6 +294,7 @@ def build_reservoir_feed_data(
             volume_max_m3=volume_max,
             apport_m3s=apport,
             current_level=initial_level,
+            ratio_dispo=ratio_dispo,
         ))
 
     logger.info(
