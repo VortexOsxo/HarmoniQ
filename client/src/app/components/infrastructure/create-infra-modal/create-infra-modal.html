@@ -6,38 +6,64 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
     <div class="modal-body">
 
-        <div *ngIf="protectedAreaName" class="alert alert-warning d-flex align-items-start mb-3" role="alert">
-            <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
-            <div>
-                <strong>Aire protégée</strong><br>
-                Cette infrastructure sera placée dans : <em>{{ protectedAreaName }}</em>
+        @if (protectedAreaName) {
+            <div class="alert alert-warning d-flex align-items-start mb-3" role="alert">
+                <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                <div>
+                    <strong>Aire protégée</strong><br>
+                    Cette infrastructure sera placée dans : <em>{{ protectedAreaName }}</em>
+                </div>
             </div>
-        </div>
+        }
 
-        <div *ngFor="let field of fields" class="form-group mb-3">
-            <label class="form-label" [for]="field.key">
-                {{ field.title }}
-                <i *ngIf="field.description" class="fas fa-info-circle" ngbTooltip="{{ field.description }}"
-                    placement="top"></i>
-            </label>
+        @for (field of fields; track field.key) {
+            <div class="form-group mb-3">
+                <label class="form-label" [for]="field.key">
+                    {{ field.title }}
+                    @if (field.key === 'nom') {
+                        <span class="required-star">*</span>
+                    }
+                    @if (field.description) {
+                        <i class="fas fa-info-circle" ngbTooltip="{{ field.description }}" placement="top"></i>
+                    }
+                </label>
 
-            <select *ngIf="field.enum" class="form-control" [id]="field.key" [formControlName]="field.key">
-                <option *ngFor="let v of field.enum" [value]="v">{{ v }}</option>
-            </select>
+                @if (field.enum) {
+                    <select class="form-control" [id]="field.key" [formControlName]="field.key"
+                        [class.is-invalid]="form.get(field.key)?.invalid && form.get(field.key)?.touched">
+                        @for (v of field.enum; track v) {
+                            <option [value]="v">{{ v }}</option>
+                        }
+                    </select>
+                } @else {
+                    <input class="form-control" [id]="field.key" [type]="field.type"
+                        [readonly]="field.readonly"
+                        [formControlName]="field.key"
+                        [class.readonly-field]="field.readonly"
+                        [class.is-invalid]="form.get(field.key)?.invalid && form.get(field.key)?.touched"
+                        [attr.min]="field.nonNegative ? 0 : null"
+                        (keydown)="onKeydown($event, field)"
+                        (blur)="onBlur(field)">
+                }
 
-            <input *ngIf="!field.enum" class="form-control" [id]="field.key" [type]="field.type"
-                [readonly]="field.readonly" [formControlName]="field.key"
-                [class.readonly-field]="field.readonly">
+                @if (getFieldError(field); as errMsg) {
+                    <div class="field-error">
+                        <i class="fas fa-exclamation-circle"></i> {{ errMsg }}
+                    </div>
+                }
 
-            <div *ngIf="field.key === 'nom' && form.get('nom')?.hasError('duplicateName')" class="text-danger small mt-1">
-                <i class="fas fa-exclamation-circle"></i> Une infrastructure avec ce nom existe déjà.
+                @if (getFieldWarning(field); as warnMsg) {
+                    <div class="field-warning">
+                        <i class="fas fa-exclamation-triangle"></i> {{ warnMsg }}
+                    </div>
+                }
             </div>
-        </div>
+        }
 
     </div>
 
     <div class="modal-footer">
         <button class="btn btn-secondary" type="button" (click)="activeModal.close()">Fermer</button>
-        <input type="submit" class="btn btn-primary" value="Créer" [disabled]="form.invalid">
+        <input type="submit" class="btn btn-primary submit-btn" value="Créer" [disabled]="form.invalid">
     </div>
 </form>
