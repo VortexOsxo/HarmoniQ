@@ -40,6 +40,17 @@ export class SimulationService {
             this.scenariosService.selectedScenario(); // track scenario changes
             this.productionNodes.set(null);
         });
+
+        effect(() => {
+            this.infrastructuresService.selectedInfraGroup(); // track infra group changes
+            this.simulationTemporalGraphService.cachedScenarioId = undefined;
+            this.simulationTemporalGraphService.cachedSimulationResult = undefined;
+            this.simulationCostGraphService.cachedScenarioId = undefined;
+            this.simulationCostGraphService.cachedData = undefined;
+            this.simulationCo2GraphService.cachedScenarioId = undefined;
+            this.simulationCo2GraphService.cachedData = undefined;
+            this.productionNodes.set(null);
+        });
     }
 
     private getInfraScenarioPayload(type: string, infraId: number) {
