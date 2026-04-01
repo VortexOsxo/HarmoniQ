@@ -69,7 +69,7 @@ class InfraSolaireResidentielle:
             mrc_data_df=...,            # DataFrame (mrc, population, superficie_km2)
             taux_adoption=0.05,
         )
-        # df : (datetime, mrc, production_kw, nb_clients_actifs)
+        # df : (datetime, mrc, production_kw)
     """
 
     def __init__(
@@ -81,7 +81,7 @@ class InfraSolaireResidentielle:
         self.surface_orientation = surface_orientation
         self._base_production: pd.DataFrame | None = None
 
-    def calculer_base(self, methode: str = "mrc") -> pd.DataFrame:
+    def calculer_base(self, methode: str = "ra") -> pd.DataFrame:
         """
         Calcule et met en cache le profil TMY en W/m² pour toutes les MRC.
         À appeler une seule fois ; les appels suivants retournent le cache.
@@ -131,11 +131,11 @@ class InfraSolaireResidentielle:
             mrc_data_df   : DataFrame (mrc, population, superficie_km2) depuis la BD
             total_clients : nombre total de clients résidentiels (défaut 125 000)
 
-        Retour : DataFrame (datetime, mrc, production_kw, nb_clients_actifs)
+        Retour : DataFrame (datetime, mrc, production_kw)
 
         Formule :
             nb_clients(mrc) = total_clients × population(mrc) / population_totale
-            production_kW   = production_w_per_m2 × nb_panneaux × 1.7 m² × nb_clients × f_densite / 1000
+            production_kW = production_w_per_m2 × nb_panneaux × 1.7 m² × nb_clients × f_densite / 1000
         """
         if self._base_production is None:
             self.calculer_base()
@@ -148,15 +148,15 @@ class InfraSolaireResidentielle:
             total_clients=total_clients,
         )
 
-    def exporter_base_csv(self, path: str = "base_production_mrc.csv") -> None:
-        """
-        Exporte la base W/m² en CSV (une seule fois, réutilisable sans recalcul).
-        Colonnes : datetime, mrc, production_w_per_m2
-        """
-        if self._base_production is None:
-            self.calculer_base()
-        self._base_production.to_csv(path, index=False)
-        logger.info(f"Base exportée → {path}")
+    # def exporter_base_csv(self, path: str = "base_production_mrc.csv") -> None:
+    #     """
+    #     Exporte la base W/m² en CSV (une seule fois, réutilisable sans recalcul).
+    #     Colonnes : datetime, mrc, production_w_per_m2
+    #     """
+    #     if self._base_production is None:
+    #         self.calculer_base()
+    #     self._base_production.to_csv(path, index=False)
+    #     logger.info(f"Base exportée → {path}")
 
 
 if __name__ == "__main__":
@@ -167,10 +167,10 @@ if __name__ == "__main__":
     import os
 
     db = next(get_db())
-    solaires = read_all_solaire(db)
+    solaire = read_all_solaire(db)
     scenarios = read_all_scenario(db)
 
-    if not solaires or not scenarios:
+    if not solaire or not scenarios:
         logger.warning("Pas de données solaires ou de scénarios en base, rien à tester")
         exit(1)
 
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     logger.info(f"Utilisation du scénario {scenario.nom} ({scenario.date_de_debut} → {scenario.date_de_fin})")
 
     output_dir = os.getcwd()
-    for centrale in solaires:
+    for centrale in solaire:
         logger.info(f"--- Traitement de la centrale {centrale.nom} ---")
         infra = InfraSolaire(centrale)
         infra.charger_scenario(scenario)

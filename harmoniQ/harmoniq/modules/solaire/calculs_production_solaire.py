@@ -512,7 +512,7 @@ def apply_residential_scenario(
         total_clients  : nombre total de clients résidentiels (défaut 125 000)
 
     Retour:
-        DataFrame avec colonnes : datetime, mrc, production_kw, nb_clients_actifs
+        DataFrame avec colonnes : datetime, mrc, production_kw
 
     Formule :
         part_mrc      = population(mrc) / sum(population)
@@ -545,9 +545,8 @@ def apply_residential_scenario(
             * factors["f_densite"]
             / 1000.0
         )
-        mrc_slice["nb_clients_actifs"] = int(factors["nb_clients"] * factors["f_densite"])
         result_frames.append(
-            mrc_slice[["datetime", "mrc", "production_kw", "nb_clients_actifs"]]
+            mrc_slice[["datetime", "mrc", "production_kw"]]
         )
 
     return pd.concat(result_frames, ignore_index=True)
