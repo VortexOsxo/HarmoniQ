@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 from typing import List
 
-
+# OBSOLETE - à garder pour référence, mais ne pas utiliser pour les calculs de production solaire (trop simpliste, ne tient pas compte de la météo, de l'albédo, du modèle bifacial, etc.). La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
 def get_weather_data(coordinates, year=2021):
     tmys = []
     for location in coordinates:
@@ -22,7 +22,7 @@ def get_weather_data(coordinates, year=2021):
             tmys.append((None, location))
     return tmys
 
-
+#OBSOLETE - à garder pour référence, mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
 def calculate_solar_parameters(
     weather,
     latitude,
@@ -80,7 +80,7 @@ def calculate_solar_parameters(
     ac = pvlib.inverter.sandia(dc["v_mp"], dc["p_mp"], inverter)
     return ac
 
-# Conversion entre surface de panneaux et puissance produite - non utilisé pour la version en ModelChain, mais peut être utile pour des calculs rapides ou des estimations approximatives.
+# Obsolete Conversion entre surface de panneaux et puissance produite - non utilisé pour la version en ModelChain, mais peut être utile pour des calculs rapides ou des estimations approximatives.
 def convert_solar(value, module, mode="surface_to_power"):
     panel_efficiency = module["Impo"] * module["Vmpo"] / (1000 * module["Area"])
 
@@ -96,6 +96,7 @@ def convert_solar(value, module, mode="surface_to_power"):
             "Mode invalide. Utilisez 'surface_to_power' ou 'power_to_surface'."
         )
 
+# OBSOLETE - Données de référence pour une centrale solaire fictive, à garder pour référence mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
 nom = "varennes"
 latitude = 45.6833
 longitude = -73.4333
@@ -181,7 +182,6 @@ def calculate_energy_solar_plants(
     )
     
     # --- Albédo saisonnier (Québec) ---
-    # pvlib 0.10+ lit l'albédo depuis une colonne 'albedo' du weather DataFrame.
     # Méthode: weather['albedo'] = Series saisonnière (prioritaire sur system.albedo).
     weather = weather.copy()
     if albedo_saisonnier:
