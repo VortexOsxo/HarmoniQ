@@ -6,6 +6,8 @@ import { FormBuilder } from '@angular/forms';
 import { CreateInfraModal } from './create-infra-modal';
 import { OpenApiService } from '@app/services/open-api-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { signal } from '@angular/core';
 
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
@@ -38,11 +40,16 @@ const mockProtectedAreasService = {
 
 const mockCdr = { detectChanges: vi.fn(), markForCheck: vi.fn() };
 
+const mockInfrastruturesService = {
+  getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
+};
+
 const defaultProviders = [
   { provide: NgbActiveModal, useValue: mockActiveModal },
   FormBuilder,
   { provide: OpenApiService, useValue: mockOpenApiService },
   { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
+  { provide: InfrastruturesService, useValue: mockInfrastruturesService },
   { provide: ChangeDetectorRef, useValue: mockCdr },
 ];
 
