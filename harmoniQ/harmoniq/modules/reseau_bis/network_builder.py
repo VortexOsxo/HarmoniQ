@@ -725,9 +725,11 @@ def _add_loads_on_conso_buses(network: pypsa.Network, buses_df: Any) -> None:
         bus_name = row.get("name")
         bus_type = str(row.get("type", "")).lower()
         if bus_name and bus_name in network.buses.index and bus_name not in existing_load_buses:
-            if bus_type == "conso":
+            if bus_type == "conso" and not str(bus_name).startswith("Etranger"):
                 # Nom = identifiant du bus (Conso1, Conso2, ...) pour que
                 # loads_t.p_set s'aligne directement avec les colonnes de demand_profile.
+                # Les bus Étranger ont type=conso en DB mais ne représentent pas de la
+                # demande québécoise — ils sont gérés par _add_interconnection_links().
                 network.add("Load", name=bus_name, bus=bus_name, p_set=0.0)
 
 
@@ -893,4 +895,10 @@ def _add_interconnection_links(
         _logger.debug(
             "Interco %s : import=%.0f MW @ %.1f $/MWh, export=%.0f MW @ %.1f $/MWh (revenu net)",
             interco_bus, import_mw, _MARKET_PRICE_IMPORT_CAD_MWH, export_mw, _MARKET_PRICE_EXPORT_CAD_MWH,
+        )
+
+    if len(network.links) == 0:
+        _logger.warning(
+            "Aucune interconnexion créée — les imports/exports seront impossibles. "
+            "Vérifier que la DB contient les bus Interco/Étranger (init-db --reset --populate)."
         )

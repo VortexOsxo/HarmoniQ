@@ -56,7 +56,22 @@ Voir:
 - `IMPLEMENTATION_TODO.md`
 - `service.get_reseau_bis_todo_list()`
 
+## Prérequis
+
+Avant de lancer une simulation, la base de données doit être initialisée :
+
+```bash
+init-db --reset --populate
+```
+
+Cette commande (définie dans `pyproject.toml` → `harmoniq.scripts.init_database:main`)
+charge la topologie (bus, lignes, types de lignes) et les données d'infrastructure
+(éoliennes, hydro, thermique, solaire) depuis les CSV dans `harmoniq/db/CSVs/`.
+
+**Sans cette étape, la simulation retournera 0 pour tous les modes de production.**
+
 ## Rappel important
 
-La logique import/export et le dispatch PyPSA complet ne sont pas encore actifs.
-Le gabarit est pret pour integration incrementale, sans casser le contrat de sortie.
+La logique import/export et le dispatch PyPSA complet sont actifs via DC-LOPF
+(rolling horizon, 240h chunks). Les interconnexions sont modélisées comme des Links
+PyPSA avec generators de marché aux bus Étranger.
