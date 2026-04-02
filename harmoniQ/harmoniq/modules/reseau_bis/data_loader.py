@@ -261,7 +261,7 @@ def _fetch_one_eolien_profile(
         return parc.nom, None
     try:
         infra = InfraParcEolienne(parc)
-        _run_async(infra.charger_scenario(scenario))
+        infra.charger_scenario(scenario)
         prod = infra.calculer_production()
         if prod is not None and "puissance" in prod.columns:
             p_nom = float(parc.puissance_nominal) * float(parc.nombre_eoliennes)
