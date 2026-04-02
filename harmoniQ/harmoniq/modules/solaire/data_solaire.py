@@ -268,12 +268,12 @@ mrc_to_ra = {
     # --- Nord-du-Québec ---
     "Nord-du-Québec":         "Nord-du-Quebec",
     # --- Gaspésie–Îles-de-la-Madeleine ---
-    "Les Îles-de-la-Madeleine":  "Gaspesie–Iles-de-la-Madeleine",
-    "Le Rocher-Percé":           "Gaspesie–Iles-de-la-Madeleine",
-    "La Côte-de-Gaspé":          "Gaspesie–Iles-de-la-Madeleine",
-    "La Haute-Gaspésie":         "Gaspesie–Iles-de-la-Madeleine",
-    "Bonaventure":               "Gaspesie–Iles-de-la-Madeleine",
-    "Avignon":                   "Gaspesie–Iles-de-la-Madeleine",
+    "Les Îles-de-la-Madeleine":  "Gaspesie-Iles-de-la-Madeleine",
+    "Le Rocher-Percé":           "Gaspesie-Iles-de-la-Madeleine",
+    "La Côte-de-Gaspé":          "Gaspesie-Iles-de-la-Madeleine",
+    "La Haute-Gaspésie":         "Gaspesie-Iles-de-la-Madeleine",
+    "Bonaventure":               "Gaspesie-Iles-de-la-Madeleine",
+    "Avignon":                   "Gaspesie-Iles-de-la-Madeleine",
     # --- Chaudière-Appalaches ---
     "L'Islet":                "Chaudiere-Appalaches",
     "Montmagny":              "Chaudiere-Appalaches",

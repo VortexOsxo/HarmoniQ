@@ -96,7 +96,7 @@ def convert_solar(value, module, mode="surface_to_power"):
             "Mode invalide. Utilisez 'surface_to_power' ou 'power_to_surface'."
         )
 
-# OBSOLETE - Données de référence pour une centrale solaire fictive, à garder pour référence mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
+# TEST DATA - Données de référence pour une centrale solaire fictive , à garder pour référence mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
 nom = "varennes"
 latitude = 45.6833
 longitude = -73.4333
@@ -376,7 +376,7 @@ def calculate_base_production_per_m2(
     bifaciality_factor: float = 0.70,
     gcr: float = 0.40, # utilisé si Bifacial=True 
     hauteur_montage: float = 1.0, #utilisé si Bifacial=True
-    espacement_rangees: float = 5.0, #tilisé si Bifacial=True, espacement entre les rangées de panneaux (m), utilisé pour le modèle bifacial
+    espacement_rangees: float = 5.0, #utilisé si Bifacial=True, espacement entre les rangées de panneaux (m), utilisé pour le modèle bifacial
     reference_year: int = 2021,
 ) -> pd.DataFrame:
     """
@@ -454,43 +454,51 @@ def compute_facteur_densite(
     population: int,
     superficie_km2: float,
     m2_par_client: float,
-    surface_hab_par_hab: float = 42.0, # surface habitable par habitant
-    eta_toit: float = 0.30, # fraction de toit utilisable (HCVC, ombrage, orientation, etc.)
+    surface_hab_par_hab: float = 40.0,  # surface habitable par habitant [m²/hab]
+    taille_menage: float = 2.3,         # taille moyenne du ménage [hab/ménage] (Stat. Can. Québec)
+    eta_toit: float = 0.40,             # fraction de toit utilisable (HVAC, ombrage, orientation, neige)
 ) -> float:
     """
     Calcule le facteur de limitation toiture basé sur la densité de population.
 
     Logique :
-        densite = population / superficie_km2                   [hab/km²]
-        nb_etages = paliers selon densite (< 100 → 1.5 ... > 5000 → 7.0)
-        s_toit_util = (surface_hab_par_hab / nb_etages) × eta_toit  [m²/hab]
-        f_densite = min(s_toit_util, m2_par_client) / m2_par_client
+        densite            = population / superficie_km2              [hab/km²]
+        nb_etages          = paliers selon densite (5 niveaux)
+        s_toit_util_hab    = (surface_hab_par_hab / nb_etages) × eta_toit   [m²/hab]
+        s_toit_util_client = s_toit_util_hab × taille_menage                [m²/ménage]
+        f_densite          = min(s_toit_util_client, m2_par_client) / m2_par_client
 
     Vaut 1.0 dans les zones rurales (le toit n'est pas limitant).
-    Vaut < 1.0 dans les zones denses (ex : Montréal).
+    Vaut < 1.0 dans les zones très denses (ex : Montréal centre, scénario optimiste).
+
+    Note : taille_menage corrige l'unité hab→ménage pour aligner s_toit_util
+           (calculé par habitant) avec m2_par_client (par client/ménage).
 
     Arguments:
         population          : population de la MRC
         superficie_km2      : superficie de la MRC [km²]
         m2_par_client       : surface totale de panneaux par client [m²]
-        surface_hab_par_hab : surface habitable par habitant (défaut 42 m²)
+        surface_hab_par_hab : surface habitable par habitant [m²/hab] (défaut 45)
+        taille_menage       : taille moyenne du ménage québécois [hab/ménage] (défaut 2.3)
         eta_toit            : fraction de toit utilisable (orientation, ombrage, etc.)
     """
     densite = population / max(superficie_km2, 1.0)
 
-    if densite < 100:
-        nb_etages = 1.5
-    elif densite < 1000:
-        nb_etages = 2.0
-    elif densite < 3000:
-        nb_etages = 3.0
-    elif densite < 5000:
-        nb_etages = 4
+    # Modèle à 5 paliers calé sur les densités typiques du Québec
+    if densite < 50:
+        nb_etages = 1.5   # Régions rurales profondes (100% maisons)
+    elif densite < 500:
+        nb_etages = 2.0   # Villes moyennes et banlieues très étalées
+    elif densite < 1500:
+        nb_etages = 2.5   # Banlieues denses et villes régionales
+    elif densite < 4000:
+        nb_etages = 3.0   # Grands pôles urbains mixtes (Laval, Longueuil, Québec)
     else:
-        nb_etages = 7.0
+        nb_etages = 4.0   # Centres urbains hyper-denses (Montréal)
 
-    s_toit_util = (surface_hab_par_hab / nb_etages) * eta_toit
-    return min(s_toit_util, m2_par_client) / m2_par_client
+    s_toit_util_hab    = (surface_hab_par_hab / nb_etages) * eta_toit  # m²/hab
+    s_toit_util_client = s_toit_util_hab * taille_menage               # m²/ménage
+    return min(s_toit_util_client, m2_par_client) / max(m2_par_client, 0.1)
 
 
 def apply_residential_scenario(
