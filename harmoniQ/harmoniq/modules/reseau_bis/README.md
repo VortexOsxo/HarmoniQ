@@ -61,7 +61,8 @@ Voir:
 Avant de lancer une simulation, la base de données doit être initialisée :
 
 ```bash
-init-db --reset --populate
+init-db --populate        # premier setup
+init-db --reset --populate  # si la DB existe déjà et qu'on veut repartir à zéro
 ```
 
 Cette commande (définie dans `pyproject.toml` → `harmoniq.scripts.init_database:main`)
