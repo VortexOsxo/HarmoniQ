@@ -329,6 +329,85 @@
     line-height: 1.5;
 }
 
+/* ── Infra summary strip ───────────────────────────────────── */
+
+.infra-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.infra-summary-left {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    padding-right: 1rem;
+    border-right: 1px solid #e9ecef;
+}
+
+.infra-total-count {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #2c3e50;
+    line-height: 1;
+}
+
+.infra-total-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #adb5bd;
+}
+
+.infra-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.infra-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--chip-color) 12%, white);
+    border: 1px solid color-mix(in srgb, var(--chip-color) 30%, white);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--chip-color) 70%, #1a1a1a);
+    white-space: nowrap;
+}
+
+.chip-img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.chip-img[src*="barrage"] {
+    width: 20px;
+    height: 20px;
+}
+
+.chip-count {
+    background: var(--chip-color);
+    color: #fff;
+    border-radius: 10px;
+    padding: 0 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
 /* ── Status colors ─────────────────────────────────────────── */
 
 .text-success { color: #2ecc71; }

@@ -28,7 +28,7 @@ export function buildCo2Details(sankeyData: SankeyData): Co2DetailsData {
     color: p.color,
     productionMW: p.value,
     co2FactorKgMWh: p.co2FactorKgMWh,
-    totalCo2Tph: (p.value * p.co2FactorKgMWh) / 1000,
+    totalCo2Tph: p.co2Tph ?? (p.value * p.co2FactorKgMWh) / 1000,
     percentage: 0,
   }));
 

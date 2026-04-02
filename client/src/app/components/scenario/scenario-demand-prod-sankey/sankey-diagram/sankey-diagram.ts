@@ -105,11 +105,12 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         return value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
     }
 
+    private co2Tph(p: { value: number; co2FactorKgMWh: number; co2Tph?: number }): number {
+        return p.co2Tph ?? (p.value * p.co2FactorKgMWh) / 1000;
+    }
+
     get totalCo2(): number {
-        return this.data.productionNodes.reduce(
-            (s, p) => s + (p.value * p.co2FactorKgMWh) / 1000,
-            0,
-        );
+        return this.data.productionNodes.reduce((s, p) => s + this.co2Tph(p), 0);
     }
 
     // ── Hover: flows ──────────────────────────────────────────────────────────
@@ -283,7 +284,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
 
     private computeProdToCo2Flows(prodRects: NodeRect[], co2Rect: NodeRect): ComputedFlow[] {
         const P = this.data.productionNodes;
-        const co2Values = P.map((p) => (p.value * p.co2FactorKgMWh) / 1000);
+        const co2Values = P.map((p) => this.co2Tph(p));
         const totalCo2 = co2Values.reduce((s, v) => s + v, 0);
         const R = 10; // card border-radius
 
@@ -292,7 +293,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const co2InnerH = co2Rect.height - 2 * R;
 
         for (let j = 0; j < P.length; j++) {
-            if (P[j].value <= 0) continue;
+            if (P[j].value <= 0 || co2Values[j] <= 0) continue;
             const pRect = prodRects[j];
             const co2Frac = co2Values[j] / totalCo2;
 

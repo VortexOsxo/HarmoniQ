@@ -1,0 +1,11 @@
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.chart-loading-icon {
+    font-size: 2.5rem;
+    color: #adb5bd;
+}

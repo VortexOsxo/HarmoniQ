@@ -26,7 +26,12 @@
             </select>
 
             <input *ngIf="!field.enum" class="form-control" [id]="field.key" [type]="field.type"
-                [readonly]="field.readonly" [formControlName]="field.key">
+                [readonly]="field.readonly" [formControlName]="field.key"
+                [class.readonly-field]="field.readonly">
+
+            <div *ngIf="field.key === 'nom' && form.get('nom')?.hasError('duplicateName')" class="text-danger small mt-1">
+                <i class="fas fa-exclamation-circle"></i> Une infrastructure avec ce nom existe déjà.
+            </div>
         </div>
 
     </div>
