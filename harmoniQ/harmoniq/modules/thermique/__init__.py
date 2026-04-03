@@ -41,7 +41,6 @@ class InfraThermique(Infrastructure):
             fuel_type=self.donnees.type_intrant,
         )
         return self.production
-        )
 
     def calculer_cout_construction(self) -> np.ndarray:
         COST_PER_MW = 3_440_000  # $/MW
