@@ -38,10 +38,14 @@
             </div>
 
             <div class="protected-area-warning" *ngIf="protectedAreaName">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+                <img *ngIf="protectedAreaIcon" [src]="protectedAreaIcon" alt="Icône zone" class="warning-icon" />
+                <i *ngIf="!protectedAreaIcon" class="fa-solid fa-triangle-exclamation"></i>
                 <div class="warning-text">
-                    <strong>Attention :</strong> Cette infrastructure se situe dans une aire protégée :<br>
+                    <strong>Attention :</strong> Cette infrastructure se situe dans {{ protectedAreaTypeLabel }}<br>
                     <span class="warning-name">{{ protectedAreaName }}</span>
+                    <div class="protected-area-impact" *ngIf="protectedAreaImpact">
+                        {{ protectedAreaImpact }}
+                    </div>
                 </div>
             </div>
 
