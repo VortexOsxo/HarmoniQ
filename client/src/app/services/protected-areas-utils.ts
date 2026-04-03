@@ -98,6 +98,26 @@ export function buildIdentifyHtml(attrs: Record<string, any>): string {
     const title = (isAuto && toponyme) ? `Communauté autochtone de ${toponyme}` : (toponyme || fallbackTitle);
     html += `<b style="font-size:0.95rem;">${title}</b><br>`;
 
+    const hiddenForNonAuto = new Set([
+        'Numéro de désignation',
+        'Latitude',
+        'Longitude',
+        'Catégorie UICN',
+    ]);
+
+    const hiddenForAuto = new Set([
+        'Étiquette',
+        'Numéro gestionnaire',
+        'Numéro d\'identification',
+        'Mode de gestion',
+        'Numéro UG',
+        'Identifiant unique',
+        'Zone de tarification',
+        'Analyse BFEC',
+        'Numéro périmètre UA',
+        'Numéro TDA',
+    ]);
+
     const fields: [string, string][] = [
         ['Identifiant unique', get('Identifiant_unique', 'GEOCODE', 'MACODE', 'ADMIN_LAND_ID', 'Numéro de la réserve indienne ou de la terre indienne')],
         ['Superficie (ha)', get('Superficie_ha', 'SUPERFICIE')],
@@ -143,6 +163,8 @@ export function buildIdentifyHtml(attrs: Record<string, any>): string {
 
 
     for (const [label, value] of fields) {
+        if (!isAuto && hiddenForNonAuto.has(label)) continue;
+        if (isAuto && hiddenForAuto.has(label)) continue;
         if (value) {
             html += `<b>${label}:</b> ${value}<br>`;
         }
