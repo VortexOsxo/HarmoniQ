@@ -12,10 +12,10 @@ describe('GranularitySelectorComponent', () => {
   });
 
   describe('@Input() selected', () => {
-    it('should default to "original" as the selected option', async () => {
+    it('should default to "weekly" as the selected option', async () => {
       await render(GranularitySelectorComponent);
       const select = screen.getByRole('combobox') as HTMLSelectElement;
-      expect(select.value).toBe('original');
+      expect(select.value).toBe('weekly');
     });
 
     it('should reflect a custom selected value', async () => {

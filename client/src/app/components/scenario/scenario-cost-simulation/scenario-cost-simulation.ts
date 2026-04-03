@@ -6,6 +6,7 @@ import { SimulationCostGraphService } from '@app/services/graph-services/simulat
   selector: 'app-scenario-cost-simulation',
   imports: [],
   templateUrl: './scenario-cost-simulation.html',
+  styleUrl: './scenario-cost-simulation.css',
 })
 export class ScenarioCostSimulation {
   config = graphServiceConfig;

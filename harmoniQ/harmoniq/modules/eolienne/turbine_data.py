@@ -173,6 +173,8 @@ _enercon_e126_4 = {
 _enercon_e138_42 = {
     "cut_in_wind_speed": 2.5,
     "cut_out_wind_speed": 34,
+    # Approximation fallback used when no manufacturer power curve is available.
+    "rated_wind_speed": 12.0,
 }
 
 # Enercon E-70 E4 2.3MW (https://en.wind-turbine-models.com/turbines/69-enercon-e-70-e4-2.300)
@@ -739,6 +741,8 @@ _ge_15sle = {
 _ge_22_107 = {
     "cut_in_wind_speed": 3,
     "cut_out_wind_speed": 25,
+    # Approximation fallback used when no manufacturer power curve is available.
+    "rated_wind_speed": 12.0,
 }
 
 # Senvion MM82 2.05MW (https://www.thewindpower.net/turbine_en_464_senvion_mm82-2050.php)

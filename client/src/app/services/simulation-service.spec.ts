@@ -25,7 +25,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SimulationService } from './simulation-service';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
-import { DemandeTemporalGraphService } from './graph-services/demande-temporal-graph-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from './simulation-step-service';
@@ -60,7 +59,6 @@ describe('SimulationService', () => {
   let service: SimulationService;
   let mockScenariosService: Partial<ScenariosService>;
   let mockInfrastruturesService: Partial<InfrastruturesService>;
-  let mockDemandeTemporalService: Partial<DemandeTemporalGraphService>;
   let mockDemandeSankeyService: Partial<DemandeSankeyGraphService>;
   let mockSimulationTemporalService: Partial<SimulationTemporalGraphService>;
   let mockStepService: Partial<SimulationStepService>;
@@ -75,11 +73,6 @@ describe('SimulationService', () => {
       selectedInfraGroup: signal<InfrastructureGroup | null>(null),
       getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
       buildSimulationPayload: vi.fn().mockReturnValue({ nom: 'Test' }),
-    };
-
-    mockDemandeTemporalService = {
-      getStepName: vi.fn().mockReturnValue('Demande Temporelle'),
-      generate: vi.fn().mockResolvedValue(undefined),
     };
 
     mockDemandeSankeyService = {
@@ -105,7 +98,6 @@ describe('SimulationService', () => {
         SimulationService,
         { provide: ScenariosService, useValue: mockScenariosService },
         { provide: InfrastruturesService, useValue: mockInfrastruturesService },
-        { provide: DemandeTemporalGraphService, useValue: mockDemandeTemporalService },
         { provide: DemandeSankeyGraphService, useValue: mockDemandeSankeyService },
         { provide: SimulationTemporalGraphService, useValue: mockSimulationTemporalService },
         { provide: SimulationStepService, useValue: mockStepService },
@@ -164,7 +156,7 @@ describe('SimulationService', () => {
       await service.launchSimulation();
 
       expect(mockStepService.runSteps).toHaveBeenCalledWith(
-        expect.arrayContaining([mockDemandeSankeyService, mockDemandeTemporalService, mockSimulationTemporalService]),
+        expect.arrayContaining([mockDemandeSankeyService, mockSimulationTemporalService]),
         MOCK_SCENARIO,
       );
     });
