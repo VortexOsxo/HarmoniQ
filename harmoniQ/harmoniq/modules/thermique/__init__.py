@@ -1,4 +1,5 @@
-from harmoniq.core.base import Infrastructure
+from harmoniq.core.base import Infrastructure, necessite_scenario
+from harmoniq.db.schemas import ThermiqueBase, ScenarioBase
 from harmoniq.modules.thermique.calculs_production_thermique import (
     calculate_thermique_production, assign_maintenance_weeks
 )
