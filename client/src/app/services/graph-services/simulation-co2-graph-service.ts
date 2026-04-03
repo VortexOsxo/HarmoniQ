@@ -10,35 +10,35 @@ import { graphServiceConfig } from '../graph-service';
 import { SimulationTemporalGraphService } from './simulation-temporal-graph-service';
 
 const SEGMENTS = [
-    { key: 'eolienneparc', label: 'Éolien',              color: '#6abbc4' },
-    { key: 'solaire',      label: 'Solaire',              color: '#e8c53c' },
-    { key: 'hydro_fil',    label: "Hydro (fil de l'eau)", color: '#7bbfe8' },
-    { key: 'hydro_res',    label: 'Hydro (réservoir)',    color: '#2b6fa8' },
-    { key: 'nucleaire',    label: 'Nucléaire',            color: '#e8754a' },
-    { key: 'thermique',    label: 'Thermique',            color: '#e25c5c' },
-    { key: 'import',       label: 'Importations',         color: '#a29bfe' },
+    { key: 'eolienneparc', label: 'Éolien', color: '#6abbc4' },
+    { key: 'solaire', label: 'Solaire', color: '#e8c53c' },
+    { key: 'hydro_fil', label: "Hydro (fil de l'eau)", color: '#7bbfe8' },
+    { key: 'hydro_res', label: 'Hydro (réservoir)', color: '#2b6fa8' },
+    { key: 'nucleaire', label: 'Nucléaire', color: '#e8754a' },
+    { key: 'thermique', label: 'Thermique', color: '#e25c5c' },
+    { key: 'import', label: 'Importations', color: '#a29bfe' },
 ];
 
 // tCO2/MWh for each production key in simulation result
 const CO2_INTENSITY: Record<string, number> = {
-    total_eolien:           0,
-    total_solaire:          0,
-    total_hydro_fil:        8    / 1000,
-    total_hydro_reservoir:  20   / 1000,
-    total_nucleaire:        9    / 1000,
-    total_thermique:        1.2  / 1000,
-    total_import:           200  / 1000,
+    total_eolien: 0,
+    total_solaire: 0,
+    total_hydro_fil: 8 / 1000,
+    total_hydro_reservoir: 20 / 1000,
+    total_nucleaire: 9 / 1000,
+    total_thermique: 1.2 / 1000,
+    total_import: 200 / 1000,
 };
 
 // Map simulation production key → segment key
 const PROD_KEY_TO_SEGMENT: [string, string][] = [
-    ['total_eolien',          'eolienneparc'],
-    ['total_solaire',         'solaire'],
-    ['total_hydro_fil',       'hydro_fil'],
+    ['total_eolien', 'eolienneparc'],
+    ['total_solaire', 'solaire'],
+    ['total_hydro_fil', 'hydro_fil'],
     ['total_hydro_reservoir', 'hydro_res'],
-    ['total_nucleaire',       'nucleaire'],
-    ['total_thermique',       'thermique'],
-    ['total_import',          'import'],
+    ['total_nucleaire', 'nucleaire'],
+    ['total_thermique', 'thermique'],
+    ['total_import', 'import'],
 ];
 
 @Injectable({
@@ -169,8 +169,6 @@ export class SimulationCo2GraphService implements SimulationStep {
                 font: { size: 15 },
                 itemwidth: 30,
                 tracegroupgap: 6,
-                itemclick: false,
-                itemdoubleclick: false,
             },
             showlegend: true,
             height: Math.floor(window.innerHeight * 0.55),
@@ -178,7 +176,23 @@ export class SimulationCo2GraphService implements SimulationStep {
             paper_bgcolor: 'white',
         };
 
-        Plotly.newPlot(graphServiceConfig.CO2_SIMULATION_ID, data, layout);
+        const graphDiv = document.getElementById(graphServiceConfig.CO2_SIMULATION_ID);
+        if (graphDiv) {
+            Plotly.newPlot(graphDiv, data, layout);
+
+            (graphDiv as any).on('plotly_restyle', () => {
+                const hiddenLabels = (graphDiv as any).data[0].hiddenlabels || [];
+                let currentTotal = 0;
+                for (let i = 0; i < labels.length; i++) {
+                    if (!hiddenLabels.includes(labels[i])) {
+                        currentTotal += values[i];
+                    }
+                }
+                Plotly.restyle(graphDiv, {
+                    'title.text': [`<b>${currentTotal.toFixed(2)}</b><br>${unit}`]
+                } as any, [0]);
+            });
+        }
         this.isLoading.set(false);
     }
 

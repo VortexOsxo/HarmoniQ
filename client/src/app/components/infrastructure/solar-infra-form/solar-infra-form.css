@@ -1,0 +1,22 @@
+/* Solar infra form specific styles */
+
+.required-star {
+    color: #dc3545;
+    margin-left: 2px;
+}
+
+.field-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.field-warning {
+    color: #b45309;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+svg {
+    border-radius: 4px;
+}
