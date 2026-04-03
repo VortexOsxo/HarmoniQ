@@ -1,6 +1,6 @@
 import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -8,6 +8,19 @@ import { OpenApiService } from '@app/services/open-api-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { prettyNames } from '@app/utils/map-utils';
+
+interface FieldDef {
+  key: string;
+  title: string;
+  description?: string;
+  enum?: string[];
+  type: string;
+  readonly: boolean;
+  nonNegative: boolean;
+  warnIfZero: boolean;
+  warningMsg: string;
+  errorMsgs: Record<string, string>;
+}
 
 @Component({
   selector: 'app-create-infra-modal',
@@ -22,13 +35,13 @@ export class CreateInfraModal {
   @Input() type!: string;
 
   form!: FormGroup;
-  fields: any[] = [];
+  fields: FieldDef[] = [];
   prettyName = '';
   protectedAreaName: string | null = null;
-  
+
   isSolar = false;
   showAdvanced = false;
-  
+
   toggleAdvanced(event: Event) {
     event.preventDefault();
     this.showAdvanced = !this.showAdvanced;
@@ -42,13 +55,13 @@ export class CreateInfraModal {
     const y2 = 65 - len * Math.sin(rad);
     document.getElementById('panelLine')?.setAttribute('x2', x2.toString());
     document.getElementById('panelLine')?.setAttribute('y2', y2.toString());
-    
+
     const arcR = 15;
     const ax = 30 + arcR * Math.cos(rad);
     const ay = 65 - arcR * Math.sin(rad);
     const d = 'M ' + (30 + arcR) + ' 65 A ' + arcR + ' ' + arcR + ' 0 0 0 ' + ax.toFixed(1) + ' ' + ay.toFixed(1);
     document.getElementById('angleArc')?.setAttribute('d', a > 0 ? d : '');
-    
+
     const tx = 30 + (arcR + 8) * Math.cos(rad / 2);
     const ty = 65 - (arcR + 8) * Math.sin(rad / 2);
     const txt = document.getElementById('angleText');
@@ -68,21 +81,21 @@ export class CreateInfraModal {
     const ey = cy - len * Math.cos(rad);
     const ax = Math.sin(rad), ay = -Math.cos(rad);
     const px = -ay, py = ax;
-    
+
     document.getElementById('orientArrow')?.setAttribute('x2', ex.toFixed(1));
     document.getElementById('orientArrow')?.setAttribute('y2', ey.toFixed(1));
-    
-    const t1x = ex - ax*8 + px*4, t1y = ey - ay*8 + py*4;
-    const t2x = ex - ax*8 - px*4, t2y = ey - ay*8 - py*4;
+
+    const t1x = ex - ax * 8 + px * 4, t1y = ey - ay * 8 + py * 4;
+    const t2x = ex - ax * 8 - px * 4, t2y = ey - ay * 8 - py * 4;
     document.getElementById('orientHead')?.setAttribute('points',
-        ex.toFixed(1)+','+ey.toFixed(1)+' '+t1x.toFixed(1)+','+t1y.toFixed(1)+' '+t2x.toFixed(1)+','+t2y.toFixed(1));
-        
+      ex.toFixed(1) + ',' + ey.toFixed(1) + ' ' + t1x.toFixed(1) + ',' + t1y.toFixed(1) + ' ' + t2x.toFixed(1) + ',' + t2y.toFixed(1));
+
     const pw = 14, ph = 4;
     const panelEl = document.getElementById('orientPanel');
     if (panelEl) {
-      panelEl.setAttribute('x', (ex - pw/2).toFixed(1));
-      panelEl.setAttribute('y', (ey - ph/2).toFixed(1));
-      panelEl.setAttribute('transform', 'rotate('+deg+','+ex.toFixed(1)+','+ey.toFixed(1)+')');
+      panelEl.setAttribute('x', (ex - pw / 2).toFixed(1));
+      panelEl.setAttribute('y', (ey - ph / 2).toFixed(1));
+      panelEl.setAttribute('transform', 'rotate(' + deg + ',' + ex.toFixed(1) + ',' + ey.toFixed(1) + ')');
     }
     const orientText = document.getElementById('orientText');
     if (orientText) orientText.textContent = Math.round(deg) + '°';
@@ -119,11 +132,11 @@ export class CreateInfraModal {
       this.protectedAreaName = name;
       this.cdr.detectChanges();
     });
-    setTimeout(() => { 
-      if (this.isSolar) { 
-        this.updateAngleSVG(this.form.get('angle_panneau')?.value); 
-        this.updateOrientationSVG(this.form.get('orientation_panneau')?.value); 
-      } 
+    setTimeout(() => {
+      if (this.isSolar) {
+        this.updateAngleSVG(this.form.get('angle_panneau')?.value);
+        this.updateOrientationSVG(this.form.get('orientation_panneau')?.value);
+      }
     }, 50);
   }
 
@@ -140,7 +153,6 @@ export class CreateInfraModal {
     const schemas = this.openApiService.getOpenApiSchemas();
     const props = this.schema.properties;
     const required = this.schema.required || [];
-
     const typeKey = this.type.split('/').pop() || '';
     this.isSolar = typeKey.toLowerCase() === 'solaire';
 
@@ -149,37 +161,24 @@ export class CreateInfraModal {
       if (key === 'id') continue;
 
       const prop = props[key];
-      const suggestion = prop.suggestion;
-
       const isLatLon = key === 'latitude' || key === 'longitude';
       let value: any = '';
       if (key === 'latitude') value = this.lat;
       else if (key === 'longitude') value = this.lon;
 
-      const initialValue = suggestion || value;
+      const initialValue = prop.suggestion ?? value;
 
-      let enumValues: string[] | undefined = undefined;
-
+      let enumValues: string[] | undefined;
       if (prop['$ref']) {
         const refPath = prop['$ref'].replace('#/components/schemas/', '');
         const enumSchema = schemas[refPath];
-        if (enumSchema && enumSchema.enum) {
-          enumValues = enumSchema.enum;
-        }
+        if (enumSchema?.enum) enumValues = enumSchema.enum;
       } else if (prop.enum) {
         enumValues = prop.enum;
       }
 
-      const validators = [Validators.required];
-      if (key === 'nom') {
-        validators.push((control: AbstractControl): ValidationErrors | null => {
-          const name = control.value?.trim().toLowerCase();
-          if (!name) return null;
-          const exists = this.infrasService.getInfrasSignalByType(typeKey)()
-            .some((i: any) => i.nom?.trim().toLowerCase() === name);
-          return exists ? { duplicateName: true } : null;
-        });
-      }
+      const { validators, errorMsgs, nonNegative, warnIfZero, warningMsg } =
+        this.resolveValidators(key, prop, typeKey);
 
       controls[key] = [initialValue, validators];
 
@@ -190,6 +189,10 @@ export class CreateInfraModal {
         enum: enumValues,
         type: (prop.type === 'number' || prop.type === 'integer') ? 'number' : 'text',
         readonly: isLatLon,
+        nonNegative,
+        warnIfZero,
+        warningMsg,
+        errorMsgs,
       });
     }
 
@@ -201,7 +204,158 @@ export class CreateInfraModal {
     this.form = this.fb.group(controls);
   }
 
+  // ── Event handlers ────────────────────────────────────────────────────────
+
+  onKeydown(event: KeyboardEvent, field: FieldDef) {
+    if (field.nonNegative && event.key === '-') {
+      event.preventDefault();
+    }
+  }
+
+  onBlur(field: FieldDef) {
+    if (!field.nonNegative) return;
+    const control = this.form.get(field.key);
+    if (!control) return;
+    const val = Number(control.value);
+    if (control.value === '' || control.value === null || isNaN(val) || val < 0) {
+      control.setValue(0);
+    }
+    control.markAsTouched();
+  }
+
+  // ── Error / warning display ───────────────────────────────────────────────
+
+  getFieldError(field: FieldDef): string | null {
+    const control = this.form.get(field.key);
+    if (!control || !control.errors || !control.touched) return null;
+    for (const errKey of Object.keys(control.errors)) {
+      if (field.errorMsgs[errKey]) return field.errorMsgs[errKey];
+    }
+    return 'Valeur invalide.';
+  }
+
+  getFieldWarning(field: FieldDef): string | null {
+    if (!field.warnIfZero) return null;
+    const control = this.form.get(field.key);
+    if (!control || control.invalid) return null;
+    return Number(control.value) === 0 ? field.warningMsg : null;
+  }
+
   submit() {
     this.activeModal.close(this.form.value);
+  }
+
+  // ── Validators ────────────────────────────────────────────────────────────
+
+  private resolveValidators(key: string, prop: any, typeKey: string): {
+    validators: ValidatorFn[];
+    errorMsgs: Record<string, string>;
+    nonNegative: boolean;
+    warnIfZero: boolean;
+    warningMsg: string;
+  } {
+    const validators: ValidatorFn[] = [Validators.required];
+    const errorMsgs: Record<string, string> = { required: 'Ce champ est obligatoire.' };
+    let nonNegative = false;
+    let warnIfZero = false;
+    let warningMsg = '';
+
+    if (key === 'nom') {
+      validators.push(this.duplicateNameValidator(typeKey));
+      errorMsgs['duplicateName'] = 'Une infrastructure avec ce nom existe déjà.';
+      return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg };
+    }
+
+    const isNumeric = prop.type === 'number' || prop.type === 'integer';
+    if (!isNumeric) return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg };
+
+    switch (key) {
+      case 'nombre_eoliennes':
+        nonNegative = true;
+        validators.push(Validators.min(0));
+        errorMsgs['min'] = "Le nombre d'éoliennes ne peut pas être négatif.";
+        warnIfZero = true;
+        warningMsg = "Un parc sans éoliennes ne produira pas d'énergie.";
+        break;
+
+      case 'capacite_total':
+        nonNegative = true;
+        validators.push(Validators.min(0));
+        errorMsgs['min'] = 'La capacité totale ne peut pas être négative.';
+        break;
+
+      case 'hauteur_moyenne':
+        nonNegative = true;
+        validators.push(Validators.min(0));
+        errorMsgs['min'] = 'La hauteur moyenne ne peut pas être négative.';
+        break;
+
+      case 'nombre_panneau':
+        nonNegative = true;
+        validators.push(Validators.min(0));
+        errorMsgs['min'] = 'Le nombre de panneaux ne peut pas être négatif.';
+        warnIfZero = true;
+        warningMsg = "Un parc sans panneaux ne produira pas d'énergie.";
+        break;
+
+      case 'angle_panneau':
+        validators.push(Validators.min(0), Validators.max(90));
+        errorMsgs['min'] = "L'angle d'inclinaison doit être compris entre 0° et 90°.";
+        errorMsgs['max'] = "L'angle d'inclinaison doit être compris entre 0° et 90°.";
+        break;
+
+      case 'orientation_panneau':
+        validators.push(Validators.min(0), Validators.max(360));
+        errorMsgs['min'] = "L'orientation doit être comprise entre 0° et 360°.";
+        errorMsgs['max'] = "L'orientation doit être comprise entre 0° et 360°.";
+        break;
+
+      case 'semaine_maintenance':
+        validators.push(Validators.min(1), Validators.max(52));
+        errorMsgs['min'] = 'La semaine de maintenance doit être un nombre entre 1 et 52.';
+        errorMsgs['max'] = 'La semaine de maintenance doit être un nombre entre 1 et 52.';
+        break;
+
+      case 'puissance_nominal':
+        if (typeKey === 'solaire') {
+          nonNegative = true;
+          validators.push(Validators.min(0), Validators.max(25));
+          errorMsgs['min'] = 'La puissance nominale ne peut pas être négative.';
+          errorMsgs['max'] = 'La puissance maximale pour un parc solaire est de 25 MW.';
+          warnIfZero = true;
+          warningMsg = "Une puissance nominale de 0 MW ne produira pas d'énergie.";
+        } else if (typeKey === 'nucleaire') {
+          validators.push(Validators.min(300), this.multipleOf300());
+          errorMsgs['min'] = 'La puissance minimale est de 300 MW (1 réacteur SMR).';
+          errorMsgs['multipleOf300'] = 'La puissance doit être un multiple de 300 MW (ex : 300, 600, 900, 1200…).';
+        } else {
+          nonNegative = true;
+          validators.push(Validators.min(0));
+          errorMsgs['min'] = 'La puissance nominale ne peut pas être négative.';
+          warnIfZero = true;
+          warningMsg = "Une puissance nominale de 0 MW ne produira pas d'énergie.";
+        }
+        break;
+    }
+
+    return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg };
+  }
+
+  private duplicateNameValidator(typeKey: string): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const name = control.value?.trim().toLowerCase();
+      if (!name) return null;
+      const exists = this.infrasService.getInfrasSignalByType(typeKey)()
+        .some((i: any) => i.nom?.trim().toLowerCase() === name);
+      return exists ? { duplicateName: true } : null;
+    };
+  }
+
+  private multipleOf300(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const val = Number(control.value);
+      if (!val || isNaN(val)) return null;
+      return val % 300 === 0 ? null : { multipleOf300: true };
+    };
   }
 }

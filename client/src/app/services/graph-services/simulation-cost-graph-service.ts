@@ -23,7 +23,7 @@ const SEGMENTS = [
 export class SimulationCostGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedData: any;
-    public costMode: 'annuel' | 'construction' = 'construction';
+    public costMode: 'annuel' | 'construction' = 'annuel';
     public isLoading = signal(true);
 
     constructor(
