@@ -10,6 +10,7 @@ import { SimulationTemporalGraphService } from './graph-services/simulation-temp
 import { SimulationStepService } from './simulation-step-service';
 import { SimulationCostGraphService } from './graph-services/simulation-cost-graph-service';
 import { SimulationCo2GraphService } from './graph-services/simulation-co2-graph-service';
+import { SimulationAnalysisGraphService } from './graph-services/simulation-analysis-graph-service';
 
 @Injectable({
     providedIn: 'root',
@@ -35,9 +36,24 @@ export class SimulationService {
         private simulationTemporalGraphService: SimulationTemporalGraphService,
         private simulationCostGraphService: SimulationCostGraphService,
         private simulationCo2GraphService: SimulationCo2GraphService,
+        private simulationAnalysisGraphService: SimulationAnalysisGraphService,
     ) {
         effect(() => {
             this.scenariosService.selectedScenario(); // track scenario changes
+            this.simulationTemporalGraphService.cachedScenarioId = undefined;
+            this.simulationTemporalGraphService.cachedSimulationResult = undefined;
+            this.simulationCostGraphService.cachedScenarioId = undefined;
+            this.simulationCostGraphService.cachedData = undefined;
+            this.simulationCostGraphService.costMode = 'annuel';
+            this.simulationCostGraphService.rentabiliteFromSimulation = undefined;
+            this.simulationCostGraphService.isLoading.set(true);
+            this.simulationCostGraphService.rentabiliteLoading.set(true);
+            this.simulationCo2GraphService.cachedScenarioId = undefined;
+            this.simulationCo2GraphService.cachedData = undefined;
+            this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
+            this.simulationCo2GraphService.costMode = 'construction';
+            this.simulationCo2GraphService.isLoading.set(true);
+            this.simulationAnalysisGraphService.reset();
             this.productionNodes.set(null);
         });
 
@@ -47,11 +63,16 @@ export class SimulationService {
             this.simulationTemporalGraphService.cachedSimulationResult = undefined;
             this.simulationCostGraphService.cachedScenarioId = undefined;
             this.simulationCostGraphService.cachedData = undefined;
+            this.simulationCostGraphService.costMode = 'annuel';
+            this.simulationCostGraphService.rentabiliteFromSimulation = undefined;
             this.simulationCostGraphService.isLoading.set(true);
+            this.simulationCostGraphService.rentabiliteLoading.set(true);
             this.simulationCo2GraphService.cachedScenarioId = undefined;
             this.simulationCo2GraphService.cachedData = undefined;
             this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
+            this.simulationCo2GraphService.costMode = 'construction';
             this.simulationCo2GraphService.isLoading.set(true);
+            this.simulationAnalysisGraphService.reset();
             this.productionNodes.set(null);
         });
     }
@@ -104,10 +125,12 @@ export class SimulationService {
 
         await this.simulationStepService.runSteps(steps, scenario);
 
-        // Compute annual CO2 from actual simulation production now that temporal is done
+        // Compute post-temporal graphs now that simulation data is available
         const simResult = this.simulationTemporalGraphService.getCachedSimulationResult();
         if (simResult) {
             this.simulationCo2GraphService.updateAnnuelFromSimulation(simResult);
+            this.simulationCostGraphService.updateRentabiliteFromSimulation(simResult);
+            this.simulationAnalysisGraphService.update(simResult);
         }
 
         this.productionNodes.set(this.simulationTemporalGraphService.getProductionNodes());

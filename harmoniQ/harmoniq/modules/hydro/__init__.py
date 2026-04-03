@@ -133,9 +133,9 @@ class InfraHydro(Infrastructure):
             pas_de_temps = self.scenario.pas_de_temps
 
         if self.donnees.type_barrage == "Fil de l'eau":
-            OPEX_PER_MW_PER_YEAR = 126   # $/MW/year
+            OPEX_PER_MW_PER_YEAR = 126_000   # $/MW/year (= 126 $/kW/year)
         else:
-            OPEX_PER_MW_PER_YEAR = 350   # $/MW/year (réservoir)
+            OPEX_PER_MW_PER_YEAR = 350_000   # $/MW/year (= 350 $/kW/year, réservoir)
 
         HOURS_PER_YEAR = 8760
 

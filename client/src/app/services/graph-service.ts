@@ -6,7 +6,13 @@ export const graphServiceConfig = {
     ENERGY_PROD_CONS_SANKEY_ID: 'energy-prod-cons-sankey-id',
     TEMPORAL_SIMULATION_ID: 'temporal-simulation-id',
     COST_SIMULATION_ID: 'cost-simulation-id',
+    COST_RENTABILITE_ID: 'cost-rentabilite-id',
+    COST_TOP10_ID: 'cost-top10-id',
     CO2_SIMULATION_ID: 'co2-simulation-id',
+    PROD_DONUT_ID: 'prod-donut-id',
+    DEMAND_DONUT_ID: 'demand-donut-id',
+    PROD_TOP10_ID: 'prod-top10-id',
+    SEASONAL_ID: 'seasonal-id',
 };
 
 

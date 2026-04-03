@@ -11,15 +11,17 @@ import { GameArea } from '@app/components/game/game-area/game-area';
 import { ScenarioCostSimulation } from '@app/components/scenario/scenario-cost-simulation/scenario-cost-simulation';
 import { SimulationCostGraphService } from '@app/services/graph-services/simulation-cost-graph-service';
 import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
+import { SimulationAnalysisGraphService } from '@app/services/graph-services/simulation-analysis-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { graphServiceConfig } from '@app/services/graph-service';
 
 interface Section {
   id: string;
   title: string;
   desc: string;
   icon: string;
-  waitForSimulation: boolean;
+  isReady: () => boolean;
 }
 
 @Component({
@@ -35,19 +37,22 @@ export class SimulationPage implements AfterViewInit {
 
   @ViewChild(ScenarioTemporalSimulation) temporalSim?: ScenarioTemporalSimulation;
 
-  simulationService    = inject(SimulationService);
-  stepService          = inject(SimulationStepService);
-  costService          = inject(SimulationCostGraphService);
-  co2Service           = inject(SimulationCo2GraphService);
-  infrasService        = inject(InfrastruturesService);
+  simulationService = inject(SimulationService);
+  stepService       = inject(SimulationStepService);
+  costService       = inject(SimulationCostGraphService);
+  co2Service        = inject(SimulationCo2GraphService);
+  analysisService   = inject(SimulationAnalysisGraphService);
+  infrasService     = inject(InfrastruturesService);
+
+  readonly config = graphServiceConfig;
 
   private static readonly INFRA_DEFS = [
-    { key: 'parc_eoliens',            label: 'Éolien',             img: '/icons/eolienne.png',  color: '#6abbc4', hydroFilter: null },
-    { key: 'central_hydroelectriques', label: "Hydro (fil de l'eau)", img: '/icons/barrage.png', color: '#7bbfe8', hydroFilter: "Fil de l'eau" },
-    { key: 'central_hydroelectriques', label: 'Hydro (réservoir)', img: '/icons/barrage.png',   color: '#2b6fa8', hydroFilter: 'Réservoir' },
-    { key: 'parc_solaires',           label: 'Solaire',            img: '/icons/solaire.png',   color: '#e8c53c', hydroFilter: null },
-    { key: 'central_nucleaire',       label: 'Nucléaire',          img: '/icons/nucelaire.png', color: '#e8754a', hydroFilter: null },
-    { key: 'central_thermique',       label: 'Thermique',          img: '/icons/thermique.png', color: '#e25c5c', hydroFilter: null },
+    { key: 'parc_eoliens',             label: 'Éolien',               img: '/icons/eolienne.png',  color: '#6abbc4', hydroFilter: null },
+    { key: 'central_hydroelectriques', label: "Hydro (fil de l'eau)", img: '/icons/barrage.png',   color: '#7bbfe8', hydroFilter: "Fil de l'eau" },
+    { key: 'central_hydroelectriques', label: 'Hydro (réservoir)',    img: '/icons/barrage.png',   color: '#2b6fa8', hydroFilter: 'Réservoir' },
+    { key: 'parc_solaires',            label: 'Solaire',              img: '/icons/solaire.png',   color: '#e8c53c', hydroFilter: null },
+    { key: 'central_nucleaire',        label: 'Nucléaire',            img: '/icons/nucelaire.png', color: '#e8754a', hydroFilter: null },
+    { key: 'central_thermique',        label: 'Thermique',            img: '/icons/thermique.png', color: '#e25c5c', hydroFilter: null },
   ];
 
   get infraSummary() {
@@ -70,11 +75,15 @@ export class SimulationPage implements AfterViewInit {
   }
 
   readonly sections: Section[] = [
-    { id: 'section-cost',      title: 'Coût du réseau',       desc: 'Estimation du coût total d\'exploitation',  icon: 'fa-coins',                waitForSimulation: false },
-    { id: 'section-co2',       title: 'Émissions CO₂',        desc: 'Bilan carbone des sources de production',   icon: 'fa-cloud',                waitForSimulation: true  },
-    { id: 'section-sankey',    title: 'Flux de production',   desc: 'Répartition entre production et demande',   icon: 'fa-diagram-project',      waitForSimulation: true  },
-    { id: 'section-temporal',  title: 'Production & Demande', desc: 'Évolution temporelle de la production',     icon: 'fa-chart-line',           waitForSimulation: true  },
-    { id: 'section-overprod',  title: 'Surproduction',        desc: 'Surplus et déficit des infrastructures',    icon: 'fa-bolt-lightning',       waitForSimulation: true  },
+    { id: 'section-cost',       title: 'Coût du réseau',       desc: 'OPEX & CAPEX par source',                  icon: 'fa-coins',           isReady: () => !this.costService.isLoading() },
+    { id: 'section-co2',        title: 'Émissions CO₂',        desc: 'Construction & annuelles',                 icon: 'fa-cloud',           isReady: () => !this.co2Service.isLoading() },
+    { id: 'section-finance',    title: 'Analyse financière',   desc: 'Rentabilité & coûts des infras',           icon: 'fa-chart-bar',       isReady: () => !this.costService.rentabiliteLoading() },
+    { id: 'section-sankey',     title: 'Flux de production',   desc: 'Répartition production → demande',         icon: 'fa-diagram-project', isReady: () => !this.isSimulating },
+    { id: 'section-temporal',   title: 'Production & Demande', desc: 'Évolution temporelle',                     icon: 'fa-chart-line',      isReady: () => !this.isSimulating },
+    { id: 'section-repartition',title: 'Répartition',          desc: 'Production & demande par secteur',         icon: 'fa-chart-pie',       isReady: () => !this.analysisService.isLoading() },
+    { id: 'section-top10-prod', title: 'Top 10 productives',   desc: 'Infrastructures les plus productrices',    icon: 'fa-medal',           isReady: () => !this.analysisService.isLoading() },
+    { id: 'section-seasonal',   title: 'Saisonnalité',         desc: 'Approvisionnement par saison',             icon: 'fa-snowflake',       isReady: () => !this.analysisService.isLoading() },
+    { id: 'section-overprod',   title: 'Surproduction',        desc: 'Surplus & déficit des infrastructures',   icon: 'fa-bolt-lightning',  isReady: () => false },
   ];
 
   get isSimulating(): boolean {
@@ -88,12 +97,12 @@ export class SimulationPage implements AfterViewInit {
   }
 
   getSectionIndicator(section: Section): { icon: string; color: string } {
-    if (!section.waitForSimulation) {
+    if (section.isReady()) {
       return { icon: 'fa-circle-check', color: '#20c997' };
     }
     return this.isSimulating
       ? { icon: 'fa-circle-notch fa-spin', color: '#4361ee' }
-      : { icon: 'fa-circle-check',         color: '#20c997' };
+      : { icon: 'fa-circle',              color: '#ced4da' };
   }
 
   ngAfterViewInit(): void {

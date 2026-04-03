@@ -408,6 +408,33 @@
     line-height: 1.5;
 }
 
+/* ── Inline chart loading / sub-titles ────────────────────── */
+
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 260px;
+}
+
+.chart-loading-icon {
+    font-size: 2.5rem;
+    color: #adb5bd;
+}
+
+.chart-sub-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 1.5rem 0 0.25rem 0.25rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.chart-sub-title:first-child {
+    margin-top: 0;
+}
+
 /* ── Status colors ─────────────────────────────────────────── */
 
 .text-success { color: #2ecc71; }
