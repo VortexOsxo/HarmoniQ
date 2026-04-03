@@ -18,12 +18,17 @@ class InfraThermique(Infrastructure):
         self.donnees:ThermiqueBase = donnees
         self.production: pd.DataFrame = None
 
-    def charger_scenario(self, scenario: ScenarioBase, toutes_les_centrales: list["InfraThermique"]):
+    def charger_scenario(self, scenario: ScenarioBase, toutes_les_centrales: list["InfraThermique"] = None):
         self.scenario: ScenarioBase = scenario
         self.production = None
+        if toutes_les_centrales is None:
+            toutes_les_centrales = [self]
         semaines = assign_maintenance_weeks(len(toutes_les_centrales))
         # Retrouver la position de cette centrale dans la liste
-        index = toutes_les_centrales.index(self)
+        try:
+            index = toutes_les_centrales.index(self)
+        except ValueError:
+            index = 0
         self._maintenance_week = semaines[index]
 
     @necessite_scenario

@@ -45,19 +45,14 @@ class InfraSolaire(Infrastructure):
             orientation_panneau=self.donnees.orientation_panneau,
             puissance_nominal=self.donnees.puissance_nominal,
             nombre_panneau=self.donnees.nombre_panneau,
+            bifacial=(self.donnees.panneau_type == 'biface'),
             date_start=self.scenario.date_de_debut,
             date_end=self.scenario.date_de_fin + pd.DateOffset(days=1),
         )
     
-    @necessite_scenario
-    def calculer_cout_construction(self):
-        self.couts  = cost_solar_powerplant(puissance_mw=self.donnees.puissance_nominal)
-        return self.couts
-    
     def calculer_cout_construction(self) -> np.ndarray:
         COST_PER_MW = 3_570_000  # $/MW
         return self.donnees.puissance_nominal * COST_PER_MW
-
     def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
