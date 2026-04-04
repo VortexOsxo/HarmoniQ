@@ -563,30 +563,20 @@ def apply_residential_scenario(
 
 def cost_solar_powerplant(puissance_mw):
     """
-    Calcule le coût total pour chaque centrale solaire.
+    Calcule le coût total pour la centrale solaire.
 
     Parameters
     ----------
-    coordinates_centrales : list of tuples
-        Liste des coordonnées et puissances des centrales
-    resultats_centrales : dict
-        Dictionnaire contenant l'énergie produite par chaque centrale
+    puissance_mw : float
+        Puissance nominale de la centrale en MW
 
     Returns
     -------
-    dict
-        Dictionnaire contenant le coût total en dollars pour chaque centrale
+    float
+        Coût total en dollars pour la centrale
     """
-    couts = {}
-    # Coût de référence par MW pour le Québec
-    cout_par_mw = 4_210_000  # Estimation moyenne des coûts actuels
-
-    # Coût total prenant en compte les coûts indirects et opérationnels
-    cout_total = puissance_mw * cout_par_mw
-
-    couts[nom] = cout_total
-
-    return couts
+    cout_par_mw = 3_570_000  # Estimation moyenne des coûts actuels
+    return puissance_mw * cout_par_mw
 
 
 def calculate_installation_cost(puissance_mw):

@@ -8,6 +8,7 @@ import { SimulationService } from '@app/services/simulation-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
 import { SimulationCostGraphService } from '@app/services/graph-services/simulation-cost-graph-service';
 import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 vi.mock('leaflet', () => ({
     default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
@@ -41,7 +42,8 @@ const mockStepService = {
 };
 
 const mockCostService = {
-    costMode: 'annuel',
+    costMode: 'construction',
+    isLoading: signal(false),
     setCostMode: vi.fn(),
     cachedData: null,
     handleData: vi.fn(),
@@ -49,11 +51,17 @@ const mockCostService = {
 };
 
 const mockCo2Service = {
-    costMode: 'annuel',
+    costMode: 'construction',
+    isLoading: signal(false),
     setCostMode: vi.fn(),
     cachedData: null,
     handleData: vi.fn(),
     getStepName: vi.fn().mockReturnValue('Simulation des emissions du reseau'),
+};
+
+const mockInfrastruturesService = {
+    selectedInfraGroup: signal(null as any),
+    getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
 };
 
 const STUB_TEMPLATE = `<div data-testid="simulation-page">Simulation Page</div>`;
@@ -69,6 +77,7 @@ async function renderComponent() {
             { provide: SimulationStepService, useValue: mockStepService },
             { provide: SimulationCostGraphService, useValue: mockCostService },
             { provide: SimulationCo2GraphService, useValue: mockCo2Service },
+            { provide: InfrastruturesService, useValue: mockInfrastruturesService },
         ],
         schemas: [NO_ERRORS_SCHEMA],
     });

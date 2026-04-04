@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
@@ -6,16 +6,16 @@ import { firstValueFrom } from 'rxjs';
 import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
-import { graphServiceConfig, GraphService } from '../graph-service';
-import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
+import { graphServiceConfig } from '../graph-service';
 
-const typeKeyMap: Record<string, string> = {
-    'hydro': 'central_hydroelectriques',
-    'eolienneparc': 'parc_eoliens',
-    'solaire': 'parc_solaires',
-    'thermique': 'central_thermique',
-    'nucleaire': 'central_nucleaire'
-};
+const SEGMENTS = [
+    { key: 'eolienneparc', label: 'Éolien',           color: '#6abbc4' },
+    { key: 'solaire',      label: 'Solaire',           color: '#e8c53c' },
+    { key: 'hydro_fil',    label: "Hydro (fil de l'eau)", color: '#7bbfe8' },
+    { key: 'hydro_res',    label: 'Hydro (réservoir)', color: '#2b6fa8' },
+    { key: 'nucleaire',    label: 'Nucléaire',         color: '#e8754a' },
+    { key: 'thermique',    label: 'Thermique',         color: '#e25c5c' },
+];
 
 @Injectable({
     providedIn: 'root',
@@ -24,6 +24,7 @@ export class SimulationCostGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedData: any;
     public costMode: 'annuel' | 'construction' = 'annuel';
+    public isLoading = signal(true);
 
     constructor(
         private infrastructuresService: InfrastruturesService,
@@ -54,48 +55,82 @@ export class SimulationCostGraphService implements SimulationStep {
     public handleData(simulationResult: any) {
         if (!document.getElementById(graphServiceConfig.COST_SIMULATION_ID)) return;
 
-        const costs: any[] = [];
-        const titles: any[] = [];
-        const colors: string[] = [];
+        const isAnnuel = this.costMode === 'annuel';
+        const divisor = isAnnuel ? 1e6 : 1e9;
+        const unit = isAnnuel ? 'M$' : 'Md$';
+        const valueKey = isAnnuel ? 'cout_annuel' : 'cout_construction';
 
-        for (const key in typeKeyMap) {
-            const cost = simulationResult[key].reduce((acc: number, infraCost: any) => 
-                acc + (this.costMode === 'annuel' ? infraCost.cout_annuel : infraCost.cout_construction), 0);
-            costs.push(cost / 1e9);
-            titles.push(INFRA_LABELS[key]);
-            colors.push(INFRA_COLORS[key]);
-        }
-
-        const data: Partial<Plotly.PlotData>[] = [
-            {
-                x: titles,
-                y: costs,
-                type: "bar",
-                marker: {
-                    color: colors
-                },
-                hovertemplate: "<b>%{y:.2f} Md $</b><extra></extra>"
-            }
-        ];
-
-        const layout: any = {
-            title: {
-                text: this.costMode === 'annuel' 
-                      ? "<b>Cout annuel des differents types d'infrastructures</b>" 
-                      : "<b>Cout de construction des differents types d'infrastructures</b>",
-                font: { size: 20, color: '#2c3e50' }
-            },
-            xaxis: { 
-                title: { text: "Type d'Infrastructure", font: { size: 14, color: '#7f8c8d' } }
-            },
-            yaxis: { 
-                title: { text: this.costMode === 'annuel' ? "Cout annuel (Milliards $)" : "Cout de construction (Milliards $)", font: { size: 14, color: '#7f8c8d' } }
-            },
-            height: Math.floor(window.innerHeight * 0.55),
-            margin: { t: 80, b: 100, l: 100, r: 40 }
+        const hydroItems: any[] = simulationResult['hydro'] ?? [];
+        const expanded: Record<string, any[]> = {
+            ...simulationResult,
+            hydro_fil: hydroItems.filter((h: any) => h.type_barrage === "Fil de l'eau"),
+            hydro_res: hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau"),
         };
 
-        Plotly.newPlot(graphServiceConfig.COST_SIMULATION_ID, data, layout);
+        const labels: string[] = [];
+        const values: number[] = [];
+        const colors: string[] = [];
+
+        for (const seg of SEGMENTS) {
+            const raw = (expanded[seg.key] ?? []).reduce(
+                (acc: number, item: any) => acc + (item[valueKey] ?? 0), 0
+            );
+            labels.push(seg.label);
+            values.push(raw / divisor);
+            colors.push(seg.color);
+        }
+
+        const total = values.reduce((a, b) => a + b, 0);
+
+        const data: any[] = [{
+            type: 'pie',
+            hole: 0.45,
+            labels,
+            values,
+            marker: { colors },
+            domain: { x: [0, 0.6], y: [0, 1] },
+            textinfo: 'none',
+            title: {
+                text: `<b>${total.toFixed(1)}</b><br>${unit}`,
+                font: { size: 22, color: '#2c3e50' },
+                position: 'middle center',
+            },
+            hovertemplate: '<b>%{label}</b><br>%{value:.2f} ' + unit + '<extra></extra>',
+        }];
+
+        const layout: any = {
+            legend: {
+                orientation: 'v',
+                x: 0.65, y: 0.5,
+                xanchor: 'left', yanchor: 'middle',
+                font: { size: 15 },
+                itemwidth: 30,
+                tracegroupgap: 6,
+            },
+            showlegend: true,
+            height: Math.floor(window.innerHeight * 0.55),
+            margin: { t: 20, b: 20, l: 20, r: 20 },
+            paper_bgcolor: 'white',
+        };
+
+        const graphDiv = document.getElementById(graphServiceConfig.COST_SIMULATION_ID);
+        if (graphDiv) {
+            Plotly.newPlot(graphDiv, data, layout);
+            
+            (graphDiv as any).on('plotly_restyle', () => {
+                const hiddenLabels = (graphDiv as any).data[0].hiddenlabels || [];
+                let currentTotal = 0;
+                for (let i = 0; i < labels.length; i++) {
+                    if (!hiddenLabels.includes(labels[i])) {
+                        currentTotal += values[i];
+                    }
+                }
+                Plotly.restyle(graphDiv, {
+                    'title.text': [`<b>${currentTotal.toFixed(1)}</b><br>${unit}`]
+                } as any, [0]);
+            });
+        }
+        this.isLoading.set(false);
     }
 
     public setCostMode(mode: 'annuel' | 'construction') {

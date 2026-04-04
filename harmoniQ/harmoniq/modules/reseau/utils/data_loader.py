@@ -475,8 +475,21 @@ class NetworkDataLoader:
                 if production_df is not None:
                     nom = parc.nom
                     if nom in network.generators.index:
-                        if 'production_horaire_wh' in production_df.columns:
-                            # Calculer p_max_pu pour chaque heure = production_horaire_wh / (puissance_nominale * 1e6)
+                        if 'production' in production_df.columns:
+                            # Calculer p_max_pu pour chaque heure = production (kW) / (puissance_nominale * 1e3)
+                            p_nom = parc.puissance_nominal * 1000  # Conversion de MW à kW
+                            
+                            p_values = production_df['production'].values
+                            hourly_index = pd.to_datetime(production_df['date'])
+                            hourly_production = pd.Series(p_values, index=hourly_index)
+                            
+                            aligned_production = hourly_production.reindex(network.snapshots).fillna(0)
+                            
+                            # Calculer p_max_pu = production_horaire / puissance_nominale
+                            p_max_pu_df[nom] = aligned_production / p_nom
+                            p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.1)  # Remplacer NaN par 0.1
+                        elif 'production_horaire_wh' in production_df.columns:
+                            # Ancienne methode
                             p_nom = parc.puissance_nominal * 1e6  # Conversion de MW à W
                             
                             p_values = production_df['production_horaire_wh'].values
@@ -485,9 +498,8 @@ class NetworkDataLoader:
                             
                             aligned_production = hourly_production.reindex(network.snapshots).fillna(0)
                             
-                            # Calculer p_max_pu = production_horaire / puissance_nominale
                             p_max_pu_df[nom] = aligned_production / p_nom
-                            p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.1)  # Remplacer NaN par 0
+                            p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.1)
         
         # Génération pour les centrales nucléaires
         if self.nucleaire_data is not None:
@@ -551,8 +563,23 @@ class NetworkDataLoader:
                         p_max_pu_df[nom] = p_max_pu_series
                         
         # Génération pour les centrales thermiques         
-   
-   
+        from harmoniq.modules.thermique import InfraThermique
+        if self.thermique_data is not None:
+            thermiques = [hydrate_model(Thermique, c) for c in self.thermique_data]
+            infra_thermiques = [InfraThermique(c) for c in thermiques]
+            for infra in infra_thermiques:
+                infra.charger_scenario(scenario, toutes_les_centrales=infra_thermiques)
+                production_df = infra.calculer_production()
+                nom = infra.donnees.nom
+                if production_df is not None and nom in network.generators.index:
+                    if 'production_mwh' in production_df.columns:
+                        p_nom = infra.donnees.puissance_nominal  # Déjà en MW
+                        hourly_production = pd.Series(
+                            production_df['production_mwh'].values, 
+                            index=production_df.index
+                        )
+                        aligned_production = hourly_production.reindex(network.snapshots).fillna(0)
+                        p_max_pu_df[nom] = (aligned_production / p_nom).fillna(0.9)
    
         marginal_cost_defaults = {
             'hydro_fil': 0.1,      # Faible coût - priorité haute

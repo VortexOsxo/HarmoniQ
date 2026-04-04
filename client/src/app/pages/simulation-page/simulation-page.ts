@@ -12,6 +12,7 @@ import { ScenarioCostSimulation } from '@app/components/scenario/scenario-cost-s
 import { SimulationCostGraphService } from '@app/services/graph-services/simulation-cost-graph-service';
 import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 interface Section {
   id: string;
@@ -34,19 +35,46 @@ export class SimulationPage implements AfterViewInit {
 
   @ViewChild(ScenarioTemporalSimulation) temporalSim?: ScenarioTemporalSimulation;
 
-  simulationService = inject(SimulationService);
-  stepService      = inject(SimulationStepService);
-  costService      = inject(SimulationCostGraphService);
-  co2Service       = inject(SimulationCo2GraphService);
+  simulationService    = inject(SimulationService);
+  stepService          = inject(SimulationStepService);
+  costService          = inject(SimulationCostGraphService);
+  co2Service           = inject(SimulationCo2GraphService);
+  infrasService        = inject(InfrastruturesService);
+
+  private static readonly INFRA_DEFS = [
+    { key: 'parc_eoliens',            label: 'Éolien',             img: '/icons/eolienne.png',  color: '#6abbc4', hydroFilter: null },
+    { key: 'central_hydroelectriques', label: "Hydro (fil de l'eau)", img: '/icons/barrage.png', color: '#7bbfe8', hydroFilter: "Fil de l'eau" },
+    { key: 'central_hydroelectriques', label: 'Hydro (réservoir)', img: '/icons/barrage.png',   color: '#2b6fa8', hydroFilter: 'Réservoir' },
+    { key: 'parc_solaires',           label: 'Solaire',            img: '/icons/solaire.png',   color: '#e8c53c', hydroFilter: null },
+    { key: 'central_nucleaire',       label: 'Nucléaire',          img: '/icons/nucelaire.png', color: '#e8754a', hydroFilter: null },
+    { key: 'central_thermique',       label: 'Thermique',          img: '/icons/thermique.png', color: '#e25c5c', hydroFilter: null },
+  ];
+
+  get infraSummary() {
+    const group: any = this.infrasService.selectedInfraGroup();
+    const hydroIds: string[] = group?.central_hydroelectriques ?? [];
+    const allHydro: any[] = this.infrasService.getInfrasSignalByType('hydro')();
+    const selectedHydro = allHydro.filter((h: any) => hydroIds.includes(String(h.id)));
+
+    const breakdown = SimulationPage.INFRA_DEFS.map(def => {
+      if (def.hydroFilter) {
+        const isFil = def.hydroFilter === "Fil de l'eau";
+        const count = selectedHydro.filter((h: any) =>
+          isFil ? h.type_barrage === "Fil de l'eau" : h.type_barrage !== "Fil de l'eau"
+        ).length;
+        return { ...def, count };
+      }
+      return { ...def, count: (group?.[def.key] ?? []).length };
+    });
+    return { breakdown, total: breakdown.reduce((s, d) => s + d.count, 0) };
+  }
 
   readonly sections: Section[] = [
     { id: 'section-cost',      title: 'Coût du réseau',       desc: 'Estimation du coût total d\'exploitation',  icon: 'fa-coins',                waitForSimulation: false },
-    { id: 'section-co2',       title: 'Émissions CO₂',        desc: 'Bilan carbone des sources de production',   icon: 'fa-cloud',                waitForSimulation: false },
+    { id: 'section-co2',       title: 'Émissions CO₂',        desc: 'Bilan carbone des sources de production',   icon: 'fa-cloud',                waitForSimulation: true  },
     { id: 'section-sankey',    title: 'Flux de production',   desc: 'Répartition entre production et demande',   icon: 'fa-diagram-project',      waitForSimulation: true  },
     { id: 'section-temporal',  title: 'Production & Demande', desc: 'Évolution temporelle de la production',     icon: 'fa-chart-line',           waitForSimulation: true  },
     { id: 'section-overprod',  title: 'Surproduction',        desc: 'Surplus et déficit des infrastructures',    icon: 'fa-bolt-lightning',       waitForSimulation: true  },
-    { id: 'section-transport', title: 'Transport du réseau',  desc: 'Problèmes de capacité et congestion',       icon: 'fa-triangle-exclamation', waitForSimulation: false },
-    { id: 'section-eco',       title: 'Impact écologique',    desc: 'Indicateurs et rétroaction contextuelle',   icon: 'fa-leaf',                 waitForSimulation: false },
   ];
 
   get isSimulating(): boolean {
@@ -73,7 +101,7 @@ export class SimulationPage implements AfterViewInit {
   }
 
   get temporalGranularity(): string {
-    return this.temporalSim?.selectedGranularity ?? 'original';
+    return this.temporalSim?.selectedGranularity ?? 'daily';
   }
 
   onTemporalGranularityChange(granularity: string): void {
