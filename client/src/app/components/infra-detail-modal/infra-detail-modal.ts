@@ -119,7 +119,7 @@ export class InfraDetailModal {
                 this.protectedAreaTypeLabel = 'un milieu forestier';
               } else if (categoryId === 52) {
                 this.protectedAreaIcon = '/icons/tipi.png';
-                this.protectedAreaTypeLabel = 'un territoire autochtone';
+                this.protectedAreaTypeLabel = 'un territoire autochtone. Une entente doit être conclue avec les communautés autochtones afin de construire une infrastructure sur ce territoire.';
               } else if (categoryId === 102) {
                 this.protectedAreaTypeLabel = 'une aire protégée fédérale';
               }
