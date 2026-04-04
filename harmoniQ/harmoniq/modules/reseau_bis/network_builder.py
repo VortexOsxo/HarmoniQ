@@ -1,4 +1,4 @@
-﻿"""Template de construction du reseau PyPSA aligne sur les variables HarmoniQ."""
+﻿"""Construction du réseau PyPSA à partir de la topologie et des profils de génération."""
 
 import logging
 import math
@@ -124,20 +124,28 @@ def auto_scale_line_capacities(
     p_max_pu_by_carrier: Optional[Dict[str, float]] = None,
     margin: float = 1.05,
 ) -> List[Dict]:
-    """Ajuste s_nom des lignes pour garantir la faisabilité de l'OPF.
+    """Ajuste ``s_nom`` des lignes pour garantir la faisabilité de l'OPF.
 
     Pour chaque bus :
-    - gen_cap  = Σ(p_nom × p_max_pu) des générateurs connectés
-    - demand_peak = max(p_set) de la charge connectée
-    - required = max(gen_cap, demand_peak) × margin
 
-    Si required > capacité_totale_lignes_connectées :
-    - Bus feuille (degree=1) : num_parallel = ⌈required / s_nom_base⌉,
-      s_nom = s_nom_base × num_parallel.
-    - Bus multi-connexion : scale-up proportionnel de toutes les lignes,
-      arrondi au multiple de s_nom_base.
+    - ``gen_cap`` = Σ(p_nom × p_max_pu) des générateurs connectés.
+    - ``demand_peak`` = max(p_set) de la charge connectée.
+    - ``required`` = max(gen_cap, demand_peak) × margin.
 
-    Retourne la liste des modifications appliquées (pour affichage).
+    Si ``required > capacité_totale_lignes_connectées`` :
+
+    - Bus feuille (degree=1) : ``num_parallel = ⌈required / s_nom_base⌉``,
+      ``s_nom = s_nom_base × num_parallel``.
+    - Bus multi-connexion : scale-up proportionnel de toutes les lignes
+      connectées, arrondi au multiple de ``s_nom_base``.
+
+    Args:
+        network: Réseau PyPSA (modifié en place).
+        p_max_pu_by_carrier: Facteurs de disponibilité par carrier. Défaut : ``_DEFAULT_P_MAX_PU``.
+        margin: Marge de sécurité sur la capacité requise (défaut : 5 %).
+
+    Returns:
+        Liste des modifications appliquées (dicts avec bus, line, old_s_nom, new_s_nom, etc.).
     """
     pu = p_max_pu_by_carrier or _DEFAULT_P_MAX_PU
     requirements = _compute_bus_requirements(network, pu)
@@ -208,12 +216,16 @@ def get_bus_capacity_report(
     network: pypsa.Network,
     p_max_pu_by_carrier: Optional[Dict[str, float]] = None,
 ) -> List[Dict]:
-    """Retourne la configuration de capacité par bus.
+    """Retourne un rapport de capacité par bus.
 
-    Chaque entrée contient :
-      bus, degree, line_type, num_parallel_est,
-      gen_cap_mw, demand_peak_mw, line_cap_mva, utilization_pct, is_bottleneck
-    Trié par utilisation décroissante.
+    Args:
+        network: Réseau PyPSA.
+        p_max_pu_by_carrier: Facteurs de disponibilité par carrier.
+
+    Returns:
+        Liste de dicts triés par utilisation décroissante. Chaque entrée contient :
+        ``bus``, ``degree``, ``line_type``, ``num_parallel``, ``gen_cap_mw``,
+        ``demand_peak_mw``, ``line_cap_mva``, ``utilization_pct``, ``is_bottleneck``.
     """
     pu = p_max_pu_by_carrier or _DEFAULT_P_MAX_PU
     requirements = _compute_bus_requirements(network, pu)
@@ -260,7 +272,7 @@ def _compute_bus_requirements(
     network: pypsa.Network,
     p_max_pu_by_carrier: Dict[str, float],
 ) -> Dict[str, Dict]:
-    """Calcule gen_cap / demand_peak / required_mw par bus."""
+    """Calcule gen_cap, demand_peak et required_mw pour chaque bus du réseau."""
     result: Dict[str, Dict] = {}
     for bus_name in network.buses.index:
         gens = network.generators[network.generators["bus"] == bus_name]
@@ -288,7 +300,7 @@ def _compute_bus_requirements(
 
 
 def get_builder_todo_list() -> List[str]:
-    """Liste actionnable des elements a implementer dans le builder."""
+    """Retourne la liste des tâches à implémenter dans le builder."""
     return [
         "Valider les colonnes minimales des DataFrames d'entree (bus/lines/generators).",
         "[DONE] Ne creer des loads que sur les bus de type consommation (pas tous les bus).",
@@ -304,12 +316,17 @@ def build_pypsa_network(
     demand_profile: pd.DataFrame,
     snapshots: pd.DatetimeIndex,
 ) -> pypsa.Network:
-    """Construit un reseau PyPSA en conservant la semantique legacy.
+    """Construit un réseau PyPSA à partir de la topologie et des profils de génération.
 
-    Mapping des entrees:
-    - topology[buses, lines, line_types]
-    - generation_profiles[generators, p_max_pu, marginal_cost]
-    - demand_profile -> loads_t.p_set
+    Args:
+        topology: Dict avec les clés ``buses``, ``lines``, ``line_types`` (DataFrames).
+        generation_profiles: Dict avec les clés ``generators``, ``p_max_pu``,
+            ``marginal_cost`` (DataFrames).
+        demand_profile: DataFrame de la demande (index = snapshots, colonnes = loads).
+        snapshots: Index temporel du réseau.
+
+    Returns:
+        Réseau PyPSA prêt pour l'optimisation.
     """
     _validate_topology_payload(topology)
 

@@ -1,10 +1,11 @@
-"""Connecte les nouvelles infrastructures (is_user_created=True) au réseau existant.
+"""Connexion des nouvelles infrastructures au réseau existant.
 
-Pour chaque nouvelle infra, crée un bus à sa position géographique et le connecte
-au bus existant le plus proche (distance Haversine). L'algorithme est itératif :
-chaque nouveau bus devient immédiatement un candidat pour les infras suivantes.
+Pour chaque infrastructure marquée ``is_user_created=True``, crée un bus à sa
+position géographique et le connecte au bus existant le plus proche (distance
+Haversine). L'algorithme est itératif : chaque nouveau bus devient immédiatement
+un candidat pour les infrastructures suivantes.
 
-Usage (dans service.py) :
+Example:
     topology = BusConnector(topology).connect_new_infras(liste_infra)
 """
 
@@ -26,24 +27,41 @@ _VNOM_TO_LINE_TYPE: dict = {
     120: "120kV_line",
     230: "230kV_line",
     315: "315kV_line",
-    320: "315kV_line",   # alias — même type de ligne
+    320: "315kV_line",
     345: "345kV_line",
     450: "450kV_line",
     735: "735kV_line",
-    765: "735kV_line",   # alias — même type de ligne
+    765: "735kV_line",
 }
 _DEFAULT_LINE_TYPE = "735kV_line"
 _DEFAULT_V_NOM = 735
 
 
 def _line_type_for_vnom(v_nom: float) -> str:
-    """Retourne le type de ligne correspondant à une tension nominale."""
+    """Retourne le type de ligne PyPSA correspondant à une tension nominale.
+
+    Args:
+        v_nom: Tension nominale en kV.
+
+    Returns:
+        Clé de type de ligne (e.g. ``"735kV_line"``).
+    """
     key = min(_VNOM_TO_LINE_TYPE.keys(), key=lambda k: abs(k - v_nom))
     return _VNOM_TO_LINE_TYPE[key]
 
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calcule la distance Haversine entre deux points (en km)."""
+    """Calcule la distance Haversine entre deux points géographiques.
+
+    Args:
+        lat1: Latitude du premier point (degrés décimaux).
+        lon1: Longitude du premier point (degrés décimaux).
+        lat2: Latitude du second point (degrés décimaux).
+        lon2: Longitude du second point (degrés décimaux).
+
+    Returns:
+        Distance en kilomètres.
+    """
     R = 6371.0
     lat1, lon1, lat2, lon2 = map(radians, (lat1, lon1, lat2, lon2))
     dlat, dlon = lat2 - lat1, lon2 - lon1
@@ -52,7 +70,14 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 def _collect_user_created_infras(liste_infra: Any) -> List[Any]:
-    """Retourne toutes les infras marquées is_user_created=True dans le groupe."""
+    """Collecte toutes les infrastructures marquées ``is_user_created=True``.
+
+    Args:
+        liste_infra: Groupe d'infrastructures (``SimulationInfraGroup``).
+
+    Returns:
+        Liste des instances d'infrastructure ajoutées par l'utilisateur.
+    """
     result = []
     for infra_list in (
         getattr(liste_infra, "parc_eoliens", None) or [],
@@ -72,12 +97,18 @@ def _find_nearest_bus(
     lon: float,
     buses_df: pd.DataFrame,
 ) -> Tuple[Optional[str], float, float]:
-    """Trouve le bus le plus proche dans buses_df.
+    """Trouve le bus existant le plus proche d'une position géographique.
 
-    Convention interne data_loader : x = latitude, y = longitude.
+    La convention interne du chargeur de données est x = latitude, y = longitude.
+
+    Args:
+        lat: Latitude de la position cible (degrés décimaux).
+        lon: Longitude de la position cible (degrés décimaux).
+        buses_df: DataFrame des bus existants (colonnes : name, x, y, v_nom).
 
     Returns:
-        (nom_du_bus, distance_km, v_nom) ou (None, inf, 735) si buses_df est vide.
+        Tuple (nom_du_bus, distance_km, v_nom). Retourne (None, inf, 735) si
+        ``buses_df`` est vide.
     """
     if buses_df.empty:
         return None, float("inf"), _DEFAULT_V_NOM
@@ -99,41 +130,39 @@ def _find_nearest_bus(
 
 
 class BusConnector:
-    """Injecte des bus pour les nouvelles infrastructures dans la topologie existante.
+    """Injecte des bus et lignes de raccordement pour les nouvelles infrastructures.
 
-    Algorithme itératif :
-    1. Collecter toutes les infras marquées is_user_created=True.
-    2. Pour chaque infra :
-       a. Créer un bus à sa position (lat, lon).
-       b. Connecter ce bus au bus existant le plus proche, en incluant
-          les bus déjà ajoutés lors des étapes précédentes.
-    3. Retourner la topologie augmentée.
+    Pour chaque infrastructure ``is_user_created=True`` :
 
-    La topologie enrichie est ensuite passée à load_generation_profiles() via
-    buses_df, ce qui permet à _resolve_generator_bus() de trouver naturellement
-    le nouveau bus (distance = 0) pour chaque générateur user-created.
+    1. Un bus est créé à la position géographique de l'infrastructure.
+    2. Ce bus est relié au bus existant le plus proche (Haversine), en incluant
+       les bus créés lors des itérations précédentes.
+
+    La topologie enrichie est ensuite transmise à ``load_generation_profiles()``
+    via ``buses_df``, ce qui permet au résolveur de bus de trouver naturellement
+    le nouveau bus (distance zéro) pour chaque générateur ajouté par l'utilisateur.
     """
 
     def __init__(self, topology: dict) -> None:
-        """
+        """Initialise le connecteur à partir d'une topologie existante.
+
         Args:
-            topology: dict {"buses": DataFrame, "lines": DataFrame, "line_types": DataFrame}
-                      tel que retourné par load_topology_from_db().
+            topology: Dict ``{"buses": DataFrame, "lines": DataFrame, "line_types": DataFrame}``
+                tel que retourné par ``load_topology_from_db()``.
         """
         self._topology = topology
-        # Copies de travail — on ne modifie pas l'original in-place.
         self._buses_df: pd.DataFrame = topology["buses"].copy()
         self._lines_df: pd.DataFrame = topology["lines"].copy()
 
     def connect_new_infras(self, liste_infra: Any) -> dict:
-        """Point d'entrée public.
+        """Connecte toutes les infrastructures utilisateur au réseau.
 
         Args:
-            liste_infra: SimulationInfraGroup avec parc_eoliens, parc_solaires, etc.
+            liste_infra: Groupe d'infrastructures (parc_eoliens, parc_solaires, etc.).
 
         Returns:
-            Topologie dict enrichie des nouveaux bus et lignes.
-            Si aucune infra user-created, retourne la topologie originale sans copie.
+            Topologie enrichie avec les nouveaux bus et lignes. Retourne la topologie
+            originale sans copie si aucune infrastructure ``is_user_created`` n'est trouvée.
         """
         new_infras = _collect_user_created_infras(liste_infra)
         if not new_infras:
@@ -154,10 +183,10 @@ class BusConnector:
         }
 
     def _process_infra(self, infra: Any) -> None:
-        """Crée un bus et une ligne de raccordement pour une infra user-created.
+        """Crée un bus et une ligne de raccordement pour une infrastructure utilisateur.
 
-        Le nouveau bus est ajouté à self._buses_df immédiatement, donc les
-        infras traitées après pourront s'y connecter si c'est le plus proche.
+        Le nouveau bus est immédiatement ajouté à ``self._buses_df`` pour qu'il soit
+        pris en compte comme candidat lors du traitement des infrastructures suivantes.
         """
         lat = float(infra.latitude)
         lon = float(infra.longitude)

@@ -1,9 +1,10 @@
-"""Chargeur de donnees pour `reseau_bis`.
+"""Chargement des données de topologie, génération et demande pour ``reseau_bis``.
 
-Sources:
-- Topologie  : DB (bus_db_03_26.csv + lines_db_03_26.csv chargés via init-db)
-- Demande    : harmoniq/db/demande.db (99 MRC québécoises, horaire)
-- Génération : DB via CRUD async + modules de production
+Sources :
+
+- Topologie  : base de données (bus_db_03_26.csv / lines_db_03_26.csv via init-db).
+- Demande    : ``harmoniq/db/demande.db`` (99 MRC québécoises, horaire).
+- Génération : base de données via CRUD async + modules de production.
 """
 
 import asyncio
@@ -90,7 +91,15 @@ _PROFILES_CACHE_DIR = Path.home() / ".cache" / "harmoniq" / "gen_profiles"
 
 
 def _compute_profiles_cache_key(scenario: Any, generator_names: List[str]) -> str:
-    """Retourne un hash court identifiant uniquement ce scénario + ces générateurs."""
+    """Calcule une clé de cache courte (SHA-256 tronqué) identifiant le scénario et les générateurs.
+
+    Args:
+        scenario: Objet scénario (dates, weather, consomation, pas_de_temps).
+        generator_names: Liste des noms de générateurs.
+
+    Returns:
+        Chaîne hexadécimale de 16 caractères.
+    """
     key_parts = "|".join([
         str(getattr(scenario, "date_de_debut", "")),
         str(getattr(scenario, "date_de_fin",   "")),
@@ -103,7 +112,14 @@ def _compute_profiles_cache_key(scenario: Any, generator_names: List[str]) -> st
 
 
 def _load_pmax_from_cache(cache_key: str) -> Optional[pd.DataFrame]:
-    """Charge le DataFrame p_max_pu depuis le cache parquet. Retourne None si absent/corrompu."""
+    """Charge le DataFrame p_max_pu depuis le cache parquet.
+
+    Args:
+        cache_key: Clé de cache calculée par ``_compute_profiles_cache_key``.
+
+    Returns:
+        DataFrame p_max_pu, ou ``None`` si le fichier est absent ou corrompu.
+    """
     cache_file = _PROFILES_CACHE_DIR / f"profiles_{cache_key}.parquet"
     if not cache_file.exists():
         return None
@@ -121,7 +137,12 @@ def _load_pmax_from_cache(cache_key: str) -> Optional[pd.DataFrame]:
 
 
 def _save_pmax_to_cache(cache_key: str, p_max_pu_df: pd.DataFrame) -> None:
-    """Persiste le DataFrame p_max_pu en parquet pour les prochains appels."""
+    """Persiste le DataFrame p_max_pu en parquet.
+
+    Args:
+        cache_key: Clé de cache calculée par ``_compute_profiles_cache_key``.
+        p_max_pu_df: DataFrame à persister (index = snapshots, colonnes = générateurs).
+    """
     try:
         _PROFILES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
         cache_file = _PROFILES_CACHE_DIR / f"profiles_{cache_key}.parquet"
@@ -171,10 +192,17 @@ _WINTER_RESERVOIR_PREMIUM = [12.0, 12.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0,
 
 
 def _apply_winter_premium(costs: np.ndarray, snapshots: pd.DatetimeIndex) -> np.ndarray:
-    """Ajoute la prime hivernale au coût marginal des réservoirs.
+    """Ajoute la prime saisonnière au coût marginal des réservoirs.
 
-    En hiver (déc-jan-fév), le coût de l'eau est relevé pour refléter la valeur
-    stratégique du stockage — rendant l'import compétitif aux pointes.
+    En hiver (déc-jan-fév), la prime élève le coût de l'eau pour refléter
+    la valeur stratégique du stockage, rendant l'import compétitif aux pointes.
+
+    Args:
+        costs: Tableau de coûts de base ($/MWh), un par snapshot.
+        snapshots: Index temporel aligné sur ``costs``.
+
+    Returns:
+        Tableau de coûts ajustés ($/MWh).
     """
     premium = np.array([_WINTER_RESERVOIR_PREMIUM[ts.month - 1] for ts in snapshots])
     return costs + premium
@@ -186,17 +214,25 @@ def _compute_initial_reservoir_pmax(
     snapshots: pd.DatetimeIndex,
     ratio_dispo_map: Dict[str, float] | None = None,
 ) -> pd.DataFrame:
-    """Contrainte de réserve stratégique basée sur le fill initial (statique pour le 1er chunk).
+    """Calcule la contrainte p_max_pu initiale des réservoirs (statique pour le premier chunk).
 
-    L'optimiseur met à jour ce p_max_pu chunk par chunk via le feed-forward hydraulique.
+    Interpolation fill → p_max_pu avant maintenance :
 
-    Interpolation continue fill → p_max_pu (avant maintenance) :
-        fill ≥ 70 % → 0.95  (libre)
-        fill = 45 % → 0.50  (prudence)
-        fill ≤ 30 % → 0.15  (réserve stratégique — force import)
+    - fill ≥ 70 % → 0.95 (libre)
+    - fill = 45 % → 0.50 (prudence)
+    - fill ≤ 30 % → 0.15 (réserve stratégique — force l'import)
 
-    Puis multiplication par ratio_dispo = (nb_turbines - nb_maintenance) / nb_turbines
-    pour être cohérent avec le bilan hydraulique du reservoir_tracker.
+    Le résultat est multiplié par ``ratio_dispo`` (turbines disponibles / total).
+    L'optimiseur met à jour cette contrainte chunk par chunk via le feed-forward hydraulique.
+
+    Args:
+        initial_fills: Dict ``{nom_barrage: fraction [0-1]}``.
+        reservoir_gen_names: Noms des générateurs réservoir dans le réseau PyPSA.
+        snapshots: Index temporel.
+        ratio_dispo_map: Dict ``{nom_barrage: ratio}`` de disponibilité des turbines.
+
+    Returns:
+        DataFrame ``p_max_pu`` (index = snapshots, colonnes = noms de générateurs).
     """
     if ratio_dispo_map is None:
         ratio_dispo_map = {}
@@ -220,7 +256,18 @@ def _apply_hydro_fil_seasonal_profile(
     generators_df: pd.DataFrame,
     snapshots: pd.DatetimeIndex,
 ) -> pd.DataFrame:
-    """Applique le profil saisonnier aux colonnes hydro_fil (recalculé à chaque run, pas caché)."""
+    """Applique le profil saisonnier mensuel aux générateurs hydro fil de l'eau.
+
+    Le profil est recalculé à chaque run car il dépend des snapshots (non caché).
+
+    Args:
+        p_max_pu: DataFrame de disponibilité à mettre à jour.
+        generators_df: Table statique des générateurs.
+        snapshots: Index temporel.
+
+    Returns:
+        DataFrame ``p_max_pu`` mis à jour.
+    """
     fil_names = [
         gen.get("name") for _, gen in generators_df.iterrows()
         if str(gen.get("carrier", "")) == "hydro_fil" and gen.get("name")
@@ -247,14 +294,17 @@ def _apply_hydro_fil_seasonal_profile(
 def _fetch_one_eolien_profile(
     args: Tuple[Any, Any, pd.DatetimeIndex]
 ) -> Tuple[str, Optional[pd.Series]]:
-    """Fetch + calcul d'un seul parc éolien dans un thread dédié.
+    """Calcule le profil p_max_pu d'un parc éolien dans un thread dédié.
 
-    Appelé via ThreadPoolExecutor : chaque parc est traité en parallèle.
-    Chaque thread crée sa propre instance InfraParcEolienne (pas de partage d'état).
-    _run_async() crée un event loop isolé par thread → thread-safe.
+    Appelé via ``ThreadPoolExecutor`` ; chaque parc est traité en parallèle.
+    Chaque thread crée sa propre instance ``InfraParcEolienne`` (pas d'état partagé).
+
+    Args:
+        args: Tuple ``(parc, scenario, snapshots)``.
 
     Returns:
-        (nom_parc, Series p_max_pu alignée sur snapshots) ou (nom, None) si échec.
+        Tuple ``(nom_parc, Series p_max_pu alignée sur snapshots)``, ou
+        ``(nom, None)`` en cas d'échec.
     """
     parc, scenario, snapshots = args
     if InfraParcEolienne is None:
@@ -328,7 +378,7 @@ PRODUCTION_MODULES_AVAILABLE = any(
 
 
 def get_database_fetch_plan() -> Dict[str, Any]:
-    """Documente les memes sources DB/SQL que le module legacy."""
+    """Retourne un plan documentaire des sources DB utilisées par le chargeur."""
     return {
         "topology": {
             "bus": "read_all_bus_async",
@@ -350,7 +400,7 @@ def get_database_fetch_plan() -> Dict[str, Any]:
 
 
 def get_loader_todo_list() -> List[str]:
-    """Liste actionnable des integrations a realiser dans le chargeur."""
+    """Retourne la liste des tâches à réaliser dans le chargeur de données."""
     return [
         "Brancher la lecture DB des bus/lignes/line_types (CRUD async existants).",
         "Mapper les IDs d'infrastructures depuis ListeInfrastructures (dont central_nucleaire).",
@@ -363,7 +413,7 @@ def get_loader_todo_list() -> List[str]:
 
 
 class NetworkDataLoaderBis:
-    """Facade minimale du chargeur alignee avec le nommage HarmoniQ actuel."""
+    """Façade de chargement des données réseau pour ``reseau_bis``."""
 
     def __init__(self) -> None:
         self.eolienne_ids = None
@@ -373,14 +423,11 @@ class NetworkDataLoaderBis:
         self.nucleaire_ids = None
 
     def set_infrastructure_ids(self, liste_infra: Any) -> None:
-        """Recopie les champs actuels de `ListeInfrastructures`.
+        """Extrait et stocke les IDs d'infrastructure depuis un groupe d'infras.
 
-        Champs attendus:
-        - parc_eoliens
-        - parc_solaires
-        - central_hydroelectriques
-        - central_thermique
-        - central_nucleaire
+        Args:
+            liste_infra: Objet avec les champs ``parc_eoliens``, ``parc_solaires``,
+                ``central_hydroelectriques``, ``central_thermique``, ``central_nucleaire``.
         """
         self.eolienne_ids = _parse_ids(getattr(liste_infra, "parc_eoliens", None))
         self.solaire_ids = _parse_ids(getattr(liste_infra, "parc_solaires", None))
@@ -457,15 +504,18 @@ class NetworkDataLoaderBis:
         resolution: str = "horaire",
         buses_df: Optional[pd.DataFrame] = None,
     ) -> Dict[str, pd.DataFrame]:
-        """Charge les metadonnees et series temporelles de generation.
+        """Charge les métadonnées et séries temporelles de génération.
 
-        Contrat utilise par `network_builder`:
-        - generators: table statique des generateurs
-        - p_max_pu: disponibilite temporelle (index = snapshots)
-        - marginal_cost: couts temporels (index = snapshots)
+        Args:
+            scenario: Objet scénario (dates, weather, pas_de_temps).
+            liste_infra: Groupe d'infrastructures.
+            db: Session SQLAlchemy.
+            resolution: ``"horaire"`` (8 760 snapshots) ou ``"hebdomadaire"`` (52 moyennes).
+            buses_df: DataFrame de topologie déjà chargé (évite un double aller-retour DB).
 
-        resolution : "horaire" (8760 snapshots) ou "hebdomadaire" (52 moyennes hebdo).
-        buses_df   : DataFrame de topologie déjà chargé — évite un double chargement xlsx.
+        Returns:
+            Dict avec les clés ``generators`` (DataFrame statique), ``p_max_pu``
+            et ``marginal_cost`` (DataFrames index = snapshots).
         """
         self.set_infrastructure_ids(liste_infra)
         # Toujours charger à la résolution horaire (pour le cache parquet et les modules de production)
@@ -524,12 +574,23 @@ class NetworkDataLoaderBis:
         generators_df: pd.DataFrame,
         resolution: str = "horaire",
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Genere p_max_pu et marginal_cost pour tous les generateurs.
+        """Génère p_max_pu et marginal_cost pour tous les générateurs.
 
-        Sequence:
-        1. Appelle InfraParcEolienne / InfraSolaire / InfraNucleaire pour les profils reels.
-        2. Utilise des profils saisonniers ou constants pour hydro/thermique (pas de module dedie).
-        3. Fallback p_max_pu = 1.0 pour tout generateur non couvert.
+        Séquence :
+
+        1. ``InfraParcEolienne`` / ``InfraSolaire`` / ``InfraNucleaire`` pour les profils réels.
+        2. Profils saisonniers ou constants pour hydro/thermique.
+        3. Fallback p_max_pu = 1.0 pour tout générateur non couvert.
+
+        Args:
+            db: Session SQLAlchemy.
+            scenario: Objet scénario.
+            snapshots: Index temporel horaire.
+            generators_df: Table statique des générateurs.
+            resolution: ``"horaire"`` ou ``"hebdomadaire"``.
+
+        Returns:
+            Tuple ``(p_max_pu, marginal_cost)`` — deux DataFrames index = snapshots.
         """
         MARGINAL_COSTS = {
             # Sources non pilotables : coût 0 $/MWh → dispatché en priorité absolue.
@@ -1230,10 +1291,10 @@ def _generators_from_user_infras(
     liste_infra: Any,
     buses_df: "pd.DataFrame | None",
 ) -> list[dict[str, Any]]:
-    """Construit les rows générateurs pour les infras user-created (non persistées en DB).
+    """Construit les lignes de générateurs pour les infrastructures créées par l'utilisateur.
 
-    Miroir de _fetch_generators_from_db mais lit directement les attributs Pydantic
-    du payload au lieu de passer par la DB. Même convention de champs en sortie.
+    Lit directement les attributs Pydantic du payload sans passer par la base de données.
+    Le format de sortie est identique à celui de ``_fetch_generators_from_db``.
     """
     rows: list[dict[str, Any]] = []
 

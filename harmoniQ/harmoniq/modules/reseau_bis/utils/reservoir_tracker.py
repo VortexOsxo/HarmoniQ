@@ -1,24 +1,22 @@
 """Suivi des niveaux de réservoir après dispatch LP-OPF.
 
-Pipeline :
-    1. L'OPF dispatch chaque barrage-réservoir (generators_t.p en MW).
-    2. compute_reservoir_levels() convertit ce dispatch en décharge (m³/s),
-       charge les apports naturels depuis les CSV hydro, et applique le bilan
-       hydraulique pas à pas pour chaque snapshot.
-    3. La sortie (fraction [0-1]) peut être visualisée ou réinjectée dans
-       l'OPF via water_value_cost() pour un dispatch sensible au niveau d'eau.
+Pipeline d'exécution :
 
-Usage :
+1. L'OPF dispatche chaque barrage-réservoir (``generators_t.p`` en MW).
+2. ``compute_reservoir_levels()`` convertit ce dispatch en décharge (m³/s),
+   charge les apports naturels depuis les CSV hydro, et applique le bilan
+   hydraulique pas à pas pour chaque snapshot.
+3. La sortie (fraction [0-1]) peut être visualisée ou réinjectée dans
+   l'OPF via ``water_value_cost()`` pour un dispatch sensible au niveau d'eau.
+
+Example:
     from harmoniq.modules.reseau_bis.utils.reservoir_tracker import (
         compute_reservoir_levels,
         water_value_cost,
     )
 
     levels = compute_reservoir_levels(network, db)
-    # levels : DataFrame index=snapshots, colonnes=nom barrage, valeurs=fraction [0-1]
-
     costs = water_value_cost(levels.iloc[-1].values)
-    # costs : array de coûts marginaux ($/MWh) pour chaque barrage au dernier snapshot
 """
 
 import logging
@@ -56,32 +54,24 @@ def compute_reservoir_levels(
 ) -> pd.DataFrame:
     """Calcule les niveaux de réservoir à chaque snapshot après le dispatch OPF.
 
-    Pour chaque barrage-réservoir trouvé dans generators_t.p, applique le bilan
-    hydraulique pas à pas :
+    Pour chaque barrage-réservoir présent dans ``generators_t.p``, applique
+    le bilan hydraulique pas à pas :
 
-        V[t+1] = clamp(V[t] + inflow(t)×Δt − discharge(t)×Δt,  0,  V_max)
+        V[t+1] = clamp(V[t] + inflow(t)×Δt − discharge(t)×Δt, 0, V_max)
 
-    où :
-        inflow(t)    = apport naturel journalier (m³/s) du CSV hydro
-        discharge(t) = debit_max × (P_dispatch[t] / P_max)          [m³/s]
-        Δt           = durée du snapshot (snapshot_weightings × 3600 s)
-        V_max        = volume_reservoir de la DB                      [m³]
+    où ``inflow(t)`` est l'apport naturel journalier (m³/s) issu du CSV hydro,
+    ``discharge(t) = debit_max × (P_dispatch[t] / P_max)`` (m³/s),
+    ``Δt = snapshot_weightings × 3 600 s``, et ``V_max`` est le volume de la DB.
 
-    Paramètres
-    ----------
-    network : pypsa.Network
-        Réseau après run_dispatch_and_flow(). generators_t.p doit être renseigné.
-    db : Session SQLAlchemy
-        Session DB pour lire les barrages (type_barrage, volume_reservoir, etc.).
-    initial_levels : dict optionnel
-        {nom_barrage: fraction [0-1]}. Défaut : 0.70 pour tout barrage absent.
+    Args:
+        network: Réseau PyPSA après ``run_dispatch_and_flow()``. ``generators_t.p``
+            doit être renseigné.
+        db: Session SQLAlchemy pour lire les barrages (type_barrage, volume, etc.).
+        initial_levels: Dict ``{nom_barrage: fraction [0-1]}``. Défaut : 0.70.
 
-    Retourne
-    --------
-    pd.DataFrame
-        index   = snapshots du réseau
-        colonnes = nom de chaque barrage-réservoir présent dans generators_t.p
-        valeurs  = fraction [0-1] du volume utile à chaque snapshot
+    Returns:
+        DataFrame index = snapshots, colonnes = noms des barrages-réservoirs,
+        valeurs = fraction [0-1] du volume utile.
     """
     from harmoniq.db.CRUD import read_all_hydro
 
@@ -172,21 +162,22 @@ def compute_reservoir_levels(
 # ---------------------------------------------------------------------------
 
 def water_value_cost(niveaux: np.ndarray) -> np.ndarray:
-    """Coût marginal de l'eau ($/MWh) en fonction du niveau de réservoir [0-1].
+    """Calcule le coût marginal de l'eau ($/MWh) en fonction du niveau de réservoir.
 
-    Calibration HQ (reprise de energy_utils.calcul_cout_reservoir_vectorized) :
-        niveau = 1.0  →  5 $/MWh  (réservoir plein, eau abondante)
-        niveau = 0.25 → ~14 $/MWh (seuil critique)
-        niveau = 0.0  → 35 $/MWh  (réservoir vide, économiser l'eau)
+    Calibration :
 
-    En dessous du seuil critique (0.25), la croissance est exponentielle pour
-    forcer le LP à éviter le vidage complet des réservoirs.
+    - niveau = 1.0 →  5 $/MWh (réservoir plein)
+    - niveau = 0.25 → ~14 $/MWh (seuil critique)
+    - niveau = 0.0 → 35 $/MWh (réservoir vide)
 
-    Utilisations :
-        1. Visualisation : colorier les barrages selon urgence hydraulique.
-        2. Intra-OPF (étape suivante) :
-               network.generators_t.marginal_cost[nom] = water_value_cost(levels[nom])
-           → L'OPF dispatch moins un barrage bas et plus un barrage plein.
+    En dessous du seuil critique (0.25), la croissance est exponentielle afin
+    d'inciter le LP à éviter le vidage complet des réservoirs.
+
+    Args:
+        niveaux: Tableau de niveaux de réservoir [0-1].
+
+    Returns:
+        Tableau de coûts marginaux en $/MWh.
     """
     COUT_MIN      = 5.0
     COUT_MAX      = 35.0
@@ -214,8 +205,8 @@ def water_value_cost(niveaux: np.ndarray) -> np.ndarray:
 class ReservoirDamFeed:
     """Métadonnées d'un barrage réservoir pour le feed-forward hydraulique chunk-par-chunk.
 
-    Pré-chargé une seule fois avant l'optimisation (via build_reservoir_feed_data).
-    L'optimiseur met à jour current_level après chaque chunk pour le prochain.
+    Pré-chargé une seule fois avant l'optimisation via ``build_reservoir_feed_data``.
+    L'optimiseur met à jour ``current_level`` après chaque chunk.
     """
     nom: str
     p_max_mw: float
@@ -233,22 +224,17 @@ def build_reservoir_feed_data(
 ) -> List[ReservoirDamFeed]:
     """Pré-charge les données de feed-forward pour tous les barrages réservoirs.
 
-    À appeler une seule fois après creer_reseau(), avant run_dispatch_and_flow().
-    Le résultat est passé à l'optimiseur qui met à jour current_level après chaque chunk.
+    À appeler une seule fois après ``creer_reseau()``, avant ``run_dispatch_and_flow()``.
+    Le résultat est passé à l'optimiseur qui met à jour ``current_level`` après chaque chunk.
 
-    Paramètres
-    ----------
-    network : pypsa.Network
-        Réseau PyPSA construit (snapshots requis).
-    db : Session SQLAlchemy
-        Session pour lire les barrages depuis la DB.
-    initial_levels : dict optionnel
-        {nom_barrage: fraction [0-1]}. Défaut : 0.70.
+    Args:
+        network: Réseau PyPSA construit (snapshots requis).
+        db: Session SQLAlchemy pour lire les barrages depuis la DB.
+        initial_levels: Dict ``{nom_barrage: fraction [0-1]}``. Défaut : 0.70.
 
-    Retourne
-    --------
-    List[ReservoirDamFeed]
-        Un élément par barrage réservoir présent dans network.generators.
+    Returns:
+        Liste de :class:`ReservoirDamFeed`, un élément par barrage réservoir
+        présent dans ``network.generators``.
     """
     from harmoniq.db.CRUD import read_all_hydro
 
@@ -311,15 +297,19 @@ def build_reservoir_feed_data(
 def _load_inflow(dam: Any, snapshots: pd.DatetimeIndex) -> np.ndarray:
     """Charge l'apport naturel journalier (m³/s) aligné sur les snapshots.
 
-    Stratégie :
-    - Fichier : {_APPORT_DIR}/{dam.id_HQ}.csv  (colonnes : time, streamflow)
-    - Pour chaque snapshot, lookup du jour correspondant (normalize() → minuit).
-    - Si le jour est absent du CSV → nearest date.
-    - Si le fichier est absent → _DEFAULT_INFLOW_M3S pour tous les snapshots.
+    Lit ``{_APPORT_DIR}/{dam.id_HQ}.csv`` (colonnes : time, streamflow) et
+    construit une climatologie moyenne par (mois, jour) sur tout l'historique,
+    puis réindexe chaque snapshot sur son (mois, jour). Cette approche est
+    indépendante de l'année de simulation (compatible avec des scénarios futurs).
 
-    Note : pour des snapshots hebdomadaires, la valeur journalière est utilisée
-    telle quelle (représentative de la semaine). Le Δt dans compute_reservoir_levels
-    s'occupe de convertir m³/s → m³ sur la durée correcte du snapshot.
+    Si le fichier est absent, retourne ``_DEFAULT_INFLOW_M3S`` pour tous les snapshots.
+
+    Args:
+        dam: Objet barrage avec les attributs ``id_HQ`` et ``nom``.
+        snapshots: Index temporel du réseau.
+
+    Returns:
+        Tableau NumPy de débits (m³/s), un par snapshot.
     """
     apport_path = _APPORT_DIR / f"{dam.id_HQ}.csv"
 

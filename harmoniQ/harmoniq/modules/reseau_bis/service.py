@@ -1,11 +1,7 @@
-﻿"""Orchestration du service `reseau_bis`.
+﻿"""Orchestration du service ``reseau_bis``.
 
-Ce fichier conserve volontairement des noms :
-- `charger_scenario`
-- `creer_reseau`
-- `calculer_production`
-
-pour faciliter la migration depuis l'ancien `InfraReseau`.
+Expose ``InfraReseauBis`` et la façade fonctionnelle ``simulate_network``
+pour l'intégration avec les routes REST.
 """
 
 from datetime import timedelta
@@ -23,7 +19,7 @@ from .utils.reservoir_tracker import compute_reservoir_levels, build_reservoir_f
 
 
 def get_reseau_bis_todo_list():
-    """Aggrège les TODO de tous les sous-modules."""
+    """Agrège les listes de tâches de tous les sous-modules."""
     return (
         get_loader_todo_list()
         + get_builder_todo_list()
@@ -33,7 +29,7 @@ def get_reseau_bis_todo_list():
 
 
 class InfraReseauBis:
-    """Gabarit minimal inspire de la classe `InfraReseau`."""
+    """Service de simulation réseau PyPSA pour un groupe d'infrastructures donné."""
 
     def __init__(self, liste_infra: Any):
         self.liste_infra = liste_infra
@@ -43,26 +39,38 @@ class InfraReseauBis:
         self.data_loader = NetworkDataLoaderBis()
 
     def charger_scenario(self, scenario: Any) -> None:
-        """Attache le scenario actif a l'instance de service."""
+        """Attache le scénario actif à l'instance.
+
+        Args:
+            scenario: Objet scénario (date_de_debut, date_de_fin, pas_de_temps, etc.).
+        """
         self.scenario = scenario
 
     def _ensure_scenario(self) -> None:
-        """Valide qu'un scenario est charge avant d'executer le workflow."""
+        """Vérifie qu'un scénario est chargé avant d'exécuter le workflow.
+
+        Raises:
+            ValueError: Si aucun scénario n'a été attribué via ``charger_scenario``.
+        """
         if self.scenario is None:
             raise ValueError("Le scenario n'est pas charge")
 
     def creer_reseau(self, db: Any, resolution: str = "hebdomadaire") -> pypsa.Network:
-        """Construit le reseau PyPSA a partir de la topologie, generation et demande.
+        """Construit le réseau PyPSA à partir de la topologie, de la génération et de la demande.
 
-        resolution : "horaire" (8760 snapshots) ou "hebdomadaire" (52 moyennes hebdo, défaut).
-        Le mode hebdomadaire réduit le LP-OPF à 1 seul appel solver au lieu de 37.
+        Args:
+            db: Session SQLAlchemy.
+            resolution: ``"horaire"`` (8 760 snapshots) ou ``"hebdomadaire"`` (52 moyennes).
+                Le mode hebdomadaire réduit significativement le temps de résolution du LP-OPF.
+
+        Returns:
+            Réseau PyPSA prêt pour l'optimisation.
         """
         self._ensure_scenario()
 
         t0 = time.time()
 
-        # Charger la topologie une seule fois et la passer aux loaders de profils
-        # pour éviter le double chargement du xlsx.
+        # Charger la topologie une seule fois pour éviter un double aller-retour DB.
         topology = self.data_loader.load_topology_from_db(db)
         topology = BusConnector(topology).connect_new_infras(self.liste_infra)
         buses_df = topology.get("buses", pd.DataFrame())
@@ -80,7 +88,7 @@ class InfraReseauBis:
 
         self.timers["load_data"] = time.time() - t0
 
-        # Dériver les snapshots depuis les profils rééchantillonnés (index réel)
+        # Dériver les snapshots depuis les profils rééchantillonnés.
         p_max_pu = gen_profiles.get("p_max_pu")
         if isinstance(p_max_pu, pd.DataFrame) and not p_max_pu.empty:
             snapshots = p_max_pu.index
@@ -109,10 +117,16 @@ class InfraReseauBis:
         flow_mode: str = "ac",
         resolution: str = "hebdomadaire",
     ) -> Dict[str, Any]:
-        """Execute optimisation + flux puis retourne une reponse API prete.
+        """Exécute l'optimisation LP-OPF, le flux de puissance et retourne une réponse API.
 
-        resolution : "horaire" ou "hebdomadaire" (défaut).
-        is_journalier : conservé pour compatibilité API (non utilisé en interne).
+        Args:
+            db: Session SQLAlchemy.
+            is_journalier: Conservé pour compatibilité API — non utilisé en interne.
+            flow_mode: Mode d'écoulement de puissance (``"ac"`` ou ``"dc"``).
+            resolution: ``"horaire"`` ou ``"hebdomadaire"`` (défaut).
+
+        Returns:
+            Dict de réponse API formaté par ``format_api_response``.
         """
         self._ensure_scenario()
 
@@ -121,8 +135,7 @@ class InfraReseauBis:
         if self.network is None:
             self.creer_reseau(db, resolution=resolution)
 
-        # Pré-charger les métadonnées des barrages réservoirs pour le feed-forward OPF.
-        # Doit être fait APRÈS creer_reseau() (snapshots connus) et AVANT l'optimiseur.
+        # Pré-charger les données des barrages réservoirs (snapshots requis, avant l'optimiseur).
         t_feed = time.time()
         reservoir_feed = build_reservoir_feed_data(self.network, db)
         self.timers["reservoir_feed_build"] = time.time() - t_feed
@@ -160,7 +173,14 @@ class InfraReseauBis:
 
 
     def _get_infras(self, infra_group: Any) -> Dict[str, list]:
-        """Instancie les modules d'infrastructure a partir d'un infra_group."""
+        """Instancie les modules d'infrastructure à partir d'un groupe d'infras.
+
+        Args:
+            infra_group: Objet contenant les listes d'infrastructures par type.
+
+        Returns:
+            Dict ``{type: [instances]}`` avec les modules d'infrastructure hydratés.
+        """
         from harmoniq.modules.eolienne import InfraParcEolienne
         from harmoniq.modules.solaire import InfraSolaire
         from harmoniq.modules.thermique import InfraThermique
@@ -193,7 +213,14 @@ class InfraReseauBis:
         }
 
     def calculer_cout(self, infra_group: Any) -> Dict[str, list]:
-        """Calcule les coûts de construction et annuels pour chaque infrastructure."""
+        """Calcule les coûts de construction et annuels pour chaque infrastructure.
+
+        Args:
+            infra_group: Objet contenant les listes d'infrastructures par type.
+
+        Returns:
+            Dict ``{type: [{"id", "cout_construction", "cout_annuel", ...}]}``.
+        """
         results = self._get_infras(infra_group)
         for key in results:
             results[key] = [
@@ -212,7 +239,14 @@ class InfraReseauBis:
         return results
 
     def calculer_co2(self, infra_group: Any) -> Dict[str, list]:
-        """Calcule les émissions CO2 de construction et annuelles pour chaque infrastructure."""
+        """Calcule les émissions CO2 de construction et annuelles pour chaque infrastructure.
+
+        Args:
+            infra_group: Objet contenant les listes d'infrastructures par type.
+
+        Returns:
+            Dict ``{type: [{"id", "co2_annuel", "co2_construction", ...}]}``.
+        """
         results = self._get_infras(infra_group)
         for key in results:
             results[key] = [
@@ -240,7 +274,19 @@ def simulate_network(
     flow_mode: str = "ac",
     resolution: str = "hebdomadaire",
 ) -> Dict[str, Any]:
-    """Facade fonctionnelle pour integration route/service."""
+    """Façade fonctionnelle pour l'intégration route/service.
+
+    Args:
+        scenario: Scénario de simulation.
+        liste_infra: Groupe d'infrastructures.
+        db: Session SQLAlchemy.
+        is_journalier: Conservé pour compatibilité API.
+        flow_mode: Mode d'écoulement de puissance (``"ac"`` ou ``"dc"``).
+        resolution: Résolution temporelle (``"horaire"`` ou ``"hebdomadaire"``).
+
+    Returns:
+        Dict de réponse API formaté par ``format_api_response``.
+    """
     infra_reseau = InfraReseauBis(liste_infra)
     infra_reseau.charger_scenario(scenario)
     return infra_reseau.calculer_production(

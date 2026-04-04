@@ -1,14 +1,14 @@
-"""Optimisation LP-DC + écoulement de puissance AC.
+"""Optimisation LP-OPF (DC) et écoulement de puissance AC.
 
-Séquence normale :
-    1. network.optimize(solver_name)  → LP-OPF DC : dispatch optimal (minimise coûts)
-    2. network.pf()                   → AC power flow : tensions, Q, chargement MVA réel
+Séquence d'exécution normale :
 
-Règle de robustesse :
-    Si l'OPF est infaisable (ex. nouvelle centrale dépasse la capacité des lignes),
-    on relâche toutes les contraintes thermiques (s_nom → 99999), on relance,
-    puis on flague les lignes surchargées dans constraint_warnings.
-    La simulation retourne toujours un résultat.
+1. ``network.optimize(solver_name)`` — LP-OPF DC : dispatch optimal minimisant les coûts.
+2. ``network.pf()`` — AC power flow : tensions, Q, chargement MVA réel.
+
+Si l'OPF est infaisable (ex. nouvelle centrale dépassant la capacité des lignes),
+les contraintes thermiques sont relâchées (``s_nom → 99999``), l'optimisation est
+relancée, et les lignes surchargées sont signalées dans ``constraint_warnings``.
+La simulation retourne toujours un résultat.
 """
 
 import gc
@@ -25,16 +25,16 @@ logger = logging.getLogger(__name__)
 
 _RELAX_SNOM = 99_999.0   # MVA non-contraignant
 
-# Prime hivernale sur la valeur de l'eau ($/MWh) — Jan à Déc
-# Dupliquée depuis data_loader pour éviter l'import circulaire.
-# Relevée pour que le water value hivernal (base ~6.5 $/MWh + prime) dépasse
-# le prix import Ontario (15 $/MWh) → LP importe en pointe jan/fév/déc
-# plutôt que de dépléter les réservoirs stratégiques.
+# Prime hivernale sur la valeur de l'eau ($/MWh), Jan à Déc.
+# Dupliquée depuis data_loader pour éviter un import circulaire.
+# En hiver (jan/fév/déc), la prime élève le coût de l'eau au-dessus du prix
+# import Ontario (~15 $/MWh), incitant le LP à importer plutôt qu'à dépléter
+# les réservoirs stratégiques.
 _WINTER_PREMIUM = [12.0, 12.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 5.0, 12.0]
 
 
 def get_optimizer_todo_list() -> List[str]:
-    """Liste actionnable des éléments à implémenter dans l'optimiseur."""
+    """Retourne la liste des tâches à implémenter dans l'optimiseur."""
     return [
         "Ajouter la logique de pilotage import/export via Links (limites horaires).",
         "Ajouter un mode journalier cohérent (agrégation des snapshots).",
@@ -48,20 +48,25 @@ def run_dispatch_and_flow(
     solver_name: str = "highs",
     reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Dict[str, Any]:
-    """Exécute le dispatch LP-DC puis l'écoulement de puissance.
+    """Exécute le dispatch LP-OPF puis l'écoulement de puissance.
 
-    Modes disponibles :
-        "dc"    — LOPF seul (dispatch optimal, pas de pertes calculées)
-        "ac"    — LOPF puis Newton-Raphson PF (pertes + tensions + chargement MVA)
-        "dc+ac" — alias de "ac" (par défaut)
+    Args:
+        network: Réseau PyPSA construit par ``build_pypsa_network()``.
+        mode: Mode d'écoulement : ``"dc"`` (LOPF seul), ``"ac"`` ou ``"dc+ac"``
+            (LOPF puis Newton-Raphson PF, avec pertes et tensions AC).
+        solver_name: Nom du solveur LP (défaut : ``"highs"``).
+        reservoir_feed: Données de feed-forward hydraulique pré-chargées par
+            ``build_reservoir_feed_data()``. Optionnel.
 
-    Retourne un dict avec :
-        status              : "ok" | "ok_with_relaxation"
-        was_relaxed         : bool — True si les contraintes thermiques ont été relâchées
-        constraint_warnings : liste des lignes surchargées (après relâchement si applicable)
-        optimization_status : statut brut du solveur HiGHS
-        flow_mode           : mode d'écoulement effectivement utilisé
-        flow_status         : résultat du PF ("pf_done" | "lpf_done" | "lpf_fallback")
+    Returns:
+        Dict avec les clés suivantes :
+
+        - ``status`` — ``"ok"`` ou ``"ok_with_relaxation"``.
+        - ``was_relaxed`` — ``True`` si les contraintes thermiques ont été relâchées.
+        - ``constraint_warnings`` — liste des lignes surchargées.
+        - ``optimization_status`` — statut brut du solveur HiGHS.
+        - ``flow_mode`` — mode d'écoulement effectivement utilisé.
+        - ``flow_status`` — résultat du PF (``"pf_done"``, ``"lpf_done"``, etc.).
     """
     # Normaliser le mode
     effective_mode = "ac" if mode in ("ac", "dc+ac") else "dc"
@@ -105,24 +110,30 @@ def _run_dispatch_with_fallback(
     """LP-OPF avec fallback automatique si infaisable.
 
     Séquence de relâchement :
-      1. OPF normal (vrais s_nom + vraies capacités d'interconnexion)
-      2. Si infaisable → relâcher contraintes thermiques des lignes (s_nom → 99999)
-         ET relâcher les capacités d'export des interconnexions (Link p_max_pu → 1.0)
-         afin qu'un surplus de production puisse toujours être évacué.
-      3. Si toujours infaisable → restaurer et retourner l'erreur.
 
-    Retourne (status, detail, was_relaxed, original_snoms).
-    original_snoms est la Series des s_nom AVANT relâchement (None si pas relâché).
+    1. OPF normal (vrais ``s_nom`` + vraies capacités d'interconnexion).
+    2. Si infaisable : relâche les contraintes thermiques (``s_nom → 99999``) et
+       les capacités d'export pour permettre l'évacuation d'un surplus.
+    3. Si toujours infaisable : restaure l'état original et retourne l'erreur.
+
+    Args:
+        network: Réseau PyPSA.
+        solver_name: Nom du solveur (défaut : ``"highs"``).
+        reservoir_feed: Données de feed-forward hydraulique (optionnel).
+
+    Returns:
+        Tuple ``(status, detail, was_relaxed, original_snoms)``.
+        ``original_snoms`` est la Series des ``s_nom`` avant relâchement, ou ``None``.
     """
-    # Premier essai avec les vrais s_nom
+    # Premier essai avec les vrais s_nom.
     status, condition = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
 
     if status == "ok":
         return status, condition, False, None
 
-    # Infaisable ou erreur ? rel?cher contraintes thermiques + fallback interco cibl?
+    # Infaisable ou erreur : relâcher contraintes thermiques + fallback interco ciblé.
     logger.warning(
-        "OPF infaisable (status=%s, %s) ? rel?chement des contraintes thermiques et fallback interco?",
+        "OPF infaisable (status=%s, %s) → relâchement des contraintes thermiques et fallback interco.",
         status, condition,
     )
     original_snoms = network.lines["s_nom"].copy() if len(network.lines) > 0 else None
@@ -137,10 +148,10 @@ def _run_dispatch_with_fallback(
         _restore_interco_limits(network, original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin)
 
         if mode == "export":
-            logger.warning("Fallback interco: relaxation EXPORT uniquement (surplus ? ?vacuer).")
+            logger.warning("Fallback interco: relaxation EXPORT uniquement (surplus → évacuer).")
             _relax_interco_for_surplus(network)
         elif mode == "import":
-            logger.warning("Fallback interco: relaxation IMPORT uniquement (d?ficit ? couvrir).")
+            logger.warning("Fallback interco: relaxation IMPORT uniquement (déficit → couvrir).")
             _relax_interco_for_deficit(network)
         else:
             logger.warning("Fallback interco: relaxation IMPORT + EXPORT (secours ultime).")
@@ -151,14 +162,14 @@ def _run_dispatch_with_fallback(
 
         if status2 == "ok":
             logger.info(
-                "OPF converg? apr?s rel?chement des contraintes thermiques + fallback interco (%s). "
-                "V?rifier constraint_warnings pour les lignes/liens surcharg?s.",
+                "OPF convergé après relâchement des contraintes thermiques + fallback interco (%s). "
+                "Vérifier constraint_warnings pour les lignes/liens surchargés.",
                 mode,
             )
             return status2, condition2, True, original_snoms
 
-    # Si m?me sans contraintes ?a ne converge pas ? restaurer et retourner l'erreur
-    logger.error("OPF toujours infaisable apr?s rel?chement : %s / %s", status2, condition2)
+    # Si même sans contraintes ça ne converge pas → restaurer et retourner l’erreur
+    logger.error("OPF toujours infaisable après relâchement : %s / %s", status2, condition2)
     if original_snoms is not None:
         network.lines["s_nom"] = original_snoms
     _restore_interco_limits(network, original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin)
@@ -168,7 +179,7 @@ def _run_dispatch_with_fallback(
 def _save_interco_limits(
     network: pypsa.Network,
 ) -> Tuple[Optional[pd.Series], Optional[pd.Series], Optional[pd.Series], Optional[pd.Series]]:
-    """Sauvegarde p_min_pu/p_max_pu des Links et des market generators ?tranger."""
+    """Sauvegarde les limites p_min_pu/p_max_pu des Links et des générateurs market_*."""
     link_pmax = network.links["p_max_pu"].copy() if len(network.links) > 0 else None
     link_pmin = network.links["p_min_pu"].copy() if len(network.links) > 0 else None
     market_mask = (
@@ -183,11 +194,11 @@ def _save_interco_limits(
 
 
 def _relax_interco_for_surplus(network: pypsa.Network) -> None:
-    """Rel?che UNIQUEMENT les capacit?s d'export pour ?vacuer un surplus.
+    """Relâche uniquement les capacités d’export pour évacuer un surplus.
 
-    - Links : p_max_pu ? 1.0 (export). p_min_pu inchang? (import limit?).
-    - market_*_export : p_min_pu ? -1.0 (puits d'export plus large).
-    - market_*_import : inchang? (ne doit pas fournir en surplus).
+    - Links : p_max_pu → 1.0 (export). p_min_pu inchangé (import limité).
+    - market_*_export : p_min_pu → -1.0 (puits d’export élargi).
+    - market_*_import : inchangé.
     """
     if len(network.links) > 0:
         network.links["p_max_pu"] = 1.0
@@ -200,11 +211,11 @@ def _relax_interco_for_surplus(network: pypsa.Network) -> None:
 
 
 def _relax_interco_for_deficit(network: pypsa.Network) -> None:
-    """Rel?che UNIQUEMENT les capacit?s d'import pour couvrir un d?ficit.
+    """Relâche uniquement les capacités d’import pour couvrir un déficit.
 
-    - Links : p_min_pu ? -1.0 (import). p_max_pu inchang? (export limit?).
-    - market_*_import : p_max_pu ? 1.0 (import ?largi).
-    - market_*_export : inchang? (ne doit pas absorber en d?ficit).
+    - Links : p_min_pu → -1.0 (import). p_max_pu inchangé (export limité).
+    - market_*_import : p_max_pu → 1.0 (import élargi).
+    - market_*_export : inchangé.
     """
     if len(network.links) > 0:
         network.links["p_min_pu"] = -1.0
@@ -237,7 +248,7 @@ def _restore_interco_limits(
 
 
 def _build_interco_fallback_plan(network: pypsa.Network) -> List[str]:
-    """D?termine l'ordre de fallback interco selon le risque d?ficit/surplus."""
+    """Détermine l’ordre de fallback interco selon le risque déficit/surplus."""
     min_gap, max_gap = _estimate_supply_demand_gap(network)
     tol = 1.0  # MW
     modes: List[str] = []
@@ -255,14 +266,14 @@ def _build_interco_fallback_plan(network: pypsa.Network) -> List[str]:
         modes = ["export", "import", "both"]
 
     logger.info(
-        "Fallback interco planifi?: min_gap=%.1f MW, max_gap=%.1f MW ? %s",
-        min_gap, max_gap, " ? ".join(modes),
+        "Fallback interco planifié : min_gap=%.1f MW, max_gap=%.1f MW → %s",
+        min_gap, max_gap, " → ".join(modes),
     )
     return modes
 
 
 def _estimate_supply_demand_gap(network: pypsa.Network) -> Tuple[float, float]:
-    """Estime l'?cart offre-demande potentiel (MW) en ignorant import/export."""
+    """Estime l’écart offre-demande potentiel (MW) en ignorant import/export."""
     if len(network.snapshots) == 0:
         return 0.0, 0.0
 
@@ -396,21 +407,24 @@ def _run_dispatch(
     solver_name: str = "highs",
     reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Tuple[str, str]:
-    """LP-OPF DC via rolling horizon avec gc.collect() inter-chunks (PyPSA 1.x).
+    """LP-OPF DC via rolling horizon avec ``gc.collect()`` entre les chunks.
 
-    PyPSA 1.x n'a qu'une formulation : "kirchhoff" qui construit un tableau dense
-    (snapshots × lignes × cycles).  Le rolling horizon découpe l'année en blocs de
-    240h (~10 jours) :
-        240 × 302 × 63 × 8 bytes = 37 MB par chunk → faisable en RAM.
+    PyPSA 1.x utilise la formulation ``"kirchhoff"`` qui construit un tableau dense
+    (snapshots × lignes × cycles). Le rolling horizon découpe l'année en blocs de
+    240 h (~10 jours), soit ~37 MB par chunk, faisable en RAM.
 
-    Pourquoi ne pas utiliser optimize_with_rolling_horizon ?
-    La fragmentation du heap Python s'accumule chunk par chunk sans gc.collect().
-    Avec 25 chunks de 360h, HiGHS crashe avec "bad allocation" au chunk 19 et le
-    fallback (qui relance toute l'année) échoue immédiatement : le heap est saturé.
-    Ce loop custom appelle gc.collect() après chaque chunk et pré-alloue les
-    DataFrames résultats pour éviter la réallocation.
+    ``optimize_with_rolling_horizon`` n'est pas utilisé directement car la fragmentation
+    du heap Python s'accumule chunk par chunk. Sans ``gc.collect()``, HiGHS peut lever
+    ``"bad allocation"`` vers le chunk 19 sur une machine 16 Go. Ce loop custom appelle
+    ``gc.collect()`` après chaque chunk et pré-alloue les DataFrames résultats.
 
-    Avec horizon=240 et 8737 snapshots → ~37 itérations (≈ 10 jours/chunk).
+    Args:
+        network: Réseau PyPSA.
+        solver_name: Nom du solveur (défaut : ``"highs"``).
+        reservoir_feed: Données de feed-forward hydraulique (optionnel).
+
+    Returns:
+        Tuple ``(status, condition)`` — ``"ok"`` si tous les chunks ont convergé.
     """
     snapshots = network.snapshots
     horizon   = min(240, len(snapshots))
@@ -501,7 +515,7 @@ def _run_dispatch(
             # "bad allocation" vers le chunk 19 sur une machine 16 Go.
             gc.collect()
 
-    # Consolider et stocker dans le r?seau
+    # Consolider et stocker dans le réseau
     gen_p   = pd.concat(gen_chunks,  axis=0) if gen_chunks  else pd.DataFrame(0.0, index=snapshots, columns=gen_cols)
     link_p0 = pd.concat(link_chunks, axis=0) if link_chunks else None
     gen_p = gen_p.fillna(0.0)
@@ -509,8 +523,8 @@ def _run_dispatch(
     if link_p0 is not None:
         network.links_t["p0"] = link_p0
 
-    # ?valuer la couverture : > 5% des heures sans activit? de dispatch ? fallback
-    # On utilise la somme absolue pour ?viter une annulation artificielle
+    # Évaluer la couverture : > 5% des heures sans activité de dispatch → fallback.
+    # La somme absolue évite une annulation artificielle quand les exportations
     # lorsque des exportations (p<0) compensent la production interne (p>0).
     total_activity = gen_p.abs().sum(axis=1)
     total_net = gen_p.sum(axis=1)

@@ -1,4 +1,4 @@
-﻿"""Extraction des resultats + formatage API avec alias de compatibilite."""
+﻿"""Extraction des résultats de simulation et formatage de la réponse API."""
 
 import logging
 import math
@@ -18,7 +18,7 @@ CARRIER_ALIAS_MAP = {
 
 
 def get_results_todo_list() -> List[str]:
-    """Liste actionnable des evolutions de sortie a implementer."""
+    """Retourne la liste des évolutions à implémenter dans le module de résultats."""
     return [
         "Ajouter les KPI import/export energies (MWh) dans summary.",
         "Ajouter les KPI de pertes reseau si `pf/lpf` disponible.",
@@ -34,21 +34,23 @@ def extract_kpis(
 ) -> Dict[str, Any]:
     """Extrait la production, les métriques lignes et les KPI de synthèse.
 
-    Paramètres
-    ----------
-    network         : réseau PyPSA après optimize() + pf()/lpf()
-    optimizer_result: dict retourné par run_dispatch_and_flow() (optionnel).
-                      S'il est fourni, les constraint_warnings et was_relaxed
-                      sont inclus dans la réponse.
+    Args:
+        network: Réseau PyPSA après ``optimize()`` puis ``pf()`` ou ``lpf()``.
+        optimizer_result: Dict retourné par ``run_dispatch_and_flow()``. Si fourni,
+            ``constraint_warnings`` et ``was_relaxed`` sont inclus dans la réponse.
+        reservoir_levels: DataFrame des niveaux de réservoir par snapshot (optionnel).
 
-    Retourne un dict avec :
-        production_df       — DataFrame index=snapshots, colonnes par carrier
-        line_flows          — liste de dicts par ligne (flux, chargement %)
-        violations          — lignes surchargées selon s_nom courant
-        constraint_warnings — lignes surchargées selon s_nom ORIGINAL (si relâchement)
-        link_flows          — flux aux interconnexions (Links PyPSA)
-        summary             — KPI globaux (énergie, pertes, import/export)
-        was_relaxed         — bool : les contraintes thermiques ont été relâchées
+    Returns:
+        Dict avec les clés suivantes :
+
+        - ``production_df`` — DataFrame index=snapshots, colonnes par carrier.
+        - ``line_flows`` — liste de dicts par ligne (flux max, chargement %).
+        - ``violations`` — lignes surchargées selon ``s_nom`` courant.
+        - ``constraint_warnings`` — lignes surchargées selon ``s_nom`` original
+          (uniquement si relâchement des contraintes thermiques).
+        - ``link_flows`` — flux aux interconnexions (Links PyPSA).
+        - ``summary`` — KPI globaux (énergie, pertes, import/export).
+        - ``was_relaxed`` — ``True`` si les contraintes thermiques ont été relâchées.
     """
     production = pd.DataFrame(index=network.snapshots)
 
@@ -101,10 +103,10 @@ def extract_kpis(
     production["demande_mw"] = demand_series
 
     if demand_series.abs().sum() == 0:
-        logger.warning("Demande totale nulle dans extract_kpis (loads_t.p_set vide ou mal align?).")
+        logger.warning("Demande totale nulle dans extract_kpis (loads_t.p_set vide ou mal aligné).")
 
     if production["totale"].abs().sum() == 0:
-        logger.warning("Production totale nulle dans extract_kpis (generators_t.p vide ou mal align?).")
+        logger.warning("Production totale nulle dans extract_kpis (generators_t.p vide ou mal aligné).")
 
     # Le frontend legacy attend total_nucleaire
     if "total_nucleaire" not in production.columns:
@@ -167,10 +169,10 @@ def extract_kpis(
                 "max_import_mw": float(vals.min()),
             })
 
-    # Pertes r?seau :
-    #   - AC PF (pf_done / pf_internal_done) : p0 + p1 ? 0  ? pertes exactes I?R
-    #   - LPF (lpf_*)                        : p0 + p1 = 0 par construction (DC lossless)
-    #                                          ? estimation via P?R/V? (DC approximation)
+    # Pertes réseau :
+    #   AC PF convergé (pf_done / pf_internal_done) : p0 + p1 ≠ 0 → pertes exactes I²R.
+    #   LPF (lpf_*)                                 : p0 + p1 = 0 par construction (DC lossless)
+    #                                                 → estimation via P²R/V² (approximation DC).
     total_losses_mwh = 0.0
     losses_series = pd.Series(0.0, index=production.index)
     flow_status = optimizer_result.get("flow_status", "") if optimizer_result else ""
@@ -179,21 +181,21 @@ def extract_kpis(
     if hasattr(network, "lines_t") and "p0" in network.lines_t and not network.lines_t.p0.empty:
         p0_df = network.lines_t.p0
         if ac_pf_converged and "p1" in network.lines_t and not network.lines_t.p1.empty:
-            # AC PF converg? : pertes exactes (p1 ? -p0), pond?r?es par snap_weights
+            # AC PF convergé : pertes exactes (p1 ≠ -p0), pondérées par snap_weights.
             losses_series = (p0_df + network.lines_t.p1).abs().sum(axis=1).reindex(production.index, fill_value=0.0)
             if snap_weights is not None:
                 total_losses_mwh = float((losses_series * snap_weights).sum())
             else:
                 total_losses_mwh = float(losses_series.sum())
         else:
-            # LPF : p1 = -p0 ? estimation DC via P?R/V?
+            # LPF : p1 = -p0 → estimation DC via P²R/V².
             losses_series = _estimate_dc_losses_series_from_lpf(network, p0_df).reindex(production.index, fill_value=0.0)
             if snap_weights is not None:
                 total_losses_mwh = float((losses_series * snap_weights).sum())
             else:
                 total_losses_mwh = float(losses_series.sum())
 
-    # Bilan ?nerg?tique par snapshot (MW)
+    # Bilan énergétique par snapshot (MW).
     total_prod = production["totale"] if "totale" in production.columns else pd.Series(0.0, index=production.index)
     total_import = production["total_import"].reindex(production.index, fill_value=0.0)
     total_export = production["total_export"].reindex(production.index, fill_value=0.0)
@@ -215,11 +217,11 @@ def extract_kpis(
         worst = abs_balance.sort_values(ascending=False).head(10)
         for ts, val in worst.items():
             logger.warning(
-                "Bilan ?nerg?tique: snapshot %s error=%.2f MW (supply=%.2f, demand=%.2f, losses=%.2f)",
+                "Bilan énergétique: snapshot %s error=%.2f MW (supply=%.2f, demand=%.2f, losses=%.2f)",
                 ts, balance_error_mw.loc[ts], total_supply_to_quebec.loc[ts], demand_series.loc[ts], losses_series.loc[ts],
             )
         if n_balance_violations > len(worst):
-            logger.warning("Bilan ?nerg?tique: %d autres snapshots au-del? de ?%.1f MW", n_balance_violations - len(worst), _BALANCE_TOLERANCE_MW)
+            logger.warning("Bilan énergétique: %d autres snapshots au-delà de ±%.1f MW", n_balance_violations - len(worst), _BALANCE_TOLERANCE_MW)
 
     summary = {
         "n_buses": int(len(network.buses)) if hasattr(network, "buses") else 0,
@@ -295,7 +297,18 @@ def format_api_response(
     kpis: Dict[str, Any],
     execution_time_seconds: float,
 ) -> Dict[str, Any]:
-    """Formate la reponse avec compatibilite legacy et nouveaux clients."""
+    """Formate la réponse API à partir des KPI extraits.
+
+    Args:
+        scenario_id: Identifiant du scénario simulé.
+        liste_infra_id: Identifiant du groupe d'infrastructures.
+        is_journalier: Indicateur de granularité journalière (conservé pour compatibilité).
+        kpis: Dict retourné par ``extract_kpis()``.
+        execution_time_seconds: Durée totale d'exécution en secondes.
+
+    Returns:
+        Dict structuré prêt à être sérialisé par FastAPI/JSON.
+    """
     production_df = kpis["production_df"].copy()
 
     # Conserver la convention backend legacy: `timestamp`
@@ -343,7 +356,7 @@ def format_api_response(
 
 
 def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame, snap_weights=None) -> float:
-    """Estime les pertes I?R depuis le flux LPF (DC)."""
+    """Estime les pertes I²R totales (MWh) depuis le flux LPF (approximation DC)."""
     losses_series = _estimate_dc_losses_series_from_lpf(network, p0_df)
     if snap_weights is not None:
         w = snap_weights.reindex(losses_series.index, fill_value=1.0)
@@ -352,7 +365,7 @@ def _estimate_dc_losses_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame, sn
 
 
 def _estimate_dc_losses_series_from_lpf(network: pypsa.Network, p0_df: pd.DataFrame) -> pd.Series:
-    """Estime les pertes I?R par snapshot depuis le flux LPF (DC)."""
+    """Estime les pertes I²R par snapshot depuis le flux LPF (approximation DC)."""
     if "r" not in network.lines.columns:
         return pd.Series(0.0, index=p0_df.index)
 
