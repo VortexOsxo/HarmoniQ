@@ -458,7 +458,7 @@ class InfraReseau(Infrastructure):
                 **({"type_barrage": infra.donnees.type_barrage} if hasattr(infra.donnees, "type_barrage") else {}),
             } for infra in results[key]]
         return results
-
+        
     def calculer_co2(self, infra_group: SimulationInfraGroup):
         results = self._get_infras(infra_group)
         for key in results.keys():

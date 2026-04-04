@@ -75,5 +75,5 @@ packages = ["harmoniq"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "integration: tests nécessitant une vraie DB (exécuter manuellement avec --run-integration)",
+    "integration: tests nécessitant une vraie DB ou des APIs externes (PVGIS, etc.) — exécuter manuellement",
 ]

@@ -23,7 +23,7 @@ const SEGMENTS = [
 export class SimulationCostGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedData: any;
-    public costMode: 'annuel' | 'construction' = 'construction';
+    public costMode: 'annuel' | 'construction' = 'annuel';
     public isLoading = signal(true);
 
     constructor(
@@ -106,8 +106,6 @@ export class SimulationCostGraphService implements SimulationStep {
                 font: { size: 15 },
                 itemwidth: 30,
                 tracegroupgap: 6,
-                itemclick: false,
-                itemdoubleclick: false,
             },
             showlegend: true,
             height: Math.floor(window.innerHeight * 0.55),
@@ -115,7 +113,23 @@ export class SimulationCostGraphService implements SimulationStep {
             paper_bgcolor: 'white',
         };
 
-        Plotly.newPlot(graphServiceConfig.COST_SIMULATION_ID, data, layout);
+        const graphDiv = document.getElementById(graphServiceConfig.COST_SIMULATION_ID);
+        if (graphDiv) {
+            Plotly.newPlot(graphDiv, data, layout);
+            
+            (graphDiv as any).on('plotly_restyle', () => {
+                const hiddenLabels = (graphDiv as any).data[0].hiddenlabels || [];
+                let currentTotal = 0;
+                for (let i = 0; i < labels.length; i++) {
+                    if (!hiddenLabels.includes(labels[i])) {
+                        currentTotal += values[i];
+                    }
+                }
+                Plotly.restyle(graphDiv, {
+                    'title.text': [`<b>${currentTotal.toFixed(1)}</b><br>${unit}`]
+                } as any, [0]);
+            });
+        }
         this.isLoading.set(false);
     }
 
