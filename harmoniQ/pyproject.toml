@@ -21,8 +21,6 @@ dependencies = [
     "matplotlib",
     "scipy",
     "openpyxl",
-    "scipy",
-    "openpyxl",
     "isodate",
     # Web app dependencies
     "flask",
@@ -34,7 +32,6 @@ dependencies = [
     "pvlib",
     # hydro dependencies
     "HydroGenerate",
-    "nrel-pysam",
     "windpowerlib",
     "geopandas",
     "env-canada",
