@@ -1,10 +1,7 @@
-<<<<<<< Updated upstream
-import { Injectable } from '@angular/core';
-=======
 import { Injectable, signal } from '@angular/core';
 import { ScenariosService } from '../scenarios-service';
+import { GraphService, graphServiceConfig } from '../graph-service';
 import * as Plotly from 'plotly.js-dist-min';
->>>>>>> Stashed changes
 import { Scenario } from '@app/models/scenario';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
@@ -18,9 +15,6 @@ export class DemandeTemporalGraphService implements SimulationStep {
     public cachedData: any;
     private cachedScenarioId?: number;
 
-<<<<<<< Updated upstream
-    constructor(private http: HttpClient) { }
-=======
     /**
      * Demande de pointe (MW) — valeur maximale sur toute la période de simulation.
      * Peuplé dès que generate() a été appelé une première fois.
@@ -38,7 +32,6 @@ export class DemandeTemporalGraphService implements SimulationStep {
         private graphService: GraphService,
         private http: HttpClient,
     ) { }
->>>>>>> Stashed changes
 
     getStepName(): string {
         return 'Generation de la demande temporelle';
@@ -51,11 +44,15 @@ export class DemandeTemporalGraphService implements SimulationStep {
                 this.http.post(`${environment.apiUrl}/demande/temporal`, scenario)
             );
         }
+        
+        if (this.cachedData && this.cachedData.total_electricity) {
+            let yval = Object.values(this.cachedData.total_electricity).map((value: any) => value / 1000);
+            this.peakDemandMW.set(Math.round(Math.max(...yval)));
+            const rawKw = Object.values(this.cachedData.total_electricity) as number[];
+            this.totalDemandEnergyTWh.set(Math.round(rawKw.reduce((s, v) => s + v, 0) / 1e9 * 10) / 10);
+        }
     }
 
-<<<<<<< Updated upstream
-    clear() { }
-=======
     public handleData(apidata: any, granularity: string = 'original') {
         let xval = Object.keys(apidata.total_electricity);
         let yval = Object.values(apidata.total_electricity).map((value: any) => value / 1000);
@@ -94,5 +91,4 @@ export class DemandeTemporalGraphService implements SimulationStep {
     clear() {
         Plotly.purge(graphServiceConfig.TEMPORAL_DEMANDE_PRODUCTION_ID);
     }
->>>>>>> Stashed changes
 }

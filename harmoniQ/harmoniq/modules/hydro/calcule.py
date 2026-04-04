@@ -454,8 +454,6 @@ def estimer_daly_futur(facteur_charge):
     daly_futur = X[0] * production_future
 
     return daly_futur
-<<<<<<< Updated upstream
-=======
 
 
 # =============================================================================
@@ -732,4 +730,3 @@ if __name__ == "__main__":
     print("\nNiveau de remplissage en fin d'année :")
     for nom, lvl in sorted(niveaux_fin.items(), key=lambda x: x[1]):
         print(f"  {nom:<30} {lvl:.1%}")
->>>>>>> Stashed changes
