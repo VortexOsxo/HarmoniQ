@@ -36,6 +36,7 @@ export class SimulationPage implements AfterViewInit {
   constructor(private bootstrap: NgbModal) { }
 
   @ViewChild(ScenarioTemporalSimulation) temporalSim?: ScenarioTemporalSimulation;
+  @ViewChild(ScenarioDemandProdSankey) sankeySim?: ScenarioDemandProdSankey;
 
   simulationService = inject(SimulationService);
   stepService       = inject(SimulationStepService);

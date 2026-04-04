@@ -1,6 +1,6 @@
 <div class="sankey-container" #sankeyContainer>
 
-  <!-- SVG ribbon overlay — pointer-events disabled on SVG itself, enabled per-path -->
+  <!-- SVG ribbon overlay -->
   <svg class="sankey-svg"
        [attr.width]="svgWidth"
        [attr.height]="svgHeight"
@@ -58,9 +58,34 @@
 
   <div class="sankey-gap"></div>
 
-  <!-- ── Column 2 : Production ───────────────────────────────────────── -->
+  <!-- ── Column 2 : Vecteur énergétique ────────────────────────────────── -->
+  <div class="sankey-column energy-type-column">
+    <div class="column-header">2. Énergie</div>
+    <div class="column-nodes">
+      @for (node of data.energyTypeNodes; track node.id; let i = $index) {
+        <div
+          #energyTypeNodeEl
+          class="node-card energy-type-card"
+          [style.background-color]="node.color"
+          [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'energy-' + i"
+          (mouseenter)="onNodeMouseEnter('energy-' + i)"
+          (mouseleave)="onNodeMouseLeave()"
+        >
+          <i class="fa-solid {{ node.icon }} node-icon"></i>
+          <div class="node-info">
+            <div class="node-label">{{ node.label }}</div>
+            <div class="node-value">{{ formatMW(node.value) }}</div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="sankey-gap"></div>
+
+  <!-- ── Column 3 : Production ───────────────────────────────────────── -->
   <div class="sankey-column production-column">
-    <div class="column-header">2. Production</div>
+    <div class="column-header">3. Production</div>
     <div class="column-nodes">
       @for (node of data.productionNodes; track node.id; let i = $index) {
         <div
@@ -87,9 +112,9 @@
 
   <div class="sankey-gap"></div>
 
-  <!-- ── Column 3 : Impact CO₂ ──────────────────────────────────────── -->
+  <!-- ── Column 4 : Impact CO₂ ──────────────────────────────────────── -->
   <div class="sankey-column co2-column">
-    <div class="column-header">3. Impact CO<sub>2</sub></div>
+    <div class="column-header">4. Impact CO<sub>2</sub></div>
     <div class="column-nodes co2-nodes">
       <div #co2NodeEl class="co2-total-card"
            [class.node-card--dimmed]="hoveredNodeKey !== null && hoveredNodeKey !== 'co2'"

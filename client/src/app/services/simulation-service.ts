@@ -50,7 +50,6 @@ export class SimulationService {
             this.simulationCostGraphService.rentabiliteLoading.set(true);
             this.simulationCo2GraphService.cachedScenarioId = undefined;
             this.simulationCo2GraphService.cachedData = undefined;
-            this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
             this.simulationCo2GraphService.costMode = 'construction';
             this.simulationCo2GraphService.isLoading.set(true);
             this.simulationAnalysisGraphService.reset();
@@ -69,7 +68,6 @@ export class SimulationService {
             this.simulationCostGraphService.rentabiliteLoading.set(true);
             this.simulationCo2GraphService.cachedScenarioId = undefined;
             this.simulationCo2GraphService.cachedData = undefined;
-            this.simulationCo2GraphService.co2AnnuelFromSimulation = undefined;
             this.simulationCo2GraphService.costMode = 'construction';
             this.simulationCo2GraphService.isLoading.set(true);
             this.simulationAnalysisGraphService.reset();
@@ -128,7 +126,6 @@ export class SimulationService {
         // Compute post-temporal graphs now that simulation data is available
         const simResult = this.simulationTemporalGraphService.getCachedSimulationResult();
         if (simResult) {
-            this.simulationCo2GraphService.updateAnnuelFromSimulation(simResult);
             this.simulationCostGraphService.updateRentabiliteFromSimulation(simResult);
             this.simulationAnalysisGraphService.update(simResult);
         }

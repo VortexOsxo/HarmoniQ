@@ -26,13 +26,14 @@ interface NodeRect {
 interface ComputedFlow {
     path: string;
     color: string;
-    type: 'demand-prod' | 'prod-co2';
+    type: 'demand-energy' | 'energy-prod' | 'prod-co2';
     fromLabel: string;
     toLabel: string;
     valueMW: number;
     co2Tph: number;
-    demandIndex: number; // -1 for prod-co2 flows
-    prodIndex: number;
+    demandIndex: number;   // index into demandNodes (-1 for other types)
+    energyIndex: number;   // index into energyTypeNodes (-1 for other types)
+    prodIndex: number;     // index into productionNodes (-1 for demand-energy flows)
 }
 
 @Component({
@@ -48,6 +49,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
 
     @ViewChild('sankeyContainer') sankeyContainer!: ElementRef<HTMLElement>;
     @ViewChildren('demandNodeEl') demandNodeEls!: QueryList<ElementRef<HTMLElement>>;
+    @ViewChildren('energyTypeNodeEl') energyTypeNodeEls!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren('prodNodeEl') prodNodeEls!: QueryList<ElementRef<HTMLElement>>;
     @ViewChild('co2NodeEl') co2NodeEl!: ElementRef<HTMLElement>;
 
@@ -96,7 +98,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         else if (value >= 1)
             formatted = value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
         else formatted = value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
-        return formatted + ' MW/jour';
+        return formatted + ' MW';
     }
 
     formatCo2(value: number): string {
@@ -128,6 +130,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             const [type, idxStr] = this.hoveredNodeKey.split('-');
             const idx = parseInt(idxStr ?? '0', 10);
             if (type === 'demand') return flow.demandIndex === idx;
+            if (type === 'energy') return flow.energyIndex === idx;
             if (type === 'prod') return flow.prodIndex === idx;
             if (type === 'co2') return flow.type === 'prod-co2';
         }
@@ -152,9 +155,9 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const rect = this.sankeyContainer.nativeElement.getBoundingClientRect();
         const flow = this.computedFlows[i];
         const lines: string[] =
-            flow.type === 'demand-prod'
-                ? [`${flow.toLabel} → ${flow.fromLabel}`, `${this.formatMW(flow.valueMW)}`]
-                : [`${flow.fromLabel} → CO\u2082`, `${this.formatCo2(flow.co2Tph)} t CO\u2082/h`];
+            flow.type === 'prod-co2'
+                ? [`${flow.fromLabel} → CO\u2082`, `${this.formatCo2(flow.co2Tph)} t CO\u2082/h`]
+                : [`${flow.fromLabel} → ${flow.toLabel}`, `${this.formatMW(flow.valueMW)}`];
 
         this.tooltip = {
             x: event.clientX - rect.left + 14,
@@ -186,20 +189,22 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         this.svgHeight = containerEl.offsetHeight;
 
         const demandEls = this.demandNodeEls.toArray();
+        const energyTypeEls = this.energyTypeNodeEls.toArray();
         const prodEls = this.prodNodeEls.toArray();
 
         if (demandEls.length !== this.data.demandNodes.length) return;
+        if (energyTypeEls.length !== this.data.energyTypeNodes.length) return;
         if (prodEls.length !== this.data.productionNodes.length) return;
 
-        const demandRects = demandEls.map((el) =>
-            this.relativeRect(el.nativeElement, containerRect),
-        );
-        const prodRects = prodEls.map((el) => this.relativeRect(el.nativeElement, containerRect));
+        const demandRects = demandEls.map(el => this.relativeRect(el.nativeElement, containerRect));
+        const energyTypeRects = energyTypeEls.map(el => this.relativeRect(el.nativeElement, containerRect));
+        const prodRects = prodEls.map(el => this.relativeRect(el.nativeElement, containerRect));
         const co2Rect = this.relativeRect(this.co2NodeEl.nativeElement, containerRect);
 
         this.computedFlows = this.showProduction
             ? [
-                  ...this.computeDemandToProdFlows(demandRects, prodRects),
+                  ...this.computeDemandToEnergyFlows(demandRects, energyTypeRects),
+                  ...this.computeEnergyToProdFlows(energyTypeRects, prodRects),
                   ...this.computeProdToCo2Flows(prodRects, co2Rect),
               ]
             : [];
@@ -207,75 +212,131 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         this.cdr.detectChanges();
     }
 
-    private computeDemandToProdFlows(
+    // Demand nodes → Energy type nodes (split by electricityValue / gasValue)
+    private computeDemandToEnergyFlows(
         demandRects: NodeRect[],
-        prodRects: NodeRect[],
+        energyRects: NodeRect[],
     ): ComputedFlow[] {
         const D = this.data.demandNodes;
-        const P = this.data.productionNodes;
-        const totalProduction = P.reduce((s, n) => s + n.value, 0);
-        const totalDemand = D.reduce((s, n) => s + n.value, 0);
+        const E = this.data.energyTypeNodes;
         const R = 10;
-
-        const denom = Math.max(totalDemand, totalProduction);
-        const flowValues = D.map((dem) =>
-            P.map((prod) => (denom > 0 ? (dem.value * prod.value) / denom : 0)),
-        );
-
-        const cumAtDemand = D.map((dem, i) => {
-            const cums: number[] = [];
-            let acc = 0;
-            const innerH = demandRects[i].height - 2 * R;
-            for (let j = 0; j < P.length; j++) {
-                cums.push(acc);
-                acc += (flowValues[i][j] / dem.value) * innerH;
-            }
-            return cums;
-        });
-
-        const cumAtProd = P.map((prod, j) => {
-            const cums: number[] = [];
-            let acc = 0;
-            const innerH = prodRects[j].height - 2 * R;
-            for (let i = 0; i < D.length; i++) {
-                cums.push(acc);
-                acc += (flowValues[i][j] / prod.value) * innerH;
-            }
-            return cums;
-        });
-
         const flows: ComputedFlow[] = [];
 
-        for (let i = 0; i < D.length; i++) {
-            for (let j = 0; j < P.length; j++) {
-                const fVal = flowValues[i][j];
-                if (fVal <= 0 || P[j].value <= 0) continue;
-                const dRect = demandRects[i];
-                const pRect = prodRects[j];
+        // For each energy type node, track how much of its height is consumed
+        const energyCum = E.map(() => 0);
 
-                const hAtD = (fVal / D[i].value) * (dRect.height - 2 * R);
-                const hAtP = (fVal / P[j].value) * (pRect.height - 2 * R);
+        // Pre-compute per-energy-type totals for proportional height allocation
+        const energyTotals = E.map(e =>
+            D.reduce((s, d) => s + (e.id === 'electricity' ? d.electricityValue : d.gasValue), 0)
+        );
+
+        for (let i = 0; i < D.length; i++) {
+            const dRect = demandRects[i];
+            const totalD = D[i].value;
+            if (totalD <= 0) continue;
+
+            // Cumulative offset on the demand node side
+            let demCum = 0;
+            const demInnerH = dRect.height - 2 * R;
+
+            for (let j = 0; j < E.length; j++) {
+                const fVal = E[j].id === 'electricity' ? D[i].electricityValue : D[i].gasValue;
+                if (fVal <= 0) continue;
+
+                const eRect = energyRects[j];
+                const eInnerH = eRect.height - 2 * R;
+                const eFrac = energyTotals[j] > 0 ? fVal / energyTotals[j] : 0;
+
+                const hAtD = (fVal / totalD) * demInnerH;
+                const hAtE = eFrac * eInnerH;
 
                 const x1 = dRect.right;
+                const x2 = eRect.left;
+                const midX = (x1 + x2) / 2;
+
+                const topY1 = dRect.top + R + demCum;
+                const botY1 = topY1 + hAtD;
+                const topY2 = eRect.top + R + energyCum[j];
+                const botY2 = topY2 + hAtE;
+
+                flows.push({
+                    path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
+                    color: E[j].color,
+                    type: 'demand-energy',
+                    fromLabel: D[i].label,
+                    toLabel: E[j].label,
+                    valueMW: fVal,
+                    co2Tph: 0,
+                    demandIndex: i,
+                    energyIndex: j,
+                    prodIndex: -1,
+                });
+
+                demCum += hAtD;
+                energyCum[j] += hAtE;
+            }
+        }
+
+        return flows;
+    }
+
+    // Energy type nodes → Production nodes (matched by energyType)
+    private computeEnergyToProdFlows(
+        energyRects: NodeRect[],
+        prodRects: NodeRect[],
+    ): ComputedFlow[] {
+        const E = this.data.energyTypeNodes;
+        const P = this.data.productionNodes;
+        const R = 10;
+        const flows: ComputedFlow[] = [];
+
+        // Cumulative offsets on the energy-type node right side
+        const energyCum = E.map(() => 0);
+
+        // For each energy type, compute total production to size proportional heights
+        const energyProdTotals = E.map(e =>
+            P.filter(p => p.energyType === e.id).reduce((s, p) => s + p.value, 0)
+        );
+
+        for (let j = 0; j < E.length; j++) {
+            const eRect = energyRects[j];
+            const eInnerH = eRect.height - 2 * R;
+            const eProdTotal = energyProdTotals[j];
+
+            for (let k = 0; k < P.length; k++) {
+                if (P[k].energyType !== E[j].id) continue;
+                if (P[k].value <= 0) continue;
+
+                const fVal = P[k].value;
+                const pRect = prodRects[k];
+                const pInnerH = pRect.height - 2 * R;
+
+                const hAtE = eProdTotal > 0 ? (fVal / eProdTotal) * eInnerH : 0;
+                const hAtP = pInnerH; // production node fully consumed by one energy type
+
+                const x1 = eRect.right;
                 const x2 = pRect.left;
                 const midX = (x1 + x2) / 2;
 
-                const topY1 = dRect.top + R + cumAtDemand[i][j];
-                const botY1 = topY1 + hAtD;
-                const topY2 = pRect.top + R + cumAtProd[j][i];
+                const topY1 = eRect.top + R + energyCum[j];
+                const botY1 = topY1 + hAtE;
+                const topY2 = pRect.top + R;
                 const botY2 = topY2 + hAtP;
 
                 flows.push({
                     path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
-                    color: P[j].color,
-                    type: 'demand-prod',
-                    fromLabel: D[i].label,
-                    toLabel: P[j].label,
+                    color: P[k].color,
+                    type: 'energy-prod',
+                    fromLabel: E[j].label,
+                    toLabel: P[k].label,
                     valueMW: fVal,
                     co2Tph: 0,
-                    demandIndex: i,
-                    prodIndex: j,
+                    demandIndex: -1,
+                    energyIndex: j,
+                    prodIndex: k,
                 });
+
+                energyCum[j] += hAtE;
             }
         }
 
@@ -284,9 +345,9 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
 
     private computeProdToCo2Flows(prodRects: NodeRect[], co2Rect: NodeRect): ComputedFlow[] {
         const P = this.data.productionNodes;
-        const co2Values = P.map((p) => this.co2Tph(p));
+        const co2Values = P.map(p => this.co2Tph(p));
         const totalCo2 = co2Values.reduce((s, v) => s + v, 0);
-        const R = 10; // card border-radius
+        const R = 10;
 
         const flows: ComputedFlow[] = [];
         let co2Cum = 0;
@@ -315,6 +376,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
                 valueMW: P[j].value,
                 co2Tph: co2Values[j],
                 demandIndex: -1,
+                energyIndex: -1,
                 prodIndex: j,
             });
 

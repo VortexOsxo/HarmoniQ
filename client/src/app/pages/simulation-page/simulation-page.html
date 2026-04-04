@@ -153,12 +153,15 @@
                 <div class="dashboard-card card-full" id="section-sankey">
                     <div class="card-header-label">
                         <i class="fa-solid fa-diagram-project card-header-icon"></i>
-                        <div>
+                        <div class="flex-grow-1">
                             <h5 class="card-header-title">Flux de production</h5>
                             <p class="card-header-desc">
                                 Répartition des flux d'énergie entre les sources de production et la demande
                             </p>
                         </div>
+                        <button class="btn card-mode-btn" (click)="sankeySim?.downloadImage()" title="Télécharger l'image">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
                     </div>
                     <app-scenario-demand-prod-sankey />
                 </div>

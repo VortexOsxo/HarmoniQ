@@ -41,6 +41,16 @@
     flex-shrink: 0;
 }
 
+.energy-type-column {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.energy-type-card {
+    font-weight: 700;
+}
+
+
 .co2-column {
     width: 145px;
     flex-shrink: 0;

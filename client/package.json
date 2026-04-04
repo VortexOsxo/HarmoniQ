@@ -35,6 +35,7 @@
     "angular-plotly.js": "^20.0.0",
     "bootstrap": "^5.3.8",
     "bootswatch": "^5.3.8",
+    "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "plotly.js-dist-min": "^3.3.1",
