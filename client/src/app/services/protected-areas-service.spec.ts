@@ -64,15 +64,15 @@ describe('ProtectedAreasService', () => {
     });
 
     it('should cache the result for the same coordinates', () => {
-      const first = service.checkProtectedArea(MOCK_LAT, MOCK_LNG);
-      const second = service.checkProtectedArea(MOCK_LAT, MOCK_LNG);
+      const first = service.checkProtectedAreaWithDetails(MOCK_LAT, MOCK_LNG);
+      const second = service.checkProtectedAreaWithDetails(MOCK_LAT, MOCK_LNG);
 
       expect(first).toBe(second);
     });
 
     it('should make separate requests for different coordinates', () => {
-      const first = service.checkProtectedArea(45.0, -73.0);
-      const second = service.checkProtectedArea(46.0, -74.0);
+      const first = service.checkProtectedAreaWithDetails(45.0, -73.0);
+      const second = service.checkProtectedAreaWithDetails(46.0, -74.0);
 
       expect(first).not.toBe(second);
     });
