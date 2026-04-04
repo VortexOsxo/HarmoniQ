@@ -4,7 +4,6 @@ from pydantic import BaseModel
 from typing import List
 
 from harmoniq.db import schemas
-from harmoniq.core.offshore import is_offshore_quebec
 
 # CRUD.py : Ce fichier contient des fonctions utilitaires pour effectuer des opérations CRUD (Create, Read, Update, Delete) sur les tables SQLAlchemy.
 # Ces fonctions sont conçues pour être génériques et peuvent être utilisées pour n'importe quelle table de la base de données.
@@ -45,12 +44,6 @@ async def read_all_data(db: Session, table: Table):
 
 async def create_data(db: Session, table: Table, data: BaseModel):
     payload = data.model_dump(exclude_unset=True)
-    if table is schemas.EolienneParc and payload.get("is_offshore") is None:
-        payload["is_offshore"] = is_offshore_quebec(
-            latitude=float(payload["latitude"]),
-            longitude=float(payload["longitude"]),
-            db=db,
-        )
     db_data = table(**payload)
     db.add(db_data)
     db.commit()
@@ -72,12 +65,6 @@ async def update_data(db: Session, table: Table, id: int, data: BaseModel):
     if db_data is None:
         return None
     payload = data.model_dump(exclude_unset=True)
-    if table is schemas.EolienneParc and payload.get("is_offshore") is None:
-        payload["is_offshore"] = is_offshore_quebec(
-            latitude=float(payload["latitude"]),
-            longitude=float(payload["longitude"]),
-            db=db,
-        )
 
     for key, value in payload.items():
         setattr(db_data, key, value)
