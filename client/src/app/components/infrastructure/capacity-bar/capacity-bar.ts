@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
-import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
+import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
 
 @Component({
   selector: 'app-capacity-bar',
@@ -13,7 +13,7 @@ import { SimulationTemporalGraphService } from '@app/services/graph-services/sim
 export class CapacityBar {
 
   private infrasService = inject(InfrastruturesService);
-  private demandeService = inject(SimulationTemporalGraphService);
+  private demandeService = inject(DemandeTemporalGraphService);
 
   /** Puissance garantie (MW) du groupe actif — mise à jour en temps réel. */
   guaranteedMW = computed(() => this.infrasService.guaranteedPowerMW());

@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { ScenariosService } from '../scenarios-service';
 import * as Plotly from 'plotly.js-dist-min';
 import { Scenario } from '@app/models/scenario';
@@ -70,20 +70,6 @@ export class SimulationTemporalGraphService implements SimulationStep {
     public cachedScenarioId?: number;
     public cachedSimulationResult: any;
     public cachedDemandeResult = signal<any>(undefined);
-
-    peakDemandMW = computed(() => {
-        const demande = this.cachedDemandeResult();
-        if (!demande || !demande.total_electricity) return null;
-        let yval = Object.values(demande.total_electricity).map((value: any) => value / 1000);
-        return Math.round(Math.max(...yval));
-    });
-
-    totalDemandEnergyTWh = computed(() => {
-        const demande = this.cachedDemandeResult();
-        if (!demande || !demande.total_electricity) return null;
-        const rawKw = Object.values(demande.total_electricity) as number[];
-        return Math.round(rawKw.reduce((s, v) => s + v, 0) / 1e9 * 10) / 10;
-    });
 
     /**
      * Bilan énergétique sur toute la période de simulation (TWh par source + demande).
