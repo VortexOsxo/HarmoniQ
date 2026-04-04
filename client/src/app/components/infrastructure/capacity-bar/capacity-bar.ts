@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
-import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
+import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
 
 @Component({
   selector: 'app-capacity-bar',
@@ -13,7 +13,7 @@ import { DemandeTemporalGraphService } from '@app/services/graph-services/demand
 export class CapacityBar {
 
   private infrasService = inject(InfrastruturesService);
-  private demandeService = inject(DemandeTemporalGraphService);
+  private simService = inject(SimulationTemporalGraphService);
 
   /** Puissance garantie (MW) du groupe actif — mise à jour en temps réel. */
   guaranteedMW = computed(() => this.infrasService.guaranteedPowerMW());
@@ -24,7 +24,7 @@ export class CapacityBar {
    * est inférieure à ce pic, le réseau ne peut pas tenir seul lors d'une vague de froid.
    * Disponible après qu'une simulation a été lancée (étape 2 du pipeline).
    */
-  peakDemandMW = computed(() => this.demandeService.peakDemandMW());
+  peakDemandMW = computed(() => this.simService.peakDemandMW());
 
   /** Pourcentage de couverture du pic de demande par la puissance garantie [0–100+]. */
   fillPercent = computed(() => {

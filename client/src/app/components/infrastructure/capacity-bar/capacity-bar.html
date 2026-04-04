@@ -10,42 +10,37 @@
 
     <span class="label-demand">
       @if (peakDemandMW() !== null) {
-        Pointe&nbsp;: <strong>{{ peakDemandMW() | number:'1.0-0' }} MW</strong>
+      Pointe&nbsp;: <strong>{{ peakDemandMW() | number:'1.0-0' }} MW</strong>
       } @else {
-        <span class="text-muted fst-italic">Lance une simulation pour voir la pointe</span>
+      <span class="text-muted fst-italic">Lancez une simulation pour voir la pointe</span>
       }
     </span>
   </div>
 
   <!-- Progress bar -->
   <div class="progress capacity-progress" title="{{ fillPercent() }}% de la demande couverte">
-    <div
-      class="progress-bar {{ barColorClass() }}"
-      role="progressbar"
-      [style.width.%]="fillPercent()"
-      [attr.aria-valuenow]="fillPercent()"
-      aria-valuemin="0"
-      aria-valuemax="100">
+    <div class="progress-bar {{ barColorClass() }}" role="progressbar" [style.width.%]="fillPercent()"
+      [attr.aria-valuenow]="fillPercent()" aria-valuemin="0" aria-valuemax="100">
       @if (fillPercent() >= 20) {
-        {{ fillPercent() }}%
+      {{ fillPercent() }}%
       }
     </div>
   </div>
 
   <!-- Coverage status badge -->
   @if (peakDemandMW() !== null) {
-    <div class="coverage-status">
-      @if (fillPercent() >= 100) {
-        <span class="badge text-bg-success">
-          <i class="fa-solid fa-circle-check me-1"></i>Pointe couverte
-        </span>
-      } @else {
-        <span class="badge text-bg-danger">
-          <i class="fa-solid fa-triangle-exclamation me-1"></i>
-          Déficit à la pointe : {{ (peakDemandMW()! - guaranteedMW()) | number:'1.0-0' }} MW
-        </span>
-      }
-    </div>
+  <div class="coverage-status">
+    @if (fillPercent() >= 100) {
+    <span class="badge text-bg-success">
+      <i class="fa-solid fa-circle-check me-1"></i>Pointe couverte
+    </span>
+    } @else {
+    <span class="badge text-bg-danger">
+      <i class="fa-solid fa-triangle-exclamation me-1"></i>
+      Déficit à la pointe : {{ (peakDemandMW()! - guaranteedMW()) | number:'1.0-0' }} MW
+    </span>
+    }
+  </div>
   }
 
 </div>
