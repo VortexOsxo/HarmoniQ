@@ -74,7 +74,7 @@ class Meteo:
             * math.cos(math.radians(lat2))
             * math.sin(dlon / 2) ** 2
         )
-        return 2 * radius_km * math.asin(math.sqrt(a))
+        return 2 * R * math.asin(math.sqrt(a))
 
     @classmethod
     def _get_weather_data(cls, Latitude, Longitude, start_date, end_date):
@@ -342,7 +342,7 @@ class WeatherHelper:
             self.end_time = self.end_time.replace(year=_REFERENCE_YEAR)
 
         # Open-Meteo demande un end_date exclusif => ajouter 1 jour
-        df = _Meteo.get_weather_or_nearest(
+        df = Meteo.get_weather_or_nearest(
             Latitude=self.position.latitude,
             Longitude=self.position.longitude,
             start_date=self.start_time,
