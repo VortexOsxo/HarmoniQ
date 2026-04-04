@@ -363,19 +363,23 @@ export class ProtectedAreasService {
         return null;
     }
 
-    private protectedAreaCache = new Map<string, Promise<string | null>>();
+    private protectedAreaDetailsCache = new Map<string, Promise<{ name: string, categoryId: number } | null>>();
 
     checkProtectedArea(lat: number, lng: number): Promise<string | null> {
+        return this.checkProtectedAreaWithDetails(lat, lng).then(res => res ? res.name : null);
+    }
+
+    checkProtectedAreaWithDetails(lat: number, lng: number): Promise<{ name: string, categoryId: number } | null> {
         const cacheKey = `${lat},${lng}`;
-        if (this.protectedAreaCache.has(cacheKey)) {
-            return this.protectedAreaCache.get(cacheKey)!;
+        if (this.protectedAreaDetailsCache.has(cacheKey)) {
+            return this.protectedAreaDetailsCache.get(cacheKey)!;
         }
-        const promise = this.fetchProtectedArea(lat, lng);
-        this.protectedAreaCache.set(cacheKey, promise);
+        const promise = this.fetchProtectedAreaWithDetails(lat, lng);
+        this.protectedAreaDetailsCache.set(cacheKey, promise);
         return promise;
     }
 
-    private async fetchProtectedArea(lat: number, lng: number): Promise<string | null> {
+    private async fetchProtectedAreaWithDetails(lat: number, lng: number): Promise<{ name: string, categoryId: number } | null> {
         const R = 6378137;
         const x = R * lng * Math.PI / 180;
         const y = R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
@@ -431,12 +435,33 @@ export class ProtectedAreasService {
                 const response = await fetch(reqUrl);
                 const data = await response.json();
                 if (data.results && data.results.length > 0) {
-                    const attrs = data.results[0].attributes;
+                    const result = data.results[0];
+                    const attrs = result.attributes;
                     let title = attrs['Toponyme'] || attrs['TOPONYME'] || attrs['NOM_ID_MGE'] || attrs['Nom_identification'] || attrs['NAME_F'] || attrs['NAME_E'] || attrs['FNAME'] || attrs['Nom de la réserve indienne ou de la terre indienne'];
                     const isAuto = attrs['GEOCODE'] || attrs['Identifiant_unique'] || attrs['DOMANIALIT'] || attrs['Domanialité'] || attrs['NOM_ID_MGE'] || attrs['Nom_identification'];
-                    if (isAuto && title) return `Communauté autochtone de ${title}`;
-                    if (isAuto) return 'Communauté autochtone';
-                    return title || 'Aire protégée';
+
+                    let finalName = title || 'Aire protégée';
+                    if (isAuto && title) finalName = `Communauté autochtone de ${title}`;
+                    else if (isAuto) finalName = 'Communauté autochtone';
+
+                    let matchedCategoryId = -1;
+                    const resultLayerId = result.layerId;
+                    for (const id of ALL_LAYER_IDS) {
+                        const node = LAYER_NODE_MAP.get(id);
+                        if (!node) continue;
+                        const nodeUrl = node.mapServerUrl || this.MAP_SERVER_URL;
+                        if (nodeUrl !== url) continue;
+                        
+                        if (node.serverLayerIds && node.serverLayerIds.includes(resultLayerId)) {
+                            matchedCategoryId = node.id;
+                            break;
+                        } else if (node.serverLayerId === resultLayerId || (node.serverLayerId === undefined && id === resultLayerId)) {
+                            matchedCategoryId = node.id;
+                            break;
+                        }
+                    }
+
+                    return { name: finalName, categoryId: matchedCategoryId };
                 }
             } catch {
             }

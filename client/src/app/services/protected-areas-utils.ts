@@ -1,3 +1,5 @@
+import { FIRST_NATION_DATA } from '../data/first-nation.data';
+
 export interface LayerNode {
     id: number;
     name: string;
@@ -116,6 +118,10 @@ export function buildIdentifyHtml(attrs: Record<string, any>): string {
         'Analyse BFEC',
         'Numéro périmètre UA',
         'Numéro TDA',
+        'Domanialité',
+        'Région administrative',
+        'MRC',
+        'Date de publication'
     ]);
 
     const fields: [string, string][] = [
@@ -167,6 +173,13 @@ export function buildIdentifyHtml(attrs: Record<string, any>): string {
         if (isAuto && hiddenForAuto.has(label)) continue;
         if (value) {
             html += `<b>${label}:</b> ${value}<br>`;
+        }
+    }
+
+    if (isAuto && toponyme) {
+        const nationData = FIRST_NATION_DATA.find(d => d.Région.toLowerCase() === toponyme.toLowerCase());
+        if (nationData && nationData.Fait) {
+            html += `<b>Fait:</b> ${nationData.Fait}<br>`;
         }
     }
 
