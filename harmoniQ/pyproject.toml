@@ -59,6 +59,9 @@ migrate-weibull-v2 = "harmoniq.scripts.migrate_add_weibull_v2_columns:main"
 backfill-weibull = "harmoniq.scripts.backfill_weibull_eolien:main"
 fetch-era5-qc-2024 = "harmoniq.scripts.fetch_era5_quebec_2024:main"
 select-wind-sites-2035 = "harmoniq.scripts.select_wind_sites_2035:main"
+migrate-offshore-mesh = "harmoniq.scripts.migrate_add_offshore_mesh_schema:main"
+build-offshore-mesh = "harmoniq.scripts.build_quebec_offshore_mesh:main"
+backfill-offshore-eolien = "harmoniq.scripts.backfill_offshore_eolien:main"
 
 [project.optional-dependencies]
 dev = [

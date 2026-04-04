@@ -1,4 +1,4 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, NgZone, effect, signal } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
@@ -9,6 +9,17 @@ import { ProtectedAreasService } from './protected-areas-service';
 import { InfraDetailService } from './infra-detail-service';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
+
+// Water color on the CartoDB light basemap
+const WATER_COLOR = { r: 212, g: 218, b: 220 }; // #d4dadc
+const WATER_COLOR_TOLERANCE = 12;
+
+// Types that are NOT allowed on water
+const WATER_BLOCKED_TYPES: Record<string, string> = {
+  'thermique': 'centrales thermiques',
+  'solaire': 'parcs solaires',
+  'nucleaire': 'centrales nucléaires',
+};
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +51,8 @@ export class MapService {
     private infrasService: InfrastruturesService,
     private mapLineService: MapLineService,
     private protectedAreasService: ProtectedAreasService,
-    private infraDetailService: InfraDetailService
+    private infraDetailService: InfraDetailService,
+    private ngZone: NgZone
   ) {
     effect(() => {
       // reload markers when selected infra group changes
@@ -120,7 +132,8 @@ export class MapService {
     // Texture of the map, could be fun to add some more
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-    }).addTo(map);
+      crossOrigin: 'anonymous',
+    } as any).addTo(map);
 
     var bounds: L.LatLngBoundsExpression = [
       [40.0, -90.0],
@@ -133,6 +146,7 @@ export class MapService {
     });
 
     const infrasService = this.infrasService;
+    const self = this;
     map.getContainer().addEventListener("drop", function (e: any) {
       e.preventDefault();
       const [className, type] = e.dataTransfer.getData("text/plain").split(",");
@@ -140,6 +154,15 @@ export class MapService {
       const mapPos = map.getContainer().getBoundingClientRect();
       const x = e.clientX - mapPos.left;
       const y = e.clientY - mapPos.top;
+
+      // Check if drop is on water and type is blocked
+      const isOnWater = self.isPixelWater(map, x, y);
+      const blockedLabel = WATER_BLOCKED_TYPES[type];
+
+      if (isOnWater && blockedLabel) {
+        self.showWaterBlockedToast(`Impossible d'ajouter des ${blockedLabel} dans une zone d'eau.`);
+        return;
+      }
 
       const latlng = map.containerPointToLatLng([x, y]);
 
@@ -272,5 +295,84 @@ export class MapService {
     if (this.clusterGroup) {
       this.clusterGroup.refreshClusters();
     }
+  }
+
+  /**
+   * Check if a pixel on the map corresponds to water by reading the tile color.
+   */
+  private isPixelWater(map: L.Map, containerX: number, containerY: number): boolean {
+    try {
+      const container = map.getContainer();
+      const tilePane = container.querySelector('.leaflet-tile-pane') as HTMLElement;
+      if (!tilePane) return false;
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return false;
+
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+
+      // Get all visible tile images
+      const tileImages = tilePane.querySelectorAll('img.leaflet-tile') as NodeListOf<HTMLImageElement>;
+
+      for (const img of Array.from(tileImages)) {
+        if (!img.complete || img.naturalWidth === 0) continue;
+
+        // Get the tile's rendered position relative to the container
+        const imgRect = img.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        const dx = imgRect.left - containerRect.left;
+        const dy = imgRect.top - containerRect.top;
+
+        try {
+          ctx.drawImage(img, dx, dy, imgRect.width, imgRect.height);
+        } catch {
+          // CORS or other drawing errors — skip this tile
+        }
+      }
+
+      const pixel = ctx.getImageData(containerX, containerY, 1, 1).data;
+      const [r, g, b] = [pixel[0], pixel[1], pixel[2]];
+
+      const dr = Math.abs(r - WATER_COLOR.r);
+      const dg = Math.abs(g - WATER_COLOR.g);
+      const db = Math.abs(b - WATER_COLOR.b);
+
+      return dr <= WATER_COLOR_TOLERANCE && dg <= WATER_COLOR_TOLERANCE && db <= WATER_COLOR_TOLERANCE;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Show a temporary toast notification on the map.
+   */
+  private showWaterBlockedToast(message: string): void {
+    // Remove any existing toast
+    const existing = document.querySelector('.hq-water-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'hq-water-toast';
+    toast.innerHTML = `
+      <span>${message}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    // trigger enter animation
+    requestAnimationFrame(() => {
+      toast.classList.add('hq-water-toast--visible');
+    });
+
+    setTimeout(() => {
+      toast.classList.remove('hq-water-toast--visible');
+      toast.classList.add('hq-water-toast--exit');
+      toast.addEventListener('transitionend', () => toast.remove());
+      // fallback removal
+      setTimeout(() => toast.remove(), 600);
+    }, 3500);
   }
 }

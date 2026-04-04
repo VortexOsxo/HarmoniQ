@@ -43,7 +43,8 @@ async def read_all_data(db: Session, table: Table):
 
 
 async def create_data(db: Session, table: Table, data: BaseModel):
-    db_data = table(**data.model_dump())
+    payload = data.model_dump(exclude_unset=True)
+    db_data = table(**payload)
     db.add(db_data)
     db.commit()
     db.refresh(db_data)
@@ -63,7 +64,9 @@ async def update_data(db: Session, table: Table, id: int, data: BaseModel):
     db_data = db.query(table).filter(table.id == id).first()
     if db_data is None:
         return None
-    for key, value in data.model_dump(exclude_none=True).items():
+    payload = data.model_dump(exclude_unset=True)
+
+    for key, value in payload.items():
         setattr(db_data, key, value)
     db.commit()
     db.refresh(db_data)
