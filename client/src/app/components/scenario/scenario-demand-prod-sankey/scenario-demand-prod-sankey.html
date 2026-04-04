@@ -1,3 +1,15 @@
-<div id="{{config.SECTOR_ENERGY_CONS_SANKEY_ID}}" class="h-100 w-100">
-    <p *ngIf="!isGraphGenerated">Choisis un scénario pour voir des données</p>
-</div>
+@if (selectedScenario()) {
+    <div class="sankey-wrapper">
+        <div class="sankey-view">
+            <div class="sankey-diagram-wrapper">
+                <h2 class="sankey-title">
+                    Détails de l'impact CO<sub>2</sub> de la production au Québec
+                </h2>
+                <app-sankey-diagram [data]="sankeyData" [showProduction]="simulationRan" />
+            </div>
+            <div class="co2-panel-wrapper">
+                <app-co2-details-panel [data]="co2Data" [loading]="!simulationRan" />
+            </div>
+        </div>
+    </div>
+}

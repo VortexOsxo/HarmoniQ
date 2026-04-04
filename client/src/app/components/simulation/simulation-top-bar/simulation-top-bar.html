@@ -1,0 +1,18 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary p-3">
+    <div class="nav-section left-section d-flex align-items-center">
+        <app-top-bar-logo />
+    </div>
+
+    <div class="nav-section center-section">
+        <p class="scenario-name"> Scénario: {{scenarioService.selectedScenario()?.nom}}</p>
+
+    </div>
+
+    <div class="nav-section right-section">
+        <button class="btn btn-link text-white d-flex align-items-center text-decoration-none me-3 p-0"
+            (click)="goBack()" title="Retour au planificateur">
+            <i class="fa-solid fa-chevron-left fa-lg"></i>
+            <p class="ms-2 mb-0"> Retour à la carte </p>
+        </button>
+    </div>
+</nav>

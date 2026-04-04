@@ -1,0 +1,6 @@
+@if (simulationCo2GraphService.isLoading()) {
+    <div class="chart-loading">
+        <i class="fa-solid fa-circle-notch fa-spin chart-loading-icon"></i>
+    </div>
+}
+<div [id]="config.CO2_SIMULATION_ID" class="w-100"></div>

@@ -90,19 +90,8 @@ def cost_nuclear_powerplant(power_mw):
         Coût total estimé en dollars canadiens
     """
 
-    # Coûts de référence basés sur des projets récents
-    cout_base_par_mw = 4_000_000  # 4M$ par MW
-
-    # Facteurs d'ajustement
-    facteur_echelle = 0.85  # Économies d'échelle
-    facteur_region = (
-        1.1  # Ajustement pour le Québec (conditions climatiques, normes, etc.)
-    )
-
-    # Calcul du coût total
-    cout_total = cout_base_par_mw * (power_mw**facteur_echelle) * facteur_region
-
-    return cout_total
+    COST_PER_MW = 10_000_000  # $/MW
+    return power_mw * COST_PER_MW
 
 
 # ---------------- APPEL DES FONCTIONS ----------------

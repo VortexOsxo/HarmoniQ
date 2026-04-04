@@ -44,6 +44,7 @@ dependencies = [
     "fastparquet",
     "xarray",
     "cdsapi",
+    "netCDF4",
     "openmeteo-requests",
     "requests-cache",
     "retry-requests"
@@ -73,3 +74,8 @@ dev = [
 
 [tool.setuptools]
 packages = ["harmoniq"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests appelant des APIs externes (PVGIS, etc.) — nécessite internet",
+]

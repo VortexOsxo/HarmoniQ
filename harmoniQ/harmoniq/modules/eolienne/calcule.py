@@ -179,10 +179,11 @@ def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
     # - onshore  -> z0 ~= 0.03
     # - offshore -> z0 = 0.0
     roughness_z0 = float(getattr(parc, "surface_roughness_z0_m", 0.03))
+    hub_height = float(getattr(parc, "hauteur_moyenne"))
     vitesse_vents = adjust_wind_speed(
         vitesse_vent_ms,
         v_ref_height_m,
-        parc.hauteur_moyenne,
+        hub_height,
         z0=roughness_z0,
     )
 
@@ -207,11 +208,13 @@ def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
             parc.puissance_nominal,
         )
 
-    # power_with_output_direction = power_output_direction * directional_losses # On ne considère pas la direction pour le moment
+    # Apply directional losses
+    directional_losses = apply_directional_losses(meteo["direction_vent"])
+    power_with_directional_losses = power_output_direction * directional_losses
 
     # Apply wake losses
     wake_losses = apply_wake_losses(meteo["direction_vent"])
-    power_with_wake_losses = power_output_direction * wake_losses
+    power_with_wake_losses = power_with_directional_losses * wake_losses
 
     # Apply ice losses
     ice_losses = ice_loss_factor(meteo["temperature"].to_numpy(dtype=float))

@@ -1,26 +1,25 @@
-<div id="plots" class="d-flex flex-column">
-    <ul ngbNav #nav="ngbNav" class="nav nav-tabs" [(activeId)]="activeTab" (navChange)="onTabChange($event)">
-        <li [ngbNavItem]="'map'">
-            <button ngbNavLink>Carte</button>
-            <ng-template ngbNavContent>
-                <app-quebec-map class="d-block h-100 w-100" />
-            </ng-template>
-        </li>
+<div id="plots">
+    <!-- Aires protégées button below view buttons -->
+    <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen">
+        <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
+            [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
+            (click)="protectedAreasService.toggleVisibility()">
+            <i class="fa-solid fa-layer-group"></i>
+            Aires protégées
+        </button>
+        <button class="btn btn-sm reseau-btn" [class.btn-reseau-active]="reseauService.isVisible()"
+            [class.btn-outline-secondary]="!reseauService.isVisible()"
+            (click)="reseauService.toggleVisibility()">
+            <i class="fa-solid fa-network-wired"></i>
+            Réseau
+        </button>
+    </div>
 
-        <li [ngbNavItem]="'sankey'">
-            <button ngbNavLink>Demande / Production</button>
-            <ng-template ngbNavContent>
-                <app-scenario-demand-prod-sankey />
-            </ng-template>
-        </li>
+    <!-- Infrastructure detail side panel -->
+    <app-infra-detail-modal />
 
-        <li [ngbNavItem]="'temporal'">
-            <button ngbNavLink>Données temporelles</button>
-            <ng-template ngbNavContent>
-                <app-scenario-temporal-demand-graph />
-            </ng-template>
-        </li>
-    </ul>
-
-    <div [ngbNavOutlet]="nav" class="flex-grow-1 w-100"></div>
+    <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
+    <div class="view-content">
+        <app-quebec-map class="d-block h-100 w-100" />
+    </div>
 </div>

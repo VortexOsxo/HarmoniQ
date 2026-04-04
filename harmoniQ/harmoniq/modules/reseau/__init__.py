@@ -1,19 +1,18 @@
+from harmoniq.db.schemas import SimulationInfraGroup
 from harmoniq.core.base import Infrastructure, necessite_scenario
-from harmoniq.db.schemas import ScenarioBase, Hydro, ListeInfrastructures
-from harmoniq.db.CRUD import read_all_hydro, read_multiple_by_id
 from harmoniq.db.engine import get_db
 
-from harmoniq.modules.reseau.core import NetworkBuilder, PowerFlowAnalyzer, NetworkOptimizer
+from harmoniq.modules.reseau.core import NetworkBuilder, NetworkOptimizer
 from harmoniq.modules.reseau.utils import EnergyUtils
 
 import pandas as pd
-import numpy as np
 import pypsa
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, Tuple
 import logging
 from pathlib import Path
 import os
 import hashlib
+from datetime import timedelta
 
 logger = logging.getLogger("Reseau")
 
@@ -34,7 +33,7 @@ class InfraReseau(Infrastructure):
     4. Analyse des résultats
     """
     
-    def __init__(self, donnees: ListeInfrastructures, data_dir: str = None):
+    def __init__(self, donnees, data_dir: str = None):
         """
         Args:
             donnees: Liste des infrastructures incluses dans le réseau
@@ -46,11 +45,6 @@ class InfraReseau(Infrastructure):
         self.statistics = {}
         self.builder = NetworkBuilder(data_dir)
         self.is_journalier = False  # Par défaut, le mode horaire est utilisé
-        
-    def charger_scenario(self, scenario: ScenarioBase):
-
-        self.scenario = scenario
-        logger.info(f"Scénario chargé: {scenario.nom}")
         
     @necessite_scenario
     async def creer_reseau(self, liste_infra=None) -> pypsa.Network: #Ne sert uniquement à créer le reseau que si il n'est pas déja crée, ce qui n'arrive à priori pas
@@ -111,7 +105,6 @@ class InfraReseau(Infrastructure):
         end_date = self.scenario.date_de_fin
         
         network = await self.builder.create_network(self.scenario, liste_infra, annee, start_date, end_date)
-        
         
         # Normaliser les types de données avant sauvegarde
         self._normaliser_types_reseau(network)
@@ -176,51 +169,35 @@ class InfraReseau(Infrastructure):
             energie_estimee = EnergyUtils.estimer_production_annuelle(centrale)
             deltaE += energie_estimee
         
-        # Calcul de l'import maximal théorique à chaque pas de temps
-        import_max_theorique = []
-        for heure in self.network.snapshots:
-            try:
-                # Besoins énergétiques
-                besoins_df = self.network.loads_t.p_set.loc[heure]
-                besoins_heure = besoins_df.sum() if isinstance(besoins_df, pd.Series) else besoins_df.sum().sum()
-                besoins_heure = float(besoins_heure)
-                
-                # Production des sources fatales
-                sources_fatales = self.network.generators[
-                    self.network.generators.carrier.isin(['hydro_fil', 'eolien', 'solaire'])
-                ].index
-                
-                production_fatale = 0
-                if not self.network.generators_t.p_max_pu.empty and len(sources_fatales) > 0:
-                    for gen in sources_fatales:
-                        if gen in self.network.generators_t.p_max_pu.columns:
-                            p_nom = float(self.network.generators.loc[gen, 'p_nom'])
-                            p_max_pu_val = float(self.network.generators_t.p_max_pu.loc[heure, gen])
-                            
-                            if pd.isna(p_nom) or pd.isna(p_max_pu_val):
-                                continue
-                                
-                            production_fatale += p_nom * p_max_pu_val
-                
-                import_max = besoins_heure - production_fatale
-                import_max_theorique.append(import_max)
-            
-            except Exception as e:
-                logger.error(f"Erreur lors du calcul pour {heure}: {str(e)}")
-                import_max_theorique.append(0.0)
+        # pmax vectorisé
+        besoins_par_heure = self.network.loads_t.p_set.sum(axis=1)  # Series indexed by snapshots
         
-        # Recherche de Pmax par dichotomie
-        Pmax_min = min(import_max_theorique)
-        Pmax_max = max(import_max_theorique)
+        sources_fatales_mask = self.network.generators.carrier.isin(['hydro_fil', 'eolien', 'solaire'])
+        sources_fatales = self.network.generators[sources_fatales_mask].index
+        
+        if not self.network.generators_t.p_max_pu.empty and len(sources_fatales) > 0:
+            p_nom_fatales = self.network.generators.loc[sources_fatales, 'p_nom']
+            
+            p_max_pu_fatales = self.network.generators_t.p_max_pu.reindex(
+                columns=sources_fatales, fill_value=0.0
+            ).fillna(0.0)
+            
+            production_fatale_par_heure = (p_max_pu_fatales * p_nom_fatales).sum(axis=1)
+        else:
+            production_fatale_par_heure = pd.Series(0.0, index=self.network.snapshots)
+        
+        import_max_theorique = (besoins_par_heure - production_fatale_par_heure).values
+        
+        Pmax_min = float(import_max_theorique.min())
+        Pmax_max = float(import_max_theorique.max())
         Pmax = (Pmax_min + Pmax_max) / 2
         
         tolerance = 0.1
         iterations_max = 100
+        n_snapshots = len(import_max_theorique)
         
         for iteration in range(iterations_max):
-            #imports = [min(Pmax, max_theorique) for max_theorique in import_max_theorique]
-            #somme_imports = sum(imports)
-            somme_imports = Pmax*len(import_max_theorique)
+            somme_imports = Pmax * n_snapshots
             
             if abs(somme_imports - deltaE) < tolerance:
                 break
@@ -270,47 +247,40 @@ class InfraReseau(Infrastructure):
                 Pmax = await self.calculer_capacite_import_export(liste_infra)
             else:
                 Pmax = self.Pmax
-        
-        # Réechantillonner à une fréquence journalière si demandé
+
         if is_journalier:
             logger.info("Passage en mode journalier (pas de temps = 24h)")
             self.network = EnergyUtils.reechantillonner_reseau_journalier(self.network)
-        
+
         barrages_reservoir = self.network.generators[
             self.network.generators.carrier == 'hydro_reservoir'
         ].index.tolist()
-        
+
         if not barrages_reservoir:
             logger.warning("Aucun barrage à réservoir trouvé dans le réseau")
             return self.network, {}
-        
-        # Générer des niveaux de réservoir simulés
+
         niveaux_reservoirs = EnergyUtils.generer_faux_niveaux_reservoirs(
             self.network.snapshots, barrages_reservoir
         )
-        
-        # Calculer les coûts marginaux basés sur les niveaux
-        marginal_costs = pd.DataFrame(index=self.network.snapshots)
-        for barrage in barrages_reservoir:
-            costs = []
-            for timestamp in self.network.snapshots:
-                niveau = niveaux_reservoirs.loc[timestamp, barrage]
-                costs.append(EnergyUtils.calcul_cout_reservoir(niveau))
-            marginal_costs[barrage] = costs
-        
-        # Ajouter les coûts marginaux au réseau
+
+        marginal_costs = niveaux_reservoirs.apply(
+            lambda col: EnergyUtils.calcul_cout_reservoir_vectorized(col.values)
+        )
+
         if not hasattr(self.network, 'generators_t'):
             self.network.generators_t = {}
         if 'marginal_cost' not in self.network.generators_t:
             self.network.generators_t['marginal_cost'] = pd.DataFrame(index=self.network.snapshots)
-        
+
         for barrage in barrages_reservoir:
             self.network.generators_t['marginal_cost'][barrage] = marginal_costs[barrage]
 
-        # Ajouter l'interconnexion et vérifier la connectivité
         bus_frontiere = EnergyUtils.obtenir_bus_frontiere(self.network, "Interconnexion")
         self.network = EnergyUtils.ajouter_interconnexion_import_export(self.network, Pmax)
+
         self.network = EnergyUtils.ensure_network_solvability(self.network)
+        
         
         # Optimiser le réseau avec l'optimisateur manuel au lieu de PyPSA standard
         optimizer = NetworkOptimizer(self.network, is_journalier=is_journalier)
@@ -320,15 +290,18 @@ class InfraReseau(Infrastructure):
         
         # Utilise notre méthode d'optimisation manuelle
         optimized_network = optimizer.optimize_manually()
+        
         optimization_results = optimizer.get_optimization_results()
 
         statistics = {
             "Pmax_calcule": Pmax,
             "niveaux_reservoirs": niveaux_reservoirs,
             "optimization_results": optimization_results,
-            "production_par_type": optimized_network.generators_t['p'].groupby(
-                optimized_network.generators.carrier, axis=1
-            ).sum(),
+            "production_par_type": optimized_network.generators_t['p']
+            .T
+            .groupby(optimized_network.generators.carrier)
+            .sum()
+            .T,
             "energie_importee": optimized_network.generators_t['p'].get(f"import_{bus_frontiere}", pd.Series()).sum() 
                 if f"import_{bus_frontiere}" in optimized_network.generators_t['p'].columns else 0,
             "energie_exportee": optimized_network.loads_t['p'].get(f"export_{bus_frontiere}", pd.Series()).sum() 
@@ -396,6 +369,7 @@ class InfraReseau(Infrastructure):
         self.is_journalier = is_journalier
         
         Pmax = await self.calculer_capacite_import_export(liste_infra)
+        
         network, statistics = await self.fake_optimiser_reservoirs(liste_infra, Pmax, is_journalier)
         
         logger.info("Workflow d'optimisation terminé")
@@ -444,21 +418,28 @@ class InfraReseau(Infrastructure):
         for carrier in carriers:
             gens = self.network.generators[self.network.generators.carrier == carrier].index
             if len(gens) > 0:
-                # Exclure les générateurs d'urgence déjà regroupés
-                gens = [g for g in gens if not g.startswith('emergency_gen_')]
-                if gens:  # S'assurer qu'il reste des générateurs à sommer
-                    production[f'total_{carrier}'] = production[gens].sum(axis=1)
-        
+                if carrier == 'import':
+                    valid_gens = [g for g in gens if g in production.columns]
+                    if valid_gens:
+                        production[f'total_{carrier}'] = production[valid_gens].sum(axis=1)
+                else:
+                    gens = [g for g in gens if not g.startswith('emergency_gen_') and g in production.columns]
+                    if gens:  # S'assurer qu'il reste des générateurs à sommer
+                        production[f'total_{carrier}'] = production[gens].sum(axis=1)
         # Ajouter une colonne spécifique pour les générateurs d'urgence
         if 'total_emergency' in production_power.columns:
-            carrier = 'emergency'
-            if f'total_{carrier}' not in production.columns:
-                production[f'total_{carrier}'] = production['total_emergency']
+            production['total_emergency'] = production_power['total_emergency']
+        
+        if 'total_import' not in production.columns:
+            if 'total_emergency' in production.columns:
+                production['total_import'] = production['total_emergency']
+            else:
+                production['total_import'] = 0.0
         
         total_production_mwh = production['totale'].sum()
         logger.info(f"Énergie totale calculée: {total_production_mwh:.2f} MWh ({total_production_mwh/1e6:.4f} TWh)")
         
-        for carrier in list(carriers) + (['emergency'] if 'total_emergency' in production_power.columns else []):
+        for carrier in list(carriers) + (['emergency'] if 'total_emergency' in production.columns else []):
             carrier_col = f'total_{carrier}'
             if carrier_col in production.columns:
                 carrier_total = production[carrier_col].sum()
@@ -466,17 +447,50 @@ class InfraReseau(Infrastructure):
                 logger.info(f"Énergie {carrier}: {carrier_total:.2f} MWh ({percentage:.2f}%)")
         
         return production
+    
+    def calculer_cout(self, infra_group: SimulationInfraGroup):
+        results = self._get_infras(infra_group)
+        for key in results.keys():
+            results[key] = [{
+                "id": infra.donnees.id,
+                "cout_construction": infra.calculer_cout_construction(),
+                "cout_annuel": infra.calculer_cout_pas_de_temps(timedelta(days=365)),
+                **({"type_barrage": infra.donnees.type_barrage} if hasattr(infra.donnees, "type_barrage") else {}),
+            } for infra in results[key]]
+        return results
+        
+    def calculer_co2(self, infra_group: SimulationInfraGroup):
+        results = self._get_infras(infra_group)
+        for key in results.keys():
+            results[key] = [{
+                "id": infra.donnees.id,
+                "co2_annuel": infra.calculer_co2_eq_pas_de_temps(timedelta(days=365)),
+                "co2_construction": infra.calculer_co2_eq_construction(),
+                **({"type_barrage": infra.donnees.type_barrage} if hasattr(infra.donnees, "type_barrage") else {}),
+            } for infra in results[key]]
+        return results
+
+    def _get_infras(self, infra_group: SimulationInfraGroup):
+        from harmoniq.modules.eolienne import InfraParcEolienne
+        from harmoniq.modules.solaire import InfraSolaire
+        from harmoniq.modules.thermique import InfraThermique
+        from harmoniq.modules.nucleaire import InfraNucleaire
+        from harmoniq.modules.hydro import InfraHydro
+        from harmoniq.db import schemas
+        from harmoniq.db.CRUD import hydrate_model
+
+        return {
+            'hydro': [InfraHydro(hydrate_model(schemas.Hydro, item)) for item in (infra_group.central_hydroelectriques or [])],
+            'nucleaire': [InfraNucleaire(hydrate_model(schemas.Nucleaire, item)) for item in (infra_group.central_nucleaire or [])],
+            'thermique': [InfraThermique(hydrate_model(schemas.Thermique, item)) for item in (infra_group.central_thermique or [])],
+            'eolienneparc': [InfraParcEolienne(hydrate_model(schemas.EolienneParc, item)) for item in (infra_group.parc_eoliens or [])],
+            'solaire': [InfraSolaire(hydrate_model(schemas.Solaire, item)) for item in (infra_group.parc_solaires or [])]
+        }
 
 if __name__ == "__main__":
     from harmoniq.db.CRUD import read_data_by_id, read_all_scenario
     from harmoniq.db.engine import get_db
-    from harmoniq.db.schemas import ListeInfrastructures
-    import asyncio
-    
-    db = next(get_db())
-    
-    liste_infrastructures = asyncio.run(read_data_by_id(db, ListeInfrastructures, 1))
-    infraReseau = InfraReseau(liste_infrastructures)
+    infraReseau = InfraReseau(None)
     
     scenario = read_all_scenario(db)[1]
     infraReseau.charger_scenario(scenario)

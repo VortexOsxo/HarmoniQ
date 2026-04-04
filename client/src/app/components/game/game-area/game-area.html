@@ -1,0 +1,37 @@
+<app-start-area *ngIf="!quizStarted" (started)="start()"></app-start-area>
+<app-result-area *ngIf="quizTerminated" (restartQuiz)="startNewQuiz()"(closeModal)="close()">
+</app-result-area>
+
+<div id="quizHeader" [hidden]="!quizStarted || quizTerminated">
+  <div id="headerLeft">
+    <span class="badge badge-category">{{questionAspect}}</span>
+  </div>
+  <div id="headerRight">
+    <span class="question-counter-text">{{currentQuestionIndex + 1}} / {{totalQuestions}}</span>
+  </div>
+</div>
+
+<div id="progressBar" [hidden]="!quizStarted || quizTerminated">
+  <div id="progressFill" [style.width.%]="((currentQuestionIndex + 1) / totalQuestions) * 100"></div>
+</div>
+
+<div id="game-area" [hidden]="!quizStarted || quizTerminated">
+
+  <div id="questionContainer" [hidden]="quizTerminated">
+    <pre id="questionText">{{questionText}}</pre>
+  </div>
+
+  <div id="optionBox" [hidden]="quizTerminated"></div>
+
+  <div id="questonInformation" [hidden]="quizTerminated">
+  <h1>{{questionInformation}}</h1>
+</div>
+
+</div>
+
+<div id="quizButtons" [hidden]="!quizStarted || quizTerminated">
+  <div class="primary-actions">
+    <button class="quizButton" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
+    <button class="quizButton" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
+  </div>
+</div>

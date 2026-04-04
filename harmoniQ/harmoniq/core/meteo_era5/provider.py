@@ -11,10 +11,14 @@ from harmoniq.core.meteo_era5.downloader import Era5MonthlyDownloader
 from harmoniq.core.meteo_era5.transform import concat_monthly_netcdf, normalize_era5_dataset
 from harmoniq.core.meteo_era5.validate import validate_normalized_df, validate_raw_dataset
 
+import threading
+
 logger = logging.getLogger("harmoniq.meteo.era5.provider")
 
 
 class Era5WeatherProvider:
+    _cache_lock = threading.Lock()
+
     def __init__(
         self,
         config: Era5Config | None = None,
@@ -43,25 +47,28 @@ class Era5WeatherProvider:
 
     def ensure_year_cached(self, year: int = 2024, force_download: bool = False) -> None:
         if self.cache.has_year(year) and not force_download:
-            logger.info("ERA5 cache already available for year=%s", year)
             return
 
-        logger.info("Building ERA5 cache for year=%s", year)
-        raw_paths = self.downloader.download_year(year=year, force=force_download)
-        ds = concat_monthly_netcdf(raw_paths)
+        with self._cache_lock:
+            if self.cache.has_year(year) and not force_download:
+                return
 
-        raw_report = validate_raw_dataset(ds)
-        if not raw_report.ok:
-            raise ValueError(f"Raw ERA5 validation failed: {raw_report.errors}")
+            logger.info("Building ERA5 cache for year=%s (locked)", year)
+            raw_paths = self.downloader.download_year(year=year, force=force_download)
+            ds = concat_monthly_netcdf(raw_paths)
 
-        normalized_df = normalize_era5_dataset(ds)
-        start_utc, end_utc = self._year_bounds_utc(year)
-        normalized_report = validate_normalized_df(normalized_df, start_utc=start_utc, end_utc=end_utc)
-        if not normalized_report.ok:
-            raise ValueError(f"Normalized ERA5 validation failed: {normalized_report.errors}")
+            raw_report = validate_raw_dataset(ds)
+            if not raw_report.ok:
+                raise ValueError(f"Raw ERA5 validation failed: {raw_report.errors}")
 
-        self.cache.write_monthly_parquet(normalized_df, year=year)
-        logger.info("ERA5 cache build complete for year=%s", year)
+            normalized_df = normalize_era5_dataset(ds)
+            start_utc, end_utc = self._year_bounds_utc(year)
+            normalized_report = validate_normalized_df(normalized_df, start_utc=start_utc, end_utc=end_utc)
+            if not normalized_report.ok:
+                raise ValueError(f"Normalized ERA5 validation failed: {normalized_report.errors}")
+
+            self.cache.write_monthly_parquet(normalized_df, year=year)
+            logger.info("ERA5 cache build complete for year=%s", year)
 
     @staticmethod
     def _years_for_range(start_utc: pd.Timestamp, end_utc: pd.Timestamp) -> list[int]:

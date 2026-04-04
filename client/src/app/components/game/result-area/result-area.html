@@ -1,0 +1,43 @@
+<div id="resultsContainer">
+
+  <div id="scoreHeader">
+    <div id="finalScore">
+      <span class="fraction">Score: {{grade}}/{{totalQuestions}}</span>
+    </div>
+    <h1 id="scoreGrade">{{goodGradeImage ? 'Félicitations!' : 'À améliorer'}}</h1>
+    <p id="scoreMessage">
+      {{goodGradeImage ? 'Excellente maîtrise des concepts !' : 'Prenez le temps de revoir les concepts clés.'}}
+    </p>
+  </div>
+
+  <div id="scoreDashboard">
+    <div class="scoreCard yellowCard" (click)="sortFinalResults('energy')">
+      <div class="cardLabel">Énergie</div>
+      <div class="cardValue">{{energyGrade}} / {{energyMax}}</div>
+    </div>
+    <div class="scoreCard greenCard" (click)="sortFinalResults('environment')">
+      <div class="cardLabel">Environnement</div>
+      <div class="cardValue">{{environmentGrade}} / {{environmentMax}}</div>
+    </div>
+    <div class="scoreCard blueCard" (click)="sortFinalResults('economy')">
+      <div class="cardLabel">Économie</div>
+      <div class="cardValue">{{economyGrade}} / {{economyMax}}</div>
+    </div>
+  </div>
+
+  <div id="answersReview">
+    <h2>Revue des réponses</h2>
+    <div id="answerReviewBox">
+
+    </div>
+  </div>
+
+  <p id="completionMessage" *ngIf="!questionsLeftAvailable" class="infoMessage">
+    Vous avez répondu à toutes les questions disponibles. Si vous recommencez, ce seront les mêmes questions.
+  </p>
+
+  <div id="resultActions">
+    <button class="resultButton" (click)="onRestartQuiz()">Commencer un nouveau quiz</button>
+    <button class="resultButton" (click)="onCloseModal()">Terminer</button>
+  </div>
+</div>
