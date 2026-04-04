@@ -31,7 +31,6 @@ from harmoniq.db.engine import get_db
 from harmoniq.core.fausse_données import production_aleatoire
 
 from harmoniq.modules.eolienne import InfraParcEolienne
-from harmoniq.modules.reseau import InfraReseau
 from harmoniq.modules.reseau_bis.service import InfraReseauBis
 from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
@@ -332,21 +331,17 @@ async def calculer_production_reseau(
     return result
 
 @reseau_router.post("/cout")
-async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
-    scenario = payload.scenario
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):
     infra_group = payload.infra_group
-    
-    infra_reseau = InfraReseau(infra_group)
-    infra_reseau.charger_scenario(scenario)
+    infra_reseau = InfraReseauBis(infra_group)
+    infra_reseau.charger_scenario(payload.scenario)
     return infra_reseau.calculer_cout(infra_group)
 
 @reseau_router.post("/emission")
-async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
-    scenario = payload.scenario
+async def calculer_emission_reseau(payload: schemas.ReseauSimulationPayload):
     infra_group = payload.infra_group
-    
-    infra_reseau = InfraReseau(infra_group)
-    infra_reseau.charger_scenario(scenario)
+    infra_reseau = InfraReseauBis(infra_group)
+    infra_reseau.charger_scenario(payload.scenario)
     return infra_reseau.calculer_co2(infra_group)
 
 router.include_router(reseau_router)

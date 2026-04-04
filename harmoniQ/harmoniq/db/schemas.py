@@ -245,6 +245,7 @@ class EolienneParcBase(BaseModel):
     surface_roughness_z0_m: Optional[float] = Field(
         0.03, description="Longueur de rugosite de surface (m) - Onshore: 0.03, Offshore: 0.0001"
     )
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -312,6 +313,7 @@ class SolaireBase(BaseModel):
     annee_commission: Optional[int] = None
     panneau_type: Optional[str] = None
     materiau_panneau: Optional[str] = None
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -334,6 +336,7 @@ class HydroBase(BaseModel):
     id_HQ: int
     annee_commission: Optional[int] = None
     materiau_conduite: Optional[str] = None
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -389,6 +392,7 @@ class ThermiqueBase(BaseModel):
     )
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -427,6 +431,7 @@ class NucleaireBase(BaseModel):
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
     type_intrant: Optional[int] = None
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

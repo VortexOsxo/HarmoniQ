@@ -497,6 +497,7 @@ class NetworkDataLoaderBis:
             gen_rows.extend(_fetch_generators_from_db(db, Hydro, self.hydro_ids, "hydro", buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, Thermique, self.thermique_ids, "thermique", buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, Nucleaire, self.nucleaire_ids, "nucleaire", buses_df))
+            gen_rows.extend(_generators_from_user_infras(liste_infra, buses_df))
 
             if gen_rows:
                 generators = pd.DataFrame(gen_rows)
@@ -1223,6 +1224,114 @@ def _select_columns(df: pd.DataFrame, expected: list[str]) -> pd.DataFrame:
         if col not in df.columns:
             df[col] = None
     return df[expected]
+
+
+def _generators_from_user_infras(
+    liste_infra: Any,
+    buses_df: "pd.DataFrame | None",
+) -> list[dict[str, Any]]:
+    """Construit les rows générateurs pour les infras user-created (non persistées en DB).
+
+    Miroir de _fetch_generators_from_db mais lit directement les attributs Pydantic
+    du payload au lieu de passer par la DB. Même convention de champs en sortie.
+    """
+    rows: list[dict[str, Any]] = []
+
+    # Éolien
+    for infra in getattr(liste_infra, "parc_eoliens", None) or []:
+        if not getattr(infra, "is_user_created", False):
+            continue
+        bus = _find_bus_for_generator(infra.latitude, infra.longitude, buses_df)
+        p_nom = float(infra.puissance_nominal) * float(infra.nombre_eoliennes) * 1e-3
+        rows.append({
+            "name": infra.nom,
+            "bus": bus,
+            "carrier": "eolien",
+            "p_nom": p_nom,
+            "p_nom_extendable": False,
+            "p_nom_min": 0.0,
+            "p_nom_max": None,
+            "marginal_cost": 0.1,
+        })
+
+    # Solaire
+    for infra in getattr(liste_infra, "parc_solaires", None) or []:
+        if not getattr(infra, "is_user_created", False):
+            continue
+        bus = _find_bus_for_generator(infra.latitude, infra.longitude, buses_df)
+        p_nom_mw = float(infra.puissance_nominal) * float(infra.nombre_panneau) / 1000.0
+        rows.append({
+            "name": infra.nom,
+            "bus": bus,
+            "carrier": "solaire",
+            "p_nom": p_nom_mw,
+            "p_nom_extendable": False,
+            "p_nom_min": 0.0,
+            "p_nom_max": None,
+            "marginal_cost": 0.1,
+        })
+
+    # Hydro
+    for infra in getattr(liste_infra, "central_hydroelectriques", None) or []:
+        if not getattr(infra, "is_user_created", False):
+            continue
+        type_barrage = str(getattr(infra, "type_barrage", "")).strip().lower()
+        carrier = "hydro_reservoir" if type_barrage == "reservoir" else "hydro_fil"
+        nb_turbines = max(1, int(getattr(infra, "nb_turbines", 1)))
+        nb_maint = max(0, int(getattr(infra, "nb_turbines_maintenance", 0)))
+        ratio_dispo = max(1, nb_turbines - nb_maint) / nb_turbines
+        bus = _find_bus_for_generator(infra.latitude, infra.longitude, buses_df)
+        rows.append({
+            "name": infra.nom,
+            "bus": bus,
+            "carrier": carrier,
+            "p_nom": float(infra.puissance_nominal),
+            "p_nom_extendable": False,
+            "p_nom_min": 0.0,
+            "p_nom_max": None,
+            "p_min_pu": 0.0,
+            "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.1,
+            "ratio_dispo": ratio_dispo,
+        })
+
+    # Thermique
+    for infra in getattr(liste_infra, "central_thermique", None) or []:
+        if not getattr(infra, "is_user_created", False):
+            continue
+        bus = _find_bus_for_generator(infra.latitude, infra.longitude, buses_df)
+        rows.append({
+            "name": infra.nom,
+            "bus": bus,
+            "carrier": "thermique",
+            "p_nom": float(infra.puissance_nominal) * 1e-3,
+            "p_nom_extendable": False,
+            "p_nom_min": 0.0,
+            "p_nom_max": None,
+            "marginal_cost": 30.0,
+        })
+
+    # Nucléaire
+    for infra in getattr(liste_infra, "central_nucleaire", None) or []:
+        if not getattr(infra, "is_user_created", False):
+            continue
+        bus = _find_bus_for_generator(infra.latitude, infra.longitude, buses_df)
+        rows.append({
+            "name": infra.nom,
+            "bus": bus,
+            "carrier": "nucleaire",
+            "p_nom": float(infra.puissance_nominal) * 1e-3,
+            "p_nom_extendable": False,
+            "p_nom_min": 0.0,
+            "p_nom_max": None,
+            "marginal_cost": 0.2,
+        })
+
+    if rows:
+        logger.info(
+            "UserInfras : %d générateur(s) user-created ajoutés directement depuis le payload.",
+            len(rows),
+        )
+    return [r for r in rows if r.get("name")]
 
 
 def _fetch_entities(db: Any, model: Any, ids: list[int] | None) -> pd.DataFrame:
