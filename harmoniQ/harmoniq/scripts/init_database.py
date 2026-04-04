@@ -245,11 +245,11 @@ BUS_TYPE_CSV_MAP = {
 
 
 def fill_buses():
-    """Remplit la table bus à partir du fichier CSV bus_new_2026.csv"""
+    """Remplit la table bus à partir du fichier CSV bus_db_03_26.csv"""
     db = next(get_db())
 
-    file_path = CSV_DIR / "bus_new_2026.csv"
-    buses_df = pd.read_csv(file_path)
+    file_path = CSV_DIR / "bus_db_03_26.csv"
+    buses_df = pd.read_csv(file_path, sep=";", decimal=",")
 
     count = 0
     for _, row in buses_df.iterrows():
@@ -288,11 +288,11 @@ def fill_buses():
 
 
 def fill_lines():
-    """Remplit la table line à partir du fichier lines_new_2026.csv"""
+    """Remplit la table line à partir du fichier lines_db_03_26.csv"""
     db = next(get_db())
 
-    file_path = CSV_DIR / "lines_new_2026.csv"
-    lines_df = pd.read_csv(file_path)
+    file_path = CSV_DIR / "lines_db_03_26.csv"
+    lines_df = pd.read_csv(file_path, sep=";", decimal=",")
 
     count = 0
     for _, row in lines_df.iterrows():
@@ -338,6 +338,8 @@ def fill_lines():
             csv_category = row['type']  # 'Bus', 'Eolienne', 'Solaire', etc.
             reseau_type = LINE_RESEAU_TYPE_MAP.get(csv_category, 'Transport')
 
+            nb_ligne = int(row["nb_ligne"])
+
             db_line = schemas.LineCreate(
                 name=line_name,
                 bus0=row["bus0"],
@@ -346,6 +348,7 @@ def fill_lines():
                 length=float(row["length"]),
                 capital_cost=float(row["capital_cost"]),
                 s_nom=float(row["s_nom"]),
+                nb_ligne=nb_ligne,
                 reseau_type=reseau_type,
             )
             count += 1

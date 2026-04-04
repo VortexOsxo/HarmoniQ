@@ -482,3 +482,150 @@ div.map-overlay img.icon-draggable {
 .reseau-cat-label {
     flex: 1;
 }
+
+/* ── Bouton Mise à jour du réseau ─────────────────────────────────────────── */
+
+.network-update-btn {
+    position: absolute;
+    bottom: 90px;
+    right: 8px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 20px;
+    background: #ccc;
+    color: #888;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: not-allowed;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, right 0.35s cubic-bezier(0.4,0,0.2,1);
+    white-space: nowrap;
+}
+
+.network-update-btn.has-pending {
+    background: #27ae60;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(39,174,96,0.4);
+}
+
+.network-update-btn.has-pending:hover {
+    background: #219a52;
+    box-shadow: 0 4px 16px rgba(39,174,96,0.55);
+}
+
+.network-update-btn.detail-open {
+    right: 408px;
+}
+
+.pending-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: #27ae60;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* ── Panneau résumé des connexions ────────────────────────────────────────── */
+
+.network-summary-panel {
+    position: absolute;
+    bottom: 140px;
+    right: 8px;
+    z-index: 1100;
+    width: 320px;
+    max-height: 260px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    overflow: hidden;
+    transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+.network-summary-panel.detail-open {
+    right: 408px;
+}
+
+.network-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.88rem;
+}
+
+.network-summary-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+}
+
+.summary-btn-clear,
+.summary-btn-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.summary-btn-clear:hover { color: #e74c3c; }
+.summary-btn-close:hover { color: #333; }
+
+.network-summary-body {
+    overflow-y: auto;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.connection-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 0 -4px;
+    transition: background 0.15s;
+}
+
+.connection-item:hover {
+    background: #f0faf4;
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #27ae60;
+    flex-shrink: 0;
+}
+
+.connection-text {
+    flex: 1;
+    color: #333;
+}
+
+.connection-dist {
+    color: #888;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
