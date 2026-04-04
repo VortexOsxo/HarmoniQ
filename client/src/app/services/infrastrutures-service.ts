@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, EventEmitter, Injectable } from '@angular/core';
 import { signal } from '@angular/core';
+import { Subject } from 'rxjs';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { environment } from 'environments/environment';
 import { OpenApiService } from './open-api-service';
@@ -13,6 +14,14 @@ import { SolarFarmFactory } from '@app/models/infras/solar-farm';
 import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
 import { LocalStorageService } from './local-storage-service';
+
+export interface PendingInfra {
+  id: number;
+  lat: number;
+  lng: number;
+  name: string;
+  type: string;
+}
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -77,6 +86,11 @@ export class InfrastruturesService {
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
 
+  /** Émis quand l'utilisateur crée une nouvelle infrastructure locale. */
+  newUserInfra$ = new Subject<PendingInfra>();
+  /** Émis quand l'utilisateur supprime une infrastructure locale (par id). */
+  deletedUserInfraId$ = new Subject<number>();
+
   infrasContainer = new Map<string, InfrasContainer<Infra<any>>>();
 
   constructor(
@@ -109,12 +123,21 @@ export class InfrastruturesService {
 
       const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
       this.infrasContainer.get(type)?.addLocal(localInfra);
+
+      this.newUserInfra$.next({
+        id: localInfra.id,
+        lat: result.latitude,
+        lng: result.longitude,
+        name: result.nom,
+        type,
+      });
     });
   }
 
   deleteLocalInfra(type: string, id: number): void {
     this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
     this.infrasContainer.get(type)?.removeLocal(id);
+    this.deletedUserInfraId$.next(id);
 
     const key = typeKeyMap[type];
     if (key) {
@@ -222,15 +245,24 @@ export class InfrastruturesService {
       const selectedIds: string[] = group[groupKey] ?? [];
       const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
 
+      // Infras sélectionnées dans le groupe (existantes en DB)
       const selectedInfras = selectedIds
         .map(id => allInfras.find((i: any) => String(i.id) === id))
         .filter(Boolean)
         .map((infra: any) => {
           const { isUserCreated, ...raw } = infra;
-          return raw;
+          return { ...raw, is_user_created: false };
         });
 
-      payload[groupKey] = selectedInfras;
+      // Infras user-created : toujours incluses avec is_user_created=true
+      const userInfras = allInfras
+        .filter((i: any) => i.isUserCreated)
+        .map((infra: any) => {
+          const { isUserCreated, ...raw } = infra;
+          return { ...raw, is_user_created: true };
+        });
+
+      payload[groupKey] = [...selectedInfras, ...userInfras];
     }
 
     return payload;

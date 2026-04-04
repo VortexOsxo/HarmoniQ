@@ -31,12 +31,25 @@ from harmoniq.db.engine import get_db
 from harmoniq.core.fausse_données import production_aleatoire
 
 from harmoniq.modules.eolienne import InfraParcEolienne
-from harmoniq.modules.reseau import InfraReseau
+from harmoniq.modules.reseau_bis.service import InfraReseauBis
 from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
 from harmoniq.modules.hydro import InfraHydro
 import json
+import time
+
+# Cache mémoire des résultats reseau_bis (max 20 entrées, FIFO).
+_reseau_cache: dict = {}
+_RESEAU_CACHE_MAX = 20
+
+def _reseau_cache_key(scenario_id: int, resolution: str, flow_mode: str) -> str:
+    return f"{scenario_id}|{resolution}|{flow_mode}"
+
+def _reseau_cache_set(key: str, value: dict) -> None:
+    if key not in _reseau_cache and len(_reseau_cache) >= _RESEAU_CACHE_MAX:
+        _reseau_cache.pop(next(iter(_reseau_cache)))
+    _reseau_cache[key] = value
 
 #Appel des modules de production énergétique, ainsi que d'autres modules, et crée des routes web pour chaque fonction CRUD et autre!
 
@@ -266,49 +279,69 @@ reseau_router = APIRouter(
 )
 
 @reseau_router.post("/production")
-async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, is_journalier: bool = False):    
+async def calculer_production_reseau(
+    payload: schemas.ReseauSimulationPayload,
+    is_journalier: bool = False,
+    flow_mode: str = "ac",
+    resolution: str = "hebdomadaire",
+    db: Session = Depends(get_db),
+):
+    """Dispatch LOPF + flux AC via reseau_bis (HiGHS solver).
+
+    Retourne un dict avec :
+      - production     : liste de snapshots avec total_xxx par carrier
+      - violations     : lignes en surcharge thermique
+      - link_flows     : flux import/export par interconnexion
+      - summary        : KPIs globaux (énergie, pertes, import, export)
+      - metadata       : infos simulation (cached, resolution, temps)
+    """
     scenario = payload.scenario
     infra_group = payload.infra_group
-    
-    infra_reseau = InfraReseau(infra_group)
+
+    # Cache mémoire : évite de refaire le calcul si rien n'a changé
+    cache_key = _reseau_cache_key(scenario.id, resolution, flow_mode)
+    if cache_key in _reseau_cache:
+        cached = _reseau_cache[cache_key]
+        if isinstance(cached.get("metadata"), dict):
+            cached["metadata"]["cached"] = True
+        return cached
+
+    total_start = time.time()
+
+    infra_reseau = InfraReseauBis(infra_group)
     infra_reseau.charger_scenario(scenario)
 
-    production = await infra_reseau.calculer_production(infra_group, is_journalier)
-    if production.empty:
+    result = await asyncio.to_thread(
+        infra_reseau.calculer_production,
+        db=db,
+        is_journalier=is_journalier,
+        flow_mode=flow_mode,
+        resolution=resolution,
+    )
+
+    if not result or not result.get("production"):
         raise HTTPException(status_code=500, detail="Calcul de production échoué")
-    
-    production_json = production.reset_index().rename(columns={'index': 'timestamp'})
-    if 'timestamp' in production_json.columns:
-        production_json['timestamp'] = production_json['timestamp'].astype(str)
-    
-    response = {
-        "metadata": {
-            "scenario_id": payload.scenario.id,
-            "infra_group_nom": infra_group.nom,
-            "is_journalier": is_journalier,
-            "timestamps": len(production)
-        },
-        "production": production_json.to_dict(orient='records')
-    }
-    
-    return response
+
+    if isinstance(result.get("metadata"), dict):
+        result["metadata"]["cached"] = False
+        result["metadata"]["resolution"] = resolution
+        result["metadata"]["execution_time_seconds"] = time.time() - total_start
+
+    _reseau_cache_set(cache_key, result)
+    return result
 
 @reseau_router.post("/cout")
-async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
-    scenario = payload.scenario
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):
     infra_group = payload.infra_group
-    
-    infra_reseau = InfraReseau(infra_group)
-    infra_reseau.charger_scenario(scenario)
+    infra_reseau = InfraReseauBis(infra_group)
+    infra_reseau.charger_scenario(payload.scenario)
     return infra_reseau.calculer_cout(infra_group)
 
 @reseau_router.post("/emission")
-async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
-    scenario = payload.scenario
+async def calculer_emission_reseau(payload: schemas.ReseauSimulationPayload):
     infra_group = payload.infra_group
-    
-    infra_reseau = InfraReseau(infra_group)
-    infra_reseau.charger_scenario(scenario)
+    infra_reseau = InfraReseauBis(infra_group)
+    infra_reseau.charger_scenario(payload.scenario)
     return infra_reseau.calculer_co2(infra_group)
 
 router.include_router(reseau_router)
