@@ -2,7 +2,6 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { ScenariosService } from '@app/services/scenarios-service';
-import { DemandeTemporalGraphService } from '@app/services/graph-services/demande-temporal-graph-service';
 import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
 
 // Typical Quebec capacity factors (fraction of installed MW produced on average)
@@ -20,7 +19,6 @@ export class EnergyBar {
 
   private infrasService  = inject(InfrastruturesService);
   private scenariosService = inject(ScenariosService);
-  private demandeService = inject(DemandeTemporalGraphService);
   simService     = inject(SimulationTemporalGraphService);
 
   // ── Scenario duration in hours (live from selected scenario) ──────────────
@@ -71,7 +69,7 @@ export class EnergyBar {
    * Total demand TWh: from demand simulation if available,
    * otherwise null (bar is hidden).
    */
-  demandEnergyTWh = computed(() => this.demandeService.totalDemandEnergyTWh());
+  demandEnergyTWh = computed(() => this.simService.totalDemandEnergyTWh());
 
   /** Surplus (>0) or deficit (<0) in TWh */
   netBalanceTWh = computed(() => {
