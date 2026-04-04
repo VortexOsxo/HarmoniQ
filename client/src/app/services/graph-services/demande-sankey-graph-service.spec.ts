@@ -22,6 +22,7 @@ const MOCK_SCENARIO_2: Scenario = { ...MOCK_SCENARIO, id: 2, nom: 'Test 2050' };
 const MOCK_SANKEY_RESPONSE = {
   sector: { 0: 'Résidentiel', 1: 'MediumOffice', 2: 'AUTRES' },
   total_electricity: { 0: 10_000_000, 1: 5_000_000, 2: 2_000_000 },
+  total_gaz: { 0: 1_000_000, 1: 500_000, 2: 0 },
 };
 
 const SANKEY_ENDPOINT = 'http://localhost:5000/api/demande/sankey?CUID=1';
