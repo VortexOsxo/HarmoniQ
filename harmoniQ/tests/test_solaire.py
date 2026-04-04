@@ -267,7 +267,7 @@ def test_base_csv_export(mock_pvgis, tmp_path):
 
 def test_bifacial_gain_positif(mock_pvgis):
     """Le mode bifacial doit produire plus que le monofacial."""
-    df_mono = calculate_energy_solar_plants(**PARAMS)
+    df_mono = calculate_energy_solar_plants(**PARAMS, bifacial=False)
     df_bi   = calculate_energy_solar_plants(**PARAMS, bifacial=True)
     assert df_bi["production"].sum() > df_mono["production"].sum()
 
@@ -279,7 +279,7 @@ def test_bifacial_non_negative(mock_pvgis):
 
 def test_bifacial_gain_raisonnable(mock_pvgis):
     """Gain bifacial attendu entre 1 % et 25 %."""
-    df_mono = calculate_energy_solar_plants(**PARAMS)
+    df_mono = calculate_energy_solar_plants(**PARAMS, bifacial=False)
     df_bi   = calculate_energy_solar_plants(**PARAMS, bifacial=True)
     gain = (df_bi["production"].sum() - df_mono["production"].sum()) / df_mono["production"].sum()
     assert 0.01 < gain < 0.25

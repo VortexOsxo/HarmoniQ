@@ -196,7 +196,7 @@ class TurbineModel(str, PyEnum):
 
 
 class EolienneParcBase(BaseModel):
-    id: int
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom du parc éolien")
     latitude: float = Field(..., description="Latitude moyenne des éoliennes (degrés)")
     longitude: float = Field(
@@ -254,8 +254,7 @@ class EolienneParcCreate(EolienneParcBase):
 class EolienneParcResponse(EolienneParcBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EolienneParc(SQLBase):
@@ -300,8 +299,7 @@ class QuebecOffshoreMeshMetaCreate(QuebecOffshoreMeshMetaBase):
 class QuebecOffshoreMeshMetaResponse(QuebecOffshoreMeshMetaBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuebecOffshoreMeshMeta(SQLBase):
@@ -333,8 +331,7 @@ class QuebecOffshoreMeshPointCreate(QuebecOffshoreMeshPointBase):
 class QuebecOffshoreMeshPointResponse(QuebecOffshoreMeshPointBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuebecOffshoreMeshPoint(SQLBase):
@@ -370,7 +367,7 @@ class Solaire(SQLBase):
 
 
 class SolaireBase(BaseModel):
-    id: int
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom du parc solaire")
     latitude: float = Field(..., description="Latitude du parc solaire (degrés)")
     longitude: float = Field(..., description="Longitude du parc solaire (degrés)")
@@ -397,7 +394,7 @@ class SolaireBase(BaseModel):
 #-----#-----#-----#-----# Hydro Base #-----#-----#-----#-----#
 
 class HydroBase(BaseModel):
-    id: int
+    id: Optional[int] = None
     nom: str
     longitude: float
     latitude: float
@@ -446,7 +443,7 @@ class TypeIntrantThermique(str, PyEnum):
 
 
 class ThermiqueBase(BaseModel):
-    id: int
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom de la centrale thermique")
     latitude: float = Field(
         ..., description="Latitude de la centrale thermique (degrés)"
@@ -488,7 +485,7 @@ class Thermique(SQLBase):
 #-----#-----#-----#-----# Nucleaire Base #-----#-----#-----#-----#
 
 class NucleaireBase(BaseModel):
-    id: int
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom de la centrale nucléaire")
     latitude: float = Field(
         ..., description="Latitude de la centrale nucléaire (degrés)"
@@ -685,5 +682,5 @@ weather_schema = pa.DataFrameSchema(
     strict=True,
 )
 
-InfraPayload.update_forward_refs()
-SimulationInfraGroup.update_forward_refs()
+InfraPayload.model_rebuild()
+SimulationInfraGroup.model_rebuild()

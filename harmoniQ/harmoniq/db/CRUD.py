@@ -44,7 +44,7 @@ async def read_all_data(db: Session, table: Table):
 
 
 async def create_data(db: Session, table: Table, data: BaseModel):
-    payload = data.dict()
+    payload = data.model_dump(exclude_unset=True)
     if table is schemas.EolienneParc and payload.get("is_offshore") is None:
         payload["is_offshore"] = is_offshore_quebec(
             latitude=float(payload["latitude"]),
@@ -71,7 +71,7 @@ async def update_data(db: Session, table: Table, id: int, data: BaseModel):
     db_data = db.query(table).filter(table.id == id).first()
     if db_data is None:
         return None
-    payload = data.dict()
+    payload = data.model_dump(exclude_unset=True)
     if table is schemas.EolienneParc and payload.get("is_offshore") is None:
         payload["is_offshore"] = is_offshore_quebec(
             latitude=float(payload["latitude"]),
