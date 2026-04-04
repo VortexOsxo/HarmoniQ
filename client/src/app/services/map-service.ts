@@ -17,7 +17,6 @@ const WATER_COLOR_TOLERANCE = 12;
 // Types that are NOT allowed on water
 const WATER_BLOCKED_TYPES: Record<string, string> = {
   'thermique': 'centrales thermiques',
-  'hydro': 'barrages hydroélectriques',
   'solaire': 'parcs solaires',
   'nucleaire': 'centrales nucléaires',
 };
