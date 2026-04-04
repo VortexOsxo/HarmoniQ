@@ -263,8 +263,11 @@ def energy_loss(
 
 # Fonction d'estimation basée sur la régression log-log
 def estimation_cout_barrage(barrage):
-    a, b = 0.9903508069996744, 14.917112141681883
-    return np.exp(b) * barrage.donnees.puissance_nominal**a
+    if barrage.donnees.type_barrage == "Fil de l'eau":
+        COST_PER_MW = 7_000_000   # $/MW
+    else:
+        COST_PER_MW = 14_000_000  # $/MW (réservoir)
+    return barrage.donnees.puissance_nominal * COST_PER_MW
 
 
 def estimer_qualite_ecosysteme_futur(facteur_charge):

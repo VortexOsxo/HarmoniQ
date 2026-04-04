@@ -454,10 +454,11 @@ class InfraReseau(Infrastructure):
             results[key] = [{
                 "id": infra.donnees.id,
                 "cout_construction": infra.calculer_cout_construction(),
-                "cout_annuel": infra.calculer_cout_pas_de_temps(timedelta(days=365))
+                "cout_annuel": infra.calculer_cout_pas_de_temps(timedelta(days=365)),
+                **({"type_barrage": infra.donnees.type_barrage} if hasattr(infra.donnees, "type_barrage") else {}),
             } for infra in results[key]]
         return results
-
+        
     def calculer_co2(self, infra_group: SimulationInfraGroup):
         results = self._get_infras(infra_group)
         for key in results.keys():
@@ -465,6 +466,7 @@ class InfraReseau(Infrastructure):
                 "id": infra.donnees.id,
                 "co2_annuel": infra.calculer_co2_eq_pas_de_temps(timedelta(days=365)),
                 "co2_construction": infra.calculer_co2_eq_construction(),
+                **({"type_barrage": infra.donnees.type_barrage} if hasattr(infra.donnees, "type_barrage") else {}),
             } for infra in results[key]]
         return results
 

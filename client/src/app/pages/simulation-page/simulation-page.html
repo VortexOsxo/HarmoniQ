@@ -48,13 +48,33 @@
         </aside>
 
         <main class="page-content">
+
+            <!-- Infra summary strip -->
+            <div class="infra-summary">
+                <div class="infra-summary-left">
+                    <span class="infra-total-count">{{ infraSummary.total }}</span>
+                    <span class="infra-total-label">infrastructures</span>
+                </div>
+                <div class="infra-chips">
+                    @for (item of infraSummary.breakdown; track item.key) {
+                        <div class="infra-chip" [style.--chip-color]="item.color">
+                            <img [src]="item.img" class="chip-img" />
+                            <span class="chip-name">{{ item.label }}</span>
+                            <span class="chip-count">{{ item.count }}</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
             <div class="dashboard-grid">
                 <!-- Cost -->
                 <div class="dashboard-card card-half" id="section-cost">
                     <div class="card-header-label">
                         <i class="fa-solid fa-coins card-header-icon"></i>
                         <div class="flex-grow-1">
-                            <h5 class="card-header-title">Coût du réseau</h5>
+                            <h5 class="card-header-title">
+                            {{ costService.costMode === 'annuel' ? 'Coût annuel du réseau' : 'Coût de construction du réseau' }}
+                        </h5>
                             <p class="card-header-desc">
                                 Estimation du coût total d'exploitation du réseau énergétique
                             </p>
@@ -86,7 +106,9 @@
                     <div class="card-header-label">
                         <i class="fa-solid fa-cloud card-header-icon"></i>
                         <div class="flex-grow-1">
-                            <h5 class="card-header-title">Émissions CO₂</h5>
+                            <h5 class="card-header-title">
+                            {{ co2Service.costMode === 'annuel' ? 'Émissions annuelles CO₂' : 'Émissions de construction CO₂' }}
+                        </h5>
                             <p class="card-header-desc">
                                 Bilan carbone des sources de production du scénario
                             </p>
@@ -170,34 +192,6 @@
                     </div>
                 </div>
 
-                <!-- Transport + Eco side-by-side -->
-                <div class="dashboard-card card-half" id="section-transport">
-                    <div class="card-header-label">
-                        <i class="fa-solid fa-triangle-exclamation card-header-icon"></i>
-                        <div>
-                            <h5 class="card-header-title">Problèmes de transport du réseau</h5>
-                            <p class="card-header-desc">...</p>
-                        </div>
-                    </div>
-                    <div class="not-implemented-area">
-                        <i class="fa-solid fa-clock not-implemented-icon"></i>
-                        <p class="not-implemented-text">Indicateurs à venir</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-card card-half" id="section-eco">
-                    <div class="card-header-label">
-                        <i class="fa-solid fa-leaf card-header-icon"></i>
-                        <div>
-                            <h5 class="card-header-title">Impact écologique &amp; rétroaction</h5>
-                            <p class="card-header-desc">...</p>
-                        </div>
-                    </div>
-                    <div class="not-implemented-area">
-                        <i class="fa-solid fa-clock not-implemented-icon"></i>
-                        <p class="not-implemented-text">Indicateurs à venir</p>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
