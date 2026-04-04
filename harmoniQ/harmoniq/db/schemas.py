@@ -242,9 +242,6 @@ class EolienneParcBase(BaseModel):
     weibull_fit_details: Optional[str] = Field(
         None, description="Details JSON du fit Weibull (annual + seasonal)"
     )
-    is_offshore: Optional[bool] = Field(
-        None, description="Indique si la position moyenne du parc est offshore au Quebec"
-    )
 
 
 class EolienneParcCreate(EolienneParcBase):
@@ -279,7 +276,6 @@ class EolienneParc(SQLBase):
     weibull_granularity = Column(String, nullable=True)
     weibull_weighting = Column(String, nullable=True)
     weibull_fit_details = Column(String, nullable=True)
-    is_offshore = Column(Boolean, nullable=True)
 
 
 class QuebecOffshoreMeshMetaBase(BaseModel):

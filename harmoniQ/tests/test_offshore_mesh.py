@@ -113,44 +113,4 @@ def test_is_offshore_quebec_true_false_and_missing_meta():
     )
 
 
-def test_create_eolienne_sets_is_offshore_from_mesh():
-    db = _session()
-    db.add(
-        schemas.QuebecOffshoreMeshMeta(
-            grid_version="qc_mer_1km_v1",
-            resolution_m=1000,
-            crs="EPSG:32198",
-            origin_x=0.0,
-            origin_y=0.0,
-            source="test",
-            generated_at=pd.Timestamp.utcnow().isoformat(),
-        )
-    )
-    db.add(
-        schemas.QuebecOffshoreMeshPoint(
-            grid_version="qc_mer_1km_v1",
-            ix=10,
-            iy=20,
-            latitude=0.0,
-            longitude=0.0,
-            resolution_m=1000,
-        )
-    )
-    db.commit()
 
-    to_wgs84 = Transformer.from_crs("EPSG:32198", "EPSG:4326", always_xy=True)
-    lon, lat = to_wgs84.transform(10_500.0, 20_500.0)
-
-    payload = schemas.EolienneParcCreate(
-        nom="test-offshore",
-        latitude=float(lat),
-        longitude=float(lon),
-        nombre_eoliennes=10,
-        capacite_total=20.0,
-        hauteur_moyenne=90.0,
-        modele_turbine=schemas.TurbineModel.MM92,
-        puissance_nominal=2000.0,
-    )
-
-    created = asyncio.run(CRUD.create_data(db, schemas.EolienneParc, payload))
-    assert created.is_offshore is True
