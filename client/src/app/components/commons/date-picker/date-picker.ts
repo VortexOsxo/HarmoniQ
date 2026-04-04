@@ -33,6 +33,7 @@ export class DatePicker {
   }
 
   set endDateStr(value: string) {
+    if (value && this.startDate && value < this.startDate) value = this.startDate;
     this.endDate = value;
     this.endDateChange.emit(this.endDate);
   }

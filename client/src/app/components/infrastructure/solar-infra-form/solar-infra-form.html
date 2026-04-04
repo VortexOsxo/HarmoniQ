@@ -1,0 +1,174 @@
+<div [formGroup]="form">
+    <div class="form-group mb-3">
+        <label class="form-label" for="nom">Nom</label>
+        <input class="form-control" id="nom" type="text" placeholder="Ex : Parc solaire de Varennes"
+            formControlName="nom">
+        <div *ngIf="form.get('nom')?.hasError('duplicateName')" class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> Une infrastructure avec ce nom existe déjà.
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label text-muted mb-1">Coordonnées</label>
+        <div class="text-dark">Lat. {{ lat | number:'1.4-4' }}, Long. {{ lon | number:'1.4-4' }}</div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label" for="orientation_panneau">
+            Orientation (azimut °)
+            <i class="fas fa-info-circle text-muted"
+                ngbTooltip="Azimut des panneaux [0–360°, 180° = plein sud]"></i>
+        </label>
+        <div class="d-flex align-items-start gap-3">
+            <div class="flex-grow-1">
+                <input class="form-control" id="orientation_panneau" type="number"
+                    formControlName="orientation_panneau" min="0" max="360"
+                    (input)="updateOrientationSVG($any($event.target).value)">
+            </div>
+            <svg id="orientDiagram" width="100" height="100" viewBox="0 0 100 100"
+                style="flex-shrink:0; margin-top:2px;">
+                <defs>
+                    <radialGradient id="compassBg" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#f8f9fa" />
+                        <stop offset="100%" stop-color="#e9ecef" />
+                    </radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="40" fill="url(#compassBg)" stroke="#ced4da" stroke-width="1" />
+                <circle cx="50" cy="50" r="28" fill="none" stroke="#dee2e6" stroke-width="0.5"
+                    stroke-dasharray="2,2" />
+                <text x="50" y="16" font-size="10" fill="#dc3545" text-anchor="middle"
+                    font-weight="bold">N</text>
+                <text x="86" y="54" font-size="9" fill="#6c757d" text-anchor="middle">E</text>
+                <text x="50" y="94" font-size="10" fill="#0d6efd" text-anchor="middle"
+                    font-weight="bold">S</text>
+                <text x="14" y="54" font-size="9" fill="#6c757d" text-anchor="middle">O</text>
+                <circle cx="50" cy="50" r="3" fill="#0d6efd" opacity="0.3" />
+                <circle cx="50" cy="50" r="1.5" fill="#0d6efd" />
+                <line id="orientArrow" x1="50" y1="50" x2="50" y2="82" stroke="#0d6efd" stroke-width="2"
+                    stroke-linecap="round" />
+                <polygon id="orientHead" points="50,82 46,74 54,74" fill="#0d6efd" />
+                <rect id="orientPanel" x="43" y="80" width="14" height="4" rx="1" fill="#0d6efd"
+                    opacity="0.5" />
+                <text id="orientText" x="50" y="54" font-size="8" fill="#0d6efd" text-anchor="middle"
+                    font-weight="bold">180°</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label" for="angle_panneau">
+            Inclinaison (angle °)
+            <i class="fas fa-info-circle text-muted"
+                ngbTooltip="Inclinaison des panneaux par rapport à l'horizontale [0–90°]"></i>
+        </label>
+        <div class="d-flex align-items-start gap-3">
+            <div class="flex-grow-1">
+                <input class="form-control" id="angle_panneau" type="number" formControlName="angle_panneau"
+                    min="0" max="90" (input)="updateAngleSVG($any($event.target).value)">
+            </div>
+            <svg id="angleDiagram" width="100" height="80" viewBox="0 0 100 80"
+                style="flex-shrink:0; margin-top:2px;">
+                <line x1="10" y1="65" x2="90" y2="65" stroke="#adb5bd" stroke-width="2" />
+                <circle cx="30" cy="65" r="3" fill="#0d6efd" />
+                <line id="panelLine" x1="30" y1="65" x2="75" y2="40" stroke="#0d6efd" stroke-width="3"
+                    stroke-linecap="round" />
+                <path id="angleArc" d="M 45 65 A 15 15 0 0 0 41.5 53.5" fill="none" stroke="#ffc107"
+                    stroke-width="1.5" />
+                <text id="angleText" x="50" y="58" font-size="10" fill="#ffc107" font-weight="bold">30°</text>
+                <circle cx="82" cy="14" r="6" fill="#ffc107" opacity="0.8" />
+                <g stroke="#ffc107" stroke-width="1" opacity="0.5">
+                    <line x1="82" y1="4" x2="82" y2="1" />
+                    <line x1="82" y1="24" x2="82" y2="27" />
+                    <line x1="72" y1="14" x2="69" y2="14" />
+                    <line x1="92" y1="14" x2="95" y2="14" />
+                    <line x1="75" y1="7" x2="73" y2="5" />
+                    <line x1="89" y1="21" x2="91" y2="23" />
+                    <line x1="75" y1="21" x2="73" y2="23" />
+                    <line x1="89" y1="7" x2="91" y2="5" />
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label" for="puissance_nominal">
+            Puissance totale (MW)
+            <i class="fas fa-info-circle text-muted" ngbTooltip="Puissance crête totale du parc en MW"></i>
+        </label>
+        <input class="form-control" id="puissance_nominal" type="number" formControlName="puissance_nominal"
+            min="0" step="0.1" (input)="calcPanneaux()">
+        <div
+            style="margin-top:6px; padding:6px 10px; background:#f0f4ff; border-radius:4px; border:1px solid #d6e0f5;">
+            <small style="color:#495057;"><i class="fas fa-solar-panel me-1"
+                    style="color:#0d6efd;"></i><strong>Module :</strong> Canadian Solar CS5P-220M</small>
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label" for="nombre_panneau">
+            Nombre de panneaux
+            <i class="fas fa-info-circle text-muted" ngbTooltip="Puissance par panneau = 220 W"></i>
+        </label>
+        <input class="form-control" id="nombre_panneau" type="number" formControlName="nombre_panneau" min="0"
+            step="1" (input)="calcPuissance()">
+    </div>
+
+    <!-- Section Avancé -->
+    <div class="mb-3">
+        <a href="#" id="toggleAdvanced" style="font-size:13px; text-decoration:none; color:#0d6efd;"
+            (click)="toggleAdvanced($event)">
+            <i id="advChevron" class="fas me-1" style="font-size:10px;"
+                [ngClass]="showAdvanced ? 'fa-chevron-down' : 'fa-chevron-right'"></i>Avancé
+        </a>
+        <div *ngIf="showAdvanced"
+            style="margin-top:12px; padding:12px; background:#f8f9fa; border-radius:6px; border:1px solid #e9ecef;">
+            <label class="form-label">Technologie de captation</label>
+            <div class="d-flex align-items-start gap-3">
+                <div>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" formControlName="panneau_type" id="typeBiface"
+                            value="biface">
+                        <label class="btn btn-outline-primary btn-sm" for="typeBiface">Bifacial</label>
+                        <input type="radio" class="btn-check" formControlName="panneau_type" id="typeMonoface"
+                            value="monoface">
+                        <label class="btn btn-outline-primary btn-sm" for="typeMonoface">Monofacial</label>
+                    </div>
+                    <div id="panelTypeDesc"
+                        style="font-size:11px; color:#6c757d; margin-top:6px; max-width:220px; line-height:1.4;">
+                        {{ form.get('panneau_type')?.value === 'biface' ? 'Face avant : irradiance directe,
+                        diffuse et réfléchie. Face arrière : albédo du sol (neige, herbe).' : 'Face avant
+                        uniquement : irradiance directe, diffuse et réfléchie (pas de captation arrière).' }}
+                    </div>
+                </div>
+                <svg id="panelViz" width="130" height="100" viewBox="0 0 130 100" style="flex-shrink:0;">
+                    <rect x="0" y="80" width="130" height="20" fill="#e9ecef" rx="2" />
+                    <text x="65" y="93" font-size="8" fill="#adb5bd" text-anchor="middle">sol</text>
+                    <line x1="55" y1="80" x2="55" y2="45" stroke="#6c757d" stroke-width="2" />
+                    <line x1="30" y1="55" x2="80" y2="35" stroke="#0d6efd" stroke-width="5"
+                        stroke-linecap="round" id="vizPanel" />
+                    <circle cx="110" cy="14" r="8" fill="#ffc107" opacity="0.9" />
+                    <g stroke="#ffc107" stroke-width="1" opacity="0.4">
+                        <line x1="110" y1="2" x2="110" y2="-2" />
+                        <line x1="110" y1="26" x2="110" y2="30" />
+                        <line x1="98" y1="14" x2="94" y2="14" />
+                        <line x1="122" y1="14" x2="126" y2="14" />
+                    </g>
+                    <line id="rayDirect" x1="100" y1="20" x2="60" y2="42" stroke="#ffc107" stroke-width="1.5"
+                        stroke-dasharray="4,3" opacity="0.8" />
+                    <polygon id="arrowDirect" points="60,42 64,37 63,43" fill="#ffc107" opacity="0.8" />
+
+                    <g *ngIf="form.get('panneau_type')?.value === 'biface'">
+                        <line id="rayReflect1" x1="70" y1="80" x2="58" y2="52" stroke="#ffc107" stroke-width="1"
+                            stroke-dasharray="3,3" opacity="0.5" />
+                        <polygon id="arrowReflect1" points="58,52 62,55 56,56" fill="#ffc107" opacity="0.5" />
+                        <line id="rayReflect2" x1="40" y1="80" x2="48" y2="52" stroke="#ffc107" stroke-width="1"
+                            stroke-dasharray="3,3" opacity="0.5" />
+                        <polygon id="arrowReflect2" points="48,52 44,55 50,56" fill="#ffc107" opacity="0.5" />
+                        <text id="reflectLabel" x="55" y="75" font-size="7" fill="#ffc107" text-anchor="middle"
+                            opacity="0.7">albédo</text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>

@@ -68,6 +68,7 @@ describe('ScenarioCreationModal', () => {
 
     it('should close the modal after submitting', async () => {
       const { fixture } = await renderComponent();
+      fixture.componentInstance.scenario = MOCK_CREATED_SCENARIO;
 
       fixture.componentInstance.onSubmit();
 

@@ -1,6 +1,7 @@
-from harmoniq.core.base import Infrastructure
+from harmoniq.core.base import Infrastructure, necessite_scenario
+from harmoniq.db.schemas import ThermiqueBase, ScenarioBase
 from harmoniq.modules.thermique.calculs_production_thermique import (
-    calculate_thermique_production,
+    calculate_thermique_production, assign_maintenance_weeks
 )
 
 import pandas as pd
@@ -11,6 +12,26 @@ logger = logging.getLogger("Thermique")
 
 
 class InfraThermique(Infrastructure):
+    def __init__(self, donnees: ThermiqueBase):
+
+        super().__init__(donnees)
+        self.donnees:ThermiqueBase = donnees
+        self.production: pd.DataFrame = None
+
+    def charger_scenario(self, scenario: ScenarioBase, toutes_les_centrales: list["InfraThermique"] = None):
+        self.scenario: ScenarioBase = scenario
+        self.production = None
+        if toutes_les_centrales is None:
+            toutes_les_centrales = [self]
+        semaines = assign_maintenance_weeks(len(toutes_les_centrales))
+        # Retrouver la position de cette centrale dans la liste
+        try:
+            index = toutes_les_centrales.index(self)
+        except ValueError:
+            index = 0
+        self._maintenance_week = semaines[index]
+
+    @necessite_scenario
     def calculer_production(self) -> pd.DataFrame:
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
@@ -18,10 +39,13 @@ class InfraThermique(Infrastructure):
 
         return calculate_thermique_production(
             power_mw=self.donnees.puissance_nominal,
-            maintenance_week=self.donnees.semaine_maintenance,
+            maintenance_week=self._maintenance_week,
             date_start=self.scenario.date_de_debut,
             date_end=self.scenario.date_de_fin,
+            name=self.donnees.nom,
+            fuel_type=self.donnees.type_intrant,
         )
+        return self.production
 
     def calculer_cout_construction(self) -> np.ndarray:
         COST_PER_MW = 3_440_000  # $/MW
@@ -73,6 +97,7 @@ if __name__ == "__main__":
 
     scenario = read_all_scenario(db)[0]
 
-    infraThermique.charger_scenario(scenario)
+    infraThermique.charger_scenario(scenario, toutes_les_centrales=[infraThermique])
 
     production = infraThermique.calculer_production()
+    print(production)

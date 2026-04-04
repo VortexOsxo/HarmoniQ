@@ -1,11 +1,4 @@
-.readonly-field {
-    background-color: #f0f0f0;
-    color: #777;
-    cursor: default;
-    border-color: #ddd;
-    pointer-events: none;
-    user-select: none;
-}
+/* Solar infra form specific styles */
 
 .required-star {
     color: #dc3545;
@@ -24,7 +17,6 @@
     margin-top: 0.25rem;
 }
 
-.submit-btn:disabled {
-    cursor: not-allowed;
-    pointer-events: auto;
+svg {
+    border-radius: 4px;
 }
