@@ -157,6 +157,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const lines: string[] =
             flow.type === 'prod-co2'
                 ? [`${flow.fromLabel} → CO\u2082`, `${this.formatCo2(flow.co2Tph)} t CO\u2082/h`]
+                : flow.type === 'energy-prod'
+                ? [`${flow.toLabel} \u2190 ${flow.fromLabel}`, `${this.formatMW(flow.valueMW)}`]
                 : [`${flow.fromLabel} → ${flow.toLabel}`, `${this.formatMW(flow.valueMW)}`];
 
         this.tooltip = {
@@ -222,10 +224,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const R = 10;
         const flows: ComputedFlow[] = [];
 
-        // For each energy type node, track how much of its height is consumed
         const energyCum = E.map(() => 0);
-
-        // Pre-compute per-energy-type totals for proportional height allocation
         const energyTotals = E.map(e =>
             D.reduce((s, d) => s + (e.id === 'electricity' ? d.electricityValue : d.gasValue), 0)
         );
@@ -235,7 +234,6 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             const totalD = D[i].value;
             if (totalD <= 0) continue;
 
-            // Cumulative offset on the demand node side
             let demCum = 0;
             const demInnerH = dRect.height - 2 * R;
 
@@ -290,10 +288,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const R = 10;
         const flows: ComputedFlow[] = [];
 
-        // Cumulative offsets on the energy-type node right side
         const energyCum = E.map(() => 0);
-
-        // For each energy type, compute total production to size proportional heights
         const energyProdTotals = E.map(e =>
             P.filter(p => p.energyType === e.id).reduce((s, p) => s + p.value, 0)
         );
@@ -312,7 +307,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
                 const pInnerH = pRect.height - 2 * R;
 
                 const hAtE = eProdTotal > 0 ? (fVal / eProdTotal) * eInnerH : 0;
-                const hAtP = pInnerH; // production node fully consumed by one energy type
+                const hAtP = pInnerH;
 
                 const x1 = eRect.right;
                 const x2 = pRect.left;
@@ -327,8 +322,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
                     path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
                     color: P[k].color,
                     type: 'energy-prod',
-                    fromLabel: E[j].label,
-                    toLabel: P[k].label,
+                    fromLabel: P[k].label,   // tooltip: Solaire → Électricité
+                    toLabel: E[j].label,
                     valueMW: fVal,
                     co2Tph: 0,
                     demandIndex: -1,

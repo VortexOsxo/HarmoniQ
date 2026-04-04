@@ -7,6 +7,7 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '../graph-service';
+import { attachCustomLegend } from './donut-legend.util';
 
 const SEGMENTS = [
     { key: 'eolienneparc', label: 'Éolien', color: '#6abbc4' },
@@ -74,8 +75,6 @@ export class SimulationCostGraphService implements SimulationStep {
         if (!document.getElementById(graphServiceConfig.COST_SIMULATION_ID)) return;
 
         const isAnnuel = this.costMode === 'annuel';
-        const divisor = isAnnuel ? 1e6 : 1e9;
-        const unit = isAnnuel ? 'M$' : 'Md$';
         const valueKey = isAnnuel ? 'cout_annuel' : 'cout_construction';
 
         const hydroItems: any[] = simulationResult['hydro'] ?? [];
@@ -85,21 +84,36 @@ export class SimulationCostGraphService implements SimulationStep {
             hydro_res: hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau"),
         };
 
-        const labels: string[] = [];
-        const values: number[] = [];
-        const colors: string[] = [];
-
-        for (const seg of SEGMENTS) {
-            const raw = (expanded[seg.key] ?? []).reduce(
+        const rawValues = SEGMENTS.map((seg) =>
+            (expanded[seg.key] ?? []).reduce(
                 (acc: number, item: any) => acc + (item[valueKey] ?? 0),
                 0,
-            );
-            labels.push(seg.label);
-            values.push(raw / divisor);
-            colors.push(seg.color);
+            ),
+        );
+        const totalRaw = rawValues.reduce((a, b) => a + b, 0);
+
+        // Dynamic unit based on total magnitude
+        let unit: string;
+        let divisor: number;
+        if (totalRaw >= 1e9) {
+            unit = 'Md$';
+            divisor = 1e9;
+        } else if (totalRaw >= 1e6) {
+            unit = 'M$';
+            divisor = 1e6;
+        } else if (totalRaw >= 1e3) {
+            unit = 'k$';
+            divisor = 1e3;
+        } else {
+            unit = '$';
+            divisor = 1;
         }
 
-        const total = values.reduce((a, b) => a + b, 0);
+        const labels = SEGMENTS.map((s) => s.label);
+        const values = rawValues.map((v) => v / divisor);
+        const colors = SEGMENTS.map((s) => s.color);
+
+        const total = totalRaw / divisor;
 
         const data: any[] = [
             {
@@ -120,17 +134,7 @@ export class SimulationCostGraphService implements SimulationStep {
         ];
 
         const layout: any = {
-            legend: {
-                orientation: 'v',
-                x: 0.65,
-                y: 0.5,
-                xanchor: 'left',
-                yanchor: 'middle',
-                font: { size: 15 },
-                itemwidth: 30,
-                tracegroupgap: 6,
-            },
-            showlegend: true,
+            showlegend: false,
             height: Math.floor(window.innerHeight * 0.55),
             margin: { t: 20, b: 20, l: 20, r: 20 },
             paper_bgcolor: 'white',
@@ -139,17 +143,27 @@ export class SimulationCostGraphService implements SimulationStep {
         const graphDiv = document.getElementById(graphServiceConfig.COST_SIMULATION_ID);
         if (graphDiv) {
             Plotly.newPlot(graphDiv, data, layout);
-            
-            (graphDiv as any).on('plotly_restyle', () => {
-                const hiddenLabels = (graphDiv as any).data[0].hiddenlabels || [];
-                let currentTotal = 0;
+            attachCustomLegend(graphDiv, labels, colors);
+
+            (graphDiv as any).on('plotly_relayout', () => {
+                const hiddenLabels = (graphDiv as any).layout?.hiddenlabels || [];
+                let visibleRaw = 0;
                 for (let i = 0; i < labels.length; i++) {
                     if (!hiddenLabels.includes(labels[i])) {
-                        currentTotal += values[i];
+                        visibleRaw += rawValues[i];
                     }
                 }
+                let currentUnit: string;
+                let currentDivisor: number;
+                if (visibleRaw >= 1e9) { currentUnit = 'Md$'; currentDivisor = 1e9; }
+                else if (visibleRaw >= 1e6) { currentUnit = 'M$'; currentDivisor = 1e6; }
+                else if (visibleRaw >= 1e3) { currentUnit = 'k$'; currentDivisor = 1e3; }
+                else { currentUnit = '$'; currentDivisor = 1; }
+                const currentTotal = visibleRaw / currentDivisor;
                 Plotly.restyle(graphDiv, {
-                    'title.text': [`<b>${currentTotal.toFixed(1)}</b><br>${unit}`]
+                    'title.text': [`<b>${currentTotal.toFixed(1)}</b><br>${currentUnit}`],
+                    values: [rawValues.map(v => v / currentDivisor)],
+                    hovertemplate: ['<b>%{label}</b><br>%{value:.2f} ' + currentUnit + '<extra></extra>'],
                 } as any, [0]);
             });
         }

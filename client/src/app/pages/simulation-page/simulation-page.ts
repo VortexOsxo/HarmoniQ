@@ -84,7 +84,6 @@ export class SimulationPage implements AfterViewInit {
     { id: 'section-repartition',title: 'Répartition',          desc: 'Production & demande par secteur',         icon: 'fa-chart-pie',       isReady: () => !this.analysisService.isLoading() },
     { id: 'section-top10-prod', title: 'Top 10 productives',   desc: 'Infrastructures les plus productrices',    icon: 'fa-medal',           isReady: () => !this.analysisService.isLoading() },
     { id: 'section-seasonal',   title: 'Saisonnalité',         desc: 'Approvisionnement par saison',             icon: 'fa-snowflake',       isReady: () => !this.analysisService.isLoading() },
-    { id: 'section-overprod',   title: 'Surproduction',        desc: 'Surplus & déficit des infrastructures',   icon: 'fa-bolt-lightning',  isReady: () => false },
   ];
 
   get isSimulating(): boolean {

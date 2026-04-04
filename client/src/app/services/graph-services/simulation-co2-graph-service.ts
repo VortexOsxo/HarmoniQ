@@ -7,6 +7,7 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '../graph-service';
+import { attachCustomLegend } from './donut-legend.util';
 
 const SEGMENTS = [
     { key: 'eolienneparc', label: 'Éolien', color: '#6abbc4' },
@@ -108,17 +109,7 @@ export class SimulationCo2GraphService implements SimulationStep {
         ];
 
         const layout: any = {
-            legend: {
-                orientation: 'v',
-                x: 0.65,
-                y: 0.5,
-                xanchor: 'left',
-                yanchor: 'middle',
-                font: { size: 15 },
-                itemwidth: 30,
-                tracegroupgap: 6,
-            },
-            showlegend: true,
+            showlegend: false,
             height: Math.floor(window.innerHeight * 0.55),
             margin: { t: 20, b: 20, l: 20, r: 20 },
             paper_bgcolor: 'white',
@@ -127,22 +118,27 @@ export class SimulationCo2GraphService implements SimulationStep {
         const graphDiv = document.getElementById(graphServiceConfig.CO2_SIMULATION_ID);
         if (graphDiv) {
             Plotly.newPlot(graphDiv, data, layout);
+            attachCustomLegend(graphDiv, labels, colors);
 
-            (graphDiv as any).on('plotly_restyle', () => {
-                const hiddenLabels = (graphDiv as any).data[0].hiddenlabels || [];
-                let currentTotal = 0;
+            (graphDiv as any).on('plotly_relayout', () => {
+                const hiddenLabels = (graphDiv as any).layout?.hiddenlabels || [];
+                let visibleRaw = 0;
                 for (let i = 0; i < labels.length; i++) {
                     if (!hiddenLabels.includes(labels[i])) {
-                        currentTotal += values[i];
+                        visibleRaw += rawValues[i];
                     }
                 }
-                Plotly.restyle(
-                    graphDiv,
-                    {
-                        'title.text': [`<b>${currentTotal.toFixed(2)}</b><br>${unit}`],
-                    } as any,
-                    [0],
-                );
+                let currentUnit: string;
+                let currentDivisor: number;
+                if (visibleRaw >= 1e6) { currentUnit = 'Mt CO₂'; currentDivisor = 1e6; }
+                else if (visibleRaw >= 1e3) { currentUnit = 'kt CO₂'; currentDivisor = 1e3; }
+                else { currentUnit = 't CO₂'; currentDivisor = 1; }
+                const currentTotal = visibleRaw / currentDivisor;
+                Plotly.restyle(graphDiv, {
+                    'title.text': [`<b>${currentTotal.toFixed(2)}</b><br>${currentUnit}`],
+                    values: [rawValues.map(v => v / currentDivisor)],
+                    hovertemplate: ['<b>%{label}</b><br>%{value:.2f} ' + currentUnit + '<extra></extra>'],
+                } as any, [0]);
             });
         }
         this.isLoading.set(false);

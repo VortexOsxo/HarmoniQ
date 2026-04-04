@@ -5,28 +5,38 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { DemandeSankeyGraphService } from './demande-sankey-graph-service';
 
 const PROD_SEGMENTS = [
-    { prodKey: 'total_eolien',          label: 'Éolien',               color: '#6abbc4', segKey: 'eolien' },
-    { prodKey: 'total_solaire',         label: 'Solaire',              color: '#e8c53c', segKey: 'solaire' },
-    { prodKey: 'total_hydro_fil',       label: "Hydro (fil de l'eau)", color: '#7bbfe8', segKey: 'hydro_fil' },
-    { prodKey: 'total_hydro_reservoir', label: 'Hydro (réservoir)',    color: '#2b6fa8', segKey: 'hydro_res' },
-    { prodKey: 'total_nucleaire',       label: 'Nucléaire',            color: '#e8754a', segKey: 'nucleaire' },
-    { prodKey: 'total_thermique',       label: 'Thermique',            color: '#e25c5c', segKey: 'thermique' },
-    { prodKey: 'total_import',          label: 'Importations',         color: '#a29bfe', segKey: 'import' },
+    { prodKey: 'total_eolien', label: 'Éolien', color: '#6abbc4', segKey: 'eolien' },
+    { prodKey: 'total_solaire', label: 'Solaire', color: '#e8c53c', segKey: 'solaire' },
+    {
+        prodKey: 'total_hydro_fil',
+        label: "Hydro (fil de l'eau)",
+        color: '#7bbfe8',
+        segKey: 'hydro_fil',
+    },
+    {
+        prodKey: 'total_hydro_reservoir',
+        label: 'Hydro (réservoir)',
+        color: '#2b6fa8',
+        segKey: 'hydro_res',
+    },
+    { prodKey: 'total_nucleaire', label: 'Nucléaire', color: '#e8754a', segKey: 'nucleaire' },
+    { prodKey: 'total_thermique', label: 'Thermique', color: '#e25c5c', segKey: 'thermique' },
+    { prodKey: 'total_import', label: 'Importations', color: '#a29bfe', segKey: 'import' },
 ];
 
 const SEASONS = [
-    { label: 'Hiver',      months: [12, 1, 2],  color: '#7bbfe8' },
-    { label: 'Printemps',  months: [3, 4, 5],   color: '#5aaa6f' },
-    { label: 'Été',        months: [6, 7, 8],   color: '#e8c53c' },
-    { label: 'Automne',    months: [9, 10, 11], color: '#e8754a' },
+    { label: 'Hiver', months: [12, 1, 2], color: '#7bbfe8' },
+    { label: 'Printemps', months: [3, 4, 5], color: '#5aaa6f' },
+    { label: 'Été', months: [6, 7, 8], color: '#e8c53c' },
+    { label: 'Automne', months: [9, 10, 11], color: '#e8754a' },
 ];
 
 const TYPE_KEY_MAP: Record<string, string> = {
     eolienneparc: 'parc_eoliens',
-    solaire:      'parc_solaires',
-    thermique:    'central_thermique',
-    nucleaire:    'central_nucleaire',
-    hydro:        'central_hydroelectriques',
+    solaire: 'parc_solaires',
+    thermique: 'central_thermique',
+    nucleaire: 'central_nucleaire',
+    hydro: 'central_hydroelectriques',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -49,9 +59,10 @@ export class SimulationAnalysisGraphService {
 
         const annualMWh: Record<string, number> = {};
         for (const seg of PROD_SEGMENTS) {
-            annualMWh[seg.segKey] = production.reduce(
-                (s: number, r: any) => s + (r[seg.prodKey] ?? 0), 0
-            ) * hoursPerStep * annualScale;
+            annualMWh[seg.segKey] =
+                production.reduce((s: number, r: any) => s + (r[seg.prodKey] ?? 0), 0) *
+                hoursPerStep *
+                annualScale;
         }
 
         this.renderProductionDonut(annualMWh);
@@ -68,7 +79,7 @@ export class SimulationAnalysisGraphService {
             graphServiceConfig.DEMAND_DONUT_ID,
             graphServiceConfig.PROD_TOP10_ID,
             graphServiceConfig.SEASONAL_ID,
-        ].forEach(id => {
+        ].forEach((id) => {
             if (document.getElementById(id)) Plotly.purge(id);
         });
     }
@@ -86,41 +97,42 @@ export class SimulationAnalysisGraphService {
             colors.push(seg.color);
         }
 
-        const total = values.reduce((a, b) => a + b, 0);
-
-        Plotly.newPlot(graphServiceConfig.PROD_DONUT_ID, [{
-            type: 'pie',
-            hole: 0.45,
-            labels,
-            values,
-            marker: { colors },
-            domain: { x: [0, 0.6], y: [0, 1] },
-            textinfo: 'percent',
-            textposition: 'inside',
-            insidetextorientation: 'auto',
-            textfont: { size: 12 },
-            hovertemplate: '<b>%{label}</b><br>%{value:.2f} TWh<br>%{percent}<extra></extra>',
-            title: {
-                text: `<b>${total.toFixed(2)}</b><br>TWh`,
-                font: { size: 20, color: '#2c3e50' },
-                position: 'middle center',
+        Plotly.newPlot(
+            graphServiceConfig.PROD_DONUT_ID,
+            [
+                {
+                    type: 'pie',
+                    hole: 0,
+                    labels,
+                    values,
+                    marker: { colors },
+                    domain: { x: [0, 0.6], y: [0, 1] },
+                    textinfo: 'percent',
+                    textposition: 'inside',
+                    insidetextorientation: 'auto',
+                    textfont: { size: 12 },
+                    hovertemplate: '<b>%{label}</b><br>%{percent}<extra></extra>',
+                },
+            ],
+            {
+                showlegend: true,
+                legend: {
+                    orientation: 'v',
+                    x: 0.65,
+                    y: 0.5,
+                    xanchor: 'left',
+                    yanchor: 'middle',
+                    font: { size: 13 },
+                    itemwidth: 30,
+                    tracegroupgap: 6,
+                    itemclick: false,
+                    itemdoubleclick: false,
+                },
+                height: Math.floor(window.innerHeight * 0.45),
+                margin: { t: 20, b: 20, l: 20, r: 20 },
+                paper_bgcolor: 'white',
             },
-        }], {
-            showlegend: true,
-            legend: {
-                orientation: 'v',
-                x: 0.65, y: 0.5,
-                xanchor: 'left', yanchor: 'middle',
-                font: { size: 13 },
-                itemwidth: 30,
-                tracegroupgap: 6,
-                itemclick: false,
-                itemdoubleclick: false,
-            },
-            height: Math.floor(window.innerHeight * 0.45),
-            margin: { t: 20, b: 20, l: 20, r: 20 },
-            paper_bgcolor: 'white',
-        });
+        );
     }
 
     private renderDemandDonut() {
@@ -129,41 +141,42 @@ export class SimulationAnalysisGraphService {
         const nodes = this.demandeSankeyService.demandNodes() ?? [];
         if (!nodes.length) return;
 
-        const total = nodes.reduce((s, n) => s + n.value, 0);
-
-        Plotly.newPlot(graphServiceConfig.DEMAND_DONUT_ID, [{
-            type: 'pie',
-            hole: 0.45,
-            labels: nodes.map(n => n.label),
-            values: nodes.map(n => n.value), // 0-values kept for legend
-            marker: { colors: nodes.map(n => n.color) },
-            domain: { x: [0, 0.6], y: [0, 1] },
-            textinfo: 'percent',
-            textposition: 'inside',
-            insidetextorientation: 'auto',
-            textfont: { size: 12 },
-            hovertemplate: '<b>%{label}</b><br>%{value:.0f} MW<br>%{percent}<extra></extra>',
-            title: {
-                text: `<b>${total.toFixed(0)}</b><br>MW moy`,
-                font: { size: 20, color: '#2c3e50' },
-                position: 'middle center',
+        Plotly.newPlot(
+            graphServiceConfig.DEMAND_DONUT_ID,
+            [
+                {
+                    type: 'pie',
+                    hole: 0,
+                    labels: nodes.map((n) => n.label),
+                    values: nodes.map((n) => n.value), // 0-values kept for legend
+                    marker: { colors: nodes.map((n) => n.color) },
+                    domain: { x: [0, 0.6], y: [0, 1] },
+                    textinfo: 'percent',
+                    textposition: 'inside',
+                    insidetextorientation: 'auto',
+                    textfont: { size: 12 },
+                    hovertemplate: '<b>%{label}</b><br>%{percent}<extra></extra>',
+                },
+            ],
+            {
+                showlegend: true,
+                legend: {
+                    orientation: 'v',
+                    x: 0.65,
+                    y: 0.5,
+                    xanchor: 'left',
+                    yanchor: 'middle',
+                    font: { size: 13 },
+                    itemwidth: 30,
+                    tracegroupgap: 6,
+                    itemclick: false,
+                    itemdoubleclick: false,
+                },
+                height: Math.floor(window.innerHeight * 0.45),
+                margin: { t: 20, b: 20, l: 20, r: 20 },
+                paper_bgcolor: 'white',
             },
-        }], {
-            showlegend: true,
-            legend: {
-                orientation: 'v',
-                x: 0.65, y: 0.5,
-                xanchor: 'left', yanchor: 'middle',
-                font: { size: 13 },
-                itemwidth: 30,
-                tracegroupgap: 6,
-                itemclick: false,
-                itemdoubleclick: false,
-            },
-            height: Math.floor(window.innerHeight * 0.45),
-            margin: { t: 20, b: 20, l: 20, r: 20 },
-            paper_bgcolor: 'white',
-        });
+        );
     }
 
     private renderTop10Productive(annualMWh: Record<string, number>) {
@@ -174,8 +187,8 @@ export class SimulationAnalysisGraphService {
 
         // Segment key → production infra type mapping
         const segInfraMap: { segKey: string; infraType: string; hydroFilter?: string }[] = [
-            { segKey: 'eolien',    infraType: 'eolienneparc' },
-            { segKey: 'solaire',   infraType: 'solaire' },
+            { segKey: 'eolien', infraType: 'eolienneparc' },
+            { segKey: 'solaire', infraType: 'solaire' },
             { segKey: 'nucleaire', infraType: 'nucleaire' },
             { segKey: 'thermique', infraType: 'thermique' },
             { segKey: 'hydro_fil', infraType: 'hydro', hydroFilter: "Fil de l'eau" },
@@ -190,25 +203,35 @@ export class SimulationAnalysisGraphService {
 
             const groupKey = TYPE_KEY_MAP[def.infraType];
             const selectedIds: string[] = group[groupKey] ?? [];
-            const allInfras: any[] = this.infrastructuresService.getInfrasSignalByType(def.infraType)();
+            const allInfras: any[] = this.infrastructuresService.getInfrasSignalByType(
+                def.infraType,
+            )();
             let infras = allInfras.filter((i: any) => selectedIds.includes(String(i.id)));
 
             if (def.hydroFilter) {
                 const isFil = def.hydroFilter === "Fil de l'eau";
                 infras = infras.filter((i: any) =>
-                    isFil ? i.type_barrage === "Fil de l'eau" : i.type_barrage !== "Fil de l'eau"
+                    isFil ? i.type_barrage === "Fil de l'eau" : i.type_barrage !== "Fil de l'eau",
                 );
             }
 
             const totalCap = infras.reduce((s: number, i: any) => {
-                return s + (def.infraType === 'eolienneparc' ? (i.capacite_total ?? 0) : (i.puissance_nominal ?? 0));
+                return (
+                    s +
+                    (def.infraType === 'eolienneparc'
+                        ? (i.capacite_total ?? 0)
+                        : (i.puissance_nominal ?? 0))
+                );
             }, 0);
             if (totalCap <= 0) continue;
 
-            const seg = PROD_SEGMENTS.find(s => s.segKey === def.segKey);
+            const seg = PROD_SEGMENTS.find((s) => s.segKey === def.segKey);
 
             for (const infra of infras) {
-                const cap = def.infraType === 'eolienneparc' ? (infra.capacite_total ?? 0) : (infra.puissance_nominal ?? 0);
+                const cap =
+                    def.infraType === 'eolienneparc'
+                        ? (infra.capacite_total ?? 0)
+                        : (infra.puissance_nominal ?? 0);
                 const estimatedMWh = typeTotalMWh * (cap / totalCap);
                 entries.push({ name: infra.nom, mwh: estimatedMWh, color: seg?.color ?? '#999' });
             }
@@ -217,29 +240,38 @@ export class SimulationAnalysisGraphService {
         entries.sort((a, b) => b.mwh - a.mwh);
         const top10 = entries.slice(0, 10).reverse(); // reverse so most productive is at top
 
-        Plotly.newPlot(graphServiceConfig.PROD_TOP10_ID, [{
-            type: 'bar',
-            orientation: 'h',
-            y: top10.map(e => e.name),
-            x: top10.map(e => e.mwh / 1e6), // TWh
-            text: top10.map(e => `${(e.mwh / 1e6).toFixed(2)} TWh`),
-            textposition: 'outside',
-            marker: { color: top10.map(e => e.color) },
-            hovertemplate: '<b>%{y}</b><br>%{x:.2f} TWh/an<extra></extra>',
-            cliponaxis: false,
-        }], {
-            xaxis: {
-                title: { text: 'Production annuelle (TWh)', font: { size: 13, color: '#7f8c8d' } },
-                gridcolor: '#eee',
-                range: [0, Math.max(...top10.map(e => e.mwh / 1e6), 0) * 1.3],
+        Plotly.newPlot(
+            graphServiceConfig.PROD_TOP10_ID,
+            [
+                {
+                    type: 'bar',
+                    orientation: 'h',
+                    y: top10.map((e) => e.name),
+                    x: top10.map((e) => e.mwh / 1e6), // TWh
+                    text: top10.map((e) => `${(e.mwh / 1e6).toFixed(2)} TWh`),
+                    textposition: 'outside',
+                    marker: { color: top10.map((e) => e.color) },
+                    hovertemplate: '<b>%{y}</b><br>%{x:.2f} TWh/an<extra></extra>',
+                    cliponaxis: false,
+                },
+            ],
+            {
+                xaxis: {
+                    title: {
+                        text: 'Production annuelle (TWh)',
+                        font: { size: 13, color: '#7f8c8d' },
+                    },
+                    gridcolor: '#eee',
+                    range: [0, Math.max(...top10.map((e) => e.mwh / 1e6), 0) * 1.3],
+                },
+                yaxis: { tickfont: { size: 12 }, automargin: true },
+                height: Math.max(250, top10.length * 40 + 80),
+                margin: { t: 20, b: 60, l: 20, r: 100 },
+                paper_bgcolor: 'white',
+                plot_bgcolor: 'white',
+                showlegend: false,
             },
-            yaxis: { tickfont: { size: 12 }, automargin: true },
-            height: Math.max(250, top10.length * 40 + 80),
-            margin: { t: 20, b: 60, l: 20, r: 100 },
-            paper_bgcolor: 'white',
-            plot_bgcolor: 'white',
-            showlegend: false,
-        });
+        );
     }
 
     private renderSeasonalBreakdown(production: any[], hoursPerStep: number) {
@@ -250,7 +282,7 @@ export class SimulationAnalysisGraphService {
 
         for (const row of production) {
             const month = new Date(row.snapshot).getMonth() + 1; // 1–12
-            const si = SEASONS.findIndex(s => s.months.includes(month));
+            const si = SEASONS.findIndex((s) => s.months.includes(month));
             if (si < 0) continue;
             for (let pi = 0; pi < PROD_SEGMENTS.length; pi++) {
                 seasonMWh[si][pi] += (row[PROD_SEGMENTS[pi].prodKey] ?? 0) * hoursPerStep;
@@ -260,13 +292,15 @@ export class SimulationAnalysisGraphService {
         // Build one stacked bar trace per segment
         const traces: any[] = PROD_SEGMENTS.map((seg, pi) => {
             const rawValues = SEASONS.map((_, si) => seasonMWh[si][pi]);
-            const totals = SEASONS.map((_, si) => PROD_SEGMENTS.reduce((s, _, pj) => s + seasonMWh[si][pj], 0));
-            const pct = rawValues.map((v, si) => totals[si] > 0 ? (v / totals[si]) * 100 : 0);
+            const totals = SEASONS.map((_, si) =>
+                PROD_SEGMENTS.reduce((s, _, pj) => s + seasonMWh[si][pj], 0),
+            );
+            const pct = rawValues.map((v, si) => (totals[si] > 0 ? (v / totals[si]) * 100 : 0));
 
             return {
                 type: 'bar',
                 name: seg.label,
-                x: SEASONS.map(s => s.label),
+                x: SEASONS.map((s) => s.label),
                 y: pct,
                 marker: { color: seg.color },
                 hovertemplate: `<b>${seg.label}</b><br>%{y:.1f}%<extra></extra>`,
@@ -284,7 +318,8 @@ export class SimulationAnalysisGraphService {
             xaxis: { tickfont: { size: 14 } },
             legend: {
                 orientation: 'h',
-                x: 0.5, y: -0.15,
+                x: 0.5,
+                y: -0.15,
                 xanchor: 'center',
                 font: { size: 13 },
                 itemclick: false,

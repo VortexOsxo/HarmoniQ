@@ -48,7 +48,6 @@
         </aside>
 
         <main class="page-content">
-
             <!-- Infra summary strip -->
             <div class="infra-summary">
                 <div class="infra-summary-left">
@@ -67,7 +66,6 @@
             </div>
 
             <div class="dashboard-grid">
-
                 <!-- ── Row 1: Cost pie (half) + CO2 pie (half) ────────────── -->
 
                 <div class="dashboard-card card-half" id="section-cost">
@@ -75,19 +73,31 @@
                         <i class="fa-solid fa-coins card-header-icon"></i>
                         <div class="flex-grow-1">
                             <h5 class="card-header-title">
-                                {{ costService.costMode === 'annuel' ? 'OPEX — Coût annuel du réseau' : 'CAPEX — Coût de construction du réseau' }}
+                                {{
+                                    costService.costMode === 'annuel'
+                                        ? 'OPEX — Coût annuel du réseau'
+                                        : 'CAPEX — Coût de construction du réseau'
+                                }}
                             </h5>
-                            <p class="card-header-desc">Estimation du coût total par source de production</p>
+                            <p class="card-header-desc">
+                                Estimation du coût total par source de production
+                            </p>
                         </div>
                         <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn card-mode-btn"
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
                                 [class.active]="costService.costMode === 'annuel'"
-                                (click)="costService.setCostMode('annuel')">
+                                (click)="costService.setCostMode('annuel')"
+                            >
                                 OPEX (Annuel)
                             </button>
-                            <button type="button" class="btn card-mode-btn"
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
                                 [class.active]="costService.costMode === 'construction'"
-                                (click)="costService.setCostMode('construction')">
+                                (click)="costService.setCostMode('construction')"
+                            >
                                 CAPEX (Construction)
                             </button>
                         </div>
@@ -100,19 +110,31 @@
                         <i class="fa-solid fa-cloud card-header-icon"></i>
                         <div class="flex-grow-1">
                             <h5 class="card-header-title">
-                                {{ co2Service.costMode === 'annuel' ? 'Émissions annuelles CO₂' : 'Émissions de construction CO₂' }}
+                                {{
+                                    co2Service.costMode === 'annuel'
+                                        ? 'Émissions annuelles CO₂'
+                                        : 'Émissions de construction CO₂'
+                                }}
                             </h5>
-                            <p class="card-header-desc">Bilan carbone des sources de production du scénario</p>
+                            <p class="card-header-desc">
+                                Bilan carbone des sources de production du scénario
+                            </p>
                         </div>
                         <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn card-mode-btn"
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
                                 [class.active]="co2Service.costMode === 'annuel'"
-                                (click)="co2Service.setCostMode('annuel')">
+                                (click)="co2Service.setCostMode('annuel')"
+                            >
                                 Émissions Annuelles
                             </button>
-                            <button type="button" class="btn card-mode-btn"
+                            <button
+                                type="button"
+                                class="btn card-mode-btn"
                                 [class.active]="co2Service.costMode === 'construction'"
-                                (click)="co2Service.setCostMode('construction')">
+                                (click)="co2Service.setCostMode('construction')"
+                            >
                                 Construction
                             </button>
                         </div>
@@ -127,11 +149,15 @@
                         <i class="fa-solid fa-chart-bar card-header-icon"></i>
                         <div>
                             <h5 class="card-header-title">Analyse financière</h5>
-                            <p class="card-header-desc">Rentabilité des modules et infrastructures les plus coûteuses par an</p>
+                            <p class="card-header-desc">
+                                Rentabilité des modules et infrastructures les plus coûteuses par an
+                            </p>
                         </div>
                     </div>
 
-                    <p class="chart-sub-title">Rentabilité — kWh produit par dollar investi (OPEX)</p>
+                    <p class="chart-sub-title">
+                        Rentabilité — kWh produit par dollar investi (OPEX)
+                    </p>
                     @if (costService.rentabiliteLoading()) {
                         <div class="chart-loading">
                             <i class="fa-solid fa-circle-notch fa-spin chart-loading-icon"></i>
@@ -156,10 +182,15 @@
                         <div class="flex-grow-1">
                             <h5 class="card-header-title">Flux de production</h5>
                             <p class="card-header-desc">
-                                Répartition des flux d'énergie entre les sources de production et la demande
+                                Répartition des flux d'énergie entre les sources de production et la
+                                demande
                             </p>
                         </div>
-                        <button class="btn card-mode-btn" (click)="sankeySim?.downloadImage()" title="Télécharger l'image">
+                        <button
+                            class="btn card-mode-btn"
+                            (click)="sankeySim?.downloadImage()"
+                            title="Télécharger l'image"
+                        >
                             <i class="fa-solid fa-download"></i>
                         </button>
                     </div>
@@ -174,13 +205,15 @@
                         <div class="flex-grow-1">
                             <h5 class="card-header-title">Production &amp; Demande</h5>
                             <p class="card-header-desc">
-                                Évolution temporelle de la production par source et de la demande électrique
+                                Évolution temporelle de la production par source et de la demande
+                                électrique
                             </p>
                         </div>
                         @if (temporalSim?.hasDemandData) {
                             <app-granularity-selector
                                 [selected]="temporalGranularity"
-                                (granularityChange)="onTemporalGranularityChange($event)">
+                                (granularityChange)="onTemporalGranularityChange($event)"
+                            >
                             </app-granularity-selector>
                         }
                     </div>
@@ -194,7 +227,9 @@
                         <i class="fa-solid fa-chart-pie card-header-icon"></i>
                         <div>
                             <h5 class="card-header-title">Répartition de la production</h5>
-                            <p class="card-header-desc">Part annuelle de chaque source dans le mix énergétique</p>
+                            <p class="card-header-desc">
+                                Part annuelle de chaque source dans le mix énergétique
+                            </p>
                         </div>
                     </div>
                     @if (analysisService.isLoading()) {
@@ -207,10 +242,12 @@
 
                 <div class="dashboard-card card-half">
                     <div class="card-header-label">
-                        <i class="fa-solid fa-building card-header-icon"></i>
+                        <i class="fa-solid fa-chart-pie card-header-icon"></i>
                         <div>
                             <h5 class="card-header-title">Répartition de la demande par secteur</h5>
-                            <p class="card-header-desc">Distribution de la consommation entre les secteurs</p>
+                            <p class="card-header-desc">
+                                Distribution de la consommation entre les secteurs
+                            </p>
                         </div>
                     </div>
                     @if (analysisService.isLoading()) {
@@ -227,8 +264,12 @@
                     <div class="card-header-label">
                         <i class="fa-solid fa-medal card-header-icon"></i>
                         <div>
-                            <h5 class="card-header-title">Top 10 des infrastructures les plus productives</h5>
-                            <p class="card-header-desc">Estimation de la production annuelle par infrastructure (proportionnelle à la capacité)</p>
+                            <h5 class="card-header-title">
+                                Top 10 des infrastructures les plus productives
+                            </h5>
+                            <p class="card-header-desc">
+                                Production annuelle estimée par infrastructure
+                            </p>
                         </div>
                     </div>
                     @if (analysisService.isLoading()) {
@@ -246,7 +287,9 @@
                         <i class="fa-solid fa-snowflake card-header-icon"></i>
                         <div>
                             <h5 class="card-header-title">Approvisionnement par saison</h5>
-                            <p class="card-header-desc">Répartition de la production par source selon les saisons de l'année</p>
+                            <p class="card-header-desc">
+                                Répartition de la production par source selon les saisons de l'année
+                            </p>
                         </div>
                     </div>
                     @if (analysisService.isLoading()) {
@@ -255,24 +298,6 @@
                         </div>
                     }
                     <div [id]="config.SEASONAL_ID" class="w-100"></div>
-                </div>
-
-                <!-- ── Row 8: Surproduction placeholder (full) ────────────── -->
-
-                <div class="dashboard-card card-full" id="section-overprod">
-                    <div class="card-header-label">
-                        <i class="fa-solid fa-bolt-lightning card-header-icon"></i>
-                        <div>
-                            <h5 class="card-header-title">Surproduction / Sous-production des infrastructures</h5>
-                            <p class="card-header-desc">
-                                Quantité de surproduction et de sous-production pour l'ensemble des infrastructures du réseau
-                            </p>
-                        </div>
-                    </div>
-                    <div class="not-implemented-area">
-                        <i class="fa-solid fa-clock not-implemented-icon"></i>
-                        <p class="not-implemented-text">Graphique à venir</p>
-                    </div>
                 </div>
 
             </div>
