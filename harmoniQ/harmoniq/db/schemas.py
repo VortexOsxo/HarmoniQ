@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql.schema import ForeignKey
@@ -277,6 +277,9 @@ class EolienneParcBase(BaseModel):
     weibull_fit_details: Optional[str] = Field(
         None, description="Details JSON du fit Weibull (annual + seasonal)"
     )
+    is_offshore: Optional[bool] = Field(
+        None, description="Indique si la position moyenne du parc est offshore au Quebec"
+    )
 
 
 class EolienneParcCreate(EolienneParcBase):
@@ -312,6 +315,76 @@ class EolienneParc(SQLBase):
     weibull_granularity = Column(String, nullable=True)
     weibull_weighting = Column(String, nullable=True)
     weibull_fit_details = Column(String, nullable=True)
+    is_offshore = Column(Boolean, nullable=True)
+
+
+class QuebecOffshoreMeshMetaBase(BaseModel):
+    grid_version: str
+    resolution_m: int
+    crs: str
+    origin_x: float
+    origin_y: float
+    source: str
+    generated_at: str
+
+
+class QuebecOffshoreMeshMetaCreate(QuebecOffshoreMeshMetaBase):
+    pass
+
+
+class QuebecOffshoreMeshMetaResponse(QuebecOffshoreMeshMetaBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class QuebecOffshoreMeshMeta(SQLBase):
+    __tablename__ = "quebec_offshore_mesh_meta"
+
+    id = Column(Integer, primary_key=True, index=True)
+    grid_version = Column(String, unique=True, nullable=False, index=True)
+    resolution_m = Column(Integer, nullable=False)
+    crs = Column(String, nullable=False)
+    origin_x = Column(Float, nullable=False)
+    origin_y = Column(Float, nullable=False)
+    source = Column(String, nullable=False)
+    generated_at = Column(String, nullable=False)
+
+
+class QuebecOffshoreMeshPointBase(BaseModel):
+    grid_version: str
+    ix: int
+    iy: int
+    latitude: float
+    longitude: float
+    resolution_m: int
+
+
+class QuebecOffshoreMeshPointCreate(QuebecOffshoreMeshPointBase):
+    pass
+
+
+class QuebecOffshoreMeshPointResponse(QuebecOffshoreMeshPointBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class QuebecOffshoreMeshPoint(SQLBase):
+    __tablename__ = "quebec_offshore_mesh_points"
+    __table_args__ = (
+        UniqueConstraint("grid_version", "ix", "iy", name="uq_qc_offshore_grid_ix_iy"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    grid_version = Column(String, nullable=False, index=True)
+    ix = Column(Integer, nullable=False, index=True)
+    iy = Column(Integer, nullable=False, index=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    resolution_m = Column(Integer, nullable=False)
 
 #-----#-----#-----#-----# Solaire Base #-----#-----#-----#-----#
 
