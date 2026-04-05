@@ -78,6 +78,24 @@ export class SimulationTemporalGraphService implements SimulationStep {
     public cachedSimulationResult: any;
     public cachedDemandeResult = signal<any>(undefined);
 
+    peakDemandMW = signal<number | null>(null);
+    totalDemandEnergyTWh = signal<number | null>(null);
+
+    /**
+     * Bilan énergétique sur toute la période de simulation (TWh par source + demande).
+     * Peuplé après chaque appel à generate() / handleData().
+     * null si la simulation n'a pas encore été lancée.
+     */
+    energySummaryTWh = signal<{
+        demand: number;
+        hydro: number;
+        wind: number;
+        solar: number;
+        thermal: number;
+        nuclear: number;
+        imported: number;
+    } | null>(null);
+
     constructor(
         private scenariosService: ScenariosService,
         private infrastructuresService: InfrastruturesService,
@@ -94,12 +112,18 @@ export class SimulationTemporalGraphService implements SimulationStep {
             this.cachedScenarioId = scenario.id;
             this.cachedSimulationResult = undefined;
             this.cachedDemandeResult.set(undefined);
+            this.peakDemandMW.set(null);
+            this.totalDemandEnergyTWh.set(null);
 
-            this.cachedDemandeResult.set(
-                await firstValueFrom(
-                    this.http.post(`${environment.apiUrl}/demande/temporal`, scenario),
-                ),
+            const demandeRes = await firstValueFrom(
+                this.http.post(`${environment.apiUrl}/demande/temporal`, scenario),
             );
+            this.cachedDemandeResult.set(demandeRes);
+
+            if (demandeRes && (demandeRes as any).total_electricity) {
+                let yval = Object.values((demandeRes as any).total_electricity).map((value: any) => value / 1000);
+                this.peakDemandMW.set(Math.round(Math.max(...yval)));
+            }
 
             const url = `${environment.apiUrl}/reseau/production?is_journalier=false`;
             const payload = {
@@ -197,6 +221,26 @@ export class SimulationTemporalGraphService implements SimulationStep {
             line: { color: '#000000', width: 2, dash: 'dot' },
             fill: 'none',
             hovertemplate: `<b>%{y:.2f} MW</b>`,
+        });
+
+        // --- Bilan énergétique (TWh) sur la période complète ---
+        // Chaque snapshot est horaire → MW × 1h = MWh → /1e6 = TWh
+        const sumMWh = (key: string) =>
+            productionData.reduce((s: number, r: any) => s + (r[key] ?? 0), 0);
+        const demandKwh = Object.values(demandeResult.total_electricity as Record<string, number>)
+            .reduce((s, v) => s + v, 0);
+        
+        const demandTWh = Math.round(demandKwh / 1e9 * 10) / 10;
+        this.totalDemandEnergyTWh.set(demandTWh);
+
+        this.energySummaryTWh.set({
+            demand:   demandTWh,
+            hydro:    Math.round((sumMWh('total_hydro_reservoir') + sumMWh('total_hydro_fil')) / 1e6 * 10) / 10,
+            wind:     Math.round(sumMWh('total_eolien')    / 1e6 * 10) / 10,
+            solar:    Math.round(sumMWh('total_solaire')   / 1e6 * 10) / 10,
+            thermal:  Math.round(sumMWh('total_thermique') / 1e6 * 10) / 10,
+            nuclear:  Math.round(sumMWh('total_nucleaire') / 1e6 * 10) / 10,
+            imported: Math.round(sumMWh('total_import')    / 1e6 * 10) / 10,
         });
 
         const layout = this.graphService.getStandardLayout(

@@ -76,8 +76,43 @@ export class InfrastruturesService {
   infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()])
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
+    /**
+   * Puissance garantie (MW) du groupe d'infrastructures actif.
+   *
+   * Seuls les types à production pilotable sont comptabilisés :
+   *   - Hydro (fil de l'eau + réservoir)
+   *   - Thermique
+   *   - Nucléaire
+   * L'éolien et le solaire sont exclus (production intermittente, non garantie).
+   *
+   * Se recalcule automatiquement dès qu'une infrastructure est cochée/décochée
+   * ou qu'un groupe différent est sélectionné.
+   */
+  guaranteedPowerMW = computed(() => this._sumInstalledMW(['hydro', 'thermique', 'nucleaire']));
+  windInstalledMW   = computed(() => this._sumInstalledMW(['eolienneparc']));
+  solarInstalledMW  = computed(() => this._sumInstalledMW(['solaire']));
 
+  private _sumInstalledMW(types: string[]): number {
+    const group: any = this.selectedInfraGroup();
+    if (!group) return 0;
+    const overrides = this.hydroPuissanceOverrides();
+    let total = 0;
+    for (const type of types) {
+      const key = typeKeyMap[type];
+      const selectedIds: string[] = group[key] ?? [];
+      const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
+      for (const id of selectedIds) {
+        const infra = allInfras.find((i: any) => String(i.id) === id) as any;
+        if (infra?.puissance_nominal) {
+          const p = type === 'hydro' ? (overrides.get(Number(infra.id)) ?? Number(infra.puissance_nominal)) : Number(infra.puissance_nominal);
+          total += p;
+        }
+      }
+    }
+    return Math.round(total);
+  }
   infrasContainer = new Map<string, InfrasContainer<Infra<any>>>();
+  hydroPuissanceOverrides = signal<Map<number, number>>(new Map());
 
   constructor(
     http: HttpClient,
@@ -151,6 +186,14 @@ export class InfrastruturesService {
     this.infrasContainer.get(type)?.refresh();
   }
 
+  overrideHydroPuissance(id: number, puissance: number): void {
+    this.hydroPuissanceOverrides.update(map => {
+      const next = new Map(map);
+      next.set(id, puissance);
+      return next;
+    });
+  }
+
   isInfraSelected(type: string, infraId: string) {
     const infraGroup: any = this.selectedInfraGroup();
     if (!infraGroup) return false;
@@ -222,11 +265,15 @@ export class InfrastruturesService {
       const selectedIds: string[] = group[groupKey] ?? [];
       const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
 
+      const overrides = this.hydroPuissanceOverrides();
       const selectedInfras = selectedIds
         .map(id => allInfras.find((i: any) => String(i.id) === id))
         .filter(Boolean)
         .map((infra: any) => {
           const { isUserCreated, ...raw } = infra;
+          if (type === 'hydro' && overrides.has(raw.id)) {
+            raw.puissance_nominal = overrides.get(raw.id);
+          }
           return raw;
         });
 

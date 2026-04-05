@@ -7,10 +7,12 @@ import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { InfraListBody } from '../infra-list-body/infra-list-body';
 import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-group-modal';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
+import { CapacityBar } from '../capacity-bar/capacity-bar';
+import { EnergyBar } from '../energy-bar/energy-bar';
 
 @Component({
   selector: 'app-infrastructure-selector',
-  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody],
+  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody, CapacityBar, EnergyBar],
   templateUrl: './infrastructure-selector.html',
   styleUrl: './infrastructure-selector.css',
 })

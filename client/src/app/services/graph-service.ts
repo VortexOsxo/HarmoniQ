@@ -15,29 +15,31 @@ export const graphServiceConfig = {
     SEASONAL_ID: 'seasonal-id',
 };
 
-
 @Injectable({
-    providedIn: 'root'
+    providedIn: 'root',
 })
 export class GraphService {
+    constructor() {}
 
-    constructor() { }
-
-    public generateProductionSingleInfraGraph(type: string, data: any, granularity: string = 'original'): void {
+    public generateProductionSingleInfraGraph(
+        type: string,
+        data: any,
+        granularity: string = 'original',
+    ): void {
         let unit = '';
         let xval: any[] = [];
         let yval: any[] = [];
 
-        if (type === "eolienneparc") {
-            unit = "MW";
+        if (type === 'eolienneparc') {
+            unit = 'MW';
             xval = Object.values(data.tempsdate);
             yval = Object.values(data.puissance);
-        } else if (type === "thermique" || type === "nucleaire") {
-            unit = "MW";
+        } else if (type === 'thermique' || type === 'nucleaire') {
+            unit = 'MW';
             xval = Object.keys(data.production_mwh);
             yval = Object.values(data.production_mwh);
-        } else if (type === "solaire") {
-            unit = "W";
+        } else if (type === 'solaire') {
+            unit = 'W';
             xval = Object.keys(data.production);
             yval = Object.values(data.production);
         }
@@ -51,7 +53,7 @@ export class GraphService {
         const layout = this.getStandardLayout(
             `Production de l'infrastructure (${type})`,
             `Production (${unit})`,
-            granularity
+            granularity,
         );
 
         const trace = this.getStandardTrace(
@@ -59,32 +61,42 @@ export class GraphService {
             xval,
             yval,
             '#3498db',
-            `%{y:.2f} ${unit}<extra></extra>`
+            `%{y:.2f} ${unit}<extra></extra>`,
         );
 
-        Plotly.newPlot(graphServiceConfig.PRODUCTION_SINGLE_INFRA_ID, [trace], layout as any, { responsive: true });
+        Plotly.newPlot(graphServiceConfig.PRODUCTION_SINGLE_INFRA_ID, [trace], layout as any, {
+            responsive: true,
+        });
     }
 
     public getStandardLayout(title: any, yTitle: string, granularity: string, extra: any = {}) {
         return {
-            title: typeof title === "string" ? {
-                text: `<b>${title}</b>`,
-                font: { size: 20, color: '#2c3e50' }
-            } : title,
+            title:
+                typeof title === 'string'
+                    ? {
+                          text: `<b>${title}</b>`,
+                          font: { size: 20, color: '#2c3e50' },
+                      }
+                    : title,
             xaxis: {
-                title: { text: "Date", font: { size: 14, color: '#7f8c8d' } },
-                tickformat: granularity === 'monthly' ? "%b %Y" : granularity === 'daily' || granularity === 'weekly' ? "%d %b %Y" : "%d %b %H:%M",
+                title: { text: 'Date', font: { size: 14, color: '#7f8c8d' } },
+                tickformat:
+                    granularity === 'monthly'
+                        ? '%b %Y'
+                        : granularity === 'daily' || granularity === 'weekly'
+                          ? '%d %b %Y'
+                          : '%d %b %H:%M',
                 gridcolor: '#eee',
                 rangeslider: { visible: false },
                 type: 'date',
-                ...extra.xaxis
+                ...extra.xaxis,
             },
             yaxis: {
                 title: { text: yTitle, font: { size: 14, color: '#7f8c8d' } },
                 gridcolor: '#eee',
                 zerolinecolor: '#ccc',
                 autorange: true,
-                ...extra.yaxis
+                ...extra.yaxis,
             },
             template: 'plotly_white',
             paper_bgcolor: 'rgba(0,0,0,0)',
@@ -96,22 +108,28 @@ export class GraphService {
                 bordercolor: '#ccc',
                 font: { size: 16, color: '#2c3e50' },
                 namelength: -1,
-                align: 'left'
+                align: 'left',
             },
             legend: {
-                orientation: "h",
-                yanchor: "top",
+                orientation: 'h',
+                yanchor: 'top',
                 y: -0.2,
-                xanchor: "center",
+                xanchor: 'center',
                 x: 0.5,
                 font: { size: 14 },
-                ...extra.legend
+                ...extra.legend,
             },
-            ...extra
+            ...extra,
         };
     }
 
-    public getStandardTrace(name: string, x: any[], y: any[], color: string, hovertemplate?: string) {
+    public getStandardTrace(
+        name: string,
+        x: any[],
+        y: any[],
+        color: string,
+        hovertemplate?: string,
+    ) {
         return {
             x: x,
             y: y,
@@ -121,7 +139,7 @@ export class GraphService {
             line: { shape: 'spline' as any, color: color, width: 4 },
             fill: 'tozeroy',
             fillcolor: this.hexToRgba(color, 0.1),
-            hovertemplate: hovertemplate || "<b>%{y:.2f}</b><extra></extra>"
+            hovertemplate: hovertemplate || '<b>%{y:.2f}</b><extra></extra>',
         };
     }
 
@@ -136,7 +154,7 @@ export class GraphService {
         }
     }
 
-    public aggregateData(x: any[], y: any[], granularity: string): { x: any[], y: any[] } {
+    public aggregateData(x: any[], y: any[], granularity: string): { x: any[]; y: any[] } {
         const groups: { [key: string]: number[] } = {};
 
         x.forEach((dateStr, index) => {
@@ -162,19 +180,19 @@ export class GraphService {
         const sortedKeys = Object.keys(groups).sort();
         return {
             x: sortedKeys,
-            y: sortedKeys.map(key => {
+            y: sortedKeys.map((key) => {
                 const values = groups[key];
                 return values.reduce((a, b) => a + b, 0) / values.length;
-            })
+            }),
         };
     }
 
     public downloadGraph(graphId: string) {
         Plotly.downloadImage(graphId, {
-            format: "png",
+            format: 'png',
             filename: graphId,
             height: 600,
-            width: 1000
+            width: 1000,
         });
     }
 }
