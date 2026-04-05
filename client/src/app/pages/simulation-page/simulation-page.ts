@@ -62,34 +62,15 @@ export class SimulationPage implements AfterViewInit {
     const allHydro: any[] = this.infrasService.getInfrasSignalByType('hydro')();
     const selectedHydro = allHydro.filter((h: any) => hydroIds.includes(String(h.id)));
 
-    const typeToKey: Record<string, string> = {
-      eolienneparc: 'parc_eoliens',
-      solaire:      'parc_solaires',
-      hydro:        'central_hydroelectriques',
-      thermique:    'central_thermique',
-      nucleaire:    'central_nucleaire',
-    };
-
-    // Compter les infras user-created par clé de groupe
-    const userCountByKey: Record<string, number> = {};
-    for (const [type, key] of Object.entries(typeToKey)) {
-      userCountByKey[key] = (this.infrasService.getInfrasSignalByType(type)() as any[])
-        .filter(i => i.isUserCreated).length;
-    }
-
     const breakdown = SimulationPage.INFRA_DEFS.map(def => {
       if (def.hydroFilter) {
         const isFil = def.hydroFilter === "Fil de l'eau";
-        const dbCount = selectedHydro.filter((h: any) =>
+        const count = selectedHydro.filter((h: any) =>
           isFil ? h.type_barrage === "Fil de l'eau" : h.type_barrage !== "Fil de l'eau"
         ).length;
-        // Les hydros user-created sont comptées une seule fois dans le premier hydroFilter
-        const userCount = isFil ? (userCountByKey['central_hydroelectriques'] ?? 0) : 0;
-        return { ...def, count: dbCount + userCount };
+        return { ...def, count };
       }
-      const dbCount = (group?.[def.key] ?? []).length;
-      const userCount = userCountByKey[def.key] ?? 0;
-      return { ...def, count: dbCount + userCount };
+      return { ...def, count: (group?.[def.key] ?? []).length };
     });
     return { breakdown, total: breakdown.reduce((s, d) => s + d.count, 0) };
   }

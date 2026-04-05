@@ -166,47 +166,6 @@
     </div>
 </div>
 
-<!-- Panneau résumé des connexions créées -->
-<div class="network-summary-panel card" *ngIf="reseauService.summaryOpen()"
-    [class.detail-open]="infraDetailService.isOpen()">
-    <div class="network-summary-header">
-        <i class="fa-solid fa-circle-check" style="color:#27ae60"></i>
-        <strong>Réseau mis à jour</strong>
-        <div class="network-summary-actions">
-            <button class="summary-btn-clear" (click)="reseauService.clearNewConnections()"
-                title="Effacer les nouvelles connexions de la carte">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-            <button class="summary-btn-close" (click)="reseauService.closeSummary()">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-    </div>
-    <div class="network-summary-body">
-        <div class="connection-item" *ngFor="let c of reseauService.newConnections()" (click)="reseauService.flyToInfra(c)" title="Centrer sur la carte">
-            <span class="connection-dot"></span>
-            <span class="connection-text">
-                <b>{{ c.fromName }}</b> → {{ c.toDisplayName }}
-            </span>
-            <span class="connection-dist">{{ c.distKm | number:'1.1-1' }} km</span>
-        </div>
-    </div>
-</div>
-
-<!-- Bouton Mise à jour du réseau -->
-<button class="network-update-btn"
-    [class.has-pending]="reseauService.hasPendingInfras()"
-    [disabled]="!reseauService.hasPendingInfras()"
-    [class.detail-open]="infraDetailService.isOpen()"
-    (click)="reseauService.connectNewInfras()"
-    title="Connecter les nouvelles infrastructures au réseau">
-    <i class="fa-solid fa-bolt"></i>
-    <span>Mise à jour du réseau</span>
-    <span class="pending-badge" *ngIf="reseauService.hasPendingInfras()">
-        {{ reseauService.pendingInfras().length }}
-    </span>
-</button>
-
 <div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
     <p>Ajouter une infrastructure :</p>
 

@@ -8,7 +8,8 @@
             Aires protégées
         </button>
         <button class="btn btn-sm reseau-btn" [class.btn-reseau-active]="reseauService.isVisible()"
-            [class.btn-outline-secondary]="!reseauService.isVisible()" (click)="reseauService.toggleVisibility()">
+            [class.btn-outline-secondary]="!reseauService.isVisible()"
+            (click)="reseauService.toggleVisibility()">
             <i class="fa-solid fa-network-wired"></i>
             Réseau
         </button>

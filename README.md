@@ -104,34 +104,6 @@ Une fois l'installation initiale (étapes 0 à 2) terminée, vous n'avez plus be
 
 ---
 
-### 5. Après un `git pull`
-
-Après avoir récupéré des mises à jour, deux étapes sont nécessaires :
-
-**Toujours faire :**
-```powershell
-pip install -e .[dev]
-```
-> Les versions de dépendances peuvent avoir changé (ex: pandas, pypsa). Cette commande les met à jour.
-
-**Si vous voyez une erreur SQL du type `no such column` ou `OperationalError` au lancement :**
-
-Le schéma de la base de données a changé. Supprimez la DB existante et recréez-la :
-
-```powershell
-# Windows
-del harmoniq\db\db.sqlite
-init-db -p
-
-# Linux / macOS
-rm harmoniq/db/db.sqlite
-init-db -p
-```
-
-> **Note :** Cela efface uniquement les données de référence (infrastructure, topologie), qui sont automatiquement rechargées par `init-db -p`. Vos scénarios ne sont pas affectés.
-
----
-
 ## Structure du projet
 
 - **`harmoniq/`** : Code source de la bibliothèque principale.

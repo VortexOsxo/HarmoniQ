@@ -250,7 +250,6 @@ class EolienneParcCreate(EolienneParcBase):
 
 class EolienneParcResponse(EolienneParcBase):
     id: int
-    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -384,7 +383,6 @@ class SolaireBase(BaseModel):
     annee_commission: Optional[int] = None
     panneau_type: Optional[str] = None
     materiau_panneau: Optional[str] = None
-    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -407,7 +405,6 @@ class HydroBase(BaseModel):
     id_HQ: int
     annee_commission: Optional[int] = None
     materiau_conduite: Optional[str] = None
-    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -463,7 +460,6 @@ class ThermiqueBase(BaseModel):
     )
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
-    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -502,7 +498,6 @@ class NucleaireBase(BaseModel):
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
     type_intrant: Optional[int] = None
-    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -624,7 +619,6 @@ class Line(SQLBase):
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)
-    nb_ligne = Column(Integer, nullable=True)
     reseau_type = Column(String, nullable=True)
 
     bus_from = relationship("Bus", back_populates="lines_from", foreign_keys=[bus0])
@@ -640,7 +634,6 @@ class LineBase(BaseModel):
     capital_cost: float
     length: float
     s_nom: float
-    nb_ligne: Optional[int] = None
     reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
