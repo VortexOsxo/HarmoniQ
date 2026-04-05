@@ -7,6 +7,7 @@ export const graphServiceConfig = {
     TEMPORAL_SIMULATION_ID: 'temporal-simulation-id',
     COST_SIMULATION_ID: 'cost-simulation-id',
     CO2_SIMULATION_ID: 'co2-simulation-id',
+    TEMPORAL_DEMANDE_PRODUCTION_ID: 'temporal-demande-production-id',
 };
 
 
