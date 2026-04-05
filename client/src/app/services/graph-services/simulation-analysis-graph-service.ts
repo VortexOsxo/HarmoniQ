@@ -251,7 +251,7 @@ export class SimulationAnalysisGraphService {
                     text: top10.map((e) => `${(e.mwh / 1e6).toFixed(2)} TWh`),
                     textposition: 'outside',
                     marker: { color: top10.map((e) => e.color) },
-                    hovertemplate: '<b>%{y}</b><br>%{x:.2f} TWh/an<extra></extra>',
+                    hovertemplate: '<b>%{y}</b><br>%{x:.2f} TWh<extra></extra>',
                     cliponaxis: false,
                 },
             ],
