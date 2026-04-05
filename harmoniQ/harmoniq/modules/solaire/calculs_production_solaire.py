@@ -118,10 +118,10 @@ def calculate_energy_solar_plants(
     longitude: float,
     angle_panneau: float,
     orientation_panneau: float,
-    puissance_nominal: float,
     nombre_panneau: int,
     date_start: pd.Timestamp,
     date_end: pd.Timestamp,
+    module_ref: str = "Canadian_Solar_CS5P_220M___2009_",
     albedo_saisonnier: bool = True,
     bifacial: bool = True,
     bifaciality_factor: float = 0.70,
@@ -137,11 +137,12 @@ def calculate_energy_solar_plants(
         - latitude, longitude : position géographique
         - angle_panneau : inclinaison des panneaux [degrés]
         - orientation_panneau : azimut des panneaux [degrés, 180=sud]
-        - puissance_nominal : puissance crête par panneau [kW]
         - nombre_panneau : nombre total de panneaux
         - date_start, date_end : période horaire demandée
 
     Arguments optionnels :
+        - module_ref         : clé Sandia du module PV (défaut Canadian Solar CS5P-220M)
+                               La puissance par panneau est déduite automatiquement via Impo × Vmpo.
         - albedo_saisonnier  : True = neige hiver (0.60) / herbe été (0.20)
                                False = valeur fixe (0.25)
         - bifacial           : True = active le modèle bifacial (infinite_sheds)
@@ -156,7 +157,7 @@ def calculate_energy_solar_plants(
     # --- Modèles de référence (Sandia) ---
     sandia_modules = pvlib.pvsystem.retrieve_sam("SandiaMod")
     sapm_inverters = pvlib.pvsystem.retrieve_sam("cecinverter")
-    module = sandia_modules["Canadian_Solar_CS5P_220M___2009_"]
+    module = sandia_modules[module_ref]
     inverter = sapm_inverters["ABB__MICRO_0_25_I_OUTD_US_208__208V_"]
     temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS["sapm"]["open_rack_glass_glass"]
 
@@ -174,7 +175,10 @@ def calculate_energy_solar_plants(
         inverter_parameters=inverter,
         temperature_model_parameters=temp_params,
     )
-    mc = pvlib.modelchain.ModelChain(system, location)
+    mc = pvlib.modelchain.ModelChain(
+        system, 
+        location,
+        ) # Il est possible de fixer les modèles Haydavies au besoin.
 
     # --- Données météo TMY depuis PVGIS (année typique, 8760h) ---
     weather, _ = pvlib.iotools.get_pvgis_tmy(
@@ -226,9 +230,8 @@ def calculate_energy_solar_plants(
     ac_tmy_w = np.roll(ac_tmy_w, -5)
 
     # --- Mise à l'échelle vers la puissance totale de la centrale ---
-    puissance_module_w = module["Impo"] * module["Vmpo"]          # ~221 W
-    puissance_totale_w = puissance_nominal * 1_000 * nombre_panneau  # kW → W
-    scaling_factor = puissance_totale_w / puissance_module_w
+    # 1 simulation ModelChain = 1 module → scaling = nombre de panneaux
+    scaling_factor = nombre_panneau
 
     # --- Répétition du profil TMY sur la période voulue ---
     datetime_index = pd.date_range(start=date_start, end=date_end, freq="h")
@@ -400,7 +403,6 @@ def calculate_base_production_per_m2(
     """
     sandia_modules = pvlib.pvsystem.retrieve_sam("SandiaMod")
     module = sandia_modules["Canadian_Solar_CS5P_220M___2009_"]
-    puissance_module_kw = module["Impo"] * module["Vmpo"] / 1000  # ~0.221 kW
     module_area_m2 = module["Area"]                               # ~1.244 m²
 
     date_start = pd.Timestamp(f"{reference_year}-01-01")
@@ -418,7 +420,6 @@ def calculate_base_production_per_m2(
             longitude=longitude,
             angle_panneau=surface_tilt,
             orientation_panneau=surface_orientation,
-            puissance_nominal=puissance_module_kw,
             nombre_panneau=1,
             date_start=date_start,
             date_end=date_end,
@@ -683,6 +684,7 @@ if __name__ == "__main__":
 
     # --- Calcul des deux centrales ---
     resultats = []
+    PUISSANCE_MODULE_W = 221  # Canadian Solar CS5P-220M : Impo × Vmpo ≈ 221 W
     for lat, lon, nom_c, alt, tz, puissance_kw in coordinates_centrales:
         print(f">> Calcul de {nom_c} (appel PVGIS)...")
         df = calculate_energy_solar_plants(
@@ -691,8 +693,7 @@ if __name__ == "__main__":
             longitude=lon,
             angle_panneau=30.0,
             orientation_panneau=180.0,
-            puissance_nominal=0.22,        # kW par panneau (module Sandia ~220 W)
-            nombre_panneau=int(puissance_kw / 0.22),  # nombre de panneaux pour atteindre puissance_kw
+            nombre_panneau=int(puissance_kw * 1000 / PUISSANCE_MODULE_W),
             date_start=DATE_START,
             date_end=DATE_END,
         )

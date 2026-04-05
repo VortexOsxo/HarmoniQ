@@ -3,6 +3,18 @@ import numpy as np
 
 # data_solaire.py
 
+# ===========================================================================
+#  MODULES SOLAIRES DISPONIBLES
+# ---------------------------------------------------------------------------
+#  Clés   = nom lisible (affiché dans le frontend)
+#  Valeurs = clé exacte dans la base Sandia (pvlib.pvsystem.retrieve_sam)
+#  Puissance par panneau = Impo × Vmpo, déduite automatiquement par pvlib.
+# ===========================================================================
+MODULES_DISPONIBLES = {
+    "Canadian Solar CS5P-220M": "Canadian_Solar_CS5P_220M___2009_",
+    # Ajouter d'autres modules ici au besoin
+}
+
 # Définition des centrales solaires avec leurs puissances
 coordinates_centrales = [
     (45.4167, -73.4999, "La Prairie", 0, "Etc/GMT+5", 8000),  # 8 MW = 8000 kW
