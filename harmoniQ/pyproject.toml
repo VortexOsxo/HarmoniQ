@@ -16,9 +16,11 @@ dependencies = [
     # Général
     "numpy==1.26.4",
     "urllib3==1.26.6",
-    "pandas>=2.0,<3.0",
+    "pandas",
     "pandera",
     "matplotlib",
+    "scipy",
+    "openpyxl",
     "scipy",
     "openpyxl",
     "isodate",
@@ -32,10 +34,11 @@ dependencies = [
     "pvlib",
     # hydro dependencies
     "HydroGenerate",
+    "nrel-pysam",
     "windpowerlib",
     "geopandas",
     "env-canada",
-    "pypsa>=1.0,<2.0",
+    "pypsa",
     "pypsa[hdf5]",
     "pyarrow",
     "fastparquet",
@@ -73,7 +76,6 @@ dev = [
 packages = ["harmoniq"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
 markers = [
-    "integration: tests nécessitant une vraie DB ou des APIs externes (PVGIS, etc.) — exécuter manuellement",
+    "integration: tests appelant des APIs externes (PVGIS, etc.) — nécessite internet",
 ]
