@@ -1,6 +1,6 @@
 :host {
     display: block;
-    height: 600px;
+    height: 700px;
     overflow: hidden;
 }
 
@@ -33,12 +33,64 @@
 
 .sankey-gap {
     flex: 1 1 0;
+    position: relative;
+    pointer-events: none;
+}
+
+.gap-arrow {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.gap-arrow::before {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: #bbb;
+}
+
+.gap-arrow--right::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid #bbb;
+}
+
+.gap-arrow--left::before {
+    order: 2;
+}
+
+.gap-arrow--left::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 8px solid #bbb;
+    order: 1;
 }
 
 .demand-column,
 .production-column {
     width: 155px;
     flex-shrink: 0;
+}
+
+.energy-type-column {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.energy-type-card {
+    font-weight: 700;
 }
 
 .co2-column {

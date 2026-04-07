@@ -1,0 +1,39 @@
+.analysis-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.analysis-loading-icon {
+    font-size: 2.5rem;
+    color: #adb5bd;
+}
+
+.hidden {
+    display: none;
+}
+
+.donuts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.donut-card {
+    min-width: 0;
+}
+
+.sub-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+    padding-left: 0.25rem;
+}
+
+.mt-section {
+    margin-top: 1.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
