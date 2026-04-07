@@ -22,6 +22,13 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from harmoniq.modules.solaire.calculs_production_solaire import (
+    calculate_base_production_per_m2,
+    distribute_base_to_mrc,
+    apply_residential_scenario,
+)
+from harmoniq.modules.solaire.data_solaire import coordinates_residential, mrc_to_ra
+
 # Water value cost — importé depuis reservoir_tracker pour éviter la duplication de logique.
 # Importé ici en module-level (pas de dépendance circulaire : reservoir_tracker n'importe pas data_loader).
 from .utils.reservoir_tracker import water_value_cost as _reservoir_water_value_cost
@@ -1133,6 +1140,58 @@ def _load_demand_from_demande_db(
         raw["date"] = pd.to_datetime(raw["date"])
         wide = raw.pivot(index="date", columns="MRC", values="mw")
         wide.index = pd.to_datetime(wide.index)
+
+        # --- Soustraction de la production solaire résidentielle de la demande (niveau MRC) ---
+        # 1) Base solaire W/m² par région administrative, puis distribution vers MRC
+        base_ra_df = calculate_base_production_per_m2(
+            coordinates=coordinates_residential,
+            reference_year=wide.index[0].year,  # ex: 2035
+        )
+        base_mrc_df = distribute_base_to_mrc(base_ra_df, mrc_to_ra)
+
+        # 2) Appliquer le scénario résidentiel (exemple: 3.4 m²/client = 2 panneaux x 1.7 m²)
+        # IMPORTANT: mrc_data_df doit contenir colonnes ['mrc', 'population', 'superficie_km2']
+        # Chemin du CSV (même logique que demande.db)
+        mrc_csv_path = _HARMONIQ_DIR / "db" / "mrc_population_superficie.csv"
+
+        # Lire le CSV
+        mrc_data_df = pd.read_csv(mrc_csv_path)
+
+        # Normaliser les noms de colonnes attendus par apply_residential_scenario
+        # attendu: ['mrc', 'population', 'superficie_km2']
+        mrc_data_df = mrc_data_df.rename(columns={
+            "MRC": "mrc",
+            "Population": "population",
+            "Superficie_km2": "superficie_km2",
+            "superficie": "superficie_km2",      # au cas où
+            "superficie_km²": "superficie_km2",  # au cas où
+        })
+
+        # Garder uniquement les colonnes utiles + types propres
+        mrc_data_df = mrc_data_df[["mrc", "population", "superficie_km2"]].copy()
+        mrc_data_df["mrc"] = mrc_data_df["mrc"].astype(str).str.strip()
+        mrc_data_df["population"] = pd.to_numeric(mrc_data_df["population"], errors="coerce").fillna(0)
+        mrc_data_df["superficie_km2"] = pd.to_numeric(mrc_data_df["superficie_km2"], errors="coerce").fillna(1.0)
+
+        solar_mrc_kw = apply_residential_scenario(
+            base_df=base_mrc_df,
+            m2_par_client=3.4,
+            mrc_data_df=mrc_data_df,   # <-- à fournir
+            total_clients=125_000,
+        )
+
+        # 3) kW -> MW, pivot temporel pour aligner sur 'wide' (demande en MW)
+        solar_mrc_kw["datetime"] = pd.to_datetime(solar_mrc_kw["datetime"])
+        solar_mrc_wide_mw = (
+            solar_mrc_kw.assign(production_mw=solar_mrc_kw["production_kw"] / 1000.0)
+            .pivot_table(index="datetime", columns="mrc", values="production_mw", aggfunc="sum")
+            .reindex(wide.index)
+            .fillna(0.0)
+        )
+
+        # 4) Soustraire seulement les MRC communes, plancher à 0 pour éviter la demande négative
+        common_mrc = [c for c in wide.columns if c in solar_mrc_wide_mw.columns]
+        wide.loc[:, common_mrc] = (wide.loc[:, common_mrc] - solar_mrc_wide_mw.loc[:, common_mrc]).clip(lower=0.0)
 
         if conso_df.empty:
             logger.warning("Aucun bus Conso trouvé dans la topologie")
