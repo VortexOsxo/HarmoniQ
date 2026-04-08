@@ -170,7 +170,7 @@ export class InfraDetailModal {
           });
         }
       });
-    });
+    }, { allowSignalWrites: true });
   }
 
   deleteInfra() {
