@@ -5,6 +5,7 @@ import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { WindMapService } from '@app/services/wind-map-service';
 
 vi.mock('leaflet.markercluster', () => ({}));
 
@@ -84,6 +85,10 @@ const mockInfraDetailService = {
   selectedInfra: signal(null),
 };
 
+const mockWindMapService = {
+  isWindMode: signal(false),
+};
+
 async function renderComponent() {
   return render(QuebecMap, {
     providers: [
@@ -91,6 +96,7 @@ async function renderComponent() {
       { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
       { provide: ReseauService, useValue: mockReseauService },
       { provide: InfraDetailService, useValue: mockInfraDetailService },
+      { provide: WindMapService, useValue: mockWindMapService },
     ],
     schemas: [NO_ERRORS_SCHEMA],
   });

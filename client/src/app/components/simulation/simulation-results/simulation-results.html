@@ -1,24 +1,48 @@
 <div id="plots">
-    <!-- Aires protégées button below view buttons -->
     <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen">
-        <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
+        <button *ngIf="!windMapService.isWindMode()"
+            class="btn btn-sm protected-areas-btn"
+            [class.btn-success]="protectedAreasService.isVisible()"
             [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
             (click)="protectedAreasService.toggleVisibility()">
             <i class="fa-solid fa-layer-group"></i>
-            Aires protégées
+            Aires protegees
         </button>
-        <button class="btn btn-sm reseau-btn" [class.btn-reseau-active]="reseauService.isVisible()"
+        <button *ngIf="!windMapService.isWindMode()"
+            class="btn btn-sm reseau-btn"
+            [class.btn-reseau-active]="reseauService.isVisible()"
             [class.btn-outline-secondary]="!reseauService.isVisible()"
             (click)="reseauService.toggleVisibility()">
             <i class="fa-solid fa-network-wired"></i>
-            Réseau
+            Reseau
         </button>
+
+        <button class="btn btn-sm wind-btn"
+            [class.btn-wind-active]="windMapService.isWindMode()"
+            [disabled]="windMapService.isLoading()"
+            (click)="toggleWindMode()">
+            <i class="fa-solid fa-wind"></i>
+            Vent
+        </button>
+
+        <div class="wind-year-panel" *ngIf="windMapService.isWindMode()">
+            <label for="wind-year-select">Annee</label>
+            <select id="wind-year-select"
+                class="form-select form-select-sm"
+                [ngModel]="selectedWindYear"
+                (ngModelChange)="onWindYearChange($event)">
+                <option *ngFor="let year of windMapService.availableYears()" [ngValue]="year">
+                    {{ year }}
+                </option>
+            </select>
+            <small class="wind-error" *ngIf="windMapService.errorMessage()">
+                {{ windMapService.errorMessage() }}
+            </small>
+        </div>
     </div>
 
-    <!-- Infrastructure detail side panel -->
     <app-infra-detail-modal />
 
-    <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
     <div class="view-content">
         <app-quebec-map class="d-block h-100 w-100" />
     </div>

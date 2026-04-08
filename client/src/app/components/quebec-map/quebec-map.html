@@ -1,14 +1,14 @@
 <div id="map" style="height: 100%; width: 100%;"></div>
 
 <!-- Infra Filters toggle button -->
-<button class="infra-filter-reopen" *ngIf="!infraFiltersOpen()"
+<button class="infra-filter-reopen" *ngIf="!infraFiltersOpen() && !windMapService.isWindMode()"
     [class.offset-right]="protectedAreasService.legendOpen() || reseauService.legendOpen()"
     (click)="infraFiltersOpen.set(true)" title="Ouvrir les filtres d'infrastructures">
     <i class="fa-solid fa-filter"></i>
 </button>
 
 <!-- Infra Filters panel -->
-<div class="infra-filter-legend card" *ngIf="infraFiltersOpen()"
+<div class="infra-filter-legend card" *ngIf="infraFiltersOpen() && !windMapService.isWindMode()"
     [class.offset-right]="protectedAreasService.legendOpen() || reseauService.legendOpen()">
     <div class="infra-filter-header">
         <i class="fa-solid fa-filter"></i>
@@ -63,13 +63,13 @@
 </div>
 
 
-<button class="pa-legend-reopen" *ngIf="protectedAreasService.isVisible() && !protectedAreasService.legendOpen()"
+<button class="pa-legend-reopen" *ngIf="protectedAreasService.isVisible() && !protectedAreasService.legendOpen() && !windMapService.isWindMode()"
     [class.offset-right]="reseauService.legendOpen() || infraFiltersOpen()"
     (click)="protectedAreasService.legendOpen.set(true)">
     <i class="fa-solid fa-layer-group"></i>
 </button>
 
-<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()" [class.offset-right]="reseauService.legendOpen() || infraFiltersOpen()">
+<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen() && !windMapService.isWindMode()" [class.offset-right]="reseauService.legendOpen() || infraFiltersOpen()">
     <div class="pa-legend-header">
         <i class="fa-solid fa-layer-group"></i>
         <strong>Aires protégées</strong>
@@ -112,14 +112,14 @@
 </ng-template>
 
 <!-- Réseau toggle button (below protected areas button) -->
-<button class="reseau-legend-reopen" *ngIf="reseauService.isVisible() && !reseauService.legendOpen()"
+<button class="reseau-legend-reopen" *ngIf="reseauService.isVisible() && !reseauService.legendOpen() && !windMapService.isWindMode()"
     [class.offset-right]="protectedAreasService.legendOpen() || infraFiltersOpen()"
     (click)="reseauService.legendOpen.set(true)">
     <i class="fa-solid fa-network-wired"></i>
 </button>
 
 <!-- Réseau legend panel -->
-<div class="reseau-legend card" *ngIf="reseauService.legendOpen()" [class.offset-right]="protectedAreasService.legendOpen() || infraFiltersOpen()">
+<div class="reseau-legend card" *ngIf="reseauService.legendOpen() && !windMapService.isWindMode()" [class.offset-right]="protectedAreasService.legendOpen() || infraFiltersOpen()">
     <div class="reseau-legend-header">
         <i class="fa-solid fa-network-wired"></i>
         <strong>Réseau électrique</strong>
@@ -166,7 +166,7 @@
     </div>
 </div>
 
-<div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
+<div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()" *ngIf="!windMapService.isWindMode()">
     <p>Ajouter une infrastructure :</p>
 
     <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" type="Hydro" route="hydro"

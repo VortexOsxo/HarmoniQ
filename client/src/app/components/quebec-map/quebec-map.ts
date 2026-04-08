@@ -5,6 +5,7 @@ import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService, BUS_CATEGORIES, LINE_CATEGORIES } from '@app/services/reseau-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { WindMapService } from '@app/services/wind-map-service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 
@@ -69,12 +70,23 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
     private mapService: MapService,
     public protectedAreasService: ProtectedAreasService,
     public reseauService: ReseauService,
-    public infraDetailService: InfraDetailService
+    public infraDetailService: InfraDetailService,
+    public windMapService: WindMapService,
   ) {
     effect(() => {
       if (this.infraDetailService.isOpen()) {
         untracked(() => {
           this.infraFiltersOpen.set(false);
+        });
+      }
+    }, { allowSignalWrites: true });
+
+    effect(() => {
+      if (this.windMapService.isWindMode()) {
+        untracked(() => {
+          this.infraFiltersOpen.set(false);
+          this.protectedAreasService.legendOpen.set(false);
+          this.reseauService.legendOpen.set(false);
         });
       }
     }, { allowSignalWrites: true });

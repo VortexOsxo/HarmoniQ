@@ -22,7 +22,8 @@ div#plots {
 }
 
 .protected-areas-btn,
-.reseau-btn {
+.reseau-btn,
+.wind-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -51,6 +52,42 @@ div#plots {
     color: #fff !important;
     border-color: #4A90D9 !important;
     box-shadow: 0 2px 8px rgba(74, 144, 217, 0.35);
+}
+
+/* Wind button */
+.wind-btn.btn-wind-active {
+    background: #2b7dff !important;
+    color: #fff !important;
+    border-color: #2b7dff !important;
+    box-shadow: 0 2px 8px rgba(43, 125, 255, 0.35);
+}
+
+.wind-year-panel {
+    min-width: 180px;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid #d6d6d6;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    padding: 8px 10px;
+}
+
+.wind-year-panel label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+    color: #3d3d3d;
+}
+
+.wind-year-panel select {
+    font-size: 0.85rem;
+}
+
+.wind-error {
+    margin-top: 6px;
+    display: block;
+    color: #b42318;
+    font-size: 0.72rem;
 }
 
 /* ── Content area ── */
