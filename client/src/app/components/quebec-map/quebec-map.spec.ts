@@ -65,6 +65,18 @@ const mockReseauService = {
   toggleBusGroup: vi.fn(),
   selectAll: vi.fn(),
   deselectAll: vi.fn(),
+  summaryOpen: signal(false),
+  newConnections: signal([] as any[]),
+  hasPendingInfras: signal(false),
+  pendingInfras: signal([] as any[]),
+  clearNewConnections: vi.fn(),
+  closeSummary: vi.fn(),
+  flyToInfra: vi.fn(),
+  connectNewInfras: vi.fn(),
+  isBusTypeSelected: vi.fn().mockReturnValue(true),
+  isLineGroupSelected: vi.fn().mockReturnValue(true),
+  toggleLineGroup: vi.fn(),
+  isLineTypeSelected: vi.fn().mockReturnValue(true),
 };
 
 const mockInfraDetailService = {

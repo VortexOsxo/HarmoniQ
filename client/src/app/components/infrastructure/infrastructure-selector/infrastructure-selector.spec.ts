@@ -40,15 +40,34 @@ const mockInfrasService = {
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
   deleteInfraGroup: vi.fn(),
   isInfraSelected: vi.fn().mockReturnValue(false),
+  guaranteedPowerMW: signal(0),
+  windInstalledMW: signal(0),
+  solarInstalledMW: signal(0),
+  hydroPuissanceOverrides: signal(new Map()),
 };
 
 const mockModalService = {
   open: vi.fn().mockReturnValue({ componentInstance: {}, result: Promise.resolve(null) }),
 };
 
+import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
+import { ScenariosService } from '@app/services/scenarios-service';
+
+const mockSimService = {
+  peakDemandMW: signal<number | null>(null),
+  totalDemandEnergyTWh: signal<number | null>(null),
+  energySummaryTWh: signal(null),
+};
+
+const mockScenariosService = {
+  selectedScenario: signal(null),
+};
+
 const providers = [
   { provide: InfrastruturesService, useValue: mockInfrasService },
   { provide: NgbModal, useValue: mockModalService },
+  { provide: SimulationTemporalGraphService, useValue: mockSimService },
+  { provide: ScenariosService, useValue: mockScenariosService },
 ];
 
 async function renderComponent() {

@@ -545,32 +545,56 @@
 .protected-area-warning {
     display: flex;
     align-items: flex-start;
-    background-color: #fff3cd;
-    color: #8a3a30;
-    padding: 10px 12px;
-    margin: 15px 0;
-    border-radius: 0 4px 4px 0;
-    font-size: 0.85rem;
-    gap: 10px;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-left: 4px solid #e74c3c;
     border-radius: 10px;
+    padding: 16px 18px;
+    margin: 16px 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .protected-area-warning i {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
     color: #e74c3c;
     margin-top: 2px;
 }
 
+.protected-area-warning .warning-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .protected-area-warning .warning-text {
     flex: 1;
+    font-size: 0.9rem;
+    color: #2c3e50;
     line-height: 1.4;
 }
 
-.protected-area-warning .warning-name {
-    font-weight: 600;
-    display: inline-block;
-    margin-top: 3px;
+.protected-area-warning .warning-text strong {
     color: #c0392b;
+    font-weight: 700;
+}
+
+.protected-area-warning .warning-name {
+    font-weight: 700;
+    display: block;
+    margin-top: 6px;
+    color: #e74c3c;
+    font-size: 0.95rem;
+}
+
+.protected-area-warning .protected-area-impact {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #e9ecef;
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.5;
 }
 
 /* ── Mini Explication Modal ── */
@@ -637,4 +661,65 @@
     font-size: 0.85rem;
     color: #555;
     line-height: 1.5;
+}
+
+/* ── Hydro Power Slider ── */
+.hydro-power-slider-card {
+    background: #fff;
+    border: 1px solid #d0e8ff;
+    border-radius: 10px;
+    padding: 14px 16px 12px;
+    margin-top: 12px;
+}
+
+.slider-card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1a6fa8;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    color: #555;
+}
+
+.slider-label-min,
+.slider-label-max {
+    opacity: 0.7;
+}
+
+.slider-current {
+    font-weight: 700;
+    color: #1a6fa8;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.slider-current.saving {
+    opacity: 0.6;
+}
+
+.hydro-range-slider {
+    width: 100%;
+    accent-color: #1a6fa8;
+    cursor: pointer;
+    height: 6px;
+}
+
+.slider-hint {
+    font-size: 0.72rem;
+    color: #888;
+    margin: 6px 0 0 0;
+    font-style: italic;
 }

@@ -14,25 +14,30 @@ vi.mock('leaflet', () => ({
 }));
 
 const MOCK_DEMAND_NODES: DemandNode[] = [
-  { id: 'residentiel', label: 'Résidentiel', value: 300, color: '#3498db', icon: 'fa-home' },
-  { id: 'commercial', label: 'Commercial', value: 200, color: '#2ecc71', icon: 'fa-building' },
+  { id: 'residentiel', label: 'Résidentiel', value: 300, electricityValue: 300, gasValue: 0, color: '#3498db', icon: 'fa-home' },
+  { id: 'commercial', label: 'Commercial', value: 200, electricityValue: 200, gasValue: 0, color: '#2ecc71', icon: 'fa-building' },
 ];
 
 const MOCK_PRODUCTION_NODES: ProductionNode[] = [
-  { id: 'hydro', label: 'Hydro', value: 400, color: '#1abc9c', icon: 'fa-water', co2FactorKgMWh: 4 },
-  { id: 'eolien', label: 'Éolien', value: 100, color: '#9b59b6', icon: 'fa-wind', co2FactorKgMWh: 7 },
+  { id: 'hydro', label: 'Hydro', value: 400, color: '#1abc9c', icon: 'fa-water', co2FactorKgMWh: 4, energyType: 'electricity' },
+  { id: 'eolien', label: 'Éolien', value: 100, color: '#9b59b6', icon: 'fa-wind', co2FactorKgMWh: 7, energyType: 'electricity' },
 ];
 
 const MOCK_SANKEY_DATA: SankeyData = {
   demandNodes: MOCK_DEMAND_NODES,
   productionNodes: MOCK_PRODUCTION_NODES,
+  energyTypeNodes: [
+    { id: 'electricity', label: 'Électricité', value: 500, color: '#3a7abf', icon: 'fa-bolt' },
+  ],
 };
 
 const demandNodes = signal<DemandNode[] | null>(null);
 const productionNodes = signal<ProductionNode[] | null>(null);
+const energyTypeNodes = signal(null);
 
 const mockGraphService = {
   demandNodes,
+  energyTypeNodes,
 };
 
 const mockScenariosService = {
@@ -82,7 +87,7 @@ describe('ScenarioDemandProdSankey', () => {
 
     it('should return 0 for empty demand nodes', async () => {
       const { fixture } = await renderComponent();
-      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [] };
+      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [], energyTypeNodes: [] };
       expect(fixture.componentInstance.totalDemandMW).toBe(0);
     });
   });
@@ -96,7 +101,7 @@ describe('ScenarioDemandProdSankey', () => {
 
     it('should return 0 for empty production nodes', async () => {
       const { fixture } = await renderComponent();
-      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [] };
+      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [], energyTypeNodes: [] };
       expect(fixture.componentInstance.totalProductionMW).toBe(0);
     });
   });
@@ -105,15 +110,16 @@ describe('ScenarioDemandProdSankey', () => {
     it('should compute production / demand * 100', async () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.sankeyData = {
-        demandNodes: [{ id: 'r', label: 'R', value: 400, color: '#000', icon: '' }],
-        productionNodes: [{ id: 'h', label: 'H', value: 200, color: '#000', icon: '', co2FactorKgMWh: 0 }],
+        demandNodes: [{ id: 'r', label: 'R', value: 400, electricityValue: 400, gasValue: 0, color: '#000', icon: '' }],
+        productionNodes: [{ id: 'h', label: 'H', value: 200, color: '#000', icon: '', co2FactorKgMWh: 0, energyType: 'electricity' }],
+        energyTypeNodes: [],
       };
       expect(fixture.componentInstance.coveragePercent).toBe(50);
     });
 
     it('should return 0 when total demand is 0', async () => {
       const { fixture } = await renderComponent();
-      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [] };
+      fixture.componentInstance.sankeyData = { demandNodes: [], productionNodes: [], energyTypeNodes: [] };
       expect(fixture.componentInstance.coveragePercent).toBe(0);
     });
   });
@@ -130,8 +136,9 @@ describe('ScenarioDemandProdSankey', () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.simulationRan = true;
       fixture.componentInstance.sankeyData = {
-        demandNodes: [{ id: 'r', label: 'R', value: 600, color: '#000', icon: '' }],
-        productionNodes: [{ id: 'h', label: 'H', value: 400, color: '#000', icon: '', co2FactorKgMWh: 0 }],
+        demandNodes: [{ id: 'r', label: 'R', value: 600, electricityValue: 600, gasValue: 0, color: '#000', icon: '' }],
+        productionNodes: [{ id: 'h', label: 'H', value: 400, color: '#000', icon: '', co2FactorKgMWh: 0, energyType: 'electricity' }],
+        energyTypeNodes: [],
       };
       expect(fixture.componentInstance.productionDeficit).toBe(200);
     });
@@ -149,8 +156,9 @@ describe('ScenarioDemandProdSankey', () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.simulationRan = true;
       fixture.componentInstance.sankeyData = {
-        demandNodes: [{ id: 'r', label: 'R', value: 300, color: '#000', icon: '' }],
-        productionNodes: [{ id: 'h', label: 'H', value: 500, color: '#000', icon: '', co2FactorKgMWh: 0 }],
+        demandNodes: [{ id: 'r', label: 'R', value: 300, electricityValue: 300, gasValue: 0, color: '#000', icon: '' }],
+        productionNodes: [{ id: 'h', label: 'H', value: 500, color: '#000', icon: '', co2FactorKgMWh: 0, energyType: 'electricity' }],
+        energyTypeNodes: [],
       };
       expect(fixture.componentInstance.productionSurplus).toBe(200);
     });

@@ -1,4 +1,4 @@
-import { Component, computed, effect, untracked, ChangeDetectorRef } from '@angular/core';
+import { Component, computed, effect, untracked, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
@@ -7,6 +7,7 @@ import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, Impac
 import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
+import { FIRST_NATION_DATA } from '@app/data/first-nation.data';
 
 @Component({
   selector: 'app-infra-detail-modal',
@@ -21,21 +22,48 @@ export class InfraDetailModal {
   isOpen = computed(() => this.infraDetailService.isOpen());
   infra = computed(() => this.infraDetailService.selectedInfra());
 
+  // Hydro power slider
+  sliderValue = signal<number>(0);
+  private basePuissance = signal<number>(0);
+
+  isNewDam = computed(() => {
+    const infra = this.infra();
+    return infra?.type === 'hydro' && !!infra.data?.nom?.endsWith('_new');
+  });
+
+  pMin = computed(() => {
+    const infra = this.infra();
+    const base = this.basePuissance();
+    if (!infra || infra.type !== 'hydro' || base === 0) return 0;
+    if (this.isNewDam()) return Math.round(base / (infra.data.nb_turbines || 1));
+    return base;
+  });
+
+  pMax = computed(() => {
+    const base = this.basePuissance();
+    if (base === 0) return 0;
+    return this.isNewDam() ? Math.round(base * 1.15) : Math.round(base * 1.10);
+  });
+
+
   protectedAreaName: string | null = null;
+  protectedAreaIcon: string | null = null;
+  protectedAreaImpact: string | null = null;
+  protectedAreaTypeLabel: string = 'une aire protégée';
   loadingProtectionStatus: boolean = false;
-  
+
   selectedExplanationTitle: string | null = null;
   selectedExplanationText: string | null = null;
-  
+
   showExplanationFromTooltip(tooltip: string) {
     if (!tooltip) return;
     const parts = tooltip.split(' : ');
     if (parts.length > 1) {
-        this.selectedExplanationTitle = parts[0];
-        this.selectedExplanationText = parts.slice(1).join(' : ');
+      this.selectedExplanationTitle = parts[0];
+      this.selectedExplanationText = parts.slice(1).join(' : ');
     } else {
-        this.selectedExplanationTitle = 'Information';
-        this.selectedExplanationText = tooltip;
+      this.selectedExplanationTitle = 'Information';
+      this.selectedExplanationText = tooltip;
     }
   }
 
@@ -46,6 +74,8 @@ export class InfraDetailModal {
 
   lat: number = 0;
   lon: number = 0;
+  private checkedLat: number | null = null;
+  private checkedLon: number | null = null;
 
   constructor(
     public infraDetailService: InfraDetailService,
@@ -58,27 +88,86 @@ export class InfraDetailModal {
       // Déclencheur sur le changement d'infrastructure
       const currentInfra = this.infra();
       untracked(() => {
+        if (!currentInfra || !currentInfra.data) {
+          this.showCycleVieModal = false;
+          this.showImageOverlay = false;
+          this.protectedAreaName = null;
+          this.protectedAreaImpact = null;
+          this.protectedAreaIcon = null;
+          this.loadingProtectionStatus = false;
+          this.closeExplanation();
+          this.checkedLat = null;
+          this.checkedLon = null;
+          return;
+        }
+
+        const newLat = parseFloat(currentInfra.data.latitude || currentInfra.data.lat);
+        const newLon = parseFloat(currentInfra.data.longitude || currentInfra.data.lng);
+
+        if (this.checkedLat === newLat && this.checkedLon === newLon) {
+          return; // Already checked this location, no refresh needed
+        }
+
+        this.lat = newLat;
+        this.lon = newLon;
+        this.checkedLat = newLat;
+        this.checkedLon = newLon;
+
         this.showCycleVieModal = false;
         this.showImageOverlay = false;
         this.protectedAreaName = null;
+        this.protectedAreaIcon = null;
+        this.protectedAreaImpact = null;
         this.loadingProtectionStatus = false;
         this.closeExplanation();
-        
-        if (currentInfra && currentInfra.data) {
-            this.lat = parseFloat(currentInfra.data.latitude || currentInfra.data.lat);
-            this.lon = parseFloat(currentInfra.data.longitude || currentInfra.data.lng);
-            
-            if (!isNaN(this.lat) && !isNaN(this.lon)) {
-                this.loadingProtectionStatus = true;
-                this.protectedAreasService.checkProtectedArea(this.lat, this.lon).then(name => {
-                    this.protectedAreaName = name;
-                    this.loadingProtectionStatus = false;
-                    this.cdr.detectChanges();
-                }).catch(() => {
-                    this.loadingProtectionStatus = false;
-                    this.cdr.detectChanges();
-                });
+
+        if (!isNaN(this.lat) && !isNaN(this.lon)) {
+          this.loadingProtectionStatus = true;
+          this.protectedAreasService.checkProtectedAreaWithDetails(this.lat, this.lon).then(res => {
+            const name = res ? res.name : null;
+            const categoryId = res ? res.categoryId : -1;
+
+            this.protectedAreaName = name;
+            this.protectedAreaImpact = null;
+            this.protectedAreaIcon = null;
+            this.protectedAreaTypeLabel = 'une aire protégée';
+            if (name) {
+              if (categoryId === 24) {
+                this.protectedAreaIcon = '/icons/fish.png';
+                this.protectedAreaTypeLabel = 'un territoire d\'importance pour la conservation';
+              } else if (categoryId === 100) {
+                this.protectedAreaIcon = '/icons/cerf.png';
+                this.protectedAreaTypeLabel = 'une zone environnementale';
+              } else if (categoryId === 101) {
+                this.protectedAreaIcon = '/icons/tree-icon.svg';
+                this.protectedAreaTypeLabel = 'un milieu forestier';
+              } else if (categoryId === 52) {
+                this.protectedAreaIcon = '/icons/tipi.png';
+                this.protectedAreaTypeLabel = 'un territoire autochtone. Une entente doit être conclue avec les communautés autochtones afin de construire une infrastructure sur ce territoire.';
+              } else if (categoryId === 102) {
+                this.protectedAreaTypeLabel = 'une aire protégée fédérale';
+              }
+
+              const habitatArray = Array.isArray(FIRST_NATION_DATA) ? FIRST_NATION_DATA : ((FIRST_NATION_DATA as any).default || []);
+              for (const habitat of habitatArray) {
+                if (habitat['Région'] && name.toUpperCase().includes((habitat['Région'] as string).toUpperCase())) {
+                  this.protectedAreaImpact = habitat['Impact'] || null;
+                  break;
+                }
+              }
             }
+            this.loadingProtectionStatus = false;
+            setTimeout(() => {
+              this.cdr.markForCheck();
+              this.cdr.detectChanges();
+            });
+          }).catch(() => {
+            this.loadingProtectionStatus = false;
+            setTimeout(() => {
+              this.cdr.markForCheck();
+              this.cdr.detectChanges();
+            });
+          });
         }
       });
     });
@@ -99,6 +188,19 @@ export class InfraDetailModal {
         }
       }).catch(() => { }); // Dismissal ignored
     }
+  }
+
+  onPuissanceSliderInput(event: Event) {
+    const val = parseFloat((event.target as HTMLInputElement).value);
+    this.sliderValue.set(val);
+  }
+
+  onPuissanceSliderChange(event: Event) {
+    const val = parseFloat((event.target as HTMLInputElement).value);
+    this.sliderValue.set(val);
+    const infra = this.infra();
+    if (!infra || infra.type !== 'hydro') return;
+    this.infrasService.overrideHydroPuissance(infra.data.id, val);
   }
 
   close() {

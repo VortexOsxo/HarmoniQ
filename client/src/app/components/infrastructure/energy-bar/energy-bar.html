@@ -1,0 +1,85 @@
+<div class="energy-bar-wrapper" *ngIf="demandEnergyTWh() !== null">
+
+  <!-- Row: labels -->
+  <div class="energy-bar-labels">
+    <span class="label-supply">
+      <i class="fa-solid fa-bolt-lightning"></i>
+      Production locale&nbsp;:
+      <strong>{{ localSupplyTWh() | number:'1.0-1' }} TWh</strong>
+    </span>
+    <span class="label-demand">
+      Demande totale&nbsp;: <strong>{{ demandEnergyTWh()! | number:'1.0-1' }} TWh</strong>
+    </span>
+  </div>
+
+  <!-- Stacked progress bar -->
+  <div class="progress energy-progress">
+    <!-- Guaranteed (hydro + thermal + nuclear) — live -->
+    <div
+      class="progress-bar bg-primary"
+      role="progressbar"
+      [style.width.%]="pctGuaranteed()"
+      [attr.aria-valuenow]="pctGuaranteed()"
+      aria-valuemin="0" aria-valuemax="100"
+      title="Garanti (hydro + thermique + nucléaire) : {{ guaranteedEnergyTWh() | number:'1.0-1' }} TWh">
+      @if (pctGuaranteed() >= 12) { {{ pctGuaranteed() }}% }
+    </div>
+
+    <!-- Wind — actual if simulated, estimated otherwise -->
+    <div
+      class="progress-bar bg-info"
+      role="progressbar"
+      [style.width.%]="pctWind()"
+      [attr.aria-valuenow]="pctWind()"
+      aria-valuemin="0" aria-valuemax="100"
+      [title]="'Éolien' + (windIsEstimate() ? ' (estimé 35%)' : '') + ' : ' + windEnergyTWh() + ' TWh'">
+      @if (pctWind() >= 8) { {{ pctWind() }}% }
+    </div>
+
+    <!-- Solar — actual if simulated, estimated otherwise -->
+    <div
+      class="progress-bar bg-warning"
+      role="progressbar"
+      [style.width.%]="pctSolar()"
+      [attr.aria-valuenow]="pctSolar()"
+      aria-valuemin="0" aria-valuemax="100"
+      [title]="'Solaire' + (solarIsEstimate() ? ' (estimé 12%)' : '') + ' : ' + solarEnergyTWh() + ' TWh'">
+      @if (pctSolar() >= 8) { {{ pctSolar() }}% }
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="energy-legend">
+    <span class="legend-item"><span class="legend-dot bg-primary"></span>Garanti</span>
+    <span class="legend-item">
+      <span class="legend-dot bg-info"></span>Éolien
+      @if (windIsEstimate()) { <em class="legend-est">(~35% CF)</em> }
+    </span>
+    <span class="legend-item">
+      <span class="legend-dot bg-warning"></span>Solaire
+      @if (solarIsEstimate()) { <em class="legend-est">(~12% CF)</em> }
+    </span>
+  </div>
+
+  <!-- Net balance badge -->
+  <div class="energy-status">
+    @if (netBalanceTWh() >= 0) {
+      <span class="badge text-bg-success">
+        <i class="fa-solid fa-arrow-up-right-dots me-1"></i>
+        Surplus exportable&nbsp;: {{ netBalanceTWh() | number:'1.0-1' }} TWh
+      </span>
+    } @else {
+      <span class="badge text-bg-danger">
+        <i class="fa-solid fa-right-to-bracket me-1"></i>
+        Importation requise&nbsp;: {{ (-netBalanceTWh()) | number:'1.0-1' }} TWh
+      </span>
+    }
+    @if (simService.energySummaryTWh()?.imported) {
+      <span class="badge text-bg-secondary ms-1">
+        <i class="fa-solid fa-plug-circle-bolt me-1"></i>
+        Importé simulé&nbsp;: {{ simService.energySummaryTWh()!.imported | number:'1.0-1' }} TWh
+      </span>
+    }
+  </div>
+
+</div>

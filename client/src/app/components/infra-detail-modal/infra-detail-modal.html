@@ -37,11 +37,46 @@
                 </div>
             </div>
 
+            <!-- Hydro power slider -->
+            <div class="hydro-power-slider-card" *ngIf="infra()?.type === 'hydro' && pMax() > 0">
+                <h6 class="slider-card-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    Ajustement de la puissance nominale
+                </h6>
+                <div class="slider-labels">
+                    <span class="slider-label-min">{{ pMin() }} MW</span>
+                    <span class="slider-current">
+                        {{ sliderValue() | number:'1.0-0' }} MW
+                    </span>
+                    <span class="slider-label-max">{{ pMax() }} MW</span>
+                </div>
+                <input
+                    type="range"
+                    class="hydro-range-slider"
+                    [min]="pMin()"
+                    [max]="pMax()"
+                    [step]="1"
+                    [value]="sliderValue()"
+                    (input)="onPuissanceSliderInput($event)"
+                    (change)="onPuissanceSliderChange($event)"
+                />
+                <p class="slider-hint" *ngIf="isNewDam()">
+                    Plage : puissance nominale / nb turbines → +15 %
+                </p>
+                <p class="slider-hint" *ngIf="!isNewDam()">
+                    Plage : valeur installée → +10 % (gains d'efficacité)
+                </p>
+            </div>
+
             <div class="protected-area-warning" *ngIf="protectedAreaName">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+                <img *ngIf="protectedAreaIcon" [src]="protectedAreaIcon" alt="Icône zone" class="warning-icon" />
+                <i *ngIf="!protectedAreaIcon" class="fa-solid fa-triangle-exclamation"></i>
                 <div class="warning-text">
-                    <strong>Attention :</strong> Cette infrastructure se situe dans une aire protégée :<br>
+                    <strong>Attention :</strong> Cette infrastructure se situe dans {{ protectedAreaTypeLabel }}<br>
                     <span class="warning-name">{{ protectedAreaName }}</span>
+                    <div class="protected-area-impact" *ngIf="protectedAreaImpact">
+                        {{ protectedAreaImpact }}
+                    </div>
                 </div>
             </div>
 
