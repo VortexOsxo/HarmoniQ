@@ -258,7 +258,7 @@ def test_base_csv_export(mock_pvgis, tmp_path):
 
 def test_bifacial_gain_positif(mock_pvgis):
     """Le mode bifacial doit produire plus que le monofacial."""
-    df_mono = calculate_energy_solar_plants(**PARAMS)
+    df_mono = calculate_energy_solar_plants(**PARAMS, bifacial=False)
     df_bi   = calculate_energy_solar_plants(**PARAMS, bifacial=True)
     assert df_bi["production"].sum() > df_mono["production"].sum()
 
@@ -270,7 +270,7 @@ def test_bifacial_non_negative(mock_pvgis):
 
 def test_bifacial_gain_raisonnable(mock_pvgis):
     """Gain bifacial attendu entre 1 % et 25 %."""
-    df_mono = calculate_energy_solar_plants(**PARAMS)
+    df_mono = calculate_energy_solar_plants(**PARAMS, bifacial=False)
     df_bi   = calculate_energy_solar_plants(**PARAMS, bifacial=True)
     gain = (df_bi["production"].sum() - df_mono["production"].sum()) / df_mono["production"].sum()
     assert 0.01 < gain < 0.25
@@ -373,10 +373,9 @@ if __name__ == "__main__":
     print("[OK] albedo_comparaison.png sauvegarde")
 
     # ── Graphique bifacial : mono vs bifacial (La Prairie) ───────────────────
-    print(f"\n>> Calcul bifacial pour {c_ref['nom']}...")
-    df_bi = calculate_energy_solar_plants(**c_ref, **COMMUN, bifacial=True)
-
-    df_mono = df_avec.copy()   # monofacial avec albedo saisonnier
+    print(f"\n>> Calcul mono/bifacial pour {c_ref['nom']}...")
+    df_mono = calculate_energy_solar_plants(**c_ref, **COMMUN, bifacial=False)
+    df_bi   = calculate_energy_solar_plants(**c_ref, **COMMUN, bifacial=True)
     df_mono["mois"] = pd.to_datetime(df_mono["date"]).dt.month
     df_bi["mois"]   = pd.to_datetime(df_bi["date"]).dt.month
     m_mono = df_mono.groupby("mois")["production"].sum() / 1_000   # MWh

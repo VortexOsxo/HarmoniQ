@@ -3,98 +3,101 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import json
+import urllib.request
+from functools import lru_cache
 from typing import List
 
-# OBSOLETE - à garder pour référence, mais ne pas utiliser pour les calculs de production solaire (trop simpliste, ne tient pas compte de la météo, de l'albédo, du modèle bifacial, etc.). La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
-def get_weather_data(coordinates, year=2021):
-    tmys = []
-    for location in coordinates:
-        latitude, longitude, name, altitude, timezone, power_kw = location
-        print(f"\nRécupération des données météo horaires pour {name} en {year}...")
-        try:
-            weather, _, _ = pvlib.iotools.get_pvgis_hourly(
-                latitude, longitude, start=year, end=year
-            )
-            weather.index.name = "utc_time"
-            tmys.append((weather, location))
-        except Exception as e:
-            print(f"Erreur pour {name}: {e}")
-            tmys.append((None, location))
-    return tmys
+# # OBSOLETE - à garder pour référence, mais ne pas utiliser pour les calculs de production solaire (trop simpliste, ne tient pas compte de la météo, de l'albédo, du modèle bifacial, etc.). La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
+# def get_weather_data(coordinates, year=2021):
+#     tmys = []
+#     for location in coordinates:
+#         latitude, longitude, name, altitude, timezone, power_kw = location
+#         print(f"\nRécupération des données météo horaires pour {name} en {year}...")
+#         try:
+#             weather, _, _ = pvlib.iotools.get_pvgis_hourly(
+#                 latitude, longitude, start=year, end=year
+#             )
+#             weather.index.name = "utc_time"
+#             tmys.append((weather, location))
+#         except Exception as e:
+#             print(f"Erreur pour {name}: {e}")
+#             tmys.append((None, location))
+#     return tmys
 
-#OBSOLETE - à garder pour référence, mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
-def calculate_solar_parameters(
-    weather,
-    latitude,
-    longitude,
-    altitude,
-    temperature_model_parameters,
-    module,
-    inverter,
-    surface_tilt,
-    surface_orientation,
-):
-    solpos = pvlib.solarposition.get_solarposition(
-        time=weather.index,
-        latitude=latitude,
-        longitude=longitude,
-        altitude=altitude,
-        temperature=weather["temp_air"],
-        pressure=pvlib.atmosphere.alt2pres(altitude),
-    )
-    dni_extra = pvlib.irradiance.get_extra_radiation(weather.index)
-    airmass = pvlib.atmosphere.get_relative_airmass(solpos["apparent_zenith"])
-    pressure = pvlib.atmosphere.alt2pres(altitude)
-    am_abs = pvlib.atmosphere.get_absolute_airmass(airmass, pressure)
-    aoi = pvlib.irradiance.aoi(
-        surface_tilt,
-        surface_orientation,
-        solpos["apparent_zenith"],
-        solpos["azimuth"],
-    )
-    total_irradiance = pvlib.irradiance.get_total_irradiance(
-        surface_tilt,
-        surface_orientation,
-        solpos["apparent_zenith"],
-        solpos["azimuth"],
-        weather["dni"],
-        weather["ghi"],
-        weather["dhi"],
-        dni_extra=dni_extra,
-        model="haydavies",
-    )
-    cell_temperature = pvlib.temperature.sapm_cell(
-        total_irradiance["poa_global"],
-        weather["temp_air"],
-        weather["wind_speed"],
-        **temperature_model_parameters,
-    )
-    effective_irradiance = pvlib.pvsystem.sapm_effective_irradiance(
-        total_irradiance["poa_direct"],
-        total_irradiance["poa_diffuse"],
-        am_abs,
-        aoi,
-        module,
-    )
-    dc = pvlib.pvsystem.sapm(effective_irradiance, cell_temperature, module)
-    ac = pvlib.inverter.sandia(dc["v_mp"], dc["p_mp"], inverter)
-    return ac
+# #OBSOLETE - à garder pour référence, mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
+# def calculate_solar_parameters(
+#     weather,
+#     latitude,
+#     longitude,
+#     altitude,
+#     temperature_model_parameters,
+#     module,
+#     inverter,
+#     surface_tilt,
+#     surface_orientation,
+# ):
+#     solpos = pvlib.solarposition.get_solarposition(
+#         time=weather.index,
+#         latitude=latitude,
+#         longitude=longitude,
+#         altitude=altitude,
+#         temperature=weather["temp_air"],
+#         pressure=pvlib.atmosphere.alt2pres(altitude),
+#     )
+#     dni_extra = pvlib.irradiance.get_extra_radiation(weather.index)
+#     airmass = pvlib.atmosphere.get_relative_airmass(solpos["apparent_zenith"])
+#     pressure = pvlib.atmosphere.alt2pres(altitude)
+#     am_abs = pvlib.atmosphere.get_absolute_airmass(airmass, pressure)
+#     aoi = pvlib.irradiance.aoi(
+#         surface_tilt,
+#         surface_orientation,
+#         solpos["apparent_zenith"],
+#         solpos["azimuth"],
+#     )
+#     total_irradiance = pvlib.irradiance.get_total_irradiance(
+#         surface_tilt,
+#         surface_orientation,
+#         solpos["apparent_zenith"],
+#         solpos["azimuth"],
+#         weather["dni"],
+#         weather["ghi"],
+#         weather["dhi"],
+#         dni_extra=dni_extra,
+#         model="haydavies",
+#     )
+#     cell_temperature = pvlib.temperature.sapm_cell(
+#         total_irradiance["poa_global"],
+#         weather["temp_air"],
+#         weather["wind_speed"],
+#         **temperature_model_parameters,
+#     )
+#     effective_irradiance = pvlib.pvsystem.sapm_effective_irradiance(
+#         total_irradiance["poa_direct"],
+#         total_irradiance["poa_diffuse"],
+#         am_abs,
+#         aoi,
+#         module,
+#     )
+#     dc = pvlib.pvsystem.sapm(effective_irradiance, cell_temperature, module)
+#     ac = pvlib.inverter.sandia(dc["v_mp"], dc["p_mp"], inverter)
+#     return ac
 
-# Obsolete Conversion entre surface de panneaux et puissance produite - non utilisé pour la version en ModelChain, mais peut être utile pour des calculs rapides ou des estimations approximatives.
-def convert_solar(value, module, mode="surface_to_power"):
-    panel_efficiency = module["Impo"] * module["Vmpo"] / (1000 * module["Area"])
+# # Obsolete Conversion entre surface de panneaux et puissance produite - non utilisé pour la version en ModelChain, mais peut être utile pour des calculs rapides ou des estimations approximatives.
+# def convert_solar(value, module, mode="surface_to_power"):
+#     panel_efficiency = module["Impo"] * module["Vmpo"] / (1000 * module["Area"])
 
-    if mode == "surface_to_power":
-        power_w = value * panel_efficiency * 1000
-        power_kw = power_w / 1000
-        return power_kw
-    elif mode == "power_to_surface":
-        surface_m2 = value * 1000 / (panel_efficiency * 1000)
-        return surface_m2
-    else:
-        raise ValueError(
-            "Mode invalide. Utilisez 'surface_to_power' ou 'power_to_surface'."
-        )
+#     if mode == "surface_to_power":
+#         power_w = value * panel_efficiency * 1000
+#         power_kw = power_w / 1000
+#         return power_kw
+#     elif mode == "power_to_surface":
+#         surface_m2 = value * 1000 / (panel_efficiency * 1000)
+#         return surface_m2
+#     else:
+#         raise ValueError(
+#             "Mode invalide. Utilisez 'surface_to_power' ou 'power_to_surface'."
+#         )
 
 # TEST DATA - Données de référence pour une centrale solaire fictive , à garder pour référence mais ne pas utiliser pour les calculs de production solaire. La nouvelle version utilise pvlib ModelChain pour une simulation plus réaliste.
 nom = "varennes"
@@ -112,6 +115,31 @@ PANELS_PAR_SCENARIO = {"pessimiste": 2, "neutre": 4, "optimiste": 6}
 # Surface d'un panneau résidentiel standard [m²]
 SURFACE_PAR_PANNEAU_M2 = 1.7
 
+@lru_cache(maxsize=64)
+def get_albedo_nasa_power(latitude: float, longitude: float) -> pd.Series:
+    """
+    Récupère l'albédo de surface mensuel climatologique (ALLSKY_SRF_ALB)
+    depuis l'API NASA POWER (MERRA-2, résolution ~0.5°).
+
+    Retour :
+        Series de 12 valeurs indexées 1–12 (janvier–décembre), sans unité [0–1].
+    """
+    url = (
+        "https://power.larc.nasa.gov/api/temporal/climatology/point"
+        f"?parameters=ALLSKY_SRF_ALB&community=RE"
+        f"&longitude={longitude}&latitude={latitude}&format=JSON"
+    )
+    with urllib.request.urlopen(url, timeout=15) as resp:
+        data = json.loads(resp.read())
+    monthly = data["properties"]["parameter"]["ALLSKY_SRF_ALB"]
+    # L'API retourne des clés "JAN"…"DEC" + "ANN"
+    _MONTH_KEYS = ["JAN","FEB","MAR","APR","MAY","JUN",
+                   "JUL","AUG","SEP","OCT","NOV","DEC"]
+    return pd.Series(
+        {i + 1: monthly[k] for i, k in enumerate(_MONTH_KEYS)}
+    )
+
+
 def calculate_energy_solar_plants(
     nom: str,
     latitude: float,
@@ -121,8 +149,10 @@ def calculate_energy_solar_plants(
     nombre_panneau: int,
     date_start: pd.Timestamp,
     date_end: pd.Timestamp,
-    module_ref: str = "Canadian_Solar_CS5P_220M___2009_",
+    module_ref: str = "Canadian_Solar_CS6X_300M__2013_",
+    inverter_ref: str = "ABB__MICRO_0_3_I_OUTD_US_240__240V_",
     albedo_saisonnier: bool = True,
+    albedo_nasa: bool = False,
     bifacial: bool = True,
     bifaciality_factor: float = 0.70,
     gcr: float = 0.40,
@@ -141,15 +171,55 @@ def calculate_energy_solar_plants(
         - date_start, date_end : période horaire demandée
 
     Arguments optionnels :
-        - module_ref         : clé Sandia du module PV (défaut Canadian Solar CS5P-220M)
-                               La puissance par panneau est déduite automatiquement via Impo × Vmpo.
-        - albedo_saisonnier  : True = neige hiver (0.60) / herbe été (0.20)
-                               False = valeur fixe (0.25)
-        - bifacial           : True = active le modèle bifacial (infinite_sheds)
-        - bifaciality_factor : ratio efficacité arrière/avant du module (défaut 0.70)
-        - gcr                : ground coverage ratio, ratio longueur_panneau/espacement [0-1]
+        - module_ref         : clé Sandia du module PV (base Sandia National Labs,
+                               pvlib.pvsystem.retrieve_sam("SandiaMod"))
+                               Défaut : "Canadian_Solar_CS6X_300M__2013_"  (~284W, Vmpo=35V)
+                               Alternatives :
+                                 "Canadian_Solar_CS5P_220M___2009_"         (~221W, Vmpo=36.3V)
+                                 "SunPower_SPR_315E_WHT__2007__E__"         (~315W, Vmpo=54.7V)
+                                 "SunPower_SPR_305_WHT__2007__E__"          (~305W, Vmpo=54.7V)
+
+        - inverter_ref       : clé CEC de l'onduleur (base California Energy Commission,
+                               pvlib.pvsystem.retrieve_sam("cecinverter"))
+                               1 micro-onduleur modélisé par panneau — scaling = nombre_panneau
+                               Défaut : "ABB__MICRO_0_3_I_OUTD_US_240__240V_"   (Paco=300W, Vdco=40V)
+                               Alternatives :
+                                 "ABB__MICRO_0_25_I_OUTD_US_240__240V_"    (Paco=250W, Vdco=40V)
+                                 "ABB__MICRO_0_25_I_OUTD_US_208__208V_"    (Paco=250W, Vdco=40V)
+
+        - albedo_nasa        : albédo mensuel climatologique via API NASA POWER
+                               (paramètre ALLSKY_SRF_ALB, réanalyse MERRA-2, résolution ~0.5°,
+                               moyenne sur toutes les années disponibles ~1981-2022)
+                               Spécifique aux coordonnées du site. Prioritaire sur albedo_saisonnier.
+                               Résultats mis en cache par site (lru_cache) — 1 seul appel réseau/site/session.
+                               Défaut : False (pour éviter les appels réseau dans les tests), sinon True pour une meilleure précision.
+                               Vérif La Prairie (45.42 N, 73.50 O) :
+                                 Jan=0.36  Fév=0.42  Mar=0.34  Avr=0.16  Mai=0.13  Jun=0.15
+                                 Jul=0.15  Aoû=0.15  Sep=0.15  Oct=0.14  Nov=0.14  Déc=0.27
+
+        - albedo_saisonnier  : Par .
+                               Valeurs calibrées sur NASA POWER MERRA-2, Québec sud (2025) :
+                                 Jan=0.36  Fév=0.42  Mar=0.34  Avr=0.16  Mai=0.13  Jun=0.15
+                                 Jul=0.15  Aoû=0.15  Sep=0.15  Oct=0.14  Nov=0.14  Déc=0.27
+                               Si False : albédo fixe = 0.25 (défaut pvlib générique)
+
+        - bifacial           : active le modèle bifacial pvlib infinite_sheds
+                               Réf : Marion et al. (2017), "A Practical Irradiance Model for
+                               Bifacial PV Modules", IEEE PVSC 44. Défaut : True
+
+        - bifaciality_factor : ratio puissance face arrière / face avant [0-1]
+                               Défaut : 0.70 (typique modules monocristallins PERC, source : fiches
+                               Canadian Solar CS6X = 0.70, SunPower SPR-315 = 0.75)
+
+        - gcr                : Ground Coverage Ratio = largeur_panneau / espacement_rangées [0-1]
+                               Affecte l'ombrage inter-rangées et la réflexion sol (bifacial).
+                               Défaut : 0.40 (valeur typique centrale au sol Québec)
+
         - hauteur_montage    : hauteur du centre de la rangée au-dessus du sol [m]
-        - espacement_rangees : distance entre rangées [m]
+                               Paramètre du modèle bifacial infinite_sheds. Défaut : 1.0 m
+
+        - espacement_rangees : distance (pitch) entre rangées [m]
+                               Paramètre du modèle bifacial infinite_sheds. Défaut : 5.0 m
 
     Retour :
         - DataFrame avec colonnes : date, nom, Latitude, Longitude, production [kW]
@@ -158,7 +228,7 @@ def calculate_energy_solar_plants(
     sandia_modules = pvlib.pvsystem.retrieve_sam("SandiaMod")
     sapm_inverters = pvlib.pvsystem.retrieve_sam("cecinverter")
     module = sandia_modules[module_ref]
-    inverter = sapm_inverters["ABB__MICRO_0_25_I_OUTD_US_208__208V_"]
+    inverter = sapm_inverters[inverter_ref]
     temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS["sapm"]["open_rack_glass_glass"]
 
     # --- Location et système PV ---
@@ -178,28 +248,44 @@ def calculate_energy_solar_plants(
     mc = pvlib.modelchain.ModelChain(
         system, 
         location,
-        ) # Il est possible de fixer les modèles Haydavies au besoin.
+        ) # Il est possible de fixer le modèle Haydavies au besoin.
 
     # --- Données météo TMY depuis PVGIS (année typique, 8760h) ---
     weather, _ = pvlib.iotools.get_pvgis_tmy(
         latitude, longitude, map_variables=True
     )
     
-    # --- Albédo saisonnier (Québec) ---
-    # Méthode: weather['albedo'] = Series saisonnière (prioritaire sur system.albedo).
+    # --- Albédo ---
     weather = weather.copy()
-    if albedo_saisonnier:
-        mois = weather.index.month
-        albedo = pd.Series(0.20, index=weather.index)   # été  : herbe/asphalte
-        albedo[mois.isin([4, 10, 11])] = 0.25           # transition
-        albedo[mois.isin([12, 1, 2, 3])] = 0.60         # hiver : neige
-        weather["albedo"] = albedo
+    mois = weather.index.month
+    if albedo_nasa:
+        nasa_monthly = get_albedo_nasa_power(latitude, longitude)
+        weather["albedo"] = mois.map(nasa_monthly)
+    elif albedo_saisonnier:
+        # Valeurs mensuelles calibrées sur NASA POWER MERRA-2 (moyenne Québec sud)
+        # utilisé par défaut pour ne pas rajouter un API.
+        _ALBEDO_MENSUEL_QC = {
+            1: 0.36,   # Jan — neige tassée
+            2: 0.42,   # Fév — couverture neigeuse maximale
+            3: 0.34,   # Mar — fonte active, neige sale
+            4: 0.16,   # Avr — sol nu, humide
+            5: 0.13,   # Mai — végétation jeune
+            6: 0.15,   # Jun — herbe/asphalte
+            7: 0.15,   # Jul
+            8: 0.15,   # Aoû
+            9: 0.15,   # Sep
+            10: 0.14,  # Oct — feuilles tombées
+            11: 0.14,  # Nov — sol nu, pas encore de neige
+            12: 0.27,  # Déc — début enneigement
+        }
+        weather["albedo"] = mois.map(_ALBEDO_MENSUEL_QC)
     else:
         weather["albedo"] = 0.25                        # défaut pvlib
 
     # --- Simulation sur l'année typique ---
     mc.run_model(weather)
-    ac_tmy_w = np.maximum(mc.results.ac.values, 0)  # W pour 1 module, 8760 h
+    ac_tmy_w = np.nan_to_num(mc.results.ac.values, nan=0.0)
+    ac_tmy_w = np.maximum(ac_tmy_w, 0)  # W pour 1 module, 8760 h
 
     # --- Modèle bifacial (infinite_sheds) ---
     if bifacial:
@@ -223,7 +309,8 @@ def calculate_energy_solar_plants(
         total_eff = mc.results.effective_irradiance + rear["poa_back"] * bifaciality_factor
         dc_bi = pvlib.pvsystem.sapm(total_eff, mc.results.cell_temperature, module)
         ac_bi = pvlib.inverter.sandia(dc_bi["v_mp"], dc_bi["p_mp"], inverter)
-        ac_tmy_w = np.maximum(ac_bi.values, 0)
+        ac_tmy_w = np.nan_to_num(ac_bi.values, nan=0.0)
+        ac_tmy_w = np.maximum(ac_tmy_w, 0)
 
     # PVGIS retourne des données en UTC; l'heure locale Québec est UTC-5.
     # On roll de -5 pour que le profil soit aligné sur l'heure locale.
@@ -249,96 +336,96 @@ def calculate_energy_solar_plants(
         }
     )
 
-# Version précédente (sans ModelChain, moins précise) --- IGNORE ---
-def calculate_energy_solar_plants_old( 
-    nom : str,
-    latitude: float,
-    longitude: float,
-    angle_panneau: float,
-    orientation_panneau: float,
-    puissance_nominal: float,
-    nombre_panneau: int,
-    date_start: pd.Timestamp,
-    date_end: pd.Timestamp,
-) -> pd.DataFrame:
-    """
-    Calcule la production énergétique des centrales solaires.
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame contenant la production énergétique horaire.
-    """
+# # Version précédente (sans ModelChain, moins précise) --- IGNORE ---
+# def calculate_energy_solar_plants_old( 
+#     nom : str,
+#     latitude: float,
+#     longitude: float,
+#     angle_panneau: float,
+#     orientation_panneau: float,
+#     puissance_nominal: float,
+#     nombre_panneau: int,
+#     date_start: pd.Timestamp,
+#     date_end: pd.Timestamp,
+# ) -> pd.DataFrame:
+#     """
+#     Calcule la production énergétique des centrales solaires.
+#     Returns
+#     -------
+#     pd.DataFrame
+#         DataFrame contenant la production énergétique horaire.
+#     """
 
-    # Initialisation des modèles
-    sandia_modules = pvlib.pvsystem.retrieve_sam("SandiaMod")
-    sapm_inverters = pvlib.pvsystem.retrieve_sam("cecinverter")
+#     # Initialisation des modèles
+#     sandia_modules = pvlib.pvsystem.retrieve_sam("SandiaMod")
+#     sapm_inverters = pvlib.pvsystem.retrieve_sam("cecinverter")
 
-    module = sandia_modules["Canadian_Solar_CS5P_220M___2009_"]
-    inverter = sapm_inverters["ABB__MICRO_0_25_I_OUTD_US_208__208V_"]
-    temperature_model_parameters = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS[
-        "sapm"
-    ]["open_rack_glass_glass"]
+#     module = sandia_modules["Canadian_Solar_CS5P_220M___2009_"]
+#     inverter = sapm_inverters["ABB__MICRO_0_25_I_OUTD_US_208__208V_"]
+#     temperature_model_parameters = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS[
+#         "sapm"
+#     ]["open_rack_glass_glass"]
 
-    # Récupération des données météo
-    weather = pvlib.iotools.get_pvgis_tmy(latitude, longitude)[0]
-    weather.index.name = "utc_time"
+#     # Récupération des données météo
+#     weather = pvlib.iotools.get_pvgis_tmy(latitude, longitude)[0]
+#     weather.index.name = "utc_time"
 
-    # Calcul du nombre de modules nécessaires
-    puissance_module_w = module["Impo"] * module["Vmpo"]
-    print(puissance_module_w)
-    nombre_modules = int(np.ceil((puissance_nominal * 1e6) / puissance_module_w))
-    altitude = 0  # Valeur par défaut pour l'altitude
+#     # Calcul du nombre de modules nécessaires
+#     puissance_module_w = module["Impo"] * module["Vmpo"]
+#     print(puissance_module_w)
+#     nombre_modules = int(np.ceil((puissance_nominal * 1e6) / puissance_module_w))
+#     altitude = 0  # Valeur par défaut pour l'altitude
 
-    # Calcul de la production
-    print(f"Calcul de la production pour {nom}")
-    ac = calculate_solar_parameters(
-        weather,
-        latitude,
-        longitude,
-        altitude,
-        temperature_model_parameters,
-        module,
-        inverter,
-        angle_panneau,
-        orientation_panneau,
-        )
-    # Mise à l'échelle selon la puissance de la centrale
-    ac_scaled = ac * nombre_modules
+#     # Calcul de la production
+#     print(f"Calcul de la production pour {nom}")
+#     ac = calculate_solar_parameters(
+#         weather,
+#         latitude,
+#         longitude,
+#         altitude,
+#         temperature_model_parameters,
+#         module,
+#         inverter,
+#         angle_panneau,
+#         orientation_panneau,
+#         )
+#     # Mise à l'échelle selon la puissance de la centrale
+#     ac_scaled = ac * nombre_modules
 
-    # Fixer les valeurs négatives à zéro
-    ac_scaled = np.maximum(ac_scaled, 0)
+#     # Fixer les valeurs négatives à zéro
+#     ac_scaled = np.maximum(ac_scaled, 0)
 
-    # Création de la plage de dates pour remplacer les datetime
-    datetime_index = pd.date_range(start=date_start, end=date_end, freq="h")
+#     # Création de la plage de dates pour remplacer les datetime
+#     datetime_index = pd.date_range(start=date_start, end=date_end, freq="h")
 
-    # Gestion des cas où la longueur de datetime_index dépasse celle de ac
-    if len(ac) < len(datetime_index):
+#     # Gestion des cas où la longueur de datetime_index dépasse celle de ac
+#     if len(ac) < len(datetime_index):
 
-        # Dupliquer les données de ac pour remplir les heures supplémentaires
-        ac_extended = np.tile(ac, int(np.ceil(len(datetime_index) / len(ac))))[:len(datetime_index)]
+#         # Dupliquer les données de ac pour remplir les heures supplémentaires
+#         ac_extended = np.tile(ac, int(np.ceil(len(datetime_index) / len(ac))))[:len(datetime_index)]
 
-        # Clip les valeurs pour les heures supplémentaires
-        for i in range(len(ac), len(datetime_index)):
-            year_offset = (datetime_index[i].year - datetime_index[0].year)
-            ac_extended[i] = np.clip(ac_extended[i % len(ac)], 0, ac_extended[i % len(ac)] * year_offset)
+#         # Clip les valeurs pour les heures supplémentaires
+#         for i in range(len(ac), len(datetime_index)):
+#             year_offset = (datetime_index[i].year - datetime_index[0].year)
+#             ac_extended[i] = np.clip(ac_extended[i % len(ac)], 0, ac_extended[i % len(ac)] * year_offset)
 
-        # Fixer les valeurs négatives à zéro
-        ac_extended = np.maximum(ac_extended, 0)
-    else:
-        # Si datetime_index est inférieur ou égal à ac, tronquer ac
-        ac_extended = ac[:len(datetime_index)]
-        ac_extended = np.maximum(ac_extended, 0)
+#         # Fixer les valeurs négatives à zéro
+#         ac_extended = np.maximum(ac_extended, 0)
+#     else:
+#         # Si datetime_index est inférieur ou égal à ac, tronquer ac
+#         ac_extended = ac[:len(datetime_index)]
+#         ac_extended = np.maximum(ac_extended, 0)
 
 
-    # Création du DataFrame avec la production horaire
-    resultats_centrales_df = pd.DataFrame(
-        {
-            "datetime": datetime_index,  # Utiliser la plage horaire générée
-            "production_horaire_wh": ac_extended,
-        }
-    )
-    resultats_centrales_df.set_index("datetime", inplace=True)
-    return resultats_centrales_df
+#     # Création du DataFrame avec la production horaire
+#     resultats_centrales_df = pd.DataFrame(
+#         {
+#             "datetime": datetime_index,  # Utiliser la plage horaire générée
+#             "production_horaire_wh": ac_extended,
+#         }
+#     )
+#     resultats_centrales_df.set_index("datetime", inplace=True)
+#     return resultats_centrales_df
 
 
 def distribute_base_to_mrc(
@@ -479,7 +566,7 @@ def compute_facteur_densite(
         population          : population de la MRC
         superficie_km2      : superficie de la MRC [km²]
         m2_par_client       : surface totale de panneaux par client [m²]
-        surface_hab_par_hab : surface habitable par habitant [m²/hab] (défaut 45)
+        surface_hab_par_hab : surface habitable par habitant [m²/hab] (défaut 40)
         taille_menage       : taille moyenne du ménage québécois [hab/ménage] (défaut 2.3)
         eta_toit            : fraction de toit utilisable (orientation, ombrage, etc.)
     """
@@ -563,20 +650,30 @@ def apply_residential_scenario(
 
 def cost_solar_powerplant(puissance_mw):
     """
-    Calcule le coût total pour la centrale solaire.
+    Calcule le coût total pour chaque centrale solaire.
 
     Parameters
     ----------
-    puissance_mw : float
-        Puissance nominale de la centrale en MW
+    coordinates_centrales : list of tuples
+        Liste des coordonnées et puissances des centrales
+    resultats_centrales : dict
+        Dictionnaire contenant l'énergie produite par chaque centrale
 
     Returns
     -------
-    float
-        Coût total en dollars pour la centrale
+    dict
+        Dictionnaire contenant le coût total en dollars pour chaque centrale
     """
-    cout_par_mw = 3_570_000  # Estimation moyenne des coûts actuels
-    return puissance_mw * cout_par_mw
+    couts = {}
+    # Coût de référence par MW pour le Québec
+    cout_par_mw = 4_210_000  # Estimation moyenne des coûts actuels
+
+    # Coût total prenant en compte les coûts indirects et opérationnels
+    cout_total = puissance_mw * cout_par_mw
+
+    couts[nom] = cout_total
+
+    return couts
 
 
 def calculate_installation_cost(puissance_mw):

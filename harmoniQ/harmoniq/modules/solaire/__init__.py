@@ -43,7 +43,6 @@ class InfraSolaire(Infrastructure):
             longitude=self.donnees.longitude,
             angle_panneau=self.donnees.angle_panneau,
             orientation_panneau=self.donnees.orientation_panneau,
-            puissance_nominal=self.donnees.puissance_nominal,
             nombre_panneau=self.donnees.nombre_panneau,
             bifacial=(self.donnees.panneau_type == 'biface'),
             date_start=self.scenario.date_de_debut,
