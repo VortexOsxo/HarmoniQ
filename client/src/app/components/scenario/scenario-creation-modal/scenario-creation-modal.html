@@ -3,85 +3,40 @@
         <div class="modal-content">
             <div class="modal-header w-100 d-flex justify-content-between">
                 <h5 class="modal-title">Créer nouveau scenario</h5>
-                <button
-                    type="button"
-                    class="btn-close"
-                    aria-label="Close"
-                    (click)="dismiss()"
-                ></button>
+                <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <div id="scenario-identity-group">
                         <label for="scenario-nom">Nom du scenario <span class="required-star">*</span></label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="scenario-nom"
-                            name="nom"
-                            [(ngModel)]="scenario.nom"
-                            placeholder="Nom du scenario"
-                            required
-                        />
+                        <input type="text" class="form-control" id="scenario-nom" name="nom" [(ngModel)]="scenario.nom"
+                            placeholder="Nom du scenario" required />
 
                         <label for="scenario-description">Description</label>
-                        <textarea
-                            class="form-control"
-                            id="scenario-description"
-                            name="description"
-                            [(ngModel)]="scenario.description"
-                            rows="3"
-                        ></textarea>
+                        <textarea class="form-control" id="scenario-description" name="description"
+                            [(ngModel)]="scenario.description" rows="3"></textarea>
 
-                        <app-date-picker
-                            id="scenario-dates"
-                            title="Étendue de temps"
-                            [(startDate)]="scenario.date_de_debut"
-                            [(endDate)]="scenario.date_de_fin"
-                        />
+                        <app-date-picker id="scenario-dates" title="Étendue de temps"
+                            [(startDate)]="scenario.date_de_debut" [(endDate)]="scenario.date_de_fin" />
                         @if (dateError) {
-                            <div class="date-error">
-                                <i class="fas fa-exclamation-circle"></i> {{ dateError }}
-                            </div>
+                        <div class="date-error">
+                            <i class="fas fa-exclamation-circle"></i> {{ dateError }}
+                        </div>
                         }
-                    </div>
-
-                    <div id="scenario-pas-de-temps-group">
-                        <label for="scenario-pas_de_temps">Pas de temps</label>
-                        <select
-                            class="form-control"
-                            id="scenario-pas_de_temps"
-                            name="pas_de_temps"
-                            [(ngModel)]="scenario.pas_de_temps"
-                        >
-                            <option value="PT15M" disabled>15 minutes</option>
-                            <option value="PT1H">1 heure</option>
-                            <option value="PT4H" disabled>4 heures</option>
-                            <option value="P1D" disabled>1 jour</option>
-                            <option value="P7D" disabled>7 jours</option>
-                        </select>
                     </div>
 
                     <div id="scenario-conditions-group">
                         <label for="scenario-weather">Meteo (consomation)</label>
-                        <select
-                            class="form-control"
-                            id="scenario-weather"
-                            name="weather"
-                            [(ngModel)]="scenario.weather"
-                        >
+                        <select class="form-control" id="scenario-weather" name="weather"
+                            [(ngModel)]="scenario.weather">
                             <option [ngValue]="Weather.Cold">Froid</option>
                             <option [ngValue]="Weather.Typical">Typique</option>
                             <option [ngValue]="Weather.Hot">Chaud</option>
                         </select>
 
                         <label for="scenario-consomation">Modèle de consommation</label>
-                        <select
-                            class="form-control"
-                            id="scenario-consomation"
-                            name="consomation"
-                            [(ngModel)]="scenario.consomation"
-                        >
+                        <select class="form-control" id="scenario-consomation" name="consomation"
+                            [(ngModel)]="scenario.consomation">
                             <option [ngValue]="Consumption.Conservative">Conservateur</option>
                             <option [ngValue]="Consumption.Normal">Normal</option>
                         </select>
@@ -89,21 +44,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button
-                    id="tutorial-close-scenario"
-                    type="button"
-                    class="btn btn-secondary"
-                    (click)="dismiss()"
-                >
+                <button id="tutorial-close-scenario" type="button" class="btn btn-secondary" (click)="dismiss()">
                     Fermer
                 </button>
-                <input
-                    id="tutorial-submit-scenario"
-                    type="submit"
-                    class="btn btn-primary"
-                    value="Créer"
-                    [disabled]="!canSubmit"
-                />
+                <input id="tutorial-submit-scenario" type="submit" class="btn btn-primary" value="Créer"
+                    [disabled]="!canSubmit" />
             </div>
         </div>
     </form>
