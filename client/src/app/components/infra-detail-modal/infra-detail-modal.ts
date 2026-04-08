@@ -121,6 +121,13 @@ export class InfraDetailModal {
         this.loadingProtectionStatus = false;
         this.closeExplanation();
 
+        if (currentInfra.type === 'hydro' && currentInfra.data.puissance_nominal) {
+            const p = parseFloat(currentInfra.data.puissance_nominal);
+            this.basePuissance.set(p);
+            const override = this.infrasService.hydroPuissanceOverrides().get(currentInfra.data.id);
+            this.sliderValue.set(override ?? p);
+        }
+
         if (!isNaN(this.lat) && !isNaN(this.lon)) {
           this.loadingProtectionStatus = true;
           this.protectedAreasService.checkProtectedAreaWithDetails(this.lat, this.lon).then(res => {
