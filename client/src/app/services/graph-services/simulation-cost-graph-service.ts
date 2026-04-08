@@ -7,14 +7,15 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '../graph-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 
 const SEGMENTS = [
-    { key: 'eolienneparc', label: 'Éolien',           color: '#6abbc4' },
-    { key: 'solaire',      label: 'Solaire',           color: '#e8c53c' },
-    { key: 'hydro_fil',    label: "Hydro (fil de l'eau)", color: '#7bbfe8' },
-    { key: 'hydro_res',    label: 'Hydro (réservoir)', color: '#2b6fa8' },
-    { key: 'nucleaire',    label: 'Nucléaire',         color: '#e8754a' },
-    { key: 'thermique',    label: 'Thermique',         color: '#e25c5c' },
+    { key: 'eolienneparc', label: 'Éolien',           color: INFRA_COLORS['eolienneparc'] },
+    { key: 'solaire',      label: 'Solaire',           color: INFRA_COLORS['solaire'] },
+    { key: 'hydro_fil',    label: "Hydro (fil de l'eau)", color: INFRA_COLORS['hydro_fil'] },
+    { key: 'hydro_res',    label: 'Hydro (réservoir)', color: INFRA_COLORS['hydro_reservoir'] },
+    { key: 'nucleaire',    label: 'Nucléaire',         color: INFRA_COLORS['nucleaire'] },
+    { key: 'thermique',    label: 'Thermique',         color: INFRA_COLORS['thermique'] },
 ];
 
 @Injectable({

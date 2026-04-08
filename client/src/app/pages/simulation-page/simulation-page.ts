@@ -13,6 +13,7 @@ import { SimulationCostGraphService } from '@app/services/graph-services/simulat
 import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 
 interface Section {
   id: string;
@@ -42,12 +43,12 @@ export class SimulationPage implements AfterViewInit {
   infrasService        = inject(InfrastruturesService);
 
   private static readonly INFRA_DEFS = [
-    { key: 'parc_eoliens',            label: 'Éolien',             img: '/icons/eolienne.png',  color: '#6abbc4', hydroFilter: null },
-    { key: 'central_hydroelectriques', label: "Hydro (fil de l'eau)", img: '/icons/barrage.png', color: '#7bbfe8', hydroFilter: "Fil de l'eau" },
-    { key: 'central_hydroelectriques', label: 'Hydro (réservoir)', img: '/icons/barrage.png',   color: '#2b6fa8', hydroFilter: 'Réservoir' },
-    { key: 'parc_solaires',           label: 'Solaire',            img: '/icons/solaire.png',   color: '#e8c53c', hydroFilter: null },
-    { key: 'central_nucleaire',       label: 'Nucléaire',          img: '/icons/nucelaire.png', color: '#e8754a', hydroFilter: null },
-    { key: 'central_thermique',       label: 'Thermique',          img: '/icons/thermique.png', color: '#e25c5c', hydroFilter: null },
+    { key: 'parc_eoliens',            label: 'Éolien',             img: '/icons/eolienne.png',  color: INFRA_COLORS['eolienneparc'], hydroFilter: null },
+    { key: 'central_hydroelectriques', label: "Hydro (fil de l'eau)", img: '/icons/barrage.png', color: INFRA_COLORS['hydro_fil'], hydroFilter: "Fil de l'eau" },
+    { key: 'central_hydroelectriques', label: 'Hydro (réservoir)', img: '/icons/barrage.png',   color: INFRA_COLORS['hydro_reservoir'], hydroFilter: 'Réservoir' },
+    { key: 'parc_solaires',           label: 'Solaire',            img: '/icons/solaire.png',   color: INFRA_COLORS['solaire'], hydroFilter: null },
+    { key: 'central_nucleaire',       label: 'Nucléaire',          img: '/icons/nucelaire.png', color: INFRA_COLORS['nucleaire'], hydroFilter: null },
+    { key: 'central_thermique',       label: 'Thermique',          img: '/icons/thermique.png', color: INFRA_COLORS['thermique'], hydroFilter: null },
   ];
 
   get infraSummary() {

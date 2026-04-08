@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService, BUS_CATEGORIES, LINE_CATEGORIES } from '@app/services/reseau-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -17,16 +18,19 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 export class QuebecMap implements AfterViewInit, OnDestroy {
   toolTipText = 'Glissez et déposez sur la carte pour ajouter une infrastructure';
 
+  /** Couleurs des pastilles résultats — teinte des icônes « Ajouter une infrastructure » */
+  readonly infraColors = INFRA_COLORS;
+
   busCategories = BUS_CATEGORIES;
   lineCategories = LINE_CATEGORIES;
   
   infraFiltersOpen = signal(false);
   infraTypes = [
-    { key: 'hydro', label: 'Barrage Hydro-Électrique', color: '#3498db' },
-    { key: 'eolienneparc', label: 'Parc Éolien', color: '#2ecc71' },
-    { key: 'solaire', label: 'Parc Solaire', color: '#f1c40f' },
-    { key: 'thermique', label: 'Centrale Thermique', color: '#e67e22' },
-    { key: 'nucleaire', label: 'Centrale Nucléaire', color: '#9b59b6' }
+    { key: 'hydro', label: 'Barrage Hydro-Électrique', color: INFRA_COLORS['hydro'] },
+    { key: 'eolienneparc', label: 'Parc Éolien', color: INFRA_COLORS['eolienneparc'] },
+    { key: 'solaire', label: 'Parc Solaire', color: INFRA_COLORS['solaire'] },
+    { key: 'thermique', label: 'Centrale Thermique', color: INFRA_COLORS['thermique'] },
+    { key: 'nucleaire', label: 'Centrale Nucléaire', color: INFRA_COLORS['nucleaire'] }
   ];
 
   get map() {
