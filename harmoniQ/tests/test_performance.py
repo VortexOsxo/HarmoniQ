@@ -32,6 +32,7 @@ async def build_default_infra_group():
     }
     return infra_group
 
+@pytest.mark.performance
 def test_performance_default_simulation():
     """
     Runs a single performance test using the test database, 
