@@ -16,7 +16,8 @@
                         <textarea class="form-control" id="scenario-description" name="description"
                             [(ngModel)]="scenario.description" rows="3"></textarea>
 
-                        <app-date-picker id="scenario-dates" title="Étendue de temps"
+                        <label>Étendue de temps</label>
+                        <app-date-picker id="scenario-dates"
                             [(startDate)]="scenario.date_de_debut" [(endDate)]="scenario.date_de_fin" />
                         @if (dateError) {
                         <div class="date-error">
