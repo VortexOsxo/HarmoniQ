@@ -51,7 +51,7 @@ export class GraphService {
         }
 
         const layout = this.getStandardLayout(
-            `Production de l'infrastructure (${type})`,
+            `Production de l'infrastructure`,
             `Production (${unit})`,
             granularity,
         );

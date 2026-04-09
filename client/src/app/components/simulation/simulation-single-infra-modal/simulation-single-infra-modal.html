@@ -47,9 +47,11 @@
         </div>
     </div>
 
-    <app-granularity-selector class="w-100" *ngIf="!isLoading && !error" [selected]="selectedGranularity" (granularityChange)="onGranularityChange($event)"></app-granularity-selector>
+    <ng-container *ngIf="type !== 'hydro'">
+        <app-granularity-selector class="w-100" *ngIf="!isLoading && !error" [selected]="selectedGranularity" (granularityChange)="onGranularityChange($event)"></app-granularity-selector>
 
-    <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="w-100 shadow-sm bg-white rounded"></div>
+        <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="w-100 shadow-sm bg-white rounded"></div>
+    </ng-container>
     <div *ngIf="error" class="alert alert-danger" role="alert">
         {{ error }}
     </div>
