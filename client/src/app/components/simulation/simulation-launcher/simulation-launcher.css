@@ -40,7 +40,7 @@
 .status-icon {
     width: 20px;
     text-align: center;
-    color: #3498db;
+    color: var(--hq-blue-start);
     font-size: 0.85rem;
     flex-shrink: 0;
 }

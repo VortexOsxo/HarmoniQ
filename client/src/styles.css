@@ -15,12 +15,12 @@
   --hq-gray-hover-start: #7f8c8d;
   --hq-gray-hover-end: #95a5a6;
 
-  /* Blue Palette */
-  --hq-blue-start: #4361ee;
-  --hq-blue-end: #3a56d4;
-  --hq-blue-hover: #3a56d4;
-  --hq-blue-shadow: rgba(67, 97, 238, 0.3);
-  --hq-blue-shadow-hover: rgba(67, 97, 238, 0.4);
+  /* Blue Palette (Unified Light Blue) */
+  --hq-blue-start: #3498db;
+  --hq-blue-end: #2980b9;
+  --hq-blue-hover: #217dbb;
+  --hq-blue-shadow: rgba(52, 152, 219, 0.3);
+  --hq-blue-shadow-hover: rgba(52, 152, 219, 0.4);
 }
 
 .hq-text-gradient-green {
@@ -227,4 +227,4 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   cursor: not-allowed;
   box-shadow: none;
 }
-
+

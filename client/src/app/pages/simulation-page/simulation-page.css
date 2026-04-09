@@ -108,7 +108,7 @@
 }
 
 .section-item:hover .section-icon {
-    color: #3d6fd8;
+    color: var(--hq-blue-start);
 }
 
 .section-text {
@@ -393,7 +393,7 @@
 /* ── Status colors ─────────────────────────────────────────── */
 
 .text-success { color: #2ecc71; }
-.text-primary { color: #3498db; }
+.text-primary { color: var(--hq-blue-start); }
 .text-danger  { color: #e74c3c; }
 .text-muted   { color: #95a5a6; }
 .text-warning { color: #f39c12; }
