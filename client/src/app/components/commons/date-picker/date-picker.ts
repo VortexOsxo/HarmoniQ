@@ -107,12 +107,6 @@ export class DatePicker implements OnChanges {
 
     this.startDate = this.toISO(this.startYear, this.startMonth, this.startDay);
     this.startDateChange.emit(this.startDate);
-    // ensure end >= start
-    if (this.endDate < this.startDate) {
-      this.endDate = this.startDate;
-      this.syncFromEnd();
-      this.endDateChange.emit(this.endDate);
-    }
   }
 
   onEndInput(event: any): void {
@@ -147,10 +141,6 @@ export class DatePicker implements OnChanges {
     this.endDay = clampedDay;
 
     this.endDate = this.toISO(this.endYear, this.endMonth, this.endDay);
-    if (this.startDate && this.endDate < this.startDate) {
-      this.endDate = this.startDate;
-      this.syncFromEnd();
-    }
     this.endDateChange.emit(this.endDate);
   }
 
