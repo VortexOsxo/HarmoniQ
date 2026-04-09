@@ -1,6 +1,8 @@
 import time
+import random
 import pytest
 import asyncio
+from datetime import datetime
 from fastapi.testclient import TestClient
 from harmoniq.webserver import app
 from harmoniq.db import schemas, engine, CRUD
@@ -72,4 +74,82 @@ def test_performance_default_simulation():
     results = response.json()
     
     print(f"\n[PERF] Total Execution Time: {duration:.3f}s")
+    assert duration <= 60
+
+@pytest.mark.performance
+def test_performance_random_long_term_simulation():
+    """
+    Runs a long term simulation with randomized start (January) 
+    and end (December) dates to test varying loads.
+    """
+    # Random day in January (1-31)
+    start_day = random.randint(1, 31)
+    # Random day in December (1-31)
+    end_day = random.randint(1, 31)
+    
+    start_date = datetime(2035, 1, start_day, 0, 0, 0)
+    end_date = datetime(2035, 12, end_day, 0, 0, 0)
+    
+    scenario = {
+        "id": 1,
+        "nom": f"Randomized Long Term ({start_date.date()} to {end_date.date()})",
+        "description": "Stress test with random dates",
+        "date_de_debut": start_date.isoformat(),
+        "date_de_fin": end_date.isoformat(),
+        "pas_de_temps": "PT1H",
+        "weather": 2, # Typical
+        "consomation": 1, # Normal
+    }
+    
+    # Get all infras from the test DB
+    infra_group = asyncio.run(build_default_infra_group())
+    
+    payload = {
+        "scenario": scenario,
+        "infra_group": infra_group
+    }
+    
+    print(f"\n[PERF] Starting random simulation: {scenario['nom']}")
+    print(f"  - Duration: {(end_date - start_date).days} days")
+    
+    start = time.perf_counter()
+    response = client.post("/api/reseau/production", json=payload)
+    end = time.perf_counter()
+    
+    duration = end - start
+    assert response.status_code == 200
+    
+    print(f"\n[PERF] Random Long Term Execution Time: {duration:.3f}s")
+    assert duration <= 60
+
+@pytest.mark.performance
+def test_performance_extreme_scenario_simulation():
+    """
+    Runs a simulation with extreme weather (Cold) and conservative consumption (UB),
+    measuring performance under a "Worst Case" scenario.
+    """
+    scenario = {
+        "id": 1,
+        "nom": "Extreme Scenario (Cold + UB)",
+        "description": "Stress test with cold weather and high consumption",
+        "date_de_debut": "2035-01-01T00:00:00",
+        "date_de_fin": "2035-12-31T00:00:00",
+        "pas_de_temps": "PT1H",
+        "weather": 3, # Cold
+        "consomation": 2, # UB / Conservateur
+    }
+    
+    infra_group = asyncio.run(build_default_infra_group())
+    payload = {"scenario": scenario, "infra_group": infra_group}
+    
+    print(f"\n[PERF] Starting extreme simulation: {scenario['nom']}")
+    
+    start = time.perf_counter()
+    response = client.post("/api/reseau/production", json=payload)
+    end = time.perf_counter()
+    
+    duration = end - start
+    assert response.status_code == 200
+    
+    print(f"\n[PERF] Extreme Scenario Execution Time: {duration:.3f}s")
     assert duration <= 60
