@@ -70,6 +70,7 @@ export class SimulationSingleInfraModal implements OnInit {
         this.cdr.detectChanges();
       },
       error: (e) => {
+        this.error = 'Une erreur est survenue. Cette infrastructure ne marche peut être pas.';
         this.isLoading = false;
         this.cdr.detectChanges();
       }
