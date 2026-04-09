@@ -193,6 +193,11 @@ export class InfrastruturesService {
     return container?.infras ?? signal([]);
   }
 
+  getInfraByTypeAndId(type: string, id: number | string): any {
+    const list = this.getInfrasSignalByType(type)();
+    return list.find((i: any) => String(i.id) === String(id));
+  }
+
   isNameTaken(name: string): boolean {
     const normalizedName = name.trim().toLowerCase();
     for (const container of this.infrasContainer.values()) {

@@ -203,12 +203,73 @@ export class SimulationService {
             });
         }
 
-        const csvContent = rows.join('\n');
+        this.downloadCSV(rows.join('\n'), 'production');
+    }
+
+    exportCostsToCSV(): void {
+        const costData = this.simulationCostGraphService.cachedData;
+        if (!costData) {
+            console.warn('No cost data available to export');
+            return;
+        }
+
+        const headers = ['Type', 'Nom', 'Coût de Construction ($)', 'Coût Annuel OPEX ($)'];
+        const rows: string[] = [headers.join(',')];
+
+        Object.entries(costData).forEach(([type, items]: [string, any]) => {
+            if (!Array.isArray(items)) return;
+            items.forEach((item: any) => {
+                const infra = this.infrastructuresService.getInfraByTypeAndId(type, item.id);
+                rows.push([
+                    type,
+                    infra?.nom || `#${item.id}`,
+                    item.cout_construction || 0,
+                    item.cout_annuel || 0
+                ].join(','));
+            });
+        });
+
+        this.downloadCSV(rows.join('\n'), 'couts');
+    }
+
+    exportEmissionsToCSV(): void {
+        const co2Data = this.simulationCo2GraphService.cachedData;
+        if (!co2Data) {
+            console.warn('No emission data available to export');
+            return;
+        }
+
+        const headers = ['Type', 'Nom', 'Émissions de Construction (t CO2)', 'Émissions Annuelles (t CO2)'];
+        const rows: string[] = [headers.join(',')];
+
+        Object.entries(co2Data).forEach(([type, items]: [string, any]) => {
+            if (!Array.isArray(items)) return;
+            items.forEach((item: any) => {
+                const infra = this.infrastructuresService.getInfraByTypeAndId(type, item.id);
+                rows.push([
+                    type,
+                    infra?.nom || `#${item.id}`,
+                    item.co2_construction || 0,
+                    item.co2_annuel || 0
+                ].join(','));
+            });
+        });
+
+        this.downloadCSV(rows.join('\n'), 'emissions');
+    }
+
+    exportAllToCSV(): void {
+        this.exportSimulationToCSV();
+        this.exportCostsToCSV();
+        this.exportEmissionsToCSV();
+    }
+
+    private downloadCSV(csvContent: string, type: string): void {
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         const scenarioName = this.scenariosService.selectedScenario()?.nom || 'simulation';
-        const filename = `simulation_${scenarioName}_${new Date().toISOString().split('T')[0]}.csv`;
+        const filename = `${type}_${scenarioName}_${new Date().toISOString().split('T')[0]}.csv`;
         link.setAttribute('href', url);
         link.setAttribute('download', filename);
         link.style.visibility = 'hidden';
