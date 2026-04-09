@@ -19,7 +19,11 @@ export class ScenariosService {
 
   refreshScenarios() {
     const loaded = this.storageService.loadElements<Scenario>(SCENARIOS_KEY);
-    this.scenarios.set([...this.getDefaultScenarios(), ...loaded]);
+    const scenarios = [...this.getDefaultScenarios(), ...loaded];
+    this.scenarios.set(scenarios);
+    if (scenarios.length > 0 && !this.selectedScenario()) {
+      this.selectedScenario.set(scenarios[0]);
+    }
   }
 
   createScenario(scenario: Scenario) {
