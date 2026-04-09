@@ -111,7 +111,7 @@ describe('SimulationLauncher', () => {
       });
 
       const btn = screen.getByRole('button', { name: /Lancer Simulation/i });
-      expect(btn.classList.contains('launch-btn-disabled')).toBe(true);
+      expect(btn.classList.contains('hq-btn-green-inactive')).toBe(true);
     });
 
     it('should render the launch button without disabled class when canLaunch is true', async () => {
@@ -123,7 +123,7 @@ describe('SimulationLauncher', () => {
       });
 
       const btn = screen.getByRole('button', { name: /Lancer Simulation/i });
-      expect(btn.classList.contains('launch-btn-disabled')).toBe(false);
+      expect(btn.classList.contains('hq-btn-green-inactive')).toBe(false);
     });
   });
 

@@ -25,7 +25,7 @@
                             </div>
                             <span class="section-indicator">
                                 <i
-                                    class="fa-solid {{ getSectionIndicator(section).icon }}"
+                                    class="fa-solid {{ getSectionIndicator(section).icon }} {{ getSectionIndicator(section).cssClass ?? '' }}"
                                     [style.color]="getSectionIndicator(section).color"
                                 ></i>
                             </span>
@@ -35,12 +35,12 @@
 
                 <div class="sidebar-footer">
                     <button
-                        class="btn btn-export w-100 mb-2"
+                        class="hq-btn-green w-100 mb-2"
                         (click)="simulationService.exportSimulationToCSV()"
                     >
                         <i class="fa-solid fa-file-arrow-down me-2"></i>Exporter
                     </button>
-                    <button class="btn btn-quiz w-100" (click)="openQuiz()">
+                    <button class="hq-btn-blue w-100" (click)="openQuiz()">
                         <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
                     </button>
                 </div>

@@ -38,6 +38,7 @@ export class CreateInfraModal {
   form!: FormGroup;
   fields: FieldDef[] = [];
   prettyName = '';
+  improvedTitle = '';
   protectedAreaName: string | null = null;
 
   isSolar = false;
@@ -66,6 +67,17 @@ export class CreateInfraModal {
       alert("La fonctionnalité pour les infrastructures hydroélectriques est en cours de développement. Cette démonstration est fournie à titre indicatif.");
     }
     this.prettyName = prettyNames[upname] || upname;
+    
+    // Determine the improved title based on grammatical gender
+    const lowName = this.prettyName.toLowerCase();
+    if (lowName.startsWith('centrale')) {
+        this.improvedTitle = `Nouvelle ${lowName}`;
+    } else {
+        this.improvedTitle = `Nouveau ${lowName}`;
+    }
+    // Capitalize only the first letter
+    this.improvedTitle = this.improvedTitle.charAt(0).toUpperCase() + this.improvedTitle.slice(1);
+
   }
 
   buildForm() {

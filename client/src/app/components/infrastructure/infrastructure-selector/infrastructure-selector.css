@@ -58,7 +58,7 @@
 
 .filter-input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
 }
 
@@ -97,9 +97,9 @@
 }
 
 .sort-toggle-btn:hover {
-    background: #3498db;
+    background: var(--hq-blue-start);
     color: #fff;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
 }
 
 .infra-empty-state {
@@ -158,7 +158,7 @@
 
 .group-select:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
 }
 
@@ -169,7 +169,7 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     background: #fff;
-    color: #3498db;
+    color: var(--hq-blue-start);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -179,9 +179,9 @@
 }
 
 .group-add-btn:hover {
-    background: #3498db;
+    background: var(--hq-blue-start);
     color: #fff;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
 }
 
 .group-delete-btn {
@@ -235,7 +235,7 @@
 }
 
 :host ::ng-deep .accordion-button:not(.collapsed) {
-    color: #3498db !important;
+    color: var(--hq-blue-start) !important;
     background: rgba(52, 152, 219, 0.04) !important;
 }
 

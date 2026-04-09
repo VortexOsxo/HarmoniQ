@@ -44,7 +44,7 @@
     </div>
 
     <!-- Launch button -->
-    <button id="run" class="launch-btn" [class.launch-btn-disabled]="!canLaunch()"
+    <button id="run" class="hq-btn-green" [class.hq-btn-green-inactive]="!canLaunch()"
         [disabled]="isLaunching()" (click)="onLaunchClick()">
         <span *ngIf="isLaunching()" class="spinner-border spinner-border-sm me-2"></span>
         <i *ngIf="!isLaunching()" class="fa-solid fa-play me-2"></i>

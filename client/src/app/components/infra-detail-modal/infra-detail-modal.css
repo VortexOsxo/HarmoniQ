@@ -139,7 +139,7 @@
 .info-field-icon {
     width: 22px;
     text-align: center;
-    color: #3498db;
+    color: var(--hq-blue-start);
     font-size: 0.9rem;
     flex-shrink: 0;
 }
@@ -178,7 +178,7 @@
 .cycle-vie-link {
     margin: 0;
     font-size: 0.85rem;
-    color: #2980b9;
+    color: var(--hq-blue-end);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -206,7 +206,7 @@
     padding: 0;
     margin: 0;
     font-size: 0.85rem;
-    color: #2980b9;
+    color: var(--hq-blue-end);
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -277,15 +277,15 @@
 
 .impact-blue {
     background: #f0f8ff;
-    border-left-color: #3498db;
+    border-left-color: var(--hq-blue-start);
 }
 
 .impact-blue .impact-card-header i {
-    color: #3498db;
+    color: var(--hq-blue-start);
 }
 
 .impact-blue .impact-card-title strong {
-    color: #2980b9;
+    color: var(--hq-blue-end);
 }
 
 .impact-green {
@@ -461,7 +461,7 @@
     margin-bottom: 20px;
     position: relative;
     padding-left: 16px;
-    border-left: 2px solid #3498db;
+    border-left: 2px solid var(--hq-blue-start);
 }
 
 .cv-step:last-child {
@@ -471,7 +471,7 @@
 .cv-step h6 {
     margin: 0 0 6px;
     font-size: 0.9rem;
-    color: #3498db;
+    color: var(--hq-blue-start);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -607,7 +607,7 @@
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
     border: 1px solid #e9ecef;
-    border-left: 4px solid #3498db;
+    border-left: 4px solid var(--hq-blue-start);
     z-index: 1200;
     display: flex;
     flex-direction: column;
@@ -632,7 +632,7 @@
 }
 
 .mini-explication-header h6 i {
-    color: #3498db;
+    color: var(--hq-blue-start);
 }
 
 .mini-explication-close {

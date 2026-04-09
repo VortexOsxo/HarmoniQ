@@ -22,7 +22,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
   
   infraFiltersOpen = signal(false);
   infraTypes = [
-    { key: 'hydro', label: 'Barrage Hydro-Électrique', color: '#3498db' },
+    { key: 'hydro', label: 'Barrage Hydro-Électrique', color: 'var(--hq-blue-start)' },
     { key: 'eolienneparc', label: 'Parc Éolien', color: '#2ecc71' },
     { key: 'solaire', label: 'Parc Solaire', color: '#f1c40f' },
     { key: 'thermique', label: 'Centrale Thermique', color: '#e67e22' },
