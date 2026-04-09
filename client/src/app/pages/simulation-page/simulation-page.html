@@ -25,7 +25,7 @@
                             </div>
                             <span class="section-indicator">
                                 <i
-                                    class="fa-solid {{ getSectionIndicator(section).icon }}"
+                                    class="fa-solid {{ getSectionIndicator(section).icon }} {{ getSectionIndicator(section).cssClass ?? '' }}"
                                     [style.color]="getSectionIndicator(section).color"
                                 ></i>
                             </span>

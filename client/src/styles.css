@@ -1,6 +1,29 @@
 @import 'leaflet/dist/leaflet.css';
 @import './app/utils/cluster-icon.css';
 
+:root {
+  /* Green Palette */
+  --hq-green-start: #27ae60;
+  --hq-green-end: #2ecc71;
+  --hq-green-hover: #219a52;
+  --hq-green-shadow: rgba(39, 174, 96, 0.25);
+  --hq-green-shadow-hover: rgba(39, 174, 96, 0.35);
+
+  /* Gray/Inactive Palette */
+  --hq-gray-start: #95a5a6;
+  --hq-gray-end: #bdc3c7;
+  --hq-gray-hover-start: #7f8c8d;
+  --hq-gray-hover-end: #95a5a6;
+}
+
+.hq-text-gradient-green {
+  background: linear-gradient(135deg, var(--hq-green-start), var(--hq-green-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
 /* You can add global styles to this file, and also import other style files */
 /* Base styles */
 * {
@@ -116,7 +139,7 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  background: linear-gradient(135deg, var(--hq-green-start), var(--hq-green-end));
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
@@ -125,12 +148,12 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.25);
+  box-shadow: 0 2px 8px var(--hq-green-shadow);
 }
 
 .hq-btn-green:hover:not(:disabled) {
-  background: linear-gradient(135deg, #219a52, #27ae60);
-  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.35);
+  background: linear-gradient(135deg, var(--hq-green-hover), var(--hq-green-start));
+  box-shadow: 0 4px 12px var(--hq-green-shadow-hover);
   transform: translateY(-1px);
 }
 
@@ -139,20 +162,20 @@ ngb-modal-window.modal.modal-static .modal-dialog {
 }
 
 .hq-btn-green:disabled {
-  background: #bdc3c7;
+  background: var(--hq-gray-end);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* ── Inactive state ── */
 .hq-btn-green-inactive {
-  background: linear-gradient(135deg, #95a5a6, #bdc3c7) !important;
+  background: linear-gradient(135deg, var(--hq-gray-start), var(--hq-gray-end)) !important;
   box-shadow: none !important;
   cursor: pointer;
 }
 
 .hq-btn-green-inactive:hover {
-  background: linear-gradient(135deg, #7f8c8d, #95a5a6) !important;
+  background: linear-gradient(135deg, var(--hq-gray-hover-start), var(--hq-gray-hover-end)) !important;
   transform: none !important;
   box-shadow: none !important;
 }

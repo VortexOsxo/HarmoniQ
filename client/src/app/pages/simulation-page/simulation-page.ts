@@ -187,9 +187,9 @@ export class SimulationPage implements AfterViewInit {
         return this.stepService.currentStepName();
     }
 
-    getSectionIndicator(section: Section): { icon: string; color: string } {
+    getSectionIndicator(section: Section): { icon: string; color?: string; cssClass?: string } {
         if (section.isReady()) {
-            return { icon: 'fa-circle-check', color: '#20c997' };
+            return { icon: 'fa-circle-check', cssClass: 'hq-text-gradient-green' };
         }
         return this.isSimulating
             ? { icon: 'fa-circle-notch fa-spin', color: '#4361ee' }
