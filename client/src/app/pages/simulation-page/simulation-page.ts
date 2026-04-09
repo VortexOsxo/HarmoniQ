@@ -192,7 +192,7 @@ export class SimulationPage implements AfterViewInit {
             return { icon: 'fa-circle-check', cssClass: 'hq-text-gradient-green' };
         }
         return this.isSimulating
-            ? { icon: 'fa-circle-notch fa-spin', color: '#4361ee' }
+            ? { icon: 'fa-circle-notch fa-spin', cssClass: 'hq-text-gradient-blue' }
             : { icon: 'fa-circle', color: '#ced4da' };
     }
 

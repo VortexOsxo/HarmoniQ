@@ -14,10 +14,25 @@
   --hq-gray-end: #bdc3c7;
   --hq-gray-hover-start: #7f8c8d;
   --hq-gray-hover-end: #95a5a6;
+
+  /* Blue Palette */
+  --hq-blue-start: #4361ee;
+  --hq-blue-end: #3a56d4;
+  --hq-blue-hover: #3a56d4;
+  --hq-blue-shadow: rgba(67, 97, 238, 0.3);
+  --hq-blue-shadow-hover: rgba(67, 97, 238, 0.4);
 }
 
 .hq-text-gradient-green {
   background: linear-gradient(135deg, var(--hq-green-start), var(--hq-green-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+.hq-text-gradient-blue {
+  background: linear-gradient(135deg, var(--hq-blue-start), var(--hq-blue-end));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -178,4 +193,38 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   background: linear-gradient(135deg, var(--hq-gray-hover-start), var(--hq-gray-hover-end)) !important;
   transform: none !important;
   box-shadow: none !important;
-}
+}
+
+/* ── Blue Button (Global) ── */
+.hq-btn-blue {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--hq-blue-start), var(--hq-blue-end));
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px var(--hq-blue-shadow);
+}
+
+.hq-btn-blue:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--hq-blue-end), var(--hq-blue-start));
+  box-shadow: 0 4px 12px var(--hq-blue-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.hq-btn-blue:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.hq-btn-blue:disabled {
+  background: var(--hq-gray-end);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
