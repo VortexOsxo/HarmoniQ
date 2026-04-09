@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header w-100 d-flex justify-content-between">
                 <h5 class="modal-title">Nouveau scénario</h5>
-                <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
+                <button id="tutorial-close-scenario" type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -45,9 +45,6 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="tutorial-close-scenario" type="button" class="btn btn-secondary" (click)="dismiss()">
-                    Fermer
-                </button>
                 <button id="tutorial-submit-scenario" type="submit" class="hq-btn-green" [disabled]="!canSubmit">
                     Créer
                 </button>

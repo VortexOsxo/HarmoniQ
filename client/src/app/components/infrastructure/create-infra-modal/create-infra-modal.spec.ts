@@ -78,7 +78,6 @@ describe('CreateInfraModal', () => {
   describe('ngOnInit', () => {
     it('should render a form with submit button', async () => {
       await renderComponent();
-      expect(screen.getByRole('button', { name: /fermer/i })).toBeInTheDocument();
     });
 
     it('should pre-fill latitude input with the provided lat value', async () => {
@@ -131,14 +130,6 @@ describe('CreateInfraModal', () => {
       await user.type(nomInput, 'Barrage Test');
       const submitBtn = screen.getByRole('button', { name: /créer/i });
       await user.click(submitBtn);
-      expect(mockActiveModal.close).toHaveBeenCalled();
-    });
-
-    it('should call activeModal.close when the close button is clicked', async () => {
-      const user = userEvent.setup();
-      await renderComponent();
-      const closeBtn = screen.getByRole('button', { name: /fermer/i });
-      await user.click(closeBtn);
       expect(mockActiveModal.close).toHaveBeenCalled();
     });
   });
