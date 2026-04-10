@@ -146,14 +146,14 @@ export class SimulationPage implements AfterViewInit {
             title: 'Flux de production',
             desc: 'Répartition production → demande',
             icon: 'fa-diagram-project',
-            isReady: () => !this.isSimulating,
+            isReady: () => !this.isSimulating && this.simulationService.productionNodes() !== null,
         },
         {
             id: 'section-temporal',
             title: 'Production & Demande',
             desc: 'Évolution temporelle',
             icon: 'fa-chart-line',
-            isReady: () => !this.isSimulating,
+            isReady: () => !this.isSimulating && this.simulationService.productionNodes() !== null,
         },
         {
             id: 'section-repartition',

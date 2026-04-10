@@ -63,11 +63,14 @@ export class SimulationCostGraphService implements SimulationStep {
             scenario: scenario,
             infra_group: this.infrastructuresService.buildSimulationPayload(),
         };
+        console.log("cout", payload);
 
         if (scenario.id != this.cachedScenarioId) {
             this.cachedScenarioId = scenario.id;
             this.cachedData = await firstValueFrom(this.http.post(url, payload));
         }
+
+        console.log(this.cachedData);
 
         return this.handleData(this.cachedData);
     }

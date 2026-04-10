@@ -6,7 +6,9 @@ import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService, BUS_CATEGORIES, LINE_CATEGORIES } from '@app/services/reseau-service';
 import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { InfraDetailService } from '@app/services/infra-detail-service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { HydroSelectModal } from '@app/components/infrastructure/hydro-select-modal/hydro-select-modal';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 @Component({
     selector: 'app-quebec-map',
@@ -85,6 +87,8 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
         public protectedAreasService: ProtectedAreasService,
         public reseauService: ReseauService,
         public infraDetailService: InfraDetailService,
+        private modalService: NgbModal,
+        private infrasService: InfrastruturesService,
     ) {
         effect(
             () => {
@@ -96,6 +100,14 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
             },
             { allowSignalWrites: true },
         );
+    }
+
+    openHydroSelectModal(): void {
+        this.modalService.open(HydroSelectModal, {
+            centered: true,
+            scrollable: true,
+            size: 'md',
+        });
     }
 
     ngAfterViewInit(): void {
