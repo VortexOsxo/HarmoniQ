@@ -3,10 +3,14 @@ vi.mock('plotly.js-dist-min', () => ({
     newPlot: vi.fn(),
     purge: vi.fn(),
     downloadImage: vi.fn(),
+    register: vi.fn(),
+    setPlotConfig: vi.fn(),
   },
   newPlot: vi.fn(),
   purge: vi.fn(),
   downloadImage: vi.fn(),
+  register: vi.fn(),
+  setPlotConfig: vi.fn(),
 }));
 
 import { GraphService } from './graph-service';

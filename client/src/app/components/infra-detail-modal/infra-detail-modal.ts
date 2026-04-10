@@ -7,6 +7,8 @@ import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, Impac
 import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
+import { ScenariosService } from '@app/services/scenarios-service';
+import { SimulationSingleInfraModal } from '@app/components/simulation/simulation-single-infra-modal/simulation-single-infra-modal';
 import { FIRST_NATION_DATA } from '@app/data/first-nation.data';
 
 @Component({
@@ -82,6 +84,7 @@ export class InfraDetailModal {
     private infrasService: InfrastruturesService,
     private modalService: NgbModal,
     private protectedAreasService: ProtectedAreasService,
+    private scenariosService: ScenariosService,
     private cdr: ChangeDetectorRef
   ) {
     effect(() => {
@@ -178,6 +181,19 @@ export class InfraDetailModal {
         }
       });
     }, { allowSignalWrites: true });
+  }
+
+  hasSelectedScenario(): boolean {
+    return !!this.scenariosService.selectedScenario();
+  }
+
+  simulateSingle(): void {
+    const infra = this.infra();
+    if (!infra || !this.scenariosService.selectedScenario()) return;
+    const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl' });
+    modalRef.componentInstance.id = infra.data.id;
+    modalRef.componentInstance.name = infra.data.nom;
+    modalRef.componentInstance.type = infra.type;
   }
 
   deleteInfra() {

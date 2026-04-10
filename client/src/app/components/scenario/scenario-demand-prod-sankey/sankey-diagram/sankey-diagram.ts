@@ -31,9 +31,9 @@ interface ComputedFlow {
     toLabel: string;
     valueMW: number;
     co2Tph: number;
-    demandIndex: number;   // index into demandNodes (-1 for other types)
-    energyIndex: number;   // index into energyTypeNodes (-1 for other types)
-    prodIndex: number;     // index into productionNodes (-1 for demand-energy flows)
+    demandIndex: number; // index into demandNodes (-1 for other types)
+    energyIndex: number; // index into energyTypeNodes (-1 for other types)
+    prodIndex: number; // index into productionNodes (-1 for demand-energy flows)
 }
 
 @Component({
@@ -93,16 +93,23 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     formatMW(value: number): string {
-        const formatted = value >= 10 || value == 0
-            ? Math.round(value).toLocaleString('fr-FR')
-            : value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formatted =
+            value >= 10 || value == 0
+                ? Math.round(value).toLocaleString('fr-FR')
+                : value.toLocaleString('fr-FR', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                  });
         return formatted + ' MW';
     }
 
     formatCo2(value: number): string {
         if (value === 0) return '0';
         if (value >= 10) return Math.round(value).toLocaleString('fr-FR');
-        return value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return value.toLocaleString('fr-FR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
     }
 
     private co2Tph(p: { value: number; co2FactorKgMWh?: number; co2Tph?: number }): number {
@@ -111,7 +118,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
 
     get totalCo2(): number {
         const prodCo2 = this.data.productionNodes.reduce((s, p) => s + this.co2Tph(p), 0);
-        const gasNode = this.data.energyTypeNodes.find(e => e.id === 'gas');
+        const gasNode = this.data.energyTypeNodes.find((e) => e.id === 'gas');
         const fossilCo2 = gasNode ? (gasNode.value * (gasNode.co2FactorKgMWh ?? 0)) / 1000 : 0;
         return prodCo2 + fossilCo2;
     }
@@ -159,8 +166,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             flow.type === 'prod-co2' || flow.type === 'fossil-co2'
                 ? [`${flow.fromLabel} → CO\u2082`, `${this.formatCo2(flow.co2Tph)} t CO\u2082/h`]
                 : flow.type === 'energy-prod'
-                ? [`${flow.toLabel} \u2192 ${flow.fromLabel}`, `${this.formatMW(flow.valueMW)}`]
-                : [`${flow.fromLabel} → ${flow.toLabel}`, `${this.formatMW(flow.valueMW)}`];
+                  ? [`${flow.toLabel} \u2192 ${flow.fromLabel}`, `${this.formatMW(flow.valueMW)}`]
+                  : [`${flow.fromLabel} → ${flow.toLabel}`, `${this.formatMW(flow.valueMW)}`];
 
         this.tooltip = {
             x: event.clientX - rect.left + 14,
@@ -199,9 +206,13 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         if (energyTypeEls.length !== this.data.energyTypeNodes.length) return;
         if (prodEls.length !== this.data.productionNodes.length) return;
 
-        const demandRects = demandEls.map(el => this.relativeRect(el.nativeElement, containerRect));
-        const energyTypeRects = energyTypeEls.map(el => this.relativeRect(el.nativeElement, containerRect));
-        const prodRects = prodEls.map(el => this.relativeRect(el.nativeElement, containerRect));
+        const demandRects = demandEls.map((el) =>
+            this.relativeRect(el.nativeElement, containerRect),
+        );
+        const energyTypeRects = energyTypeEls.map((el) =>
+            this.relativeRect(el.nativeElement, containerRect),
+        );
+        const prodRects = prodEls.map((el) => this.relativeRect(el.nativeElement, containerRect));
         const co2Rect = this.relativeRect(this.co2NodeEl.nativeElement, containerRect);
 
         this.computedFlows = this.showProduction
@@ -226,8 +237,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const flows: ComputedFlow[] = [];
 
         const energyCum = E.map(() => 0);
-        const energyTotals = E.map(e =>
-            D.reduce((s, d) => s + (e.id === 'electricity' ? d.electricityValue : d.gasValue), 0)
+        const energyTotals = E.map((e) =>
+            D.reduce((s, d) => s + (e.id === 'electricity' ? d.electricityValue : d.gasValue), 0),
         );
 
         for (let i = 0; i < D.length; i++) {
@@ -290,8 +301,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const flows: ComputedFlow[] = [];
 
         const energyCum = E.map(() => 0);
-        const energyProdTotals = E.map(e =>
-            P.filter(p => p.energyType === e.id).reduce((s, p) => s + p.value, 0)
+        const energyProdTotals = E.map((e) =>
+            P.filter((p) => p.energyType === e.id).reduce((s, p) => s + p.value, 0),
         );
 
         for (let j = 0; j < E.length; j++) {
@@ -323,7 +334,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
                     path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
                     color: P[k].color,
                     type: 'energy-prod',
-                    fromLabel: P[k].label,   // tooltip: Solaire → Électricité
+                    fromLabel: P[k].label, // tooltip: Solaire → Électricité
                     toLabel: E[j].label,
                     valueMW: fVal,
                     co2Tph: 0,
@@ -349,10 +360,10 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const R = 10;
         const co2InnerH = co2Rect.height - 2 * R;
 
-        const prodCo2Values = P.map(p => this.co2Tph(p));
+        const prodCo2Values = P.map((p) => this.co2Tph(p));
         const prodTotalCo2 = prodCo2Values.reduce((s, v) => s + v, 0);
 
-        const gasIdx = E.findIndex(e => e.id === 'gas');
+        const gasIdx = E.findIndex((e) => e.id === 'gas');
         const gasNode = gasIdx >= 0 ? E[gasIdx] : null;
         const fossilCo2 = gasNode ? (gasNode.value * (gasNode.co2FactorKgMWh ?? 0)) / 1000 : 0;
 
@@ -399,12 +410,8 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             const topY2 = co2Rect.top + R + co2Cum;
             const botY2 = topY2 + fossilFrac * co2InnerH;
 
-            // Route below all production nodes instead of crossing them
-            const bottomProd = prodRects.length > 0 ? Math.max(...prodRects.map(r => r.bottom)) : co2Rect.bottom;
-            const belowY = bottomProd + 30;
-
             flows.push({
-                path: ribbonBelow(x1, gasRect.top + R, gasRect.bottom - R, x2, topY2, botY2, belowY),
+                path: ribbonRightUpRight(x1, gasRect.top + R, gasRect.bottom - R, x2, topY2, botY2),
                 color: gasNode.color,
                 type: 'fossil-co2',
                 fromLabel: gasNode.label,
@@ -432,28 +439,29 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     }
 }
 
-
-
-function ribbonBelow(
+// Ribbon that goes flat → curves up at turn1Frac → curves right at turn2Frac → flat
+function ribbonRightUpRight(
     x1: number,
     topY1: number,
     botY1: number,
     x2: number,
     topY2: number,
     botY2: number,
-    belowY: number,
-    dipFraction = 0.67,
+    turn1Frac = 0.667,
+    turn2Frac = 0.95,
 ): string {
-    const h2 = botY2 - topY2;
-    const xDip = x1 + (x2 - x1) * dipFraction;
-    const cp = (x2 - x1) * 0.15;
+    const xTurn1 = x1 + (x2 - x1) * turn1Frac;
+    const xTurn2 = x1 + (x2 - x1) * turn2Frac;
+    const cp = (xTurn2 - xTurn1) * 0.5;
     return (
         `M ${x1} ${topY1} ` +
-        `C ${xDip - cp} ${topY1}, ${xDip - cp} ${belowY}, ${xDip} ${belowY} ` +
-        `C ${xDip + cp} ${belowY}, ${x2 - cp} ${topY2}, ${x2} ${topY2} ` +
+        `L ${xTurn1} ${topY1} ` +
+        `C ${xTurn1 + cp} ${topY1}, ${xTurn2 - cp} ${topY2}, ${xTurn2} ${topY2} ` +
+        `L ${x2} ${topY2} ` +
         `L ${x2} ${botY2} ` +
-        `C ${x2 - cp} ${botY2}, ${xDip + cp} ${belowY + h2}, ${xDip} ${belowY + h2} ` +
-        `C ${xDip - cp} ${belowY + h2}, ${xDip - cp} ${botY1}, ${x1} ${botY1} Z`
+        `L ${xTurn2} ${botY2} ` +
+        `C ${xTurn2 - cp} ${botY2}, ${xTurn1 + cp} ${botY1}, ${xTurn1} ${botY1} ` +
+        `L ${x1} ${botY1} Z`
     );
 }
 

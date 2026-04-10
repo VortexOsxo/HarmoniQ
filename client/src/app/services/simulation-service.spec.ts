@@ -73,6 +73,7 @@ describe('SimulationService', () => {
       selectedInfraGroup: signal<InfrastructureGroup | null>(null),
       getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
       buildSimulationPayload: vi.fn().mockReturnValue({ nom: 'Test' }),
+      ensureInfrasLoaded: vi.fn().mockResolvedValue(undefined),
     };
 
     mockDemandeSankeyService = {
