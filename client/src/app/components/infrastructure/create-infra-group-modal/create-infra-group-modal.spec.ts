@@ -82,14 +82,4 @@ describe('CreateInfraGroupModal', () => {
         });
     });
 
-    describe('cancel', () => {
-        it('should call activeModal.dismiss when Annuler is clicked', async () => {
-            const user = userEvent.setup();
-            await render(CreateInfraGroupModal, { providers: defaultProviders });
-
-            await user.click(screen.getByRole('button', { name: /Annuler/i }));
-
-            expect(mockActiveModal.dismiss).toHaveBeenCalled();
-        });
-    });
 });

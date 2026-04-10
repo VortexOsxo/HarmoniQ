@@ -2,14 +2,14 @@
 
 <!-- Infra Filters toggle button -->
 <button class="infra-filter-reopen" *ngIf="!infraFiltersOpen()"
-    [class.offset-right]="protectedAreasService.legendOpen() || reseauService.legendOpen()"
-    (click)="infraFiltersOpen.set(true)" title="Ouvrir les filtres d'infrastructures">
+    [class.offset-right]="protectedAreasService.legendOpen()" (click)="infraFiltersOpen.set(true)"
+    title="Ouvrir les filtres d'infrastructures">
     <i class="fa-solid fa-filter"></i>
 </button>
 
 <!-- Infra Filters panel -->
 <div class="infra-filter-legend card" *ngIf="infraFiltersOpen()"
-    [class.offset-right]="protectedAreasService.legendOpen() || reseauService.legendOpen()">
+    [class.offset-right]="protectedAreasService.legendOpen()">
     <div class="infra-filter-header">
         <i class="fa-solid fa-filter"></i>
         <strong>Filtres d'infrastructures</strong>
@@ -34,9 +34,11 @@
             <div class="filter-section-title d-flex justify-content-between align-items-center">
                 <span>Types</span>
                 <div>
-                    <button class="btn btn-link btn-sm p-0 m-0 text-decoration-none" style="font-size: 0.7rem;" (click)="selectAllInfraTypes()">Tous</button>
+                    <button class="btn btn-link btn-sm p-0 m-0 text-decoration-none" style="font-size: 0.7rem;"
+                        (click)="selectAllInfraTypes()">Tous</button>
                     <span class="mx-1 text-muted">|</span>
-                    <button class="btn btn-link btn-sm p-0 m-0 text-decoration-none" style="font-size: 0.7rem;" (click)="deselectAllInfraTypes()">Aucun</button>
+                    <button class="btn btn-link btn-sm p-0 m-0 text-decoration-none" style="font-size: 0.7rem;"
+                        (click)="deselectAllInfraTypes()">Aucun</button>
                 </div>
             </div>
             <div class="infra-layer-item" *ngFor="let infra of infraTypes">
@@ -64,12 +66,11 @@
 
 
 <button class="pa-legend-reopen" *ngIf="protectedAreasService.isVisible() && !protectedAreasService.legendOpen()"
-    [class.offset-right]="reseauService.legendOpen() || infraFiltersOpen()"
-    (click)="protectedAreasService.legendOpen.set(true)">
+    [class.offset-right]="infraFiltersOpen()" (click)="protectedAreasService.legendOpen.set(true)">
     <i class="fa-solid fa-layer-group"></i>
 </button>
 
-<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()" [class.offset-right]="reseauService.legendOpen() || infraFiltersOpen()">
+<div class="protected-areas-legend card" *ngIf="protectedAreasService.legendOpen()">
     <div class="pa-legend-header">
         <i class="fa-solid fa-layer-group"></i>
         <strong>Aires protégées</strong>
@@ -98,7 +99,8 @@
             <input type="checkbox" [checked]="protectedAreasService.isGroupFullySelected(node)"
                 (change)="protectedAreasService.toggleNode(node)">
             <span class="pa-layer-name">
-                <span *ngIf="node.color" class="pa-color-swatch" [style.background-color]="'rgba(' + node.color[0] + ',' + node.color[1] + ',' + node.color[2] + ',' + (node.color.length > 3 ? node.color[3]/255 : 1) + ')'"></span>
+                <span *ngIf="node.color" class="pa-color-swatch"
+                    [style.background-color]="'rgba(' + node.color[0] + ',' + node.color[1] + ',' + node.color[2] + ',' + (node.color.length > 3 ? node.color[3]/255 : 1) + ')'"></span>
                 {{ node.name }}
             </span>
         </label>
@@ -113,13 +115,12 @@
 
 <!-- Réseau toggle button (below protected areas button) -->
 <button class="reseau-legend-reopen" *ngIf="reseauService.isVisible() && !reseauService.legendOpen()"
-    [class.offset-right]="protectedAreasService.legendOpen() || infraFiltersOpen()"
     (click)="reseauService.legendOpen.set(true)">
     <i class="fa-solid fa-network-wired"></i>
 </button>
 
 <!-- Réseau legend panel -->
-<div class="reseau-legend card" *ngIf="reseauService.legendOpen()" [class.offset-right]="protectedAreasService.legendOpen() || infraFiltersOpen()">
+<div class="reseau-legend card" *ngIf="reseauService.legendOpen()">
     <div class="reseau-legend-header">
         <i class="fa-solid fa-network-wired"></i>
         <strong>Réseau électrique</strong>
@@ -130,13 +131,15 @@
 
     <div class="reseau-legend-controls">
         <button class="btn btn-sm btn-outline-secondary" (click)="reseauService.selectAll()">Tout sélectionner</button>
-        <button class="btn btn-sm btn-outline-secondary" (click)="reseauService.deselectAll()">Tout désélectionner</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="reseauService.deselectAll()">Tout
+            désélectionner</button>
     </div>
 
     <div class="reseau-legend-body">
         <div class="reseau-section-title">
             <label class="reseau-checkbox-label">
-                <input type="checkbox" [checked]="reseauService.isBusGroupSelected()" (change)="reseauService.toggleBusGroup()">
+                <input type="checkbox" [checked]="reseauService.isBusGroupSelected()"
+                    (change)="reseauService.toggleBusGroup()">
                 <strong>Bus</strong>
             </label>
         </div>
@@ -151,7 +154,8 @@
 
         <div class="reseau-section-title" style="margin-top: 8px;">
             <label class="reseau-checkbox-label">
-                <input type="checkbox" [checked]="reseauService.isLineGroupSelected()" (change)="reseauService.toggleLineGroup()">
+                <input type="checkbox" [checked]="reseauService.isLineGroupSelected()"
+                    (change)="reseauService.toggleLineGroup()">
                 <strong>Lignes</strong>
             </label>
         </div>
@@ -169,18 +173,25 @@
 <div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
     <p>Ajouter une infrastructure :</p>
 
-    <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" type="Hydro" route="hydro"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-barrage" infraNom="Barrage Hydro-Électrique"
+        type="Hydro" route="hydro" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Barrage hydroélectrique"
+        [style.background-color]="infraColors['hydro']"></div>
 
-    <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable" type="EolienneParc"
-        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-eolienne" infraNom="Parc Éolien"
+        type="EolienneParc" route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Parc éolien"
+        [style.background-color]="infraColors['eolienneparc']"></div>
 
-    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="Solaire" route="solaire"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-solaire" infraNom="Parc Solaire" type="Solaire"
+        route="solaire" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" role="img"
+        aria-label="Parc solaire" [style.background-color]="infraColors['solaire']"></div>
 
-    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="Thermique" route="thermique"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-thermique" infraNom="Parc Thermique"
+        type="Thermique" route="thermique" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Centrale thermique" [style.background-color]="infraColors['thermique']"></div>
 
-    <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable" type="Nucleaire" route="nucleaire"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-nucleaire" infraNom="Parc Nucléaire"
+        type="Nucleaire" route="nucleaire" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Centrale nucléaire" [style.background-color]="infraColors['nucleaire']"></div>
 </div>

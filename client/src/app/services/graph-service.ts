@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as Plotly from 'plotly.js-dist-min';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 
 export const graphServiceConfig = {
     PRODUCTION_SINGLE_INFRA_ID: 'production-single-infra-id',
@@ -72,16 +73,27 @@ export class GraphService {
         }
 
         const layout = this.getStandardLayout(
-            `Production de l'infrastructure`,
+            null,
             `Production (${unit})`,
             granularity,
+            { margin: { t: 20 } }
         );
 
+        const lineColor =
+            type === 'eolienneparc'
+                ? INFRA_COLORS['eolienneparc']
+                : type === 'solaire'
+                  ? INFRA_COLORS['solaire']
+                  : type === 'thermique'
+                    ? INFRA_COLORS['thermique']
+                    : type === 'nucleaire'
+                      ? INFRA_COLORS['nucleaire']
+                      : '#3498db';
         const trace = this.getStandardTrace(
             'Production',
             xval,
             yval,
-            '#3498db',
+            lineColor,
             `%{y:.2f} ${unit}<extra></extra>`,
         );
 
@@ -100,7 +112,7 @@ export class GraphService {
                       }
                     : title,
             xaxis: {
-                title: { text: 'Date', font: { size: 14, color: '#7f8c8d' } },
+                title: null,
                 tickformat:
                     granularity === 'monthly'
                         ? '%b %Y'

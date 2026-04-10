@@ -103,6 +103,7 @@ describe('SimulationSingleInfraModal', () => {
 
     it('should call generateProductionSingleInfraGraph after receiving data', async () => {
       await renderComponent({ type: 'eolienneparc' });
+      await new Promise(resolve => setTimeout(resolve, 0));
       expect(mockGraphService.generateProductionSingleInfraGraph).toHaveBeenCalledWith(
         'eolienneparc',
         MOCK_PRODUCTION_DATA,
@@ -134,7 +135,7 @@ describe('SimulationSingleInfraModal', () => {
     it('should call activeModal.dismiss when the close button is clicked', async () => {
       const user = userEvent.setup();
       await renderComponent();
-      const closeBtn = screen.getByRole('button', { name: /close/i });
+      const closeBtn = screen.getByRole('button', { name: /fermer/i });
       await user.click(closeBtn);
       expect(mockActiveModal.dismiss).toHaveBeenCalled();
     });

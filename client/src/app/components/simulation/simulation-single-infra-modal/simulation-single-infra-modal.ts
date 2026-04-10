@@ -4,13 +4,14 @@ import { SimulationService } from '@app/services/simulation-service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { GraphService, graphServiceConfig } from '@app/services/graph-service';
-import { forkJoin } from 'rxjs';
-
+import { InfraIconComponent } from '@app/components/commons/infra-icon';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 
 @Component({
   selector: 'app-simulation-single-infra-modal',
-  imports: [CommonModule, GranularitySelectorComponent],
+  standalone: true,
+  imports: [CommonModule, GranularitySelectorComponent, InfraIconComponent],
   templateUrl: './simulation-single-infra-modal.html',
   styleUrl: './simulation-single-infra-modal.css',
 })
@@ -33,6 +34,10 @@ export class SimulationSingleInfraModal implements OnInit {
     return `Simulation de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
   }
 
+  get typeColor(): string {
+    return INFRA_COLORS[this.type] ?? '#3498db';
+  }
+
   constructor(
     public activeModal: NgbActiveModal,
     private scenarioService: ScenariosService,
@@ -50,7 +55,9 @@ export class SimulationSingleInfraModal implements OnInit {
   onGranularityChange(granularity: string) {
     this.selectedGranularity = granularity;
     if (this.productionData) {
-      this.graphService.generateProductionSingleInfraGraph(this.type, this.productionData, this.selectedGranularity);
+      setTimeout(() => {
+        this.graphService.generateProductionSingleInfraGraph(this.type, this.productionData, this.selectedGranularity);
+      }, 0);
     }
   }
 
@@ -66,8 +73,12 @@ export class SimulationSingleInfraModal implements OnInit {
       next: (data) => {
         this.isLoading = false;
         this.productionData = data;
-        this.graphService.generateProductionSingleInfraGraph(this.type, data, this.selectedGranularity);
+        // Flush Angular change detection first so the *ngIf renders the chart div,
+        // then defer Plotly to the next macrotask so the DOM element is guaranteed to exist.
         this.cdr.detectChanges();
+        setTimeout(() => {
+          this.graphService.generateProductionSingleInfraGraph(this.type, data, this.selectedGranularity);
+        }, 0);
       },
       error: (e) => {
         this.error = 'Une erreur est survenue. Cette infrastructure ne marche peut être pas.';

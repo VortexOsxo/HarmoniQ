@@ -34,28 +34,28 @@ export interface ReseauCategory {
 
 export const BUS_CATEGORIES: ReseauCategory[] = [
   { key: 'Transport', label: 'Bus - Transport', color: '#4ad97cff' },
-  { key: 'Éoliennes', label: 'Bus - Éoliennes', color: '#4A90D9' },
-  { key: 'Solaire', label: 'Bus - Solaire', color: '#F5A623' },
-  { key: 'Thermique', label: 'Bus - Thermique', color: '#E74C3C' },
-  { key: 'Hydroélectrique', label: 'Bus - Hydroélectrique', color: '#3498DB' },
+  { key: 'Éoliennes', label: 'Bus - Éoliennes', color: '#70b2c1' },
+  { key: 'Solaire', label: 'Bus - Solaire', color: '#de8c28' },
+  { key: 'Thermique', label: 'Bus - Thermique', color: '#698c77' },
+  { key: 'Hydroélectrique', label: 'Bus - Hydroélectrique', color: '#1d6799' },
   { key: 'Consommation', label: 'Bus - Consommation', color: '#8E44AD' },
 ];
 
 export const LINE_CATEGORIES: ReseauCategory[] = [
   { key: 'Transport', label: 'Lignes - Transport', color: '#4ad97cff' },
-  { key: 'Éoliennes', label: 'Lignes - Éoliennes', color: '#4A90D9' },
-  { key: 'Solaire', label: 'Lignes - Solaires', color: '#F5A623' },
-  { key: 'Thermique', label: 'Lignes - Thermiques', color: '#E74C3C' },
-  { key: 'Hydroélectrique', label: 'Lignes - Hydroélectriques', color: '#3498DB' },
+  { key: 'Éoliennes', label: 'Lignes - Éoliennes', color: '#70b2c1' },
+  { key: 'Solaire', label: 'Lignes - Solaires', color: '#de8c28' },
+  { key: 'Thermique', label: 'Lignes - Thermiques', color: '#698c77' },
+  { key: 'Hydroélectrique', label: 'Lignes - Hydroélectriques', color: '#1d6799' },
   { key: 'Consommation', label: 'Lignes - Consommation', color: '#8E44AD' },
 ];
 
 const COLOR_MAP: Record<string, string> = {
   'Transport': '#4ad97cff',
-  'Éoliennes': '#4A90D9',
-  'Solaire': '#F5A623',
-  'Thermique': '#E74C3C',
-  'Hydroélectrique': '#3498DB',
+  'Éoliennes': '#70b2c1',
+  'Solaire': '#de8c28',
+  'Thermique': '#698c77',
+  'Hydroélectrique': '#1d6799',
   'Consommation': '#8E44AD',
 };
 

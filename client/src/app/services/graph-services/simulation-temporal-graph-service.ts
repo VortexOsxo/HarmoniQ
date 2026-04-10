@@ -16,14 +16,14 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
     hydro_fil: {
         id: 'hydro_fil',
         label: "Hydro (fil de l'eau)",
-        color: '#7bbfe8',
+        color: INFRA_COLORS['hydro_fil'],
         icon: 'fa-droplet',
         energyType: 'electricity',
     },
     hydro_res: {
         id: 'hydro_res',
         label: 'Hydro (réservoir)',
-        color: '#2b6fa8',
+        color: INFRA_COLORS['hydro_reservoir'],
         icon: 'fa-droplet',
         energyType: 'electricity',
     },
@@ -138,8 +138,8 @@ export class SimulationTemporalGraphService implements SimulationStep {
         const components = [
             { key: 'total_eolien', name: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'] },
             { key: 'total_solaire', name: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'] },
-            { key: 'total_hydro_fil', name: 'Hydro (fil de l\'eau)', color: '#7bbfe8' },
-            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: '#2b6fa8' },
+            { key: 'total_hydro_fil', name: 'Hydro (fil de l\'eau)', color: INFRA_COLORS['hydro_fil'] },
+            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: INFRA_COLORS['hydro_reservoir'] },
             {
                 key: 'total_nucleaire',
                 name: INFRA_LABELS['nucleaire'],

@@ -149,6 +149,105 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   transition: transform 0.35s cubic-bezier(0.4, 0, 1, 1), opacity 0.35s ease;
 }
 
+/* ── Global Snackbar (Energy Info Style) ── */
+.hq-snackbar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 350px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e9ecef;
+  border-left: 4px solid var(--hq-blue-start);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: auto;
+}
+
+.hq-snackbar--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hq-snackbar--exit {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: all 0.3s ease;
+}
+
+.hq-snackbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.hq-snackbar-header h6 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hq-snackbar-body {
+  padding: 12px 16px 16px;
+}
+
+.hq-snackbar-body p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.hq-snackbar-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #95a5a6;
+  font-size: 1rem;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.hq-snackbar-close:hover {
+  color: #e74c3c;
+}
+
+/* Variants */
+.hq-snackbar--success {
+  border-left-color: var(--hq-green-start);
+}
+.hq-snackbar--success .hq-snackbar-header h6 i {
+  color: var(--hq-green-start);
+}
+
+.hq-snackbar--error {
+  border-left-color: #e74c3c;
+}
+.hq-snackbar--error .hq-snackbar-header h6 i {
+  color: #e74c3c;
+}
+
+.hq-snackbar--info {
+  border-left-color: var(--hq-blue-start);
+}
+.hq-snackbar--info .hq-snackbar-header h6 i {
+  color: var(--hq-blue-start);
+}
+
 /* ── Green Button (Global) ── */
 .hq-btn-green {
   padding: 10px 20px;
@@ -226,5 +325,23 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   background: var(--hq-gray-end);
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* ── Simulation Single Infra Modal overrides ── */
+.sim-infra-modal .modal-dialog {
+  max-width: 90vw;
+  width: 1200px;
+}
+
+.sim-infra-modal .modal-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  height: 85vh;
+}
+
+/* ── Disable Leaflet Attribution Footer ── */
+.leaflet-control-attribution {
+  display: none !important;
 }
 
