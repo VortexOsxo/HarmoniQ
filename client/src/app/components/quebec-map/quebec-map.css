@@ -56,6 +56,16 @@ div.map-overlay .icon-draggable.icon-draggable-tinted {
     mask-image: url(/icons/barrage.png);
 }
 
+.icon-clickable {
+    cursor: pointer !important;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.icon-clickable:hover {
+    transform: scale(1.15);
+    filter: brightness(1.15);
+}
+
 .icon-draggable-eolienne {
     -webkit-mask-image: url(/icons/eolienne.png);
     mask-image: url(/icons/eolienne.png);

@@ -156,7 +156,6 @@ export class MapService {
       const y = e.clientY - mapPos.top;
 
       if (type === 'hydro') {
-        self.showWaterBlockedToast("Il est impossible de créer des nouveaux barrages hydrauliques pour l'instant");
         return;
       }
 

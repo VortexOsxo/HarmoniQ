@@ -1,0 +1,66 @@
+<div class="modal-header w-100 d-flex justify-content-between">
+    <h5 class="modal-title">Nouveau barrage hydro-électrique</h5>
+    <button class="btn-close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body hq-modal-body">
+    <!-- Barre de recherche -->
+    <div class="search-wrapper" *ngIf="!hasNoDams">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" class="search-input" placeholder="Rechercher un barrage..." [(ngModel)]="searchText" />
+        <button class="search-clear" *ngIf="searchText" (click)="searchText = ''">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Liste des barrages -->
+    <div class="dam-list" *ngIf="filteredDams.length > 0">
+        <div class="dam-card" *ngFor="let dam of filteredDams">
+            <div class="dam-card-left">
+                <div class="dam-icon-circle">
+                    <i [class]="getTypeIcon(dam.type_barrage)"></i>
+                </div>
+            </div>
+            <div class="dam-card-center">
+                <span class="dam-name">{{ dam.nom }}</span>
+                <div class="dam-details">
+                    <span class="dam-badge dam-badge-type">
+                        <i class="fa-solid fa-tag"></i>
+                        {{ getTypeLabel(dam.type_barrage) }}
+                    </span>
+                    <span class="dam-badge dam-badge-power">
+                        <i class="fa-solid fa-bolt"></i>
+                        {{ dam.puissance_nominal | number:'1.0-0' }} MW
+                    </span>
+                    <span class="dam-badge dam-badge-turbines" *ngIf="dam.nb_turbines">
+                        <i class="fa-solid fa-gear"></i>
+                        {{ dam.nb_turbines }} turbine{{ dam.nb_turbines > 1 ? 's' : '' }}
+                    </span>
+                </div>
+            </div>
+            <div class="dam-card-right">
+                <button class="dam-add-btn" title="Ajouter ce barrage à la carte"
+                    (click)="selectDam(dam); $event.stopPropagation()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- État vide : recherche sans résultats -->
+    <div class="empty-state" *ngIf="filteredDams.length === 0 && !hasNoDams">
+        <i class="fa-solid fa-magnifying-glass empty-icon"></i>
+        <p>Aucun barrage trouvé pour « {{ searchText }} »</p>
+    </div>
+
+    <!-- État vide : tous les barrages déjà ajoutés -->
+    <div class="empty-state" *ngIf="hasNoDams">
+        <i class="fa-solid fa-check-circle empty-icon empty-icon-success"></i>
+        <p>Tous les barrages fictifs ont déjà été ajoutés à la carte.</p>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <small class="text-muted me-auto">* Ces barrages hydro-électriques sont fictifs.</small>
+    <button type="button" class="btn btn-light fw-semibold" (click)="activeModal.close()">Fermer</button>
+</div>
