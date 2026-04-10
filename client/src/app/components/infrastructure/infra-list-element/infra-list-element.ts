@@ -38,7 +38,7 @@ export class InfraListElement {
     if (!this.scenarioService.selectedScenario())
       return;
 
-    const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl' });
+    const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl', windowClass: 'sim-infra-modal' });
 
     modalRef.componentInstance.id = this.id;
     modalRef.componentInstance.name = this.nom;

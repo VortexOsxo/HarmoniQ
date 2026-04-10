@@ -2,8 +2,8 @@
 .co2-panel {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 16px 14px;
+    gap: 8px;
+    padding: 10px 12px;
     min-height: 560px;
 }
 
@@ -36,13 +36,13 @@
 .sources-section {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 .source-row {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
 }
 
 .source-top {
