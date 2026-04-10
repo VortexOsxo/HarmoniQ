@@ -26,7 +26,7 @@ interface NodeRect {
 interface ComputedFlow {
     path: string;
     color: string;
-    type: 'demand-energy' | 'energy-prod' | 'prod-co2';
+    type: 'demand-energy' | 'energy-prod' | 'prod-co2' | 'fossil-co2';
     fromLabel: string;
     toLabel: string;
     valueMW: number;
@@ -93,26 +93,27 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     formatMW(value: number): string {
-        let formatted: string;
-        if (value >= 10) formatted = Math.round(value).toLocaleString('fr-FR');
-        else if (value >= 1)
-            formatted = value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
-        else formatted = value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+        const formatted = value >= 10 || value == 0
+            ? Math.round(value).toLocaleString('fr-FR')
+            : value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         return formatted + ' MW';
     }
 
     formatCo2(value: number): string {
+        if (value === 0) return '0';
         if (value >= 10) return Math.round(value).toLocaleString('fr-FR');
-        if (value >= 1) return value.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
-        return value.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+        return value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    private co2Tph(p: { value: number; co2FactorKgMWh: number; co2Tph?: number }): number {
-        return p.co2Tph ?? (p.value * p.co2FactorKgMWh) / 1000;
+    private co2Tph(p: { value: number; co2FactorKgMWh?: number; co2Tph?: number }): number {
+        return p.co2Tph ?? (p.value * (p.co2FactorKgMWh ?? 0)) / 1000;
     }
 
     get totalCo2(): number {
-        return this.data.productionNodes.reduce((s, p) => s + this.co2Tph(p), 0);
+        const prodCo2 = this.data.productionNodes.reduce((s, p) => s + this.co2Tph(p), 0);
+        const gasNode = this.data.energyTypeNodes.find(e => e.id === 'gas');
+        const fossilCo2 = gasNode ? (gasNode.value * (gasNode.co2FactorKgMWh ?? 0)) / 1000 : 0;
+        return prodCo2 + fossilCo2;
     }
 
     // ── Hover: flows ──────────────────────────────────────────────────────────
@@ -132,7 +133,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             if (type === 'demand') return flow.demandIndex === idx;
             if (type === 'energy') return flow.energyIndex === idx;
             if (type === 'prod') return flow.prodIndex === idx;
-            if (type === 'co2') return flow.type === 'prod-co2';
+            if (type === 'co2') return flow.type === 'prod-co2' || flow.type === 'fossil-co2';
         }
         return false;
     }
@@ -155,10 +156,10 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         const rect = this.sankeyContainer.nativeElement.getBoundingClientRect();
         const flow = this.computedFlows[i];
         const lines: string[] =
-            flow.type === 'prod-co2'
+            flow.type === 'prod-co2' || flow.type === 'fossil-co2'
                 ? [`${flow.fromLabel} → CO\u2082`, `${this.formatCo2(flow.co2Tph)} t CO\u2082/h`]
                 : flow.type === 'energy-prod'
-                ? [`${flow.toLabel} \u2190 ${flow.fromLabel}`, `${this.formatMW(flow.valueMW)}`]
+                ? [`${flow.toLabel} \u2192 ${flow.fromLabel}`, `${this.formatMW(flow.valueMW)}`]
                 : [`${flow.fromLabel} → ${flow.toLabel}`, `${this.formatMW(flow.valueMW)}`];
 
         this.tooltip = {
@@ -207,7 +208,7 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             ? [
                   ...this.computeDemandToEnergyFlows(demandRects, energyTypeRects),
                   ...this.computeEnergyToProdFlows(energyTypeRects, prodRects),
-                  ...this.computeProdToCo2Flows(prodRects, co2Rect),
+                  ...this.computeAllCo2Flows(energyTypeRects, prodRects, co2Rect),
               ]
             : [];
 
@@ -338,44 +339,82 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
         return flows;
     }
 
-    private computeProdToCo2Flows(prodRects: NodeRect[], co2Rect: NodeRect): ComputedFlow[] {
+    private computeAllCo2Flows(
+        energyTypeRects: NodeRect[],
+        prodRects: NodeRect[],
+        co2Rect: NodeRect,
+    ): ComputedFlow[] {
+        const E = this.data.energyTypeNodes;
         const P = this.data.productionNodes;
-        const co2Values = P.map(p => this.co2Tph(p));
-        const totalCo2 = co2Values.reduce((s, v) => s + v, 0);
         const R = 10;
+        const co2InnerH = co2Rect.height - 2 * R;
+
+        const prodCo2Values = P.map(p => this.co2Tph(p));
+        const prodTotalCo2 = prodCo2Values.reduce((s, v) => s + v, 0);
+
+        const gasIdx = E.findIndex(e => e.id === 'gas');
+        const gasNode = gasIdx >= 0 ? E[gasIdx] : null;
+        const fossilCo2 = gasNode ? (gasNode.value * (gasNode.co2FactorKgMWh ?? 0)) / 1000 : 0;
+
+        const totalCo2 = prodTotalCo2 + fossilCo2;
+        if (totalCo2 <= 0) return [];
 
         const flows: ComputedFlow[] = [];
         let co2Cum = 0;
-        const co2InnerH = co2Rect.height - 2 * R;
 
         for (let j = 0; j < P.length; j++) {
-            if (P[j].value <= 0 || co2Values[j] <= 0) continue;
+            if (P[j].value <= 0 || prodCo2Values[j] <= 0) continue;
+            const co2Frac = prodCo2Values[j] / totalCo2;
             const pRect = prodRects[j];
-            const co2Frac = co2Values[j] / totalCo2;
 
             const x1 = pRect.right;
             const x2 = co2Rect.left;
             const midX = (x1 + x2) / 2;
 
-            const topY1 = pRect.top + R;
-            const botY1 = pRect.bottom - R;
             const topY2 = co2Rect.top + R + co2Cum;
             const botY2 = topY2 + co2Frac * co2InnerH;
 
             flows.push({
-                path: ribbon(x1, topY1, botY1, midX, x2, topY2, botY2),
+                path: ribbon(x1, pRect.top + R, pRect.bottom - R, midX, x2, topY2, botY2),
                 color: P[j].color,
                 type: 'prod-co2',
                 fromLabel: P[j].label,
                 toLabel: 'CO\u2082',
                 valueMW: P[j].value,
-                co2Tph: co2Values[j],
+                co2Tph: prodCo2Values[j],
                 demandIndex: -1,
                 energyIndex: -1,
                 prodIndex: j,
             });
 
             co2Cum += co2Frac * co2InnerH;
+        }
+
+        if (fossilCo2 > 0 && gasIdx >= 0 && gasNode) {
+            const fossilFrac = fossilCo2 / totalCo2;
+            const gasRect = energyTypeRects[gasIdx];
+            const x1 = gasRect.right;
+            const x2 = co2Rect.left;
+
+            const topY2 = co2Rect.top + R + co2Cum;
+            const botY2 = topY2 + fossilFrac * co2InnerH;
+
+            // Route below all production nodes instead of crossing them
+            const bottomProd = prodRects.length > 0 ? Math.max(...prodRects.map(r => r.bottom)) : co2Rect.bottom;
+            const belowY = bottomProd + 30;
+
+            flows.push({
+                path: ribbonBelow(x1, gasRect.top + R, gasRect.bottom - R, x2, topY2, botY2, belowY),
+                color: gasNode.color,
+                type: 'fossil-co2',
+                fromLabel: gasNode.label,
+                toLabel: 'CO\u2082',
+                valueMW: gasNode.value,
+                co2Tph: fossilCo2,
+                demandIndex: -1,
+                energyIndex: gasIdx,
+                prodIndex: -1,
+            });
         }
 
         return flows;
@@ -391,6 +430,31 @@ export class SankeyDiagramComponent implements AfterViewInit, OnChanges, OnDestr
             height: r.height,
         };
     }
+}
+
+
+
+function ribbonBelow(
+    x1: number,
+    topY1: number,
+    botY1: number,
+    x2: number,
+    topY2: number,
+    botY2: number,
+    belowY: number,
+    dipFraction = 0.67,
+): string {
+    const h2 = botY2 - topY2;
+    const xDip = x1 + (x2 - x1) * dipFraction;
+    const cp = (x2 - x1) * 0.15;
+    return (
+        `M ${x1} ${topY1} ` +
+        `C ${xDip - cp} ${topY1}, ${xDip - cp} ${belowY}, ${xDip} ${belowY} ` +
+        `C ${xDip + cp} ${belowY}, ${x2 - cp} ${topY2}, ${x2} ${topY2} ` +
+        `L ${x2} ${botY2} ` +
+        `C ${x2 - cp} ${botY2}, ${xDip + cp} ${belowY + h2}, ${xDip} ${belowY + h2} ` +
+        `C ${xDip - cp} ${belowY + h2}, ${xDip - cp} ${botY1}, ${x1} ${botY1} Z`
+    );
 }
 
 function ribbon(

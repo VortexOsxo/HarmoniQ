@@ -44,6 +44,7 @@ export class SimulationCo2GraphService implements SimulationStep {
                 scenario: scenario,
                 infra_group: this.infrastructuresService.buildSimulationPayload(),
             };
+            console.log("emmission", payload);
             this.cachedData = await firstValueFrom(this.http.post(url, payload));
         }
 
@@ -142,6 +143,24 @@ export class SimulationCo2GraphService implements SimulationStep {
             });
         }
         this.isLoading.set(false);
+    }
+
+    /** Returns annual CO₂ (tonnes/year) by Sankey carrier key from the emission API cache. */
+    getAnnualCo2ByCarrier(): Record<string, number> {
+        if (!this.cachedData) return {};
+        const hydroItems: any[] = this.cachedData['hydro'] ?? [];
+        const expanded: Record<string, any[]> = {
+            ...this.cachedData,
+            hydro_fil: hydroItems.filter((h: any) => h.type_barrage === "Fil de l'eau"),
+            hydro_res: hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau"),
+        };
+        const result: Record<string, number> = {};
+        for (const seg of SEGMENTS) {
+            result[seg.key] = (expanded[seg.key] ?? []).reduce(
+                (acc: number, item: any) => acc + (item['co2_annuel'] ?? 0), 0,
+            );
+        }
+        return result;
     }
 
     public setCostMode(mode: 'annuel' | 'construction') {

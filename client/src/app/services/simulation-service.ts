@@ -114,6 +114,8 @@ export class SimulationService {
 
         if (!scenario || !infraGroup) return;
 
+        await this.infrastructuresService.ensureInfrasLoaded();
+
         const steps = [
             this.simulationCostGraphService,
             this.simulationCo2GraphService,
