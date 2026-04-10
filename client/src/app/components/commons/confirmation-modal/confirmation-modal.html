@@ -6,6 +6,6 @@
   <p class="mb-0 text-secondary fs-5">{{ message }}</p>
 </div>
 <div class="modal-footer border-top-0 pt-0">
-  <button type="button" class="btn btn-light fw-semibold" (click)="activeModal.close(false)">{{ cancelText }}</button>
+  <button *ngIf="cancelText" type="button" class="btn btn-light fw-semibold" (click)="activeModal.close(false)">{{ cancelText }}</button>
   <button type="button" class="btn fw-semibold" [ngClass]="confirmBtnClass" (click)="activeModal.close(true)">{{ confirmText }}</button>
 </div>
