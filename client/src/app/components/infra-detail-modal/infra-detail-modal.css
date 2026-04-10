@@ -101,24 +101,6 @@
     }
 }
 
-/* ── Informations card ── */
-.info-card {
-    background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    padding: 18px 16px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.info-card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e9ecef;
-}
-
 .info-field {
     display: flex;
     align-items: center;
@@ -153,7 +135,7 @@
     padding: 10px;
     border-radius: 6px;
     margin-top: 8px;
-    border: 1px dashed #ced4da;
+    border: 1.5px solid #ced4da;
 }
 
 .cycle-vie-link-container {

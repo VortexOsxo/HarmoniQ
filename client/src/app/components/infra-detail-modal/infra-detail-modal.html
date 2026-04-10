@@ -17,24 +17,24 @@
     <div class="detail-body">
         <!-- Informations content -->
         <div class="detail-tab-content">
-            <div class="info-card">
-                <h6 class="info-card-title">{{ infra()?.data?.nom }}</h6>
-                <div class="info-field" *ngFor="let field of getInfoFields()"
-                    [class.vulgarisation-field]="field.isVulgarisation">
-                    <i [class]="field.icon" class="info-field-icon"></i>
-                    <span class="info-field-text" *ngIf="!field.isVulgarisation">
-                        {{ field.label }} : 
-                        <strong *ngIf="field.tooltip" (click)="showExplanationFromTooltip(field.tooltip)" style="cursor: pointer; border-bottom: 1px dotted #888; color: #2980b9;" title="Cliquez pour plus d'informations">
-                            {{ field.value }} <i class="fa-solid fa-circle-info" style="font-size: 0.8em; margin-left: 2px;"></i>
-                        </strong>
-                        <strong *ngIf="!field.tooltip">
-                            {{ field.value }}
-                        </strong>
-                    </span>
-                    <span class="info-field-text" *ngIf="field.isVulgarisation">
-                        <strong>{{ field.label }}</strong> : {{ field.value }}
-                    </span>
-                </div>
+            <div class="info-field" *ngFor="let field of getInfoFields()"
+                [class.vulgarisation-field]="field.isVulgarisation">
+                <i [class]="field.icon" class="info-field-icon"></i>
+                <span class="info-field-text" *ngIf="!field.isVulgarisation">
+                    {{ field.label }} :
+                    <strong *ngIf="field.tooltip" (click)="showExplanationFromTooltip(field.tooltip)"
+                        style="cursor: pointer; border-bottom: 1px dotted #888; color: #2980b9;"
+                        title="Cliquez pour plus d'informations">
+                        {{ field.value }} <i class="fa-solid fa-circle-info"
+                            style="font-size: 0.8em; margin-left: 2px;"></i>
+                    </strong>
+                    <strong *ngIf="!field.tooltip">
+                        {{ field.value }}
+                    </strong>
+                </span>
+                <span class="info-field-text" *ngIf="field.isVulgarisation">
+                    <strong>{{ field.label }}</strong> : {{ field.value }}
+                </span>
             </div>
 
             <!-- Hydro power slider -->
@@ -50,16 +50,9 @@
                     </span>
                     <span class="slider-label-max">{{ pMax() }} MW</span>
                 </div>
-                <input
-                    type="range"
-                    class="hydro-range-slider"
-                    [min]="pMin()"
-                    [max]="pMax()"
-                    [step]="1"
-                    [value]="sliderValue()"
-                    (input)="onPuissanceSliderInput($event)"
-                    (change)="onPuissanceSliderChange($event)"
-                />
+                <input type="range" class="hydro-range-slider" [min]="pMin()" [max]="pMax()" [step]="1"
+                    [value]="sliderValue()" (input)="onPuissanceSliderInput($event)"
+                    (change)="onPuissanceSliderChange($event)" />
                 <p class="slider-hint" *ngIf="isNewDam()">
                     Plage : puissance nominale / nb turbines → +15 %
                 </p>
@@ -110,7 +103,8 @@
     <div class="mini-explication-modal" *ngIf="selectedExplanationText">
         <div class="mini-explication-header">
             <h6><i class="fa-solid fa-circle-info"></i> {{ selectedExplanationTitle }}</h6>
-            <button class="mini-explication-close" (click)="closeExplanation()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="mini-explication-close" (click)="closeExplanation()"><i
+                    class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="mini-explication-body">
             <p>{{ selectedExplanationText }}</p>

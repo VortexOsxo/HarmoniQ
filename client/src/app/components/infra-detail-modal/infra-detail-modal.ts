@@ -311,8 +311,6 @@ export class InfraDetailModal {
     const d = infra.data;
     const fields: { icon: string; label: string; value: string; isVulgarisation?: boolean; tooltip?: string }[] = [];
 
-    fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
-
     if (infra.type === 'hydro') {
       fields.push({ icon: 'fa-solid fa-water', label: 'Type de barrage', value: d.type_barrage || 'N/A' });
       fields.push({ icon: 'fa-solid fa-gauge-high', label: 'Débit nominal', value: d.debits_nominal ? `${parseFloat(d.debits_nominal).toFixed(1)} m³/s` : 'N/A', tooltip: "Mètres cubes par seconde (m³/s) : Mesure le volume d'eau qui s'écoule chaque seconde." });
