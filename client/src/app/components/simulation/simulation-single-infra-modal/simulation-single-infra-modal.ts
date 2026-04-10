@@ -4,13 +4,14 @@ import { SimulationService } from '@app/services/simulation-service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { GraphService, graphServiceConfig } from '@app/services/graph-service';
-import { forkJoin } from 'rxjs';
+import { InfraIconComponent } from '@app/components/commons/infra-icon';
 
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 
 @Component({
   selector: 'app-simulation-single-infra-modal',
-  imports: [CommonModule, GranularitySelectorComponent],
+  standalone: true,
+  imports: [CommonModule, GranularitySelectorComponent, InfraIconComponent],
   templateUrl: './simulation-single-infra-modal.html',
   styleUrl: './simulation-single-infra-modal.css',
 })

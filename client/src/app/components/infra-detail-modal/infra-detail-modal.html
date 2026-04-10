@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="detail-header">
         <div class="detail-header-left">
-            <img *ngIf="infra()" [src]="getIconForType(infra()!.type)" class="detail-header-icon" alt="" />
+            <app-infra-icon *ngIf="infra()" [type]="infra()!.type" [size]="40"></app-infra-icon>
             <div>
                 <h5 class="detail-title">{{ infra()?.data?.nom }}</h5>
                 <span class="detail-subtitle">{{ infra()?.categoryName }}</span>
