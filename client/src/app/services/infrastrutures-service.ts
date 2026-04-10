@@ -13,6 +13,7 @@ import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
 import { LocalStorageService } from './local-storage-service';
 import { Subject } from 'rxjs';
+import { SnackbarService } from './snackbar-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -121,6 +122,7 @@ export class InfrastruturesService {
     private modalService: NgbModal,
     private openApiService: OpenApiService,
     private storageService: LocalStorageService,
+    private snackbarService: SnackbarService,
   ) {
     this.refreshInfraGroups();
     this.selectedInfraGroup.set(this.getDefaultInfraGroup());
@@ -256,6 +258,11 @@ export class InfrastruturesService {
 
     if (isDefault) {
       this.createInfraGroup(infraGroup);
+      this.snackbarService.show(
+        "Nouveau groupe d'infrastructures",
+        `Le groupe « ${infraGroup.nom} » a été créé car le groupe Infrastructures québécoises ne peut pas être modifié.`,
+        'info'
+      );
     } else {
       this.selectedInfraGroup.set(infraGroup);
       this._persistSelectedGroup();
@@ -279,6 +286,11 @@ export class InfrastruturesService {
 
     if (isDefault) {
       this.createInfraGroup(infraGroup);
+      this.snackbarService.show(
+        "Nouveau groupe d'infrastructures",
+        `Le groupe « ${infraGroup.nom} » a été créé car le groupe Infrastructures québécoises ne peut pas être modifié.`,
+        'info'
+      );
     } else {
       this.selectedInfraGroup.set(infraGroup);
       this._persistSelectedGroup();
