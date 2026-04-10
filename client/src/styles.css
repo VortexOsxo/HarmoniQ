@@ -345,3 +345,32 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   display: none !important;
 }
 
+/* Side Filter Modal Styling - Repositions modals to the top center of the screen */
+.side-filter-modal .modal-dialog {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) !important;
+    margin: 0;
+    width: 800px;
+    max-width: 95vw;
+    height: auto;
+    max-height: calc(100vh - 40px);
+}
+
+.side-filter-modal .modal-content {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+}
+
+.side-filter-modal .modal-body {
+    max-height: calc(85vh - 60px);
+    overflow-y: auto;
+}
+
+.transparent-backdrop {
+    background-color: transparent !important;
+    opacity: 0 !important;
+}
+

@@ -35,6 +35,12 @@ export class InfrastructuresModal {
   get mapFilterMaxPower() { return this.mapService.mapFilterMaxPower(); }
   set mapFilterMaxPower(val: number | null) { this.mapService.mapFilterMaxPower.set(val); }
 
+  get showRealInfra() { return this.mapService.showRealInfra(); }
+  set showRealInfra(val: boolean) { this.mapService.showRealInfra.set(val); }
+
+  get showUserInfra() { return this.mapService.showUserInfra(); }
+  set showUserInfra(val: boolean) { this.mapService.showUserInfra.set(val); }
+
   isInfraTypeSelected(type: string): boolean {
     return this.mapService.mapFilterTypes().has(type);
   }

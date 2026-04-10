@@ -1,11 +1,23 @@
-.infra-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
+.infra-column-list {
+    display: flex;
+    flex-direction: column;
 }
 
 .infra-item {
-    padding: 4px 0;
+    padding: 2px 0;
+}
+
+.item-compact-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6c757d;
+    letter-spacing: 0.5px;
+}
+
+.btn-xs {
+    padding: 2px 8px;
+    font-size: 0.7rem;
 }
 
 .infra-checkbox-label {

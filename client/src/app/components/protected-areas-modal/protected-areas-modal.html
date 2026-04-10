@@ -7,17 +7,34 @@
 </div>
 
 <div class="modal-body p-0">
-    <div class="controls-bar p-3 border-bottom bg-light d-flex gap-2">
-        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.selectAll()">Tout
-            sélectionner</button>
-        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.deselectAll()">Tout
-            désélectionner</button>
-    </div>
 
-    <div class="layers-container p-3" style="max-height: 60vh; overflow-y: auto;">
-        <ng-container *ngFor="let node of protectedAreasService.layerTree">
-            <ng-container *ngTemplateOutlet="layerNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
-        </ng-container>
+
+    <div class="px-3 py-3">
+        <div class="row">
+            <!-- Column 1 -->
+            <div class="col-6 border-end">
+                <div class="mb-2 pb-1 border-bottom">
+                    <label class="form-label m-0 item-compact-label">Catégories</label>
+                </div>
+                <div class="pa-column-list">
+                    <ng-container *ngFor="let node of protectedAreasService.layerTree.slice(0, 3)">
+                        <ng-container *ngTemplateOutlet="layerNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
+                    </ng-container>
+                </div>
+            </div>
+
+            <!-- Column 2 -->
+            <div class="col-6">
+                <div class="mb-2 pb-1 border-bottom">
+                    <label class="form-label m-0 item-compact-label">Catégories (suite)</label>
+                </div>
+                <div class="pa-column-list">
+                    <ng-container *ngFor="let node of protectedAreasService.layerTree.slice(3)">
+                        <ng-container *ngTemplateOutlet="layerNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

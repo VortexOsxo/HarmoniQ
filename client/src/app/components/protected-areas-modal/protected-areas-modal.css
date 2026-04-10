@@ -1,5 +1,15 @@
+.pa-column-list {
+    display: flex;
+    flex-direction: column;
+}
+
 .pa-layer-item {
-    padding: 6px 0;
+    padding: 3px 0;
+}
+
+.btn-xs {
+    padding: 2px 8px;
+    font-size: 0.7rem;
 }
 
 .pa-group-parent>.pa-checkbox-label {

@@ -1,18 +1,23 @@
-.reseau-section-title {
-    font-size: 0.95rem;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 12px;
-}
-
-.reseau-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 8px;
+.reseau-column-list {
+    display: flex;
+    flex-direction: column;
 }
 
 .reseau-layer-item {
-    padding: 4px 0;
+    padding: 2px 0;
+}
+
+.item-compact-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6c757d;
+    letter-spacing: 0.5px;
+}
+
+.btn-xs {
+    padding: 2px 8px;
+    font-size: 0.7rem;
 }
 
 .reseau-checkbox-label {

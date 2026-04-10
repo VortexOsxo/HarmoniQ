@@ -38,27 +38,33 @@ export class SimulationResults implements OnInit, OnDestroy {
   openProtectedAreasSettings(event: Event): void {
     event.stopPropagation(); // Avoid toggling visibility when clicking the settings icon
     this.modalService.open(ProtectedAreasModal, {
-      centered: true,
       scrollable: true,
-      size: 'lg'
+      size: 'lg',
+      windowClass: 'side-filter-modal',
+      backdrop: true,
+      backdropClass: 'transparent-backdrop'
     });
   }
 
   openReseauSettings(event: Event): void {
     event.stopPropagation();
     this.modalService.open(ReseauModal, {
-      centered: true,
       scrollable: true,
-      size: 'lg'
+      size: 'lg',
+      windowClass: 'side-filter-modal',
+      backdrop: true,
+      backdropClass: 'transparent-backdrop'
     });
   }
 
   openInfrastructuresSettings(event: Event): void {
     event.stopPropagation();
     this.modalService.open(InfrastructuresModal, {
-      centered: true,
       scrollable: true,
-      size: 'lg'
+      size: 'lg',
+      windowClass: 'side-filter-modal',
+      backdrop: true,
+      backdropClass: 'transparent-backdrop'
     });
   }
 

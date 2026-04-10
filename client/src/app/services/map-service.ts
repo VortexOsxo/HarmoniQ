@@ -43,8 +43,10 @@ export class MapService {
   mapFilterTypes = signal<Set<string>>(new Set(types)); // Show all by default
   mapFilterMinPower = signal<number | null>(null);
   mapFilterMaxPower = signal<number | null>(null);
+  showRealInfra = signal(true);
+  showUserInfra = signal(true);
 
-  hasSelection = computed(() => this.mapFilterTypes().size > 0);
+  hasSelection = computed(() => this.mapFilterTypes().size > 0 && (this.showRealInfra() || this.showUserInfra()));
   private lastTypeSelection: Set<string> = new Set(types);
 
   private previousSelectedType: string | null = null;
@@ -80,6 +82,8 @@ export class MapService {
       this.mapFilterTypes();
       this.mapFilterMinPower();
       this.mapFilterMaxPower();
+      this.showRealInfra();
+      this.showUserInfra();
       this.reloadMarkers();
     });
 
@@ -252,6 +256,16 @@ export class MapService {
           return true;
         });
       }
+
+      // Apply Origin filters
+      const showReal = this.showRealInfra();
+      const showUser = this.showUserInfra();
+      infras = infras.filter(i => {
+        const isUser = (i as any).isUserCreated === true;
+        if (isUser && !showUser) return false;
+        if (!isUser && !showReal) return false;
+        return true;
+      });
 
       this.addMarkers(type, infras);
     });
