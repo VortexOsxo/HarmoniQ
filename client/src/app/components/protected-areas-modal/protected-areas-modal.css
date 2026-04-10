@@ -1,0 +1,49 @@
+.pa-layer-item {
+    padding: 6px 0;
+}
+
+.pa-group-parent>.pa-checkbox-label {
+    font-weight: 600;
+}
+
+.pa-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.pa-checkbox-label input[type="checkbox"] {
+    margin-top: 4px;
+    flex-shrink: 0;
+    accent-color: var(--hq-green-start);
+    width: 16px;
+    height: 16px;
+}
+
+.pa-color-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.pa-layer-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.controls-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}

@@ -1,0 +1,44 @@
+<div class="modal-header">
+    <h5 class="modal-title">
+        <i class="fa-solid fa-layer-group me-2" style="color: var(--hq-green-start);"></i>
+        Sélection des aires protégées
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body p-0">
+    <div class="controls-bar p-3 border-bottom bg-light d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.selectAll()">Tout
+            sélectionner</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="protectedAreasService.deselectAll()">Tout
+            désélectionner</button>
+    </div>
+
+    <div class="layers-container p-3" style="max-height: 60vh; overflow-y: auto;">
+        <ng-container *ngFor="let node of protectedAreasService.layerTree">
+            <ng-container *ngTemplateOutlet="layerNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
+        </ng-container>
+    </div>
+</div>
+
+
+
+<ng-template #layerNodeTpl let-node let-depth="depth">
+    <div class="pa-layer-item" [class.pa-group-parent]="node.children" [style.padding-left.px]="depth * 20">
+        <label class="pa-checkbox-label">
+            <input type="checkbox" [checked]="protectedAreasService.isGroupFullySelected(node)"
+                (change)="protectedAreasService.toggleNode(node)">
+            <span class="pa-layer-name">
+                <span *ngIf="node.color" class="pa-color-swatch"
+                    [style.background-color]="'rgba(' + node.color[0] + ',' + node.color[1] + ',' + node.color[2] + ',' + (node.color.length > 3 ? node.color[3]/255 : 1) + ')'"></span>
+                {{ node.name }}
+            </span>
+        </label>
+    </div>
+    <ng-container *ngIf="node.children">
+        <ng-container *ngFor="let child of node.children">
+            <ng-container
+                *ngTemplateOutlet="layerNodeTpl; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+        </ng-container>
+    </ng-container>
+</ng-template>

@@ -35,22 +35,48 @@ div#plots {
     background: #fff !important;
     color: #555 !important;
     border: 1px solid #ddd !important;
-    min-width: 180px;
+    min-width: 190px;
 }
 
-.protected-areas-btn.btn-success {
+.protected-areas-btn .btn-label,
+.reseau-btn .btn-label {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.settings-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.settings-trigger:hover {
+    background: rgba(0, 0, 0, 0.15);
+    transform: rotate(30deg);
+}
+
+.protected-areas-btn.btn-success .settings-trigger,
+.reseau-btn.btn-reseau-active .settings-trigger {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.protected-areas-btn.btn-success .settings-trigger:hover,
+.reseau-btn.btn-reseau-active .settings-trigger:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.protected-areas-btn.btn-success,
+.reseau-btn.btn-reseau-active {
     background: #27ae60 !important;
     color: #fff !important;
     border-color: #27ae60 !important;
     box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);
-}
-
-/* ── Réseau button ── */
-.reseau-btn.btn-reseau-active {
-    background: #4A90D9 !important;
-    color: #fff !important;
-    border-color: #4A90D9 !important;
-    box-shadow: 0 2px 8px rgba(74, 144, 217, 0.35);
 }
 
 /* ── Content area ── */

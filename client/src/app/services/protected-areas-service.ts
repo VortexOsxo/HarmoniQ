@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import { LayerNode, LAYER_TREE, ALL_LAYER_IDS, DEFAULT_SELECTED_LAYERS, buildIdentifyHtml, LAYER_NODE_MAP } from './protected-areas-utils';
 
@@ -9,9 +9,11 @@ export class ProtectedAreasService {
     private readonly MAP_SERVER_URL = 'https://geo.environnement.gouv.qc.ca/donnees/rest/services/Biodiversite/Aires_protegees/MapServer';
     readonly layerTree = LAYER_TREE;
 
-    isVisible = signal(false);
+
     legendOpen = signal(false);
     selectedLayers = signal<Set<number>>(new Set(DEFAULT_SELECTED_LAYERS));
+    hasSelection = computed(() => this.selectedLayers().size > 0);
+    private lastSelection: Set<number> = new Set(ALL_LAYER_IDS);
 
     private tileLayers: L.TileLayer[] = [];
     private map?: L.Map;
@@ -19,6 +21,7 @@ export class ProtectedAreasService {
 
     initLayer(map: L.Map): void {
         this.map = map;
+        this.registerClickHandler();
         this.rebuildTileLayer();
     }
 
@@ -130,9 +133,7 @@ export class ProtectedAreasService {
 
                 return finalUrl;
             };
-            if (this.isVisible()) {
-                tiledLayer.addTo(this.map);
-            }
+            tiledLayer.addTo(this.map);
             this.tileLayers.push(tiledLayer);
         }
     }
@@ -227,45 +228,33 @@ export class ProtectedAreasService {
     }
 
     toggleVisibility(): void {
-        if (this.tileLayers.length === 0 || !this.map) {
-            this.rebuildTileLayer();
-        }
-
-        if (this.isVisible()) {
-            this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
-            this.map?.closePopup();
-            this.isVisible.set(false);
-            this.legendOpen.set(false);
-            this.unregisterClickHandler();
+        if (this.hasSelection()) {
+            this.lastSelection = new Set(this.selectedLayers());
+            this.deselectAll();
         } else {
-            this.tileLayers.forEach(layer => layer.addTo(this.map!));
-            this.isVisible.set(true);
-            this.legendOpen.set(true);
-            this.registerClickHandler();
+            if (!this.lastSelection || this.lastSelection.size === 0) {
+                this.selectAll();
+            } else {
+                this.selectedLayers.set(new Set(this.lastSelection));
+                this.rebuildTileLayer();
+            }
         }
     }
 
     show(): void {
-        if (!this.map || this.isVisible()) return;
-        if (this.tileLayers.length === 0) this.rebuildTileLayer();
-        this.tileLayers.forEach(layer => layer.addTo(this.map!));
-        this.isVisible.set(true);
-        this.registerClickHandler();
+        if (this.hasSelection()) return;
+        this.selectAll();
     }
 
     hide(): void {
-        if (!this.map || !this.isVisible()) return;
-        this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
-        this.isVisible.set(false);
-        this.legendOpen.set(false);
-        this.unregisterClickHandler();
+        this.deselectAll();
     }
 
     private registerClickHandler(): void {
         if (!this.map || this.clickHandler) return;
 
         this.clickHandler = (e: L.LeafletMouseEvent) => {
-            if (!this.map || !this.isVisible()) return;
+            if (!this.map || !this.hasSelection()) return;
             if (this.map.getZoom() < 6) return;
 
             this.identify(e.latlng).then(html => {
@@ -478,7 +467,6 @@ export class ProtectedAreasService {
         });
         this.tileLayers = [];
         this.map = undefined;
-        this.isVisible.set(false);
         this.legendOpen.set(false);
     }
 }

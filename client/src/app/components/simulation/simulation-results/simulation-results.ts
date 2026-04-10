@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbNavModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuebecMap } from '@app/components/quebec-map/quebec-map';
+import { ProtectedAreasModal } from '@app/components/protected-areas-modal/protected-areas-modal';
+import { ReseauModal } from '@app/components/reseau-modal/reseau-modal';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
 import { TutorialService } from '@app/services/tutorial-service';
@@ -11,7 +13,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-results',
-  imports: [CommonModule, NgbNavModule, QuebecMap, InfraDetailModal],
+  imports: [CommonModule, NgbNavModule, QuebecMap, InfraDetailModal, ProtectedAreasModal, ReseauModal],
   templateUrl: './simulation-results.html',
   styleUrl: './simulation-results.css',
 }) // TODO: Rename to like QuebecMapWrapper or something
@@ -27,7 +29,26 @@ export class SimulationResults implements OnInit, OnDestroy {
     public reseauService: ReseauService,
     private tutorialService: TutorialService,
     private infraDetailService: InfraDetailService,
+    private modalService: NgbModal,
   ) { }
+
+  openProtectedAreasSettings(event: Event): void {
+    event.stopPropagation(); // Avoid toggling visibility when clicking the settings icon
+    this.modalService.open(ProtectedAreasModal, {
+      centered: true,
+      scrollable: true,
+      size: 'lg'
+    });
+  }
+
+  openReseauSettings(event: Event): void {
+    event.stopPropagation();
+    this.modalService.open(ReseauModal, {
+      centered: true,
+      scrollable: true,
+      size: 'lg'
+    });
+  }
 
   ngOnInit(): void {
     this.tutorialSub = this.tutorialService.tutorialState$.subscribe((s) => {

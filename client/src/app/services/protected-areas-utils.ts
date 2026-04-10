@@ -69,8 +69,8 @@ function buildNodeMap(nodes: LayerNode[]) {
 }
 buildNodeMap(LAYER_TREE);
 
-// Par défaut on selectionne tout
-export const DEFAULT_SELECTED_LAYERS = new Set([100, 101, 102, 24, 25, 21, 52]);
+// Par défaut rien n'est sélectionné (donc caché)
+export const DEFAULT_SELECTED_LAYERS = new Set<number>([]);
 
 export const BIOME_MAP: Record<string, string> = {
     'T': 'Milieu terrestre',
