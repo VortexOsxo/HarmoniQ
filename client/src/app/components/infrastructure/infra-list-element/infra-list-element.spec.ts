@@ -135,7 +135,7 @@ describe('InfraListElement', () => {
 
       await user.click(screen.getByText('Barrage Test'));
 
-      expect(mockInfrasService.toggleInfra).not.toHaveBeenCalled();
+      expect(mockInfrasService.toggleInfra).toHaveBeenCalledWith('hydro', '42');
     });
 
   });

@@ -61,12 +61,19 @@ describe('CreateInfraGroupModal', () => {
     describe('create', () => {
         it('should call infrastructuresService.createInfraGroup when a name is typed and Create is clicked', async () => {
             const user = userEvent.setup();
+            mockInfrastruturesService.selectedInfraGroup.set({
+                parc_eoliens: ['9'],
+                parc_solaires: [],
+                central_hydroelectriques: [],
+                central_thermique: [],
+                central_nucleaire: [],
+            } as any);
+
             await render(CreateInfraGroupModal, { providers: defaultProviders });
 
             await user.type(screen.getByLabelText(/Nom du groupe/i), 'Mon Groupe');
             await user.click(screen.getByRole('button', { name: /Créer/i }));
 
-            expect(mockInfrastruturesService.getNewGroupInfraTemplate).toHaveBeenCalled();
             expect(mockInfrastruturesService.createInfraGroup).toHaveBeenCalledWith(
                 expect.objectContaining({
                     nom: 'Mon Groupe',

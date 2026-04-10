@@ -234,8 +234,13 @@ export class InfrastruturesService {
   }
 
   toggleInfra(type: string, infraId: string) {
-    const infraGroup: any = this.selectedInfraGroup();
-    if (!infraGroup) return;
+    const currentGroup: any = this.selectedInfraGroup();
+    if (!currentGroup) return;
+
+    const isDefault = this.isDefaultInfraGroup(currentGroup);
+    const infraGroup = isDefault
+      ? { ...currentGroup, id: 0, nom: this._getNextDefaultGroupName() }
+      : { ...currentGroup };
 
     const key = typeKeyMap[type];
     if (!key) return;
@@ -249,21 +254,35 @@ export class InfrastruturesService {
       isActive = true;
     }
 
-    this.selectedInfraGroup.set({ ...infraGroup });
-    this._persistSelectedGroup();
+    if (isDefault) {
+      this.createInfraGroup(infraGroup);
+    } else {
+      this.selectedInfraGroup.set(infraGroup);
+      this._persistSelectedGroup();
+    }
+
     this.infraToggled.emit({ type, id: infraId, isActive });
   }
 
   setInfrasForType(type: string, infrasIds: any[]) {
-    const infraGroup: any = this.selectedInfraGroup();
-    if (!infraGroup) return;
+    const currentGroup: any = this.selectedInfraGroup();
+    if (!currentGroup) return;
+
+    const isDefault = this.isDefaultInfraGroup(currentGroup);
+    const infraGroup = isDefault
+      ? { ...currentGroup, id: 0, nom: this._getNextDefaultGroupName() }
+      : { ...currentGroup };
 
     const key = typeKeyMap[type];
     if (!key) return;
     infraGroup[key] = infrasIds;
 
-    this.selectedInfraGroup.set({ ...infraGroup });
-    this._persistSelectedGroup();
+    if (isDefault) {
+      this.createInfraGroup(infraGroup);
+    } else {
+      this.selectedInfraGroup.set(infraGroup);
+      this._persistSelectedGroup();
+    }
   }
 
   refreshInfraGroups() {
@@ -324,8 +343,20 @@ export class InfrastruturesService {
 
   private _persistSelectedGroup() {
     const group = this.selectedInfraGroup();
-    if (group)
+    if (group && group.id !== DEFAULT_INFRA_GROUP_ID)
       this.storageService.updateElement(INFRA_GROUPS_KEY, group);
+  }
+
+  private _getNextDefaultGroupName(): string {
+    const baseName = "Groupe d'infrastructure";
+    const groups = this.infraGroups();
+    let index = 1;
+    let name = `${baseName} ${index}`;
+    while (groups.some(g => g.nom === name)) {
+      index++;
+      name = `${baseName} ${index}`;
+    }
+    return name;
   }
 
   private getDefaultInfraGroup(): InfrastructureGroup {

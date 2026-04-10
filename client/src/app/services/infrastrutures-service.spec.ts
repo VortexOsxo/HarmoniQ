@@ -174,7 +174,7 @@ describe('InfrastruturesService', () => {
       expect(() => service.toggleInfra('eolienneparc', '5')).not.toThrow();
     });
 
-    it('should not change selection when the default Québec group is active', () => {
+    it('should create a new group when the default Québec group is active', () => {
       flushInitialHttpRequests();
       const def: InfrastructureGroup = {
         id: DEFAULT_INFRA_GROUP_ID,
@@ -189,7 +189,14 @@ describe('InfrastruturesService', () => {
 
       service.toggleInfra('eolienneparc', '1');
 
-      expect(service.selectedInfraGroup()?.parc_eoliens).toEqual(['1']);
+      // It should have called createElement for the new group
+      expect(mockStorageService.createElement).toHaveBeenCalledWith(
+        'harmoniq_local_infra_groups',
+        expect.objectContaining({ nom: "Groupe d'infrastructure 1" }),
+      );
+      // And the new selected group should have the change
+      expect(service.selectedInfraGroup()?.nom).toBe("Groupe d'infrastructure 1");
+      expect(service.selectedInfraGroup()?.parc_eoliens).toEqual([]);
     });
   });
 
@@ -245,7 +252,7 @@ describe('InfrastruturesService', () => {
   });
 
   describe('setInfrasForType', () => {
-    it('should not run when the default Québec group is selected', () => {
+    it('should create a new group when the default Québec group is selected', () => {
       flushInitialHttpRequests();
       service.selectedInfraGroup.set({
         id: DEFAULT_INFRA_GROUP_ID,
@@ -259,7 +266,10 @@ describe('InfrastruturesService', () => {
 
       service.setInfrasForType('eolienneparc', []);
 
-      expect(mockStorageService.updateElement).not.toHaveBeenCalled();
+      expect(mockStorageService.createElement).toHaveBeenCalledWith(
+        'harmoniq_local_infra_groups',
+        expect.objectContaining({ nom: "Groupe d'infrastructure 1" }),
+      );
     });
   });
 

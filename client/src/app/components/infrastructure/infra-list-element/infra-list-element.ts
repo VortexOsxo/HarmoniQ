@@ -28,6 +28,10 @@ export class InfraListElement {
   }
 
   get rowTitle(): string {
+    const g = this.infrastructuresService.selectedInfraGroup();
+    if (g && this.infrastructuresService.isDefaultInfraGroup(g)) {
+      return 'Modifier cette infrastructure créera une copie modifiée du groupe québécois.';
+    }
     return 'Cliquez pour sélectionner ou désélectionner cette infrastructure';
   }
 
