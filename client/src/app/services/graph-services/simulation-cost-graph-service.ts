@@ -7,15 +7,16 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '../graph-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { attachCustomLegend } from './donut-legend.util';
 
 const SEGMENTS = [
-    { key: 'eolienneparc', label: 'Éolien', color: '#6abbc4' },
-    { key: 'solaire', label: 'Solaire', color: '#e8c53c' },
-    { key: 'hydro_fil', label: "Hydro (fil de l'eau)", color: '#7bbfe8' },
-    { key: 'hydro_res', label: 'Hydro (réservoir)', color: '#2b6fa8' },
-    { key: 'nucleaire', label: 'Nucléaire', color: '#e8754a' },
-    { key: 'thermique', label: 'Thermique', color: '#e25c5c' },
+    { key: 'eolienneparc', label: 'Éolien', color: INFRA_COLORS['eolienneparc'] },
+    { key: 'solaire', label: 'Solaire', color: INFRA_COLORS['solaire'] },
+    { key: 'hydro_fil', label: "Hydro (fil de l'eau)", color: INFRA_COLORS['hydro_fil'] },
+    { key: 'hydro_res', label: 'Hydro (réservoir)', color: INFRA_COLORS['hydro_reservoir'] },
+    { key: 'nucleaire', label: 'Nucléaire', color: INFRA_COLORS['nucleaire'] },
+    { key: 'thermique', label: 'Thermique', color: INFRA_COLORS['thermique'] },
 ];
 
 const PROD_KEY_TO_SEGMENT: [string, string][] = [
@@ -155,16 +156,31 @@ export class SimulationCostGraphService implements SimulationStep {
                 }
                 let currentUnit: string;
                 let currentDivisor: number;
-                if (visibleRaw >= 1e9) { currentUnit = 'Md$'; currentDivisor = 1e9; }
-                else if (visibleRaw >= 1e6) { currentUnit = 'M$'; currentDivisor = 1e6; }
-                else if (visibleRaw >= 1e3) { currentUnit = 'k$'; currentDivisor = 1e3; }
-                else { currentUnit = '$'; currentDivisor = 1; }
+                if (visibleRaw >= 1e9) {
+                    currentUnit = 'Md$';
+                    currentDivisor = 1e9;
+                } else if (visibleRaw >= 1e6) {
+                    currentUnit = 'M$';
+                    currentDivisor = 1e6;
+                } else if (visibleRaw >= 1e3) {
+                    currentUnit = 'k$';
+                    currentDivisor = 1e3;
+                } else {
+                    currentUnit = '$';
+                    currentDivisor = 1;
+                }
                 const currentTotal = visibleRaw / currentDivisor;
-                Plotly.restyle(graphDiv, {
-                    'title.text': [`<b>${currentTotal.toFixed(1)}</b><br>${currentUnit}`],
-                    values: [rawValues.map(v => v / currentDivisor)],
-                    hovertemplate: ['<b>%{label}</b><br>%{value:.2f} ' + currentUnit + '<extra></extra>'],
-                } as any, [0]);
+                Plotly.restyle(
+                    graphDiv,
+                    {
+                        'title.text': [`<b>${currentTotal.toFixed(1)}</b><br>${currentUnit}`],
+                        values: [rawValues.map((v) => v / currentDivisor)],
+                        hovertemplate: [
+                            '<b>%{label}</b><br>%{value:.2f} ' + currentUnit + '<extra></extra>',
+                        ],
+                    } as any,
+                    [0],
+                );
             });
         }
         this.isLoading.set(false);

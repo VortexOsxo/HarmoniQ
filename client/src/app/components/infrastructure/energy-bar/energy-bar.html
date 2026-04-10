@@ -27,7 +27,7 @@
 
     <!-- Wind — actual if simulated, estimated otherwise -->
     <div
-      class="progress-bar bg-info"
+      class="progress-bar energy-wind"
       role="progressbar"
       [style.width.%]="pctWind()"
       [attr.aria-valuenow]="pctWind()"
@@ -38,7 +38,7 @@
 
     <!-- Solar — actual if simulated, estimated otherwise -->
     <div
-      class="progress-bar bg-warning"
+      class="progress-bar energy-solar"
       role="progressbar"
       [style.width.%]="pctSolar()"
       [attr.aria-valuenow]="pctSolar()"
@@ -52,11 +52,11 @@
   <div class="energy-legend">
     <span class="legend-item"><span class="legend-dot bg-primary"></span>Garanti</span>
     <span class="legend-item">
-      <span class="legend-dot bg-info"></span>Éolien
+      <span class="legend-dot energy-wind-dot"></span>Éolien
       @if (windIsEstimate()) { <em class="legend-est">(~35% CF)</em> }
     </span>
     <span class="legend-item">
-      <span class="legend-dot bg-warning"></span>Solaire
+      <span class="legend-dot energy-solar-dot"></span>Solaire
       @if (solarIsEstimate()) { <em class="legend-est">(~12% CF)</em> }
     </span>
   </div>

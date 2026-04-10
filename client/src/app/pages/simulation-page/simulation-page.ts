@@ -14,6 +14,7 @@ import { SimulationCo2GraphService } from '@app/services/graph-services/simulati
 import { SimulationAnalysisGraphService } from '@app/services/graph-services/simulation-analysis-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { graphServiceConfig } from '@app/services/graph-service';
 
 interface Section {
@@ -59,42 +60,42 @@ export class SimulationPage implements AfterViewInit {
             key: 'parc_eoliens',
             label: 'Éolien',
             img: '/icons/eolienne.png',
-            color: '#6abbc4',
+            color: INFRA_COLORS['eolienneparc'],
             hydroFilter: null,
         },
         {
             key: 'central_hydroelectriques',
             label: "Hydro (fil de l'eau)",
             img: '/icons/barrage.png',
-            color: '#7bbfe8',
+            color: INFRA_COLORS['hydro_fil'],
             hydroFilter: "Fil de l'eau",
         },
         {
             key: 'central_hydroelectriques',
             label: 'Hydro (réservoir)',
             img: '/icons/barrage.png',
-            color: '#2b6fa8',
+            color: INFRA_COLORS['hydro_reservoir'],
             hydroFilter: 'Réservoir',
         },
         {
             key: 'parc_solaires',
             label: 'Solaire',
             img: '/icons/solaire.png',
-            color: '#e8c53c',
+            color: INFRA_COLORS['solaire'],
             hydroFilter: null,
         },
         {
             key: 'central_nucleaire',
             label: 'Nucléaire',
             img: '/icons/nucelaire.png',
-            color: '#e8754a',
+            color: INFRA_COLORS['nucleaire'],
             hydroFilter: null,
         },
         {
             key: 'central_thermique',
             label: 'Thermique',
             img: '/icons/thermique.png',
-            color: '#e25c5c',
+            color: INFRA_COLORS['thermique'],
             hydroFilter: null,
         },
     ];
