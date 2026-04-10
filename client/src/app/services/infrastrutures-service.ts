@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, EventEmitter, Injectable, signal } from '@angular/core';
+import { computed, EventEmitter, Injectable, signal, inject, Injector } from '@angular/core';
 import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 import { environment } from 'environments/environment';
 import { OpenApiService } from './open-api-service';
@@ -15,7 +15,6 @@ import { LocalStorageService } from './local-storage-service';
 import { isFictionalHydro } from '@app/data/fictional-hydro-names';
 import { firstValueFrom, Subject } from 'rxjs';
 import { SnackbarService } from './snackbar-service';
-import { Injector } from '@angular/core';
 import { InfraDetailService } from './infra-detail-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
@@ -116,6 +115,8 @@ export class InfrastruturesService {
   private defaultInfraGroup = computed(() => this.getDefaultInfraGroup());
   infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()])
 
+  private injector = inject(Injector);
+
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
   /**
  * Puissance garantie (MW) du groupe d'infrastructures actif.
@@ -161,7 +162,6 @@ export class InfrastruturesService {
     private openApiService: OpenApiService,
     private storageService: LocalStorageService,
     private snackbarService: SnackbarService,
-    private injector: Injector,
   ) {
     this.refreshInfraGroups();
     this.selectedInfraGroup.set(this.getDefaultInfraGroup());
@@ -195,10 +195,13 @@ export class InfrastruturesService {
       if (!result) return;
 
       const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
+      const idStr = localInfra.id.toString();
       this.infrasContainer.get(type)?.addLocal(localInfra);
 
+      this.toggleInfra(type, idStr);
+
       const detailService = this.injector.get(InfraDetailService);
-      detailService.openDetail(type, localInfra.id.toString());
+      detailService.openDetail(type, idStr);
     }).catch(() => { });
   }
 
@@ -306,16 +309,8 @@ export class InfrastruturesService {
       this.storageService.saveObject(FICTIONAL_HYDRO_IDS_KEY, addedIds);
     }
 
-    // Ajouter au groupe sélectionné
-    const group: any = this.selectedInfraGroup();
-    if (group) {
-      const key = 'central_hydroelectriques';
-      if (!group[key].includes(id.toString())) {
-        group[key].push(id.toString());
-        this.selectedInfraGroup.set({ ...group });
-        this._persistSelectedGroup();
-      }
-    }
+    // Ajouter au groupe sélectionné (utilise toggleInfra pour gérer le branching)
+    this.toggleInfra('hydro', id.toString());
   }
 
   /** Retire un barrage fictif de la carte et du groupe d'infras. */
