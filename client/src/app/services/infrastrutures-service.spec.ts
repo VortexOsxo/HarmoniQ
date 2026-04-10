@@ -62,6 +62,7 @@ describe('InfrastruturesService', () => {
     mockOpenApiService = { getOpenApiSchemas: vi.fn().mockReturnValue({}) };
     mockStorageService = {
       loadElements: vi.fn().mockReturnValue([]),
+      loadObject: vi.fn().mockReturnValue(null),
       createElement: vi.fn().mockImplementation((_key: string, el: any) => ({ ...el, id: 100 })),
       updateElement: vi.fn(),
       deleteElement: vi.fn(),
