@@ -158,10 +158,9 @@
     padding: 10px 14px;
     background-color: var(--type-color);
     color: #fff;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
 }
 
 .sim-group-header i {
@@ -231,10 +230,9 @@
     padding: 10px 14px;
     background-color: var(--type-color);
     color: #fff;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
 }
 
 .sim-chart-header i {
