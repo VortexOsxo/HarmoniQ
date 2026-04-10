@@ -18,11 +18,41 @@
 }
 
 .pa-checkbox-label input[type="checkbox"] {
-    margin-top: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    accent-color: var(--hq-green-start);
-    width: 16px;
-    height: 16px;
+}
+
+.pa-checkbox-label input[type="checkbox"]:checked {
+    background: var(--hq-blue-start);
+    border-color: var(--hq-blue-start);
+}
+
+.pa-checkbox-label input[type="checkbox"]:checked::after {
+    content: '';
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}
+
+.pa-checkbox-label:hover input[type="checkbox"]:not(:checked) {
+    border-color: var(--hq-blue-start);
+    background: #f0f7ff;
 }
 
 .pa-color-swatch {

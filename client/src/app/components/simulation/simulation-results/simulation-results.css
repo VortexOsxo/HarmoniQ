@@ -73,10 +73,10 @@ div#plots {
 
 .protected-areas-btn.btn-success,
 .reseau-btn.btn-reseau-active {
-    background: #27ae60 !important;
+    background: var(--hq-blue-start) !important;
     color: #fff !important;
-    border-color: #27ae60 !important;
-    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);
+    border-color: var(--hq-blue-start) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.35);
 }
 
 /* ── Content area ── */
