@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-results',
-  imports: [CommonModule, NgbNavModule, QuebecMap, InfraDetailModal, ProtectedAreasModal, ReseauModal, InfrastructuresModal],
+  imports: [CommonModule, NgbNavModule, QuebecMap, InfraDetailModal],
   templateUrl: './simulation-results.html',
   styleUrl: './simulation-results.css',
 }) // TODO: Rename to like QuebecMapWrapper or something

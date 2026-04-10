@@ -7,6 +7,8 @@ import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
 import { TutorialService, TutorialState } from '@app/services/tutorial-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { MapService } from '@app/services/map-service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 vi.mock('leaflet.markercluster', () => ({}));
 vi.mock('leaflet', () => ({
@@ -76,11 +78,36 @@ const mockInfraDetailService = {
     closeDetail: vi.fn(),
 };
 
+const mockMapService = {
+    mapFilterName: signal(''),
+    mapFilterTypes: signal(new Set()),
+    mapFilterMinPower: signal(null),
+    mapFilterMaxPower: signal(null),
+    showRealInfra: signal(true),
+    showUserInfra: signal(true),
+    hasSelection: signal(true),
+    reloadMarkers: vi.fn(),
+    createMap: vi.fn(),
+    destroyMap: vi.fn(),
+    initMarkers: vi.fn(),
+    destroyMarkers: vi.fn(),
+    onMapLoaded: vi.fn(),
+    toggleVisibility: vi.fn(),
+    selectAll: vi.fn(),
+    deselectAll: vi.fn(),
+};
+
+const mockNgbModal = {
+    open: vi.fn(),
+};
+
 const providers = [
     { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
     { provide: ReseauService, useValue: mockReseauService },
     { provide: TutorialService, useValue: mockTutorialService },
     { provide: InfraDetailService, useValue: mockInfraDetailService },
+    { provide: MapService, useValue: mockMapService },
+    { provide: NgbModal, useValue: mockNgbModal },
 ];
 
 async function renderComponent() {

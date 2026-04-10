@@ -37,45 +37,42 @@ describe('ReseauService', () => {
   });
 
   describe('initial state', () => {
-    it('should start with isVisible as false', () => {
-      expect(service.isVisible()).toBe(false);
+    it('should start with hasSelection as false', () => {
+      expect(service.hasSelection()).toBe(false);
     });
 
     it('should start with legendOpen as false', () => {
       expect(service.legendOpen()).toBe(false);
     });
 
-    it('should have all bus categories selected by default', () => {
+    it('should have all bus categories deselected by default', () => {
       BUS_CATEGORIES.forEach(cat => {
-        expect(service.isBusTypeSelected(cat.key)).toBe(true);
+        expect(service.isBusTypeSelected(cat.key)).toBe(false);
       });
     });
 
-    it('should have all line categories selected by default', () => {
+    it('should have all line categories deselected by default', () => {
       LINE_CATEGORIES.forEach(cat => {
-        expect(service.isLineTypeSelected(cat.key)).toBe(true);
+        expect(service.isLineTypeSelected(cat.key)).toBe(false);
       });
     });
   });
 
   describe('toggleVisibility', () => {
-    it('should toggle isVisible from false to true', () => {
+    it('should toggle hasSelection from false to true', () => {
       service.toggleVisibility();
-
-      expect(service.isVisible()).toBe(true);
+      expect(service.hasSelection()).toBe(true);
     });
 
-    it('should open legend when toggling visible on', () => {
+    it('should NOT open legend when toggling visible on', () => {
       service.toggleVisibility();
-
-      expect(service.legendOpen()).toBe(true);
+      expect(service.legendOpen()).toBe(false);
     });
 
-    it('should toggle isVisible from true to false on second call', () => {
-      service.toggleVisibility();
-      service.toggleVisibility();
-
-      expect(service.isVisible()).toBe(false);
+    it('should toggle hasSelection from true to false on second call', () => {
+      service.toggleVisibility(); // now true
+      service.toggleVisibility(); // now false
+      expect(service.hasSelection()).toBe(false);
     });
 
     it('should close legend when toggling visible off', () => {
@@ -87,32 +84,28 @@ describe('ReseauService', () => {
   });
 
   describe('toggleBusType', () => {
-    it('should remove a bus type that was previously selected', () => {
-      service.toggleBusType('Transport');
-
-      expect(service.isBusTypeSelected('Transport')).toBe(false);
-    });
-
     it('should add a bus type that was previously deselected', () => {
       service.toggleBusType('Transport');
-      service.toggleBusType('Transport');
-
       expect(service.isBusTypeSelected('Transport')).toBe(true);
+    });
+
+    it('should remove a bus type that was previously selected', () => {
+      service.toggleBusType('Transport');
+      service.toggleBusType('Transport');
+      expect(service.isBusTypeSelected('Transport')).toBe(false);
     });
   });
 
   describe('toggleLineType', () => {
-    it('should remove a line type that was previously selected', () => {
-      service.toggleLineType('Éoliennes');
-
-      expect(service.isLineTypeSelected('Éoliennes')).toBe(false);
-    });
-
     it('should add a line type that was previously deselected', () => {
       service.toggleLineType('Éoliennes');
-      service.toggleLineType('Éoliennes');
-
       expect(service.isLineTypeSelected('Éoliennes')).toBe(true);
+    });
+
+    it('should remove a line type that was previously selected', () => {
+      service.toggleLineType('Éoliennes');
+      service.toggleLineType('Éoliennes');
+      expect(service.isLineTypeSelected('Éoliennes')).toBe(false);
     });
   });
 
@@ -155,19 +148,19 @@ describe('ReseauService', () => {
   });
 
   describe('isBusGroupSelected', () => {
-    it('should return true when all bus categories are selected', () => {
-      expect(service.isBusGroupSelected()).toBe(true);
+    it('should return false when not all bus categories are selected', () => {
+      expect(service.isBusGroupSelected()).toBe(false);
     });
 
-    it('should return false when any bus category is deselected', () => {
-      service.toggleBusType('Transport');
-
-      expect(service.isBusGroupSelected()).toBe(false);
+    it('should return true when all bus categories are selected', () => {
+      service.selectAll();
+      expect(service.isBusGroupSelected()).toBe(true);
     });
   });
 
   describe('toggleBusGroup', () => {
     it('should deselect all bus types when all are selected', () => {
+      service.selectAll();
       service.toggleBusGroup();
 
       expect(service.isBusGroupSelected()).toBe(false);
