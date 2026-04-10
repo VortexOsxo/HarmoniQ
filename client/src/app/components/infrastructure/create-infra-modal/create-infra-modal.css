@@ -24,3 +24,7 @@
     margin-top: 0.25rem;
 }
 
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}

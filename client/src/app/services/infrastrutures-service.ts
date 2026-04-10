@@ -91,8 +91,8 @@ export class InfrastruturesService {
  * ou qu'un groupe différent est sélectionné.
  */
   guaranteedPowerMW = computed(() => this._sumInstalledMW(['hydro', 'thermique', 'nucleaire']));
-  windInstalledMW   = computed(() => this._sumInstalledMW(['eolienneparc']));
-  solarInstalledMW  = computed(() => this._sumInstalledMW(['solaire']));
+  windInstalledMW = computed(() => this._sumInstalledMW(['eolienneparc']));
+  solarInstalledMW = computed(() => this._sumInstalledMW(['solaire']));
 
   private _sumInstalledMW(types: string[]): number {
     const group: any = this.selectedInfraGroup();
@@ -143,7 +143,7 @@ export class InfrastruturesService {
   createInfra(className: string, type: string, lat: number, lon: number) {
     const schemas = this.openApiService.getOpenApiSchemas();
 
-    const modalRef = this.modalService.open(CreateInfraModal, {});
+    const modalRef = this.modalService.open(CreateInfraModal, { centered: true, scrollable: true });
 
     modalRef.componentInstance.schema = schemas[className];
     modalRef.componentInstance.type = type;

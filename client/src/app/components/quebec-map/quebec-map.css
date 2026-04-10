@@ -344,7 +344,7 @@ div.map-overlay img.icon-draggable {
 
 .reseau-legend-reopen {
     position: absolute;
-    bottom: 112px;
+    bottom: 16px;
     left: 16px;
     z-index: 1100;
     width: 40px;
