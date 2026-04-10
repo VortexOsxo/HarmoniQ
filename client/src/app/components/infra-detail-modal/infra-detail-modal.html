@@ -117,8 +117,12 @@
 <!-- Cycle de vie / Impacts Modal Inner -->
 <div class="cycle-vie-overlay" *ngIf="showCycleVieModal" (click)="closeCycleVie()">
     <div class="cycle-vie-modal" (click)="$event.stopPropagation()">
-        <div class="cv-header">
-            <h5>{{ getCapitalizedPluralCategoryName() }}</h5>
+        <div class="cv-header" [style.--type-color]="infra() ? infraColors[infra()!.type] : '#3498db'">
+            <div class="cv-header-bg"></div>
+            <div class="cv-header-left">
+                <app-infra-icon *ngIf="infra()" [type]="infra()!.type" [size]="32"></app-infra-icon>
+                <h5>{{ getCapitalizedPluralCategoryName() }}</h5>
+            </div>
             <button class="cv-close" (click)="closeCycleVie()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="cv-body-grid">
