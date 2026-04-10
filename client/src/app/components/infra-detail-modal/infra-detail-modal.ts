@@ -392,8 +392,6 @@ export class InfraDetailModal {
             tooltip?: string;
         }[] = [];
 
-        fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
-
         if (infra.type === 'hydro') {
             fields.push({
                 icon: 'fa-solid fa-water',
