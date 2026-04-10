@@ -52,9 +52,10 @@ export class GraphService {
         }
 
         const layout = this.getStandardLayout(
-            `Production de l'infrastructure`,
+            null,
             `Production (${unit})`,
             granularity,
+            { margin: { t: 20 } }
         );
 
         const lineColor =
@@ -90,7 +91,7 @@ export class GraphService {
                       }
                     : title,
             xaxis: {
-                title: { text: 'Date', font: { size: 14, color: '#7f8c8d' } },
+                title: null,
                 tickformat:
                     granularity === 'monthly'
                         ? '%b %Y'
