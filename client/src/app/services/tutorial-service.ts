@@ -113,12 +113,11 @@ export class TutorialService {
         {
             title: 'Fermer le Formulaire',
             icon: 'fa-solid fa-xmark',
-            description: 'C\'est un tutoriel, donc on ne crée rien pour le moment. Cliquez sur « Fermer » pour revenir au panneau principal.',
+            description: 'C\'est un tutoriel, donc on ne crée rien pour le moment. Cliquez sur la croix en haut à droite pour revenir au panneau principal.',
             targetSelector: '#tutorial-close-scenario',
-            position: 'top',
+            position: 'bottom',
             requireAction: true,
-            actionHint: 'Cliquez sur le bouton « Fermer »',
-            bubbleOffsetX: 200,
+            actionHint: 'Cliquez sur la croix en haut à droite',
             disableSelectors: ['#tutorial-submit-scenario'],
         },
         {

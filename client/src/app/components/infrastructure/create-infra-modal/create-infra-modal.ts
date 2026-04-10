@@ -277,8 +277,7 @@ export class CreateInfraModal {
     return (control: AbstractControl): ValidationErrors | null => {
       const name = control.value?.trim().toLowerCase();
       if (!name) return null;
-      const exists = this.infrasService.getInfrasSignalByType(typeKey)()
-        .some((i: any) => i.nom?.trim().toLowerCase() === name);
+      const exists = this.infrasService.isNameTaken(name);
       return exists ? { duplicateName: true } : null;
     };
   }

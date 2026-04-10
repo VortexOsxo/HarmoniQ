@@ -28,6 +28,7 @@ import { InfrastruturesService } from './infrastrutures-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from './simulation-step-service';
+import { SnackbarService } from './snackbar-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
@@ -62,6 +63,7 @@ describe('SimulationService', () => {
   let mockDemandeSankeyService: Partial<DemandeSankeyGraphService>;
   let mockSimulationTemporalService: Partial<SimulationTemporalGraphService>;
   let mockStepService: Partial<SimulationStepService>;
+  let mockSnackbarService: Partial<SnackbarService>;
 
   beforeEach(() => {
     const selectedScenarioSignal = signal<Scenario | null>(null);
@@ -93,6 +95,11 @@ describe('SimulationService', () => {
       currentStepName: vi.fn().mockReturnValue('Initialisation') as any,
     };
 
+    mockSnackbarService = {
+      show: vi.fn(),
+      close: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         SimulationService,
@@ -101,6 +108,7 @@ describe('SimulationService', () => {
         { provide: DemandeSankeyGraphService, useValue: mockDemandeSankeyService },
         { provide: SimulationTemporalGraphService, useValue: mockSimulationTemporalService },
         { provide: SimulationStepService, useValue: mockStepService },
+        { provide: SnackbarService, useValue: mockSnackbarService },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
