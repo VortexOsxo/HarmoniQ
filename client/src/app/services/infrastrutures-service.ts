@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, EventEmitter, Injectable, signal } from '@angular/core';
-import { InfrastructureGroup } from '@app/models/infrastructure-group';
+import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 import { environment } from 'environments/environment';
 import { OpenApiService } from './open-api-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -133,7 +133,7 @@ export class InfrastruturesService {
 
     this.infrasContainer.forEach((container) => {
       container.loaded.subscribe(() => {
-        if (this.selectedInfraGroup() != null && this.selectedInfraGroup()?.id !== 1)
+        if (this.selectedInfraGroup() != null && this.selectedInfraGroup()?.id !== DEFAULT_INFRA_GROUP_ID)
           return;
         this.selectedInfraGroup.set(this.getDefaultInfraGroup());
       });
@@ -229,18 +229,23 @@ export class InfrastruturesService {
     return infraGroup[key].includes(infraId);
   }
 
+  isDefaultInfraGroup(group: InfrastructureGroup | null | undefined): boolean {
+    return group != null && group.id === DEFAULT_INFRA_GROUP_ID;
+  }
+
   toggleInfra(type: string, infraId: string) {
     const infraGroup: any = this.selectedInfraGroup();
     if (!infraGroup) return;
 
     const key = typeKeyMap[type];
+    if (!key) return;
 
     let isActive = false;
     if (infraGroup[key].includes(infraId)) {
       infraGroup[key] = infraGroup[key].filter((id: string) => id !== infraId);
       isActive = false;
     } else {
-      infraGroup[key].push(infraId);
+      infraGroup[key] = [...infraGroup[key], infraId];
       isActive = true;
     }
 
@@ -264,6 +269,14 @@ export class InfrastruturesService {
   refreshInfraGroups() {
     const groups = this.storageService.loadElements<InfrastructureGroup>(INFRA_GROUPS_KEY);
     this.localInfraGroups.set(groups);
+
+    const selected = this.selectedInfraGroup();
+    if (selected && selected.id !== DEFAULT_INFRA_GROUP_ID) {
+      const updated = groups.find((g) => g.id === selected.id);
+      if (updated) {
+        this.selectedInfraGroup.set({ ...updated });
+      }
+    }
   }
 
   createInfraGroup(group: InfrastructureGroup) {

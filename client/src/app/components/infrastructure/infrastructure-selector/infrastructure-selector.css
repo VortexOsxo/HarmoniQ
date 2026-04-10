@@ -232,6 +232,63 @@
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Icônes catégories : mêmes masques / couleurs que « Ajouter une infrastructure » (quebec-map) */
+.infra-accordion-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.infra-accordion-title-text {
+    min-width: 0;
+}
+
+.infra-category-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.infra-category-icon-tinted {
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.infra-category-barrage {
+    -webkit-mask-image: url(/icons/barrage.png);
+    mask-image: url(/icons/barrage.png);
+}
+
+.infra-category-eolienne {
+    -webkit-mask-image: url(/icons/eolienne.png);
+    mask-image: url(/icons/eolienne.png);
+}
+
+.infra-category-solaire {
+    -webkit-mask-image: url(/icons/solaire.png);
+    mask-image: url(/icons/solaire.png);
+}
+
+.infra-category-thermique {
+    -webkit-mask-image: url(/icons/thermique.png);
+    mask-image: url(/icons/thermique.png);
+}
+
+.infra-category-nucleaire {
+    -webkit-mask-image: url(/icons/nucelaire.png);
+    mask-image: url(/icons/nucelaire.png);
 }
 
 :host ::ng-deep .accordion-button:not(.collapsed) {

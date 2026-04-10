@@ -132,7 +132,7 @@ export class TutorialService {
             title: 'Lancement',
             icon: 'fa-solid fa-play',
             description: 'Vérifiez le scénario et le groupe actifs, puis lancez la simulation depuis ce panneau pour voir les résultats.',
-            targetSelector: 'app-simulation-launcher',
+            targetSelector: 'app-simulation-panel-launch-button',
             position: 'right',
         },
         {

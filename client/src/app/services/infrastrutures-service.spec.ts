@@ -30,7 +30,7 @@ import { InfrastruturesService } from './infrastrutures-service';
 import { OpenApiService } from './open-api-service';
 import { LocalStorageService } from './local-storage-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { InfrastructureGroup } from '@app/models/infrastructure-group';
+import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 
 const INFRA_TYPES = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 const API_BASE = 'http://localhost:5000/api';
@@ -65,6 +65,7 @@ describe('InfrastruturesService', () => {
       createElement: vi.fn().mockImplementation((_key: string, el: any) => ({ ...el, id: 100 })),
       updateElement: vi.fn(),
       deleteElement: vi.fn(),
+      saveObject: vi.fn(),
     };
     mockModalService = {
       open: vi.fn().mockReturnValue({
@@ -172,6 +173,24 @@ describe('InfrastruturesService', () => {
 
       expect(() => service.toggleInfra('eolienneparc', '5')).not.toThrow();
     });
+
+    it('should not change selection when the default Québec group is active', () => {
+      flushInitialHttpRequests();
+      const def: InfrastructureGroup = {
+        id: DEFAULT_INFRA_GROUP_ID,
+        nom: 'Infrastructures québécoises',
+        parc_eoliens: ['1'],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+      };
+      service.selectedInfraGroup.set(def);
+
+      service.toggleInfra('eolienneparc', '1');
+
+      expect(service.selectedInfraGroup()?.parc_eoliens).toEqual(['1']);
+    });
   });
 
   describe('createInfraGroup', () => {
@@ -222,6 +241,25 @@ describe('InfrastruturesService', () => {
       service.deleteInfraGroup(MOCK_INFRA_GROUP);
 
       expect(service.selectedInfraGroup()).toBeNull();
+    });
+  });
+
+  describe('setInfrasForType', () => {
+    it('should not run when the default Québec group is selected', () => {
+      flushInitialHttpRequests();
+      service.selectedInfraGroup.set({
+        id: DEFAULT_INFRA_GROUP_ID,
+        nom: 'Infrastructures québécoises',
+        parc_eoliens: ['1'],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+      });
+
+      service.setInfrasForType('eolienneparc', []);
+
+      expect(mockStorageService.updateElement).not.toHaveBeenCalled();
     });
   });
 

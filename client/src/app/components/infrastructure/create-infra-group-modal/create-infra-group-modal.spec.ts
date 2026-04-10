@@ -20,6 +20,13 @@ const mockActiveModal = { close: vi.fn(), dismiss: vi.fn() };
 const mockInfrastruturesService = {
     createInfraGroup: vi.fn().mockReturnValue(MOCK_NEW_GROUP),
     selectedInfraGroup: signal<any>(null),
+    getNewGroupInfraTemplate: vi.fn().mockReturnValue({
+        parc_eoliens: ['9'],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+    }),
 };
 
 const defaultProviders = [
@@ -59,7 +66,13 @@ describe('CreateInfraGroupModal', () => {
             await user.type(screen.getByLabelText(/Nom du groupe/i), 'Mon Groupe');
             await user.click(screen.getByRole('button', { name: /Créer/i }));
 
-            expect(mockInfrastruturesService.createInfraGroup).toHaveBeenCalled();
+            expect(mockInfrastruturesService.getNewGroupInfraTemplate).toHaveBeenCalled();
+            expect(mockInfrastruturesService.createInfraGroup).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    nom: 'Mon Groupe',
+                    parc_eoliens: ['9'],
+                }),
+            );
         });
 
         it('should close the modal after creating the group', async () => {
