@@ -5,17 +5,20 @@ import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { CYCLE_DE_VIE_DATA, CycleDeVieData, IMPACTS_ENVIRONNEMENTAUX_DATA, ImpactItem } from '@app/data/infra-details.data';
 import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
+import { InfraIconComponent } from '@app/components/commons/infra-icon';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { FIRST_NATION_DATA } from '@app/data/first-nation.data';
 
 @Component({
   selector: 'app-infra-detail-modal',
-  imports: [CommonModule, NgbTooltipModule],
+  imports: [CommonModule, NgbTooltipModule, InfraIconComponent],
   templateUrl: './infra-detail-modal.html',
   styleUrl: './infra-detail-modal.css',
 })
 export class InfraDetailModal {
+  infraColors = INFRA_COLORS;
   showCycleVieModal: boolean = false;
   showImageOverlay: boolean = false;
 
@@ -264,17 +267,6 @@ export class InfraDetailModal {
     return null;
   }
 
-  getIconForType(type: string): string {
-    const icons: Record<string, string> = {
-      hydro: '/icons/barrage.png',
-      eolienneparc: '/icons/eolienne.png',
-      solaire: '/icons/solaire.png',
-      thermique: '/icons/thermique.png',
-      nucleaire: '/icons/nucelaire.png',
-    };
-    return icons[type] || '';
-  }
-
   openCycleVie() {
     this.showCycleVieModal = true;
   }
@@ -320,8 +312,6 @@ export class InfraDetailModal {
 
     const d = infra.data;
     const fields: { icon: string; label: string; value: string; isVulgarisation?: boolean; tooltip?: string }[] = [];
-
-    fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
 
     if (infra.type === 'hydro') {
       fields.push({ icon: 'fa-solid fa-water', label: 'Type de barrage', value: d.type_barrage || 'N/A' });

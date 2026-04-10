@@ -1,58 +1,102 @@
-<div class="modal-header">
-    <h5 class="modal-title">{{ label }}</h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()">
-    </button>
-</div>
+<div class="sim-modal-wrapper" [style.--type-color]="typeColor">
 
-<div class="modal-body d-flex flex-column align-items-center" style="min-height: 400px;">
-    <div class="spinner-border text-primary" role="status" *ngIf="isLoading">
-        <span class="visually-hidden">Loading...</span>
+    <!-- Header -->
+    <div class="sim-modal-header">
+        <div class="sim-header-bg"></div>
+        <div class="sim-header-left">
+            <app-infra-icon [type]="type" [size]="40"></app-infra-icon>
+                <h5 class="sim-modal-title">{{ label }}</h5>
+        </div>
+        <button class="sim-close-btn" (click)="activeModal.dismiss()" title="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
 
-    <div class="row w-100 mb-4" *ngIf="costs">
-        <div class="col-md-6 mb-3">
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-body text-center">
-                    <h6 class="text-muted text-uppercase small font-weight-bold mb-2">Coût Annuel</h6>
-                    <h4 class="text-primary mb-0">{{ costs.cout_annuel | number:'1.0-2' }} $</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-3">
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-body text-center">
-                    <h6 class="text-muted text-uppercase small font-weight-bold mb-2">Coût de Construction</h6>
-                    <h4 class="text-success mb-0">{{ costs.cout_construction | number:'1.0-2' }} $</h4>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Body -->
+    <div class="sim-modal-body">
 
-    <div class="row w-100 mb-4" *ngIf="emissions">
-        <div class="col-md-6 mb-3">
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-body text-center">
-                    <h6 class="text-muted text-uppercase small font-weight-bold mb-2">CO2 Annuel</h6>
-                    <h4 class="text-secondary mb-0">{{ emissions.co2_annuel | number:'1.0-2' }} tonnes</h4>
+        <!-- Loading spinner -->
+        <div class="sim-loading" *ngIf="isLoading">
+            <div class="sim-spinner">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+            </div>
+            <span>Chargement de la simulation…</span>
+        </div>
+
+        <!-- Error -->
+        <div class="sim-error" *ngIf="error" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ error }}
+        </div>
+
+        <!-- Grouped stat cards -->
+        <div class="sim-stats-grid" *ngIf="costs || emissions">
+
+            <!-- Costs card -->
+            <div class="sim-group-card" *ngIf="costs">
+                <div class="sim-group-header">
+                    <i class="fa-solid fa-dollar-sign"></i>
+                    <span>Coûts</span>
+                </div>
+                <div class="sim-group-rows">
+                    <div class="sim-group-row">
+                        <span class="sim-group-label">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            Annuel
+                        </span>
+                        <strong class="sim-group-value">{{ costs.cout_annuel | number:'1.0-2' }} $</strong>
+                    </div>
+                    <div class="sim-group-row">
+                        <span class="sim-group-label">
+                            <i class="fa-solid fa-hammer"></i>
+                            Construction
+                        </span>
+                        <strong class="sim-group-value">{{ costs.cout_construction | number:'1.0-2' }} $</strong>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6 mb-3">
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-body text-center">
-                    <h6 class="text-muted text-uppercase small font-weight-bold mb-2">CO2 Construction</h6>
-                    <h4 class="text-dark mb-0">{{ emissions.co2_construction | number:'1.0-2' }} tonnes</h4>
+
+            <!-- Emissions card -->
+            <div class="sim-group-card" *ngIf="emissions">
+                <div class="sim-group-header">
+                    <i class="fa-solid fa-smog"></i>
+                    <span>Émissions CO₂</span>
+                </div>
+                <div class="sim-group-rows">
+                    <div class="sim-group-row">
+                        <span class="sim-group-label">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            Annuel
+                        </span>
+                        <strong class="sim-group-value">{{ emissions.co2_annuel | number:'1.0-2' }} t</strong>
+                    </div>
+                    <div class="sim-group-row">
+                        <span class="sim-group-label">
+                            <i class="fa-solid fa-industry"></i>
+                            Construction
+                        </span>
+                        <strong class="sim-group-value">{{ emissions.co2_construction | number:'1.0-2' }} t</strong>
+                    </div>
                 </div>
             </div>
+
         </div>
-    </div>
 
-    <ng-container *ngIf="type !== 'hydro'">
-        <app-granularity-selector class="w-100" *ngIf="!isLoading && !error" [selected]="selectedGranularity" (granularityChange)="onGranularityChange($event)"></app-granularity-selector>
+        <!-- Production chart section -->
+        <ng-container *ngIf="type !== 'hydro'">
+            <div class="sim-chart-section" *ngIf="!isLoading && !error">
+                <div class="sim-chart-header">
+                    <i class="fa-solid fa-chart-area"></i>
+                    <span>Production simulée</span>
+                    <app-granularity-selector
+                        class="sim-granularity"
+                        [selected]="selectedGranularity"
+                        (granularityChange)="onGranularityChange($event)">
+                    </app-granularity-selector>
+                </div>
+                <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="sim-chart-canvas"></div>
+            </div>
+        </ng-container>
 
-        <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="w-100 shadow-sm bg-white rounded"></div>
-    </ng-container>
-    <div *ngIf="error" class="alert alert-danger" role="alert">
-        {{ error }}
     </div>
 </div>
