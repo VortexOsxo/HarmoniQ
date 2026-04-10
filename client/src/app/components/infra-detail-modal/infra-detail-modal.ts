@@ -216,7 +216,7 @@ export class InfraDetailModal {
     simulateSingle(): void {
         const infra = this.infra();
         if (!infra || !this.scenariosService.selectedScenario()) return;
-        const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl' });
+        const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl', windowClass: 'sim-infra-modal' });
         modalRef.componentInstance.id = infra.data.id;
         modalRef.componentInstance.name = infra.data.nom;
         modalRef.componentInstance.type = infra.type;

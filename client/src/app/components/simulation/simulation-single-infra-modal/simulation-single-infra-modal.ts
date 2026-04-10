@@ -27,7 +27,7 @@ export class SimulationSingleInfraModal implements OnInit {
   costs?: any;
   emissions?: any;
 
-  selectedGranularity = 'original';
+  selectedGranularity = 'weekly';
   productionData: any;
 
   get label() {
