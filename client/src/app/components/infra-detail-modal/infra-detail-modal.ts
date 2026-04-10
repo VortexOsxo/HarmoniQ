@@ -8,6 +8,7 @@ import { HQ_IMAGE_URLS } from '@app/data/hq-images.data';
 import { InfraIconComponent } from '@app/components/commons/infra-icon';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { FIRST_NATION_DATA } from '@app/data/first-nation.data';
 
 @Component({
@@ -17,6 +18,7 @@ import { FIRST_NATION_DATA } from '@app/data/first-nation.data';
   styleUrl: './infra-detail-modal.css',
 })
 export class InfraDetailModal {
+  infraColors = INFRA_COLORS;
   showCycleVieModal: boolean = false;
   showImageOverlay: boolean = false;
 
