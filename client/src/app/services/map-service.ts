@@ -123,7 +123,7 @@ export class MapService {
       throw new Error('Map already created');
 
     const map = L.map('map', {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: false,
       maxZoom: 12,
       minZoom: 5
