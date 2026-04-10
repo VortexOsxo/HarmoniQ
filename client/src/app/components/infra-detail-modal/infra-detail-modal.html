@@ -10,9 +10,15 @@
                 <span class="detail-subtitle">{{ infra()?.categoryName }}</span>
             </div>
         </div>
-        <button class="detail-close-btn" (click)="close()" title="Fermer">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+        <div class="detail-header-actions">
+            <!-- Delete Button -->
+            <button class="detail-delete-btn" *ngIf="infra()?.data?.isUserCreated" (click)="deleteInfra()" title="Supprimer l'infrastructure">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+            <button class="detail-close-btn" (click)="close()" title="Fermer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Tab content -->
@@ -101,12 +107,6 @@
             </button>
         </div>
 
-        <!-- Delete Button -->
-        <div class="delete-btn-container" *ngIf="infra()?.data?.isUserCreated">
-            <button class="delete-infra-btn" (click)="deleteInfra()" title="Supprimer l'infrastructure">
-                <i class="fa-solid fa-trash"></i> Supprimer
-            </button>
-        </div>
     </div>
 
     <!-- Mini Explication Modal -->

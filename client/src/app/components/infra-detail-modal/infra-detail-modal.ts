@@ -230,6 +230,7 @@ export class InfraDetailModal {
             modalRef.componentInstance.message =
                 "Êtes-vous sûr de vouloir supprimer cette infrastructure? L'action est irréversible.";
             modalRef.componentInstance.confirmText = 'Supprimer';
+            modalRef.componentInstance.cancelText = '';
 
             modalRef.result
                 .then((confirmed) => {
@@ -391,8 +392,6 @@ export class InfraDetailModal {
             isVulgarisation?: boolean;
             tooltip?: string;
         }[] = [];
-
-        fields.push({ icon: 'fa-solid fa-tag', label: 'Catégorie', value: infra.categoryName });
 
         if (infra.type === 'hydro') {
             fields.push({

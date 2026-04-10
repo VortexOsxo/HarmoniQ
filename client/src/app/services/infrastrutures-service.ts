@@ -12,7 +12,10 @@ import { SolarFarmFactory } from '@app/models/infras/solar-farm';
 import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
 import { LocalStorageService } from './local-storage-service';
+import { isFictionalHydro } from '@app/data/fictional-hydro-names';
 import { firstValueFrom, Subject } from 'rxjs';
+import { Injector } from '@angular/core';
+import { InfraDetailService } from './infra-detail-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -25,10 +28,13 @@ const typeKeyMap: Record<string, string> = {
 
 const INFRA_KEY = 'harmoniq_local_infras';
 const INFRA_GROUPS_KEY = 'harmoniq_local_infra_groups';
+const FICTIONAL_HYDRO_IDS_KEY = 'harmoniq_added_fictional_hydros';
 
 export class InfrasContainer<T extends Infra<T>> {
 
   infras = signal<T[]>([]);
+  /** Barrages fictifs provenant de la DB (hydro seulement). */
+  fictionalInfras = signal<T[]>([]);
   loaded = new Subject<void>();
 
   private get apiUrl() {
@@ -45,12 +51,29 @@ export class InfrasContainer<T extends Infra<T>> {
 
   refresh() {
     this.http.get(this.apiUrl).subscribe((data: any) => {
-      const dbInfras = data.map((i: any) => this.factory.fromJson(i));
+      const allDbInfras = data.map((i: any) => this.factory.fromJson(i));
+
+      // Séparer les fictifs (hydro seulement)
+      const isHydro = this.factory.getType() === 'hydro';
+      const dbInfras = isHydro
+        ? allDbInfras.filter((i: any) => !isFictionalHydro(i.nom))
+        : allDbInfras;
+      const fictional = isHydro
+        ? allDbInfras.filter((i: any) => isFictionalHydro(i.nom))
+        : [];
+
+      this.fictionalInfras.set(fictional);
+
+      // Charger les fictifs précédemment ajoutés par l'utilisateur
+      const addedFictionalIds: number[] = this.storageService.loadObject(FICTIONAL_HYDRO_IDS_KEY) ?? [];
+      const addedFictional = fictional
+        .filter((i: any) => addedFictionalIds.includes(i.id))
+        .map((i: any) => ({ ...i, isUserCreated: true }));
 
       const localInfras = this.storageService.loadElements(`${INFRA_KEY}_${this.factory.getType()}`)
         .map((i: any) => ({ ...this.factory.fromJson(i), isUserCreated: true }));
 
-      this.infras.set([...dbInfras, ...localInfras]);
+      this.infras.set([...dbInfras, ...addedFictional, ...localInfras]);
       this.loaded.next();
     });
   }
@@ -62,6 +85,21 @@ export class InfrasContainer<T extends Infra<T>> {
   }
 
   removeLocal(id: number): void {
+    this.infras.update(list => list.filter(i => i.id !== id));
+  }
+
+  /** Ajoute un barrage fictif au signal infras (le marque comme userCreated). */
+  addFictional(id: number): void {
+    const fictional = this.fictionalInfras().find((i: any) => i.id === id);
+    if (!fictional) return;
+    // Éviter les doublons
+    if (this.infras().some(i => i.id === id)) return;
+    const copy = { ...fictional, isUserCreated: true } as T;
+    this.infras.update(list => [...list, copy]);
+  }
+
+  /** Retire un barrage fictif du signal infras. */
+  removeFictional(id: number): void {
     this.infras.update(list => list.filter(i => i.id !== id));
   }
 }
@@ -121,6 +159,7 @@ export class InfrastruturesService {
     private modalService: NgbModal,
     private openApiService: OpenApiService,
     private storageService: LocalStorageService,
+    private injector: Injector,
   ) {
     this.refreshInfraGroups();
     this.selectedInfraGroup.set(this.getDefaultInfraGroup());
@@ -155,10 +194,23 @@ export class InfrastruturesService {
 
       const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
       this.infrasContainer.get(type)?.addLocal(localInfra);
-    });
+
+      const detailService = this.injector.get(InfraDetailService);
+      detailService.openDetail(type, localInfra.id.toString());
+    }).catch(() => { });
   }
 
   deleteLocalInfra(type: string, id: number): void {
+    // Vérifier si c'est un barrage fictif ajouté
+    if (type === 'hydro') {
+      const container = this.infrasContainer.get('hydro');
+      const isFictional = container?.fictionalInfras().some(i => i.id === id);
+      if (isFictional) {
+        this.removeFictionalHydroFromMap(id);
+        return;
+      }
+    }
+
     this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
     this.infrasContainer.get(type)?.removeLocal(id);
 
@@ -225,6 +277,78 @@ export class InfrastruturesService {
       next.set(id, puissance);
       return next;
     });
+  }
+
+  // ── Gestion des barrages fictifs ──────────────────────────────────────────
+
+  /** Retourne la liste des barrages fictifs pas encore ajoutés à la carte. */
+  getAvailableFictionalHydros(): any[] {
+    const container = this.infrasContainer.get('hydro');
+    if (!container) return [];
+    const allFictional = container.fictionalInfras();
+    const currentIds = new Set(container.infras().map(i => i.id));
+    return allFictional.filter(i => !currentIds.has(i.id));
+  }
+
+  /** Ajoute un barrage fictif à la carte et au groupe d'infras sélectionné. */
+  addFictionalHydroToMap(id: number): void {
+    const container = this.infrasContainer.get('hydro');
+    if (!container) return;
+
+    container.addFictional(id);
+
+    // Persister l'ID
+    const addedIds: number[] = this.storageService.loadObject(FICTIONAL_HYDRO_IDS_KEY) ?? [];
+    if (!addedIds.includes(id)) {
+      addedIds.push(id);
+      this.storageService.saveObject(FICTIONAL_HYDRO_IDS_KEY, addedIds);
+    }
+
+    // Ajouter au groupe sélectionné
+    const group: any = this.selectedInfraGroup();
+    if (group) {
+      const key = 'central_hydroelectriques';
+      if (!group[key].includes(id.toString())) {
+        group[key].push(id.toString());
+        this.selectedInfraGroup.set({ ...group });
+        this._persistSelectedGroup();
+      }
+    }
+  }
+
+  /** Retire un barrage fictif de la carte et du groupe d'infras. */
+  removeFictionalHydroFromMap(id: number): void {
+    const container = this.infrasContainer.get('hydro');
+    if (!container) return;
+
+    container.removeFictional(id);
+
+    // Retirer de la persistance
+    const addedIds: number[] = this.storageService.loadObject(FICTIONAL_HYDRO_IDS_KEY) ?? [];
+    const filtered = addedIds.filter(i => i !== id);
+    this.storageService.saveObject(FICTIONAL_HYDRO_IDS_KEY, filtered);
+
+    // Retirer du groupe sélectionné et des groupes locaux
+    const idStr = id.toString();
+    const key = 'central_hydroelectriques';
+
+    const group: any = this.selectedInfraGroup();
+    if (group && group[key]?.includes(idStr)) {
+      group[key] = group[key].filter((i: string) => i !== idStr);
+      this.selectedInfraGroup.set({ ...group });
+      this._persistSelectedGroup();
+    }
+
+    // Aussi retirer des groupes locaux
+    const updatedGroups = this.localInfraGroups().map(g => {
+      const anyG = g as any;
+      if (anyG[key]?.includes(idStr)) {
+        anyG[key] = anyG[key].filter((i: string) => i !== idStr);
+        this.storageService.updateElement(INFRA_GROUPS_KEY, anyG);
+      }
+      return anyG as InfrastructureGroup;
+    });
+    this.localInfraGroups.set(updatedGroups);
   }
 
   isInfraSelected(type: string, infraId: string) {
