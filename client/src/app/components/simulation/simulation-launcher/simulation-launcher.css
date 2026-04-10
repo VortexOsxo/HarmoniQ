@@ -11,6 +11,11 @@
     border-bottom: 1px solid #e9ecef;
 }
 
+:host.launcher--panel-footer .status-section {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
 .status-label {
     display: block;
     font-size: 0.78rem;
@@ -67,12 +72,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
-/* ── Launch button layout ── */
-.hq-btn-green {
-    margin: 0 16px 14px;
-}
-
 
 /* ── Status item error state ── */
 .status-item.status-item-error {

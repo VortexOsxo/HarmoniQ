@@ -9,6 +9,7 @@ import { InfraDetailService } from '@app/services/infra-detail-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
+import { DEFAULT_INFRA_GROUP_ID } from '@app/models/infrastructure-group';
 
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
@@ -27,10 +28,14 @@ const MOCK_SCENARIO: Scenario = {
   consomation: Consumption.Normal,
 };
 
+const selectedInfraGroup = signal<any>(null);
+
 const mockInfrasService = {
   isInfraSelected: vi.fn().mockReturnValue(false),
   toggleInfra: vi.fn(),
   deleteLocalInfra: vi.fn(),
+  selectedInfraGroup,
+  isDefaultInfraGroup: vi.fn().mockReturnValue(false),
 };
 
 const selectedScenario = signal<Scenario | null>(null);
@@ -64,7 +69,9 @@ const defaultProviders = [
 describe('InfraListElement', () => {
   beforeEach(() => {
     selectedScenario.set(null);
+    selectedInfraGroup.set(null);
     mockInfrasService.isInfraSelected.mockReturnValue(false);
+    mockInfrasService.isDefaultInfraGroup.mockReturnValue(false);
   });
 
   afterEach(() => vi.clearAllMocks());
@@ -91,7 +98,7 @@ describe('InfraListElement', () => {
     });
   });
 
-  describe('toggleInfra', () => {
+  describe('onRowClick', () => {
     it('should call infrastructuresService.toggleInfra with type and id when the item is clicked', async () => {
       const user = userEvent.setup();
       await render(InfraListElement, {
@@ -100,10 +107,37 @@ describe('InfraListElement', () => {
         schemas: [NO_ERRORS_SCHEMA],
       });
 
-      await user.click(screen.getByTitle(/Cliquez pour sélectionner/i));
+      await user.click(screen.getByText('Barrage Test'));
 
       expect(mockInfrasService.toggleInfra).toHaveBeenCalledWith('hydro', '42');
     });
+
+    it('should not toggle when the default infrastructure group is selected', async () => {
+      const user = userEvent.setup();
+      selectedInfraGroup.set({
+        id: DEFAULT_INFRA_GROUP_ID,
+        nom: 'Infrastructures québécoises',
+        parc_eoliens: [],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+      });
+      mockInfrasService.isDefaultInfraGroup.mockImplementation(
+        (g: any) => g?.id === DEFAULT_INFRA_GROUP_ID,
+      );
+
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByText('Barrage Test'));
+
+      expect(mockInfrasService.toggleInfra).toHaveBeenCalledWith('hydro', '42');
+    });
+
   });
 
   describe('handleInfoClick', () => {

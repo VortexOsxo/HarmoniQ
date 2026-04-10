@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, EventEmitter, Injectable, signal } from '@angular/core';
-import { InfrastructureGroup } from '@app/models/infrastructure-group';
+import { computed, EventEmitter, Injectable, signal, inject, Injector } from '@angular/core';
+import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 import { environment } from 'environments/environment';
 import { OpenApiService } from './open-api-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,7 +14,7 @@ import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant
 import { LocalStorageService } from './local-storage-service';
 import { isFictionalHydro } from '@app/data/fictional-hydro-names';
 import { firstValueFrom, Subject } from 'rxjs';
-import { Injector } from '@angular/core';
+import { SnackbarService } from './snackbar-service';
 import { InfraDetailService } from './infra-detail-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
@@ -115,6 +115,8 @@ export class InfrastruturesService {
   private defaultInfraGroup = computed(() => this.getDefaultInfraGroup());
   infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()])
 
+  private injector = inject(Injector);
+
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
   /**
  * Puissance garantie (MW) du groupe d'infrastructures actif.
@@ -159,7 +161,7 @@ export class InfrastruturesService {
     private modalService: NgbModal,
     private openApiService: OpenApiService,
     private storageService: LocalStorageService,
-    private injector: Injector,
+    private snackbarService: SnackbarService,
   ) {
     this.refreshInfraGroups();
     this.selectedInfraGroup.set(this.getDefaultInfraGroup());
@@ -172,7 +174,7 @@ export class InfrastruturesService {
 
     this.infrasContainer.forEach((container) => {
       container.loaded.subscribe(() => {
-        if (this.selectedInfraGroup() != null && this.selectedInfraGroup()?.id !== 1)
+        if (this.selectedInfraGroup() != null && this.selectedInfraGroup()?.id !== DEFAULT_INFRA_GROUP_ID)
           return;
         this.selectedInfraGroup.set(this.getDefaultInfraGroup());
       });
@@ -193,10 +195,13 @@ export class InfrastruturesService {
       if (!result) return;
 
       const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
+      const idStr = localInfra.id.toString();
       this.infrasContainer.get(type)?.addLocal(localInfra);
 
+      this.toggleInfra(type, idStr);
+
       const detailService = this.injector.get(InfraDetailService);
-      detailService.openDetail(type, localInfra.id.toString());
+      detailService.openDetail(type, idStr);
     }).catch(() => { });
   }
 
@@ -304,16 +309,8 @@ export class InfrastruturesService {
       this.storageService.saveObject(FICTIONAL_HYDRO_IDS_KEY, addedIds);
     }
 
-    // Ajouter au groupe sélectionné
-    const group: any = this.selectedInfraGroup();
-    if (group) {
-      const key = 'central_hydroelectriques';
-      if (!group[key].includes(id.toString())) {
-        group[key].push(id.toString());
-        this.selectedInfraGroup.set({ ...group });
-        this._persistSelectedGroup();
-      }
-    }
+    // Ajouter au groupe sélectionné (utilise toggleInfra pour gérer le branching)
+    this.toggleInfra('hydro', id.toString());
   }
 
   /** Retire un barrage fictif de la carte et du groupe d'infras. */
@@ -360,41 +357,83 @@ export class InfrastruturesService {
     return infraGroup[key].includes(infraId);
   }
 
+  isDefaultInfraGroup(group: InfrastructureGroup | null | undefined): boolean {
+    return group != null && group.id === DEFAULT_INFRA_GROUP_ID;
+  }
+
   toggleInfra(type: string, infraId: string) {
-    const infraGroup: any = this.selectedInfraGroup();
-    if (!infraGroup) return;
+    const currentGroup: any = this.selectedInfraGroup();
+    if (!currentGroup) return;
+
+    const isDefault = this.isDefaultInfraGroup(currentGroup);
+    const infraGroup = isDefault
+      ? { ...currentGroup, id: 0, nom: this._getNextDefaultGroupName() }
+      : { ...currentGroup };
 
     const key = typeKeyMap[type];
+    if (!key) return;
 
     let isActive = false;
     if (infraGroup[key].includes(infraId)) {
       infraGroup[key] = infraGroup[key].filter((id: string) => id !== infraId);
       isActive = false;
     } else {
-      infraGroup[key].push(infraId);
+      infraGroup[key] = [...infraGroup[key], infraId];
       isActive = true;
     }
 
-    this.selectedInfraGroup.set({ ...infraGroup });
-    this._persistSelectedGroup();
+    if (isDefault) {
+      this.createInfraGroup(infraGroup);
+      this.snackbarService.show(
+        "Nouveau groupe d'infrastructures",
+        `Le groupe « ${infraGroup.nom} » a été créé car le groupe Infrastructures québécoises ne peut pas être modifié.`,
+        'info'
+      );
+    } else {
+      this.selectedInfraGroup.set(infraGroup);
+      this._persistSelectedGroup();
+    }
+
     this.infraToggled.emit({ type, id: infraId, isActive });
   }
 
   setInfrasForType(type: string, infrasIds: any[]) {
-    const infraGroup: any = this.selectedInfraGroup();
-    if (!infraGroup) return;
+    const currentGroup: any = this.selectedInfraGroup();
+    if (!currentGroup) return;
+
+    const isDefault = this.isDefaultInfraGroup(currentGroup);
+    const infraGroup = isDefault
+      ? { ...currentGroup, id: 0, nom: this._getNextDefaultGroupName() }
+      : { ...currentGroup };
 
     const key = typeKeyMap[type];
     if (!key) return;
     infraGroup[key] = infrasIds;
 
-    this.selectedInfraGroup.set({ ...infraGroup });
-    this._persistSelectedGroup();
+    if (isDefault) {
+      this.createInfraGroup(infraGroup);
+      this.snackbarService.show(
+        "Nouveau groupe d'infrastructures",
+        `Le groupe « ${infraGroup.nom} » a été créé car le groupe Infrastructures québécoises ne peut pas être modifié.`,
+        'info'
+      );
+    } else {
+      this.selectedInfraGroup.set(infraGroup);
+      this._persistSelectedGroup();
+    }
   }
 
   refreshInfraGroups() {
     const groups = this.storageService.loadElements<InfrastructureGroup>(INFRA_GROUPS_KEY);
     this.localInfraGroups.set(groups);
+
+    const selected = this.selectedInfraGroup();
+    if (selected && selected.id !== DEFAULT_INFRA_GROUP_ID) {
+      const updated = groups.find((g) => g.id === selected.id);
+      if (updated) {
+        this.selectedInfraGroup.set({ ...updated });
+      }
+    }
   }
 
   createInfraGroup(group: InfrastructureGroup) {
@@ -442,8 +481,20 @@ export class InfrastruturesService {
 
   private _persistSelectedGroup() {
     const group = this.selectedInfraGroup();
-    if (group)
+    if (group && group.id !== DEFAULT_INFRA_GROUP_ID)
       this.storageService.updateElement(INFRA_GROUPS_KEY, group);
+  }
+
+  private _getNextDefaultGroupName(): string {
+    const baseName = "Groupe d'infrastructure";
+    const groups = this.infraGroups();
+    let index = 1;
+    let name = `${baseName} ${index}`;
+    while (groups.some(g => g.nom === name)) {
+      index++;
+      name = `${baseName} ${index}`;
+    }
+    return name;
   }
 
   private getDefaultInfraGroup(): InfrastructureGroup {

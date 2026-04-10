@@ -30,7 +30,7 @@ import { InfrastruturesService } from './infrastrutures-service';
 import { OpenApiService } from './open-api-service';
 import { LocalStorageService } from './local-storage-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { InfrastructureGroup } from '@app/models/infrastructure-group';
+import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 
 const INFRA_TYPES = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 const API_BASE = 'http://localhost:5000/api';
@@ -66,6 +66,7 @@ describe('InfrastruturesService', () => {
       createElement: vi.fn().mockImplementation((_key: string, el: any) => ({ ...el, id: 100 })),
       updateElement: vi.fn(),
       deleteElement: vi.fn(),
+      saveObject: vi.fn(),
     };
     mockModalService = {
       open: vi.fn().mockReturnValue({
@@ -173,6 +174,31 @@ describe('InfrastruturesService', () => {
 
       expect(() => service.toggleInfra('eolienneparc', '5')).not.toThrow();
     });
+
+    it('should create a new group when the default Québec group is active', () => {
+      flushInitialHttpRequests();
+      const def: InfrastructureGroup = {
+        id: DEFAULT_INFRA_GROUP_ID,
+        nom: 'Infrastructures québécoises',
+        parc_eoliens: ['1'],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+      };
+      service.selectedInfraGroup.set(def);
+
+      service.toggleInfra('eolienneparc', '1');
+
+      // It should have called createElement for the new group
+      expect(mockStorageService.createElement).toHaveBeenCalledWith(
+        'harmoniq_local_infra_groups',
+        expect.objectContaining({ nom: "Groupe d'infrastructure 1" }),
+      );
+      // And the new selected group should have the change
+      expect(service.selectedInfraGroup()?.nom).toBe("Groupe d'infrastructure 1");
+      expect(service.selectedInfraGroup()?.parc_eoliens).toEqual([]);
+    });
   });
 
   describe('createInfraGroup', () => {
@@ -223,6 +249,28 @@ describe('InfrastruturesService', () => {
       service.deleteInfraGroup(MOCK_INFRA_GROUP);
 
       expect(service.selectedInfraGroup()).toBeNull();
+    });
+  });
+
+  describe('setInfrasForType', () => {
+    it('should create a new group when the default Québec group is selected', () => {
+      flushInitialHttpRequests();
+      service.selectedInfraGroup.set({
+        id: DEFAULT_INFRA_GROUP_ID,
+        nom: 'Infrastructures québécoises',
+        parc_eoliens: ['1'],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+      });
+
+      service.setInfrasForType('eolienneparc', []);
+
+      expect(mockStorageService.createElement).toHaveBeenCalledWith(
+        'harmoniq_local_infra_groups',
+        expect.objectContaining({ nom: "Groupe d'infrastructure 1" }),
+      );
     });
   });
 

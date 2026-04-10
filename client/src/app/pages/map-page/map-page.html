@@ -19,14 +19,20 @@
         </div>
         <div class="sources-panel-content">
             <div class="panel-column panel-column-left">
-                <app-simulation-launcher />
                 <app-scenario-selector />
             </div>
             <div class="panel-column panel-column-right">
                 <app-infrastructure-selector />
             </div>
         </div>
+        <div class="sources-panel-footer">
+            <div class="sources-panel-footer-config">
+                <app-simulation-launcher panelFooter />
+            </div>
+            <app-simulation-panel-launch-button />
+        </div>
     </div>
+
 
     <!-- Full-screen simulation results (map / graphs) -->
     <app-simulation-results />

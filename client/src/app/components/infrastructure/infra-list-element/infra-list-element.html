@@ -1,7 +1,8 @@
-<li class="list-group-item d-flex justify-content-between align-items-center" role="button"
+<li class="list-group-item d-flex justify-content-between align-items-center"
+    [attr.role]="isToggleLocked ? null : 'button'"
     style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px;"
-    (click)="toggleInfra()" [ngClass]="{ 'list-group-item-secondary': isSelected }"
-    title="Cliquez pour sélectionner ou désélectionner cette infrastructure">
+    (click)="onRowClick()" [ngClass]="{ 'list-group-item-secondary': isSelected, 'infra-list-item--locked': isToggleLocked }"
+    [attr.title]="rowTitle">
     <span>{{nom}}</span>
     <div>
         <i class="fas fa-line-chart" style="color: #007bff; cursor: pointer;" (click)="simulate_single($event)"

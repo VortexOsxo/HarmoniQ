@@ -11,6 +11,7 @@ import { ConfirmationModal } from '@app/components/commons/confirmation-modal/co
   selector: 'app-infra-list-element',
   imports: [CommonModule],
   templateUrl: './infra-list-element.html',
+  styleUrl: './infra-list-element.css',
 })
 export class InfraListElement {
   @Input({ required: true }) nom!: string;
@@ -22,6 +23,18 @@ export class InfraListElement {
     return this.infrastructuresService.isInfraSelected(this.type, this.id);
   }
 
+  get isToggleLocked(): boolean {
+    return false;
+  }
+
+  get rowTitle(): string {
+    const g = this.infrastructuresService.selectedInfraGroup();
+    if (g && this.infrastructuresService.isDefaultInfraGroup(g)) {
+      return 'Modifier cette infrastructure créera une copie modifiée du groupe québécois.';
+    }
+    return 'Cliquez pour sélectionner ou désélectionner cette infrastructure';
+  }
+
   constructor(
     private infrastructuresService: InfrastruturesService,
     private scenarioService: ScenariosService,
@@ -29,7 +42,7 @@ export class InfraListElement {
     private infraDetailService: InfraDetailService,
   ) { }
 
-  toggleInfra() {
+  onRowClick() {
     this.infrastructuresService.toggleInfra(this.type, this.id);
   }
 
