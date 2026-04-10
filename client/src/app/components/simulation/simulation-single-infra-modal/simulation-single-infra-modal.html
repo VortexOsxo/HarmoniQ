@@ -15,14 +15,6 @@
     <!-- Body -->
     <div class="sim-modal-body">
 
-        <!-- Loading spinner -->
-        <div class="sim-loading" *ngIf="isLoading">
-            <div class="sim-spinner">
-                <i class="fa-solid fa-circle-notch fa-spin"></i>
-            </div>
-            <span>Chargement de la simulation…</span>
-        </div>
-
         <!-- Error -->
         <div class="sim-error" *ngIf="error" role="alert">
             <i class="fa-solid fa-triangle-exclamation"></i>
@@ -80,6 +72,14 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Loading spinner -->
+        <div class="sim-loading" *ngIf="isLoading">
+            <div class="sim-spinner">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+            </div>
+            <span>Chargement de la simulation…</span>
         </div>
 
         <!-- Production chart section -->
