@@ -7,18 +7,7 @@
     padding: 2px 0;
 }
 
-.item-compact-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #6c757d;
-    letter-spacing: 0.5px;
-}
 
-.btn-xs {
-    padding: 2px 8px;
-    font-size: 0.7rem;
-}
 
 .infra-checkbox-label {
     display: flex;
