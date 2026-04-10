@@ -14,6 +14,8 @@ import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant
 import { LocalStorageService } from './local-storage-service';
 import { isFictionalHydro } from '@app/data/fictional-hydro-names';
 import { firstValueFrom, Subject } from 'rxjs';
+import { Injector } from '@angular/core';
+import { InfraDetailService } from './infra-detail-service';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -157,6 +159,7 @@ export class InfrastruturesService {
     private modalService: NgbModal,
     private openApiService: OpenApiService,
     private storageService: LocalStorageService,
+    private injector: Injector,
   ) {
     this.refreshInfraGroups();
     this.selectedInfraGroup.set(this.getDefaultInfraGroup());
@@ -191,6 +194,9 @@ export class InfrastruturesService {
 
       const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
       this.infrasContainer.get(type)?.addLocal(localInfra);
+
+      const detailService = this.injector.get(InfraDetailService);
+      detailService.openDetail(type, localInfra.id.toString());
     }).catch(() => { });
   }
 

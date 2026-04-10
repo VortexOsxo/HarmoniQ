@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { MapService } from '@app/services/map-service';
+import { InfraDetailService } from '@app/services/infra-detail-service';
 
 @Component({
   selector: 'app-hydro-select-modal',
@@ -20,6 +21,7 @@ export class HydroSelectModal implements OnInit {
     public activeModal: NgbActiveModal,
     private infrasService: InfrastruturesService,
     private mapService: MapService,
+    private infraDetailService: InfraDetailService
   ) {}
 
   ngOnInit(): void {
@@ -51,6 +53,8 @@ export class HydroSelectModal implements OnInit {
   selectDam(dam: any): void {
     this.infrasService.addFictionalHydroToMap(dam.id);
     this.activeModal.close(dam);
+
+    this.infraDetailService.openDetail('hydro', dam.id.toString());
 
     // Zoomer sur le barrage ajouté
     const map = this.mapService.map;
