@@ -161,13 +161,8 @@
     border-top: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
-
-
-
-
-
 /* ── Main content ─────────────────────────────────────────── */
 
 .page-content {

@@ -36,14 +36,16 @@
                 </nav>
 
                 <div class="sidebar-footer">
+                    <button class="hq-btn-green w-100 mb-2" (click)="openQuiz()">
+                        <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
+                    </button>
+
                     <button
-                        class="hq-btn-green w-100 mb-2"
-                        (click)="simulationService.exportSimulationToCSV()"
+                        class="hq-btn-blue w-100"
+                        (click)="simulationService.exportAllToCSV()"
+                        title="Exporter tous les rapports (Production, Coûts, CO2)"
                     >
                         <i class="fa-solid fa-file-arrow-down me-2"></i>Exporter
-                    </button>
-                    <button class="hq-btn-blue w-100" (click)="openQuiz()">
-                        <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
                     </button>
                 </div>
             </div>

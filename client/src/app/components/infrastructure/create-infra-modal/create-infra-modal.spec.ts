@@ -42,6 +42,7 @@ const mockCdr = { detectChanges: vi.fn(), markForCheck: vi.fn() };
 
 const mockInfrastruturesService = {
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
+  isNameTaken: vi.fn().mockReturnValue(false),
 };
 
 const defaultProviders = [
