@@ -1,7 +1,6 @@
-/* ── Modal body ── */
 .hq-modal-body {
     padding: 20px 24px;
-    max-height: 55vh;
+    height: 55vh;
     overflow-y: auto;
 }
 
@@ -123,7 +122,7 @@
 .dam-details {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 12px;
 }
 
 /* ── Badges ── */
@@ -131,30 +130,10 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 500;
+    font-size: 0.82rem;
+    font-weight: 600;
     letter-spacing: 0.01em;
-}
-
-.dam-badge i {
-    font-size: 0.65rem;
-}
-
-.dam-badge-type {
-    background: rgba(29, 103, 153, 0.08);
-    color: #1a5276;
-}
-
-.dam-badge-power {
-    background: rgba(243, 156, 18, 0.1);
-    color: #b7791f;
-}
-
-.dam-badge-turbines {
-    background: rgba(39, 174, 96, 0.08);
-    color: #1e8449;
+    color: #555;
 }
 
 /* ── Add button ── */
@@ -198,7 +177,7 @@
 .empty-icon {
     font-size: 2rem;
     margin-bottom: 12px;
-    display: block;
+    display: inline-block;
     color: #bdc3c7;
 }
 
