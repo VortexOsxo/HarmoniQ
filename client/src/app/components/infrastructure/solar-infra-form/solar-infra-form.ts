@@ -17,7 +17,7 @@ export class SolarInfraForm implements OnInit, AfterViewInit {
 
   showAdvanced = false;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     // We can subscribe to form changes if needed, but the HTML uses (input) handlers
@@ -37,8 +37,24 @@ export class SolarInfraForm implements OnInit, AfterViewInit {
     this.showAdvanced = !this.showAdvanced;
   }
 
+  onKeydown(event: KeyboardEvent) {
+    if (['-', 'e', 'E', '+'].includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
   updateAngleSVG(val: any) {
-    const a = Math.max(0, Math.min(90, parseFloat(val) || 0));
+    let raw = parseFloat(val);
+    if (isNaN(raw)) raw = 0;
+
+    let a = raw;
+    if (a < 0) a = 0;
+    if (a > 90) a = 90;
+
+    if (a !== raw) {
+      this.form.get('angle_panneau')?.setValue(a, { emitEvent: false });
+    }
+
     const rad = (a * Math.PI) / 180;
     const len = 45;
     const x2 = 30 + len * Math.cos(rad);
@@ -63,8 +79,17 @@ export class SolarInfraForm implements OnInit, AfterViewInit {
   }
 
   updateOrientationSVG(val: any) {
-    let deg = parseFloat(val) || 0;
-    deg = Math.max(0, Math.min(360, deg));
+    let raw = parseFloat(val);
+    if (isNaN(raw)) raw = 0;
+
+    let deg = raw;
+    if (deg < 0) deg = 0;
+    if (deg > 360) deg = 360;
+
+    if (deg !== raw) {
+      this.form.get('orientation_panneau')?.setValue(deg, { emitEvent: false });
+    }
+
     const rad = (deg * Math.PI) / 180;
     const cx = 50,
       cy = 50,
