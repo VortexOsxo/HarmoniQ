@@ -1,6 +1,15 @@
 <div id="plots">
     <!-- Aires protégées button below view buttons -->
     <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen">
+        <button class="btn btn-sm infrastructures-btn" [class.btn-infrastructures-active]="mapService.hasSelection()"
+            [class.btn-outline-secondary]="!mapService.hasSelection()"
+            (click)="mapService.toggleVisibility()">
+            <i class="fa-solid fa-industry"></i>
+            <span class="btn-label">Infrastructures</span>
+            <span class="settings-trigger" (click)="openInfrastructuresSettings($event)" title="Filtrer les infrastructures">
+                <i class="fa-solid fa-gear"></i>
+            </span>
+        </button>
         <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.hasSelection()"
             [class.btn-outline-secondary]="!protectedAreasService.hasSelection()"
             (click)="protectedAreasService.toggleVisibility()">

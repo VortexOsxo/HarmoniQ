@@ -1,68 +1,6 @@
 <div id="map" style="height: 100%; width: 100%;"></div>
 
-<!-- Infra Filters toggle button -->
-<button class="infra-filter-reopen" *ngIf="!infraFiltersOpen()"
-    [class.offset-right]="protectedAreasService.legendOpen()" (click)="infraFiltersOpen.set(true)"
-    title="Ouvrir les filtres d'infrastructures">
-    <i class="fa-solid fa-filter"></i>
-</button>
 
-<!-- Infra Filters panel -->
-<div class="infra-filter-legend card" *ngIf="infraFiltersOpen()"
-    [class.offset-right]="protectedAreasService.legendOpen()">
-    <div class="infra-filter-header">
-        <i class="fa-solid fa-filter"></i>
-        <strong>Filtres d'infrastructures</strong>
-        <button class="infra-filter-close" (click)="infraFiltersOpen.set(false)" title="Fermer">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-
-    <div class="infra-filter-body">
-        <!-- Name Filter -->
-        <div class="filter-section">
-            <div class="filter-section-title">Nom</div>
-            <div class="filter-input-wrapper">
-                <i class="fa-solid fa-magnifying-glass filter-icon"></i>
-                <input type="text" class="form-control form-control-sm" placeholder="Ex: Manic-5"
-                    [(ngModel)]="mapFilterName" />
-            </div>
-        </div>
-
-        <!-- Types Filter -->
-        <div class="filter-section">
-            <div class="filter-section-title d-flex justify-content-between align-items-center">
-                <span>Types</span>
-                <div>
-                    <button class="btn btn-link btn-sm p-0 m-0 text-decoration-none" style="font-size: 0.7rem;"
-                        (click)="selectAllInfraTypes()">Tous</button>
-                    <span class="mx-1 text-muted">|</span>
-                    <button class="btn btn-link btn-sm p-0 m-0 text-decoration-none" style="font-size: 0.7rem;"
-                        (click)="deselectAllInfraTypes()">Aucun</button>
-                </div>
-            </div>
-            <div class="infra-layer-item" *ngFor="let infra of infraTypes">
-                <label class="infra-checkbox-label">
-                    <input type="checkbox" [checked]="isInfraTypeSelected(infra.key)"
-                        (change)="toggleInfraType(infra.key)">
-                    <span class="infra-cat-label">{{ infra.label }}</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Power Filter -->
-        <div class="filter-section">
-            <div class="filter-section-title">Puissance (MW)</div>
-            <div class="d-flex align-items-center gap-2">
-                <input type="number" class="form-control form-control-sm" placeholder="Min"
-                    [(ngModel)]="mapFilterMinPower" />
-                <span class="text-muted" style="font-size: 0.8rem;">à</span>
-                <input type="number" class="form-control form-control-sm" placeholder="Max"
-                    [(ngModel)]="mapFilterMaxPower" />
-            </div>
-        </div>
-    </div>
-</div>
 
 
 

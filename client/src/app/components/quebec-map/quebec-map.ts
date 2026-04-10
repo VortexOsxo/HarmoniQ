@@ -25,7 +25,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
     busCategories = BUS_CATEGORIES;
     lineCategories = LINE_CATEGORIES;
 
-    infraFiltersOpen = signal(false);
+
     infraTypes = [
         { key: 'hydro', label: 'Barrage Hydro-Électrique', color: INFRA_COLORS['hydro'] },
         { key: 'eolienneparc', label: 'Parc Éolien', color: INFRA_COLORS['eolienneparc'] },
@@ -38,49 +38,9 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
         return this.mapService.map;
     }
 
-    // Bind to mapService signals for UI
-    get mapFilterName() {
-        return this.mapService.mapFilterName();
-    }
-    set mapFilterName(val: string) {
-        this.mapService.mapFilterName.set(val);
-    }
 
-    get mapFilterMinPower() {
-        return this.mapService.mapFilterMinPower();
-    }
-    set mapFilterMinPower(val: number | null) {
-        this.mapService.mapFilterMinPower.set(val);
-    }
 
-    get mapFilterMaxPower() {
-        return this.mapService.mapFilterMaxPower();
-    }
-    set mapFilterMaxPower(val: number | null) {
-        this.mapService.mapFilterMaxPower.set(val);
-    }
 
-    isInfraTypeSelected(type: string): boolean {
-        return this.mapService.mapFilterTypes().has(type);
-    }
-
-    toggleInfraType(type: string) {
-        const current = new Set(this.mapService.mapFilterTypes());
-        if (current.has(type)) {
-            current.delete(type);
-        } else {
-            current.add(type);
-        }
-        this.mapService.mapFilterTypes.set(current);
-    }
-
-    selectAllInfraTypes() {
-        this.mapService.mapFilterTypes.set(new Set(this.infraTypes.map((t) => t.key)));
-    }
-
-    deselectAllInfraTypes() {
-        this.mapService.mapFilterTypes.set(new Set());
-    }
 
     constructor(
         private mapService: MapService,
@@ -89,18 +49,7 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
         public infraDetailService: InfraDetailService,
         private modalService: NgbModal,
         private infrasService: InfrastruturesService,
-    ) {
-        effect(
-            () => {
-                if (this.infraDetailService.isOpen()) {
-                    untracked(() => {
-                        this.infraFiltersOpen.set(false);
-                    });
-                }
-            },
-            { allowSignalWrites: true },
-        );
-    }
+    ) { }
 
     openHydroSelectModal(): void {
         this.modalService.open(HydroSelectModal, {

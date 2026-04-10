@@ -1,4 +1,4 @@
-import { Injectable, NgZone, effect, signal } from '@angular/core';
+import { Injectable, NgZone, effect, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
@@ -40,9 +40,12 @@ export class MapService {
 
   // Filter Signals
   mapFilterName = signal('');
-  mapFilterTypes = signal<Set<string>>(new Set(types));
+  mapFilterTypes = signal<Set<string>>(new Set(types)); // Show all by default
   mapFilterMinPower = signal<number | null>(null);
   mapFilterMaxPower = signal<number | null>(null);
+
+  hasSelection = computed(() => this.mapFilterTypes().size > 0);
+  private lastTypeSelection: Set<string> = new Set(types);
 
   private previousSelectedType: string | null = null;
   private previousSelectedId: string | null = null;
@@ -115,6 +118,28 @@ export class MapService {
     });
   }
 
+
+  toggleVisibility(): void {
+    if (this.hasSelection()) {
+      this.lastTypeSelection = new Set(this.mapFilterTypes());
+      this.deselectAll();
+    } else {
+      if (!this.lastTypeSelection || this.lastTypeSelection.size === 0) {
+        this.selectAll();
+      } else {
+        this.mapFilterTypes.set(new Set(this.lastTypeSelection));
+      }
+    }
+    this.reloadMarkers();
+  }
+
+  selectAll() {
+    this.mapFilterTypes.set(new Set(types));
+  }
+
+  deselectAll() {
+    this.mapFilterTypes.set(new Set());
+  }
 
   onMapLoaded() { setTimeout(() => this.map?.invalidateSize(), 250); }
 
