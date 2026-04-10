@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title">Créer un nouveau groupe d'infrastructures</h4>
+    <h4 class="modal-title">Nouveau groupe d'infrastructures</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body">
@@ -10,6 +10,5 @@
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="activeModal.dismiss()">Annuler</button>
-    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="!name">Créer</button>
+    <button type="button" class="hq-btn-green" (click)="create()" [disabled]="!name">Créer</button>
 </div>

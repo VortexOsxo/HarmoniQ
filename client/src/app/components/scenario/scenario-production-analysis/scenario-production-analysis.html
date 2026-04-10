@@ -1,0 +1,24 @@
+@if (analysisService.isLoading()) {
+    <div class="analysis-loading">
+        <i class="fa-solid fa-circle-notch fa-spin analysis-loading-icon"></i>
+    </div>
+}
+
+<div [class.hidden]="analysisService.isLoading()">
+    <div class="donuts-row">
+        <div class="donut-card">
+            <h6 class="sub-title">Répartition de la production</h6>
+            <div [id]="config.PROD_DONUT_ID"></div>
+        </div>
+        <div class="donut-card">
+            <h6 class="sub-title">Répartition de la demande par secteur</h6>
+            <div [id]="config.DEMAND_DONUT_ID"></div>
+        </div>
+    </div>
+
+    <h6 class="sub-title mt-section">Top 10 des infrastructures les plus productives</h6>
+    <div [id]="config.PROD_TOP10_ID" class="w-100"></div>
+
+    <h6 class="sub-title mt-section">Approvisionnement par saison</h6>
+    <div [id]="config.SEASONAL_ID" class="w-100"></div>
+</div>

@@ -11,7 +11,7 @@
             découvrir toutes les fonctionnalités de HarmoniQ.
         </p>
         <div class="welcome-actions">
-            <button class="btn-tutorial-primary" (click)="onStart()">
+            <button class="hq-btn-blue" (click)="onStart()">
                 <i class="fa-solid fa-play"></i> Démarrer le Tutoriel
             </button>
             <button class="btn-tutorial-secondary" (click)="onSkip()">
@@ -65,7 +65,7 @@
             <button class="btn-nav btn-skip" (click)="onSkip()">
                 Quitter
             </button>
-            <button #nextButton class="btn-nav btn-next" (click)="onNext()">
+            <button #nextButton class="hq-btn-blue" (click)="onNext()">
                 {{ isLastStep ? 'Terminer' : 'Suivant' }}
                 <i class="fa-solid fa-chevron-right" *ngIf="!isLastStep"></i>
                 <i class="fa-solid fa-check" *ngIf="isLastStep"></i>

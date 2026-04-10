@@ -228,6 +228,7 @@ describe('InfrastruturesService', () => {
   describe('buildSimulationPayload', () => {
     it('should return null when no group is selected', () => {
       flushInitialHttpRequests();
+      service.selectedInfraGroup.set(null);
 
       expect(service.buildSimulationPayload()).toBeNull();
     });

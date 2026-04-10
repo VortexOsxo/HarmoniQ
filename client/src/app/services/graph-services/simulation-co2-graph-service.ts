@@ -7,7 +7,7 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import * as Plotly from 'plotly.js-dist-min';
 import { graphServiceConfig } from '../graph-service';
-import { SimulationTemporalGraphService } from './simulation-temporal-graph-service';
+import { attachCustomLegend } from './donut-legend.util';
 import { INFRA_COLORS } from '@app/data/infra-colors.data';
 
 const SEGMENTS = [
@@ -47,16 +47,14 @@ const PROD_KEY_TO_SEGMENT: [string, string][] = [
 })
 export class SimulationCo2GraphService implements SimulationStep {
     public cachedScenarioId?: number;
-    public cachedData: any;            // per-infra construction CO2 from API
-    public co2AnnuelFromSimulation?: Record<string, number>; // tCO2/year per segment
+    public cachedData: any;
     public costMode: 'annuel' | 'construction' = 'construction';
     public isLoading = signal(true);
 
     constructor(
         private infrastructuresService: InfrastruturesService,
-        private temporalGraphService: SimulationTemporalGraphService,
         private http: HttpClient,
-    ) { }
+    ) {}
 
     getStepName(): string {
         return 'Simulation des emissions du reseau';
@@ -73,105 +71,69 @@ export class SimulationCo2GraphService implements SimulationStep {
             this.cachedData = await firstValueFrom(this.http.post(url, payload));
         }
 
-        // Always recompute annual CO2 from the current simulation result
-        const simResult = this.temporalGraphService.getCachedSimulationResult();
-        if (simResult) {
-            this.co2AnnuelFromSimulation = this.computeAnnuelFromSimulation(simResult);
-        }
-
         return this.handleData(this.cachedData);
-    }
-
-    private computeAnnuelFromSimulation(simResult: any): Record<string, number> {
-        const production: any[] = simResult.production;
-        if (!production?.length) return {};
-
-        const t0 = new Date(production[0].snapshot).getTime();
-        const t1 = new Date(production[1].snapshot).getTime();
-        const hoursPerStep = (t1 - t0) / (1000 * 3600);
-        const totalHours = production.length * hoursPerStep;
-        const annualScale = 8760 / totalHours;
-
-        const result: Record<string, number> = {};
-        for (const [prodKey, segKey] of PROD_KEY_TO_SEGMENT) {
-            const totalMWh = production.reduce((s: number, r: any) => s + (r[prodKey] ?? 0), 0) * hoursPerStep;
-            result[segKey] = totalMWh * (CO2_INTENSITY[prodKey] ?? 0) * annualScale;
-        }
-        return result;
     }
 
     public handleData(simulationResult: any) {
         if (!document.getElementById(graphServiceConfig.CO2_SIMULATION_ID)) return;
 
         const isAnnuel = this.costMode === 'annuel';
+        const co2Key = isAnnuel ? 'co2_annuel' : 'co2_construction';
 
-        // Annual data not yet available — clear any existing chart and show spinner
-        if (isAnnuel && !this.co2AnnuelFromSimulation) {
-            Plotly.purge(graphServiceConfig.CO2_SIMULATION_ID);
-            this.isLoading.set(true);
-            return;
-        }
+        const hydroItems: any[] = simulationResult['hydro'] ?? [];
+        const expanded: Record<string, any[]> = {
+            ...simulationResult,
+            hydro_fil: hydroItems.filter((h: any) => h.type_barrage === "Fil de l'eau"),
+            hydro_res: hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau"),
+        };
 
-        const unit = 'Mt CO₂';
+        const rawValues = SEGMENTS.map((seg) =>
+            (expanded[seg.key] ?? []).reduce(
+                (acc: number, item: any) => acc + (item[co2Key] ?? 0),
+                0,
+            ),
+        );
+        const totalTonnes = rawValues.reduce((a, b) => a + b, 0);
 
-        const labels: string[] = [];
-        const values: number[] = [];
-        const colors: string[] = [];
-
-        if (isAnnuel && this.co2AnnuelFromSimulation) {
-            for (const seg of SEGMENTS) {
-                labels.push(seg.label);
-                values.push((this.co2AnnuelFromSimulation[seg.key] ?? 0) / 1e6);
-                colors.push(seg.color);
-            }
+        // Dynamic unit based on total magnitude
+        let unit: string;
+        let divisor: number;
+        if (totalTonnes >= 1e6) {
+            unit = 'Mt CO₂';
+            divisor = 1e6;
+        } else if (totalTonnes >= 1e3) {
+            unit = 'kt CO₂';
+            divisor = 1e3;
         } else {
-            // Construction mode: imports have no construction CO2 — exclude from legend
-            const constructionSegments = SEGMENTS.filter(s => s.key !== 'import');
-            const hydroItems: any[] = simulationResult['hydro'] ?? [];
-            const expanded: Record<string, any[]> = {
-                ...simulationResult,
-                hydro_fil: hydroItems.filter((h: any) => h.type_barrage === "Fil de l'eau"),
-                hydro_res: hydroItems.filter((h: any) => h.type_barrage !== "Fil de l'eau"),
-            };
-
-            for (const seg of constructionSegments) {
-                const raw = (expanded[seg.key] ?? []).reduce(
-                    (acc: number, item: any) => acc + (item['co2_construction'] ?? 0), 0
-                );
-                labels.push(seg.label);
-                values.push(raw / 1e6);
-                colors.push(seg.color);
-            }
+            unit = 't CO₂';
+            divisor = 1;
         }
 
-        const total = values.reduce((a, b) => a + b, 0);
+        const labels = SEGMENTS.map((s) => s.label);
+        const values = rawValues.map((v) => v / divisor);
+        const colors = SEGMENTS.map((s) => s.color);
+        const total = totalTonnes / divisor;
 
-        const data: any[] = [{
-            type: 'pie',
-            hole: 0.45,
-            labels,
-            values,
-            marker: { colors },
-            domain: { x: [0, 0.6], y: [0, 1] },
-            textinfo: 'none',
-            title: {
-                text: `<b>${total.toFixed(2)}</b><br>${unit}`,
-                font: { size: 22, color: '#2c3e50' },
-                position: 'middle center',
+        const data: any[] = [
+            {
+                type: 'pie',
+                hole: 0.45,
+                labels,
+                values,
+                marker: { colors },
+                domain: { x: [0, 0.6], y: [0, 1] },
+                textinfo: 'none',
+                title: {
+                    text: `<b>${total.toFixed(2)}</b><br>${unit}`,
+                    font: { size: 22, color: '#2c3e50' },
+                    position: 'middle center',
+                },
+                hovertemplate: '<b>%{label}</b><br>%{value:.2f} ' + unit + '<extra></extra>',
             },
-            hovertemplate: '<b>%{label}</b><br>%{value:.2f} ' + unit + '<extra></extra>',
-        }];
+        ];
 
         const layout: any = {
-            legend: {
-                orientation: 'v',
-                x: 0.65, y: 0.5,
-                xanchor: 'left', yanchor: 'middle',
-                font: { size: 15 },
-                itemwidth: 30,
-                tracegroupgap: 6,
-            },
-            showlegend: true,
+            showlegend: false,
             height: Math.floor(window.innerHeight * 0.55),
             margin: { t: 20, b: 20, l: 20, r: 20 },
             paper_bgcolor: 'white',
@@ -180,29 +142,43 @@ export class SimulationCo2GraphService implements SimulationStep {
         const graphDiv = document.getElementById(graphServiceConfig.CO2_SIMULATION_ID);
         if (graphDiv) {
             Plotly.newPlot(graphDiv, data, layout);
+            attachCustomLegend(graphDiv, labels, colors);
 
-            (graphDiv as any).on('plotly_restyle', () => {
-                const hiddenLabels = (graphDiv as any).data[0].hiddenlabels || [];
-                let currentTotal = 0;
+            (graphDiv as any).on('plotly_relayout', () => {
+                const hiddenLabels = (graphDiv as any).layout?.hiddenlabels || [];
+                let visibleRaw = 0;
                 for (let i = 0; i < labels.length; i++) {
                     if (!hiddenLabels.includes(labels[i])) {
-                        currentTotal += values[i];
+                        visibleRaw += rawValues[i];
                     }
                 }
-                Plotly.restyle(graphDiv, {
-                    'title.text': [`<b>${currentTotal.toFixed(2)}</b><br>${unit}`]
-                } as any, [0]);
+                let currentUnit: string;
+                let currentDivisor: number;
+                if (visibleRaw >= 1e6) {
+                    currentUnit = 'Mt CO₂';
+                    currentDivisor = 1e6;
+                } else if (visibleRaw >= 1e3) {
+                    currentUnit = 'kt CO₂';
+                    currentDivisor = 1e3;
+                } else {
+                    currentUnit = 't CO₂';
+                    currentDivisor = 1;
+                }
+                const currentTotal = visibleRaw / currentDivisor;
+                Plotly.restyle(
+                    graphDiv,
+                    {
+                        'title.text': [`<b>${currentTotal.toFixed(2)}</b><br>${currentUnit}`],
+                        values: [rawValues.map((v) => v / currentDivisor)],
+                        hovertemplate: [
+                            '<b>%{label}</b><br>%{value:.2f} ' + currentUnit + '<extra></extra>',
+                        ],
+                    } as any,
+                    [0],
+                );
             });
         }
         this.isLoading.set(false);
-    }
-
-    public updateAnnuelFromSimulation(simResult: any) {
-        this.co2AnnuelFromSimulation = this.computeAnnuelFromSimulation(simResult);
-        // If user is already on annual tab, render now that data is available
-        if (this.costMode === 'annuel' && this.cachedData) {
-            this.handleData(this.cachedData);
-        }
     }
 
     public setCostMode(mode: 'annuel' | 'construction') {

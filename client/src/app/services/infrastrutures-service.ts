@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, EventEmitter, Injectable } from '@angular/core';
-import { signal } from '@angular/core';
+import { computed, EventEmitter, Injectable, signal } from '@angular/core';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 import { environment } from 'environments/environment';
 import { OpenApiService } from './open-api-service';
@@ -13,6 +12,7 @@ import { SolarFarmFactory } from '@app/models/infras/solar-farm';
 import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
 import { LocalStorageService } from './local-storage-service';
+import { Subject } from 'rxjs';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -29,6 +29,7 @@ const INFRA_GROUPS_KEY = 'harmoniq_local_infra_groups';
 export class InfrasContainer<T extends Infra<T>> {
 
   infras = signal<T[]>([]);
+  loaded = new Subject<void>();
 
   private get apiUrl() {
     return `${environment.apiUrl}/${this.factory.getType()}`;
@@ -50,6 +51,7 @@ export class InfrasContainer<T extends Infra<T>> {
         .map((i: any) => ({ ...this.factory.fromJson(i), isUserCreated: true }));
 
       this.infras.set([...dbInfras, ...localInfras]);
+      this.loaded.next();
     });
   }
 
@@ -76,18 +78,18 @@ export class InfrastruturesService {
   infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()])
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
-    /**
-   * Puissance garantie (MW) du groupe d'infrastructures actif.
-   *
-   * Seuls les types à production pilotable sont comptabilisés :
-   *   - Hydro (fil de l'eau + réservoir)
-   *   - Thermique
-   *   - Nucléaire
-   * L'éolien et le solaire sont exclus (production intermittente, non garantie).
-   *
-   * Se recalcule automatiquement dès qu'une infrastructure est cochée/décochée
-   * ou qu'un groupe différent est sélectionné.
-   */
+  /**
+ * Puissance garantie (MW) du groupe d'infrastructures actif.
+ *
+ * Seuls les types à production pilotable sont comptabilisés :
+ *   - Hydro (fil de l'eau + réservoir)
+ *   - Thermique
+ *   - Nucléaire
+ * L'éolien et le solaire sont exclus (production intermittente, non garantie).
+ *
+ * Se recalcule automatiquement dès qu'une infrastructure est cochée/décochée
+ * ou qu'un groupe différent est sélectionné.
+ */
   guaranteedPowerMW = computed(() => this._sumInstalledMW(['hydro', 'thermique', 'nucleaire']));
   windInstalledMW   = computed(() => this._sumInstalledMW(['eolienneparc']));
   solarInstalledMW  = computed(() => this._sumInstalledMW(['solaire']));
@@ -121,11 +123,20 @@ export class InfrastruturesService {
     private storageService: LocalStorageService,
   ) {
     this.refreshInfraGroups();
+    this.selectedInfraGroup.set(this.getDefaultInfraGroup());
 
     const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
     factories.forEach((Factory) => {
       const factory = new Factory();
       this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory, storageService));
+    });
+
+    this.infrasContainer.forEach((container) => {
+      container.loaded.subscribe(() => {
+        if (this.selectedInfraGroup() != null && this.selectedInfraGroup()?.id !== 1)
+          return;
+        this.selectedInfraGroup.set(this.getDefaultInfraGroup());
+      });
     });
   }
 

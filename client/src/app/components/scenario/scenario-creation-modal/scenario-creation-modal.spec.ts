@@ -42,7 +42,7 @@ describe('ScenarioCreationModal', () => {
   describe('initial state', () => {
     it('should render the modal title', async () => {
       await renderComponent();
-      expect(screen.getByText('Créer nouveau scenario')).toBeInTheDocument();
+      expect(screen.getByText('Nouveau scénario')).toBeInTheDocument();
     });
 
     it('should expose Weather enum', async () => {

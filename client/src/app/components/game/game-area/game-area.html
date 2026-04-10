@@ -31,7 +31,7 @@
 
 <div id="quizButtons" [hidden]="!quizStarted || quizTerminated">
   <div class="primary-actions">
-    <button class="quizButton" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
-    <button class="quizButton" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
+    <button class="hq-btn-blue" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
+    <button class="hq-btn-blue" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
   </div>
 </div>

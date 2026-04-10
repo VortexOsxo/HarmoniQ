@@ -103,7 +103,7 @@ select:hover {
 }
 
 .cliquable:hover {
-    color: #3498db;
+    color: var(--hq-blue-start);
     transform: scale(1.02);
 }
 

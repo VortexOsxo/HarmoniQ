@@ -18,6 +18,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['hydro_fil'],
         icon: 'fa-droplet',
         co2FactorKgMWh: 8,
+        energyType: 'electricity',
     },
     hydro_res: {
         id: 'hydro_res',
@@ -25,6 +26,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['hydro_reservoir'],
         icon: 'fa-droplet',
         co2FactorKgMWh: 20,
+        energyType: 'electricity',
     },
     eolien: {
         id: 'eolien',
@@ -32,6 +34,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['eolien'],
         icon: 'fa-wind',
         co2FactorKgMWh: 12,
+        energyType: 'electricity',
     },
     solaire: {
         id: 'solaire',
@@ -39,6 +42,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['solaire'],
         icon: 'fa-sun',
         co2FactorKgMWh: 48,
+        energyType: 'electricity',
     },
     thermique: {
         id: 'thermique',
@@ -46,6 +50,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['thermique'],
         icon: 'fa-bolt',
         co2FactorKgMWh: 820,
+        energyType: 'electricity',
     },
     nucleaire: {
         id: 'nucleaire',
@@ -53,6 +58,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['nucleaire'],
         icon: 'fa-radiation',
         co2FactorKgMWh: 12,
+        energyType: 'electricity',
     },
     import: {
         id: 'import',
@@ -60,6 +66,7 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         color: INFRA_COLORS['import'],
         icon: 'fa-right-to-bracket',
         co2FactorKgMWh: 200,
+        energyType: 'electricity',
     },
 };
 
@@ -299,6 +306,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
             co2Tph: co2Tph[carrier],
         }));
     }
+
 
     renderDemandPreview(demandeResult: any, granularity: string = 'weekly') {
         if (!document.getElementById(graphServiceConfig.TEMPORAL_SIMULATION_ID)) return;

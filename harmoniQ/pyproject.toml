@@ -78,4 +78,5 @@ packages = ["harmoniq"]
 [tool.pytest.ini_options]
 markers = [
     "integration: tests appelant des APIs externes (PVGIS, etc.) — nécessite internet",
+    "performance: tests de performance longs — sautés par défaut sauf si --perf est passé",
 ]

@@ -155,6 +155,11 @@ export class MapService {
       const x = e.clientX - mapPos.left;
       const y = e.clientY - mapPos.top;
 
+      if (type === 'hydro') {
+        self.showWaterBlockedToast("Il est impossible de créer des nouveaux barrages hydrauliques pour l'instant");
+        return;
+      }
+
       // Check if drop is on water and type is blocked
       const isOnWater = self.isPixelWater(map, x, y);
       const blockedLabel = WATER_BLOCKED_TYPES[type];

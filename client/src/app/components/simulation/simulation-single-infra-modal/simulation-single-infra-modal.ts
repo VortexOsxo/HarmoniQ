@@ -55,6 +55,10 @@ export class SimulationSingleInfraModal implements OnInit {
   }
 
   private initProduction() {
+    if (this.type === 'hydro') {
+      this.isLoading = false;
+      return;
+    }
     const obs = this.simulationService.launchSimulationSingleInfra(this.type, this.id);
     if (!obs) return;
 

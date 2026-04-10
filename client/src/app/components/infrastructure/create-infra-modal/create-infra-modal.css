@@ -24,7 +24,3 @@
     margin-top: 0.25rem;
 }
 
-.submit-btn:disabled {
-    cursor: not-allowed;
-    pointer-events: auto;
-}

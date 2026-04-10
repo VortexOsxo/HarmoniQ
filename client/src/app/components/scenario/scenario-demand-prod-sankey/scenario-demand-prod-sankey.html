@@ -1,10 +1,7 @@
 @if (selectedScenario()) {
     <div class="sankey-wrapper">
-        <div class="sankey-view">
+        <div class="sankey-view" #sankeyView>
             <div class="sankey-diagram-wrapper">
-                <h2 class="sankey-title">
-                    Détails de l'impact CO<sub>2</sub> de la production au Québec
-                </h2>
                 <app-sankey-diagram [data]="sankeyData" [showProduction]="simulationRan" />
             </div>
             <div class="co2-panel-wrapper">
