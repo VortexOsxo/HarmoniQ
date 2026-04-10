@@ -93,6 +93,14 @@
         </div>
 
 
+        <!-- Simulate Button -->
+        <div class="view-image-container" *ngIf="hasSelectedScenario()">
+            <button class="view-image-btn" (click)="simulateSingle()" title="Simuler cette infrastructure">
+                <i class="fas fa-line-chart"></i>
+                Simuler cette infrastructure
+            </button>
+        </div>
+
         <!-- Delete Button -->
         <div class="delete-btn-container" *ngIf="infra()?.data?.isUserCreated">
             <button class="delete-infra-btn" (click)="deleteInfra()" title="Supprimer l'infrastructure">

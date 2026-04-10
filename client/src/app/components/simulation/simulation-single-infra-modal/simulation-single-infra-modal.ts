@@ -27,7 +27,7 @@ export class SimulationSingleInfraModal implements OnInit {
   costs?: any;
   emissions?: any;
 
-  selectedGranularity = 'original';
+  selectedGranularity = 'weekly';
   productionData: any;
 
   get label() {
@@ -47,7 +47,6 @@ export class SimulationSingleInfraModal implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.initProduction();
     this.initCosts();
     this.initEmissions();
   }
@@ -89,11 +88,21 @@ export class SimulationSingleInfraModal implements OnInit {
   }
 
   private initCosts() {
-    this.simulationService.getInfraCost(this.type, this.id)?.
-      subscribe((result) => {
-        this.costs = result;
-        this.cdr.detectChanges();
+    const obs = this.simulationService.getInfraCost(this.type, this.id);
+    if (obs) {
+      obs.subscribe({
+        next: (result) => {
+          this.costs = result;
+          this.cdr.detectChanges();
+          this.initProduction();
+        },
+        error: () => {
+          this.initProduction();
+        }
       });
+    } else {
+      this.initProduction();
+    }
   }
 
   private initEmissions() {

@@ -20,7 +20,28 @@ export const graphServiceConfig = {
     providedIn: 'root',
 })
 export class GraphService {
-    constructor() {}
+    constructor() {
+        (Plotly as any).register({
+            moduleType: 'locale',
+            name: 'fr',
+            dictionary: {},
+            format: {
+                months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+                shortMonths: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+                days: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+                shortDays: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+                decimal: ',',
+                thousands: '\u00a0',
+                grouping: [3],
+                currency: ['', '\u00a0€'],
+                periods: ['', ''],
+                dateTime: '%A %e %B %Y %X',
+                date: '%d/%m/%Y',
+                time: '%H:%M:%S',
+            },
+        });
+        (Plotly as any).setPlotConfig({ locale: 'fr' });
+    }
 
     public generateProductionSingleInfraGraph(
         type: string,

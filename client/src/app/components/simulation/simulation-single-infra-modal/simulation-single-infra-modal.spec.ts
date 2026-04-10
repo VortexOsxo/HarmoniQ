@@ -107,7 +107,7 @@ describe('SimulationSingleInfraModal', () => {
       expect(mockGraphService.generateProductionSingleInfraGraph).toHaveBeenCalledWith(
         'eolienneparc',
         MOCK_PRODUCTION_DATA,
-        'original',
+        'weekly',
       );
     });
 

@@ -12,7 +12,7 @@ import { SolarFarmFactory } from '@app/models/infras/solar-farm';
 import { ThermalPowerPlantFactory } from '@app/models/infras/thermal-power-plant';
 import { NuclearPowerPlantFactory } from '@app/models/infras/nuclear-power-plant';
 import { LocalStorageService } from './local-storage-service';
-import { Subject } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
@@ -210,6 +210,13 @@ export class InfrastruturesService {
 
   refreshService(type: string) {
     this.infrasContainer.get(type)?.refresh();
+  }
+
+  async ensureInfrasLoaded(): Promise<void> {
+    const pending = Array.from(this.infrasContainer.values())
+      .filter(c => c.infras().length === 0);
+    if (pending.length === 0) return;
+    await Promise.all(pending.map(c => firstValueFrom(c.loaded)));
   }
 
   overrideHydroPuissance(id: number, puissance: number): void {
