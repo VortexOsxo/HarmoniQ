@@ -30,7 +30,6 @@ describe('DocsPage', () => {
   it('devrait mettre à jour la sélection et vider les détails actifs sur onSelectionChange', () => {
     const mockEvent = { target: { value: 'hydro' } } as unknown as Event;
 
-    // Ajouter un détail actif temporaire
     component.activeDetails.set(new Set(['test_func']));
 
     component.onSelectionChange(mockEvent);
@@ -56,13 +55,13 @@ describe('DocsPage', () => {
   it('devrait basculer l\'état et la visibilité des descriptions de fonctions (toggleDetail)', () => {
     const funcName = 'test_function';
 
-    expect(component.isDetailActive(funcName)).toBeFalse();
+    expect(component.isDetailActive(funcName)).toBe(false);
 
     component.toggleDetail(funcName);
-    expect(component.isDetailActive(funcName)).toBeTrue();
+    expect(component.isDetailActive(funcName)).toBe(true);
 
     component.toggleDetail(funcName);
-    expect(component.isDetailActive(funcName)).toBeFalse();
+    expect(component.isDetailActive(funcName)).toBe(false);
   });
 
   it('devrait formater correctement les noms affichés (ajout de () pour les fonctions)', () => {
