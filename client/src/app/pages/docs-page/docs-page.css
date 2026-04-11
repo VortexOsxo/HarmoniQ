@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
 :host {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     font-family: 'Poppins', sans-serif;
     background-color: #f9f9f9;
     color: #fff;
@@ -12,7 +14,7 @@
 
 .hero-section {
     position: relative;
-    min-height: calc(100vh - 4.5rem);
+    flex: 1;
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -20,7 +22,6 @@
     flex-direction: column;
     justify-content: flex-start;
     padding-top: 3.125rem;
-    align-items: center;
     align-items: center;
     text-align: center;
     color: white;
