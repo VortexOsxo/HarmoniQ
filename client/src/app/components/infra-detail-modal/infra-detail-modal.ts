@@ -239,7 +239,7 @@ export class InfraDetailModal {
                         this.close();
                     }
                 })
-                .catch(() => {}); // Dismissal ignored
+                .catch(() => { }); // Dismissal ignored
         }
     }
 
@@ -470,11 +470,13 @@ export class InfraDetailModal {
                 tooltip:
                     'Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production.',
             });
-            fields.push({
-                icon: 'fa-solid fa-fire',
-                label: "Type d'intrant",
-                value: d.type_intrant || 'N/A',
-            });
+            if (infra.type === 'thermique') {
+                fields.push({
+                    icon: 'fa-solid fa-fire',
+                    label: "Type d'intrant",
+                    value: d.type_intrant || 'N/A',
+                });
+            }
         }
 
         // Vulgarisation (Comparaison)

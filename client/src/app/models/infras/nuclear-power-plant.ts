@@ -11,7 +11,6 @@ export class NuclearPowerPlant extends Infra<NuclearPowerPlant> {
     semaine_maintenance!: number
     annee_commission!: number | null
     type_generateur!: string | null
-    type_intrant!: number | null
 }
 
 export class NuclearPowerPlantFactory extends InfraFactory<NuclearPowerPlant> {
@@ -28,7 +27,6 @@ export class NuclearPowerPlantFactory extends InfraFactory<NuclearPowerPlant> {
             semaine_maintenance: infra.semaine_maintenance,
             annee_commission: infra.annee_commission,
             type_generateur: infra.type_generateur,
-            type_intrant: infra.type_intrant
         };
     }
 
@@ -42,7 +40,6 @@ export class NuclearPowerPlantFactory extends InfraFactory<NuclearPowerPlant> {
             semaine_maintenance: json.semaine_maintenance,
             annee_commission: json.annee_commission,
             type_generateur: json.type_generateur,
-            type_intrant: json.type_intrant
         });
     }
 
@@ -56,7 +53,6 @@ export class NuclearPowerPlantFactory extends InfraFactory<NuclearPowerPlant> {
             semaine_maintenance: 20,
             annee_commission: null,
             type_generateur: null,
-            type_intrant: null
         });
     }
 }
