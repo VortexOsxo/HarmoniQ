@@ -64,9 +64,6 @@
                 <p class="slider-hint" *ngIf="isNewDam()">
                     Plage : puissance nominale / nb turbines → +15 %
                 </p>
-                <p class="slider-hint" *ngIf="!isNewDam()">
-                    Plage : valeur installée → +10 % (gains d'efficacité)
-                </p>
             </div>
 
             <div class="protected-area-warning" *ngIf="protectedAreaName">
@@ -85,7 +82,7 @@
             <div class="cycle-vie-link-container" *ngIf="getCycleVieData()">
                 <p class="cycle-vie-link" (click)="openCycleVie()">
                     <i class="fa-solid fa-recycle"></i>
-                    Cliquez ici pour en apprendre plus sur les {{ getPluralCategoryName() }}
+                    En apprendre plus sur les {{ getPluralCategoryName() }}
                 </p>
             </div>
 
