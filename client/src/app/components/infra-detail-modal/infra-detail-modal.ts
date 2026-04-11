@@ -564,9 +564,22 @@ export class InfraDetailModal {
         if (d.puissance_nominal) {
             const puissanceMW = parseFloat(d.puissance_nominal);
             if (!isNaN(puissanceMW) && puissanceMW > 0) {
+                // Le nombre de cellulaires rechargés SIMULTANÉMENT dépend de la puissance brute à un instant T (Max)
                 const telephones = (puissanceMW * 1000000) / 20;
-                // User's formula: Puissance x 365 x 24 x 60 x 10^9 divisé par 20 000
-                const foyers = (puissanceMW * 365 * 24 * 60 * 1000000000) / 20000;
+
+                // Le nombre de foyers alimentés EN UNE ANNÉE dépend de l'énergie totale (kWh)
+                // Facteur d'utilisation (capacity factor) moyen réaliste pour le Québec/Canada
+                let facteurCapacite = 1.0;
+                switch (infra.type) {
+                    case 'hydro': facteurCapacite = 0.60; break;       // Barrages modulent la production
+                    case 'eolienneparc': facteurCapacite = 0.35; break; // Vent intermittent
+                    case 'solaire': facteurCapacite = 0.15; break;      // Nuit, hiver, nuages
+                    case 'nucleaire': facteurCapacite = 0.90; break;    // Base load très stable
+                    case 'thermique': facteurCapacite = 0.80; break;
+                }
+
+                // Formule ajustée : Puissance * Facteur d'utilisation * 1000 kW * 365 j * 24h / 20 000 kWh/foyer
+                const foyers = (puissanceMW * facteurCapacite * 1000 * 365 * 24) / 20000;
 
                 const millionsTelephones = (telephones / 1000000).toFixed(1);
                 const foyersFormatted = this.formatBigNumber(foyers);
@@ -574,13 +587,13 @@ export class InfraDetailModal {
                 fields.push({
                     icon: 'fa-solid fa-mobile-screen-button',
                     label: 'Comparaison globale',
-                    value: `Pourrait recharger ${millionsTelephones} millions de téléphones simultanément.`,
+                    value: `Pourrait recharger ${millionsTelephones} millions de téléphones simultanément au maximum.`,
                     isVulgarisation: true,
                 });
                 fields.push({
                     icon: 'fa-solid fa-house',
                     label: 'Foyers alimentés',
-                    value: `${foyersFormatted} foyers théoriquement.`,
+                    value: `${foyersFormatted} foyers environ annuellement.`,
                     isVulgarisation: true,
                 });
             }
