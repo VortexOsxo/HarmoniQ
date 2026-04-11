@@ -81,11 +81,11 @@ export class InfrastructureSelector {
     private modalService: NgbModal,
   ) {
     this.infras = [
-      { name: 'Barrage Hydro-Électrique', type: 'hydro', shortName: 'Hydro' },
-      { name: 'Parc Éolien', type: 'eolienneparc', shortName: 'Éolien' },
-      { name: 'Parc Solaire', type: 'solaire', shortName: 'Solaire' },
-      { name: 'Centrale Thermique', type: 'thermique', shortName: 'Thermique' },
-      { name: 'Centrale Nucléaire', type: 'nucleaire', shortName: 'Nucléaire' },
+      { name: 'Barrage Hydro-Électrique', type: 'hydro', shortName: 'Hyd' },
+      { name: 'Parc Éolien', type: 'eolienneparc', shortName: 'Éol' },
+      { name: 'Parc Solaire', type: 'solaire', shortName: 'Sol' },
+      { name: 'Centrale Thermique', type: 'thermique', shortName: 'Therm' },
+      { name: 'Centrale Nucléaire', type: 'nucleaire', shortName: 'Nuc' },
     ];
     // All types active by default
     this.activeFilters = new Set(this.infras.map(i => i.type));

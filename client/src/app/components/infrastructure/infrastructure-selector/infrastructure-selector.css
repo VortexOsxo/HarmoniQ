@@ -21,7 +21,7 @@
     align-items: center;
     padding: 10px 16px;
     border-bottom: 1px solid #e9ecef;
-    background: #f8f9fa;
+    background: #fff;
     flex-shrink: 0;
 }
 
@@ -190,7 +190,6 @@
     display: flex;
     gap: 6px;
     padding: 10px 16px;
-    flex-wrap: wrap;
     flex-shrink: 0;
     border-bottom: 1px solid #e9ecef;
 }
