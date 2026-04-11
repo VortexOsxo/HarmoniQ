@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from harmoniq import ERA5_CACHE_PATH, ERA5_RAW_PATH
+from harmoniq import ERA5_NORMALIZED_PATH, ERA5_RAW_PATH
 
 
 @dataclass(frozen=True)
@@ -13,7 +13,7 @@ class Era5Config:
     area_nwse: tuple[float, float, float, float] = (62.0, -79.8, 44.5, -57.0)
     grid_deg: tuple[float, float] = (1.5, 1.5)
     raw_dir: Path = ERA5_RAW_PATH
-    cache_dir: Path = ERA5_CACHE_PATH
+    normalized_dir: Path = ERA5_NORMALIZED_PATH
     timezone_default: str = "UTC"
     max_retries: int = 5
     retry_backoff_s: float = 2.0
@@ -25,7 +25,7 @@ class Era5Config:
         return self.raw_month_dir(year, month) / f"era5_qc_{year}_{month:02d}.nc"
 
     def normalized_month_dir(self, year: int, month: int) -> Path:
-        return self.cache_dir / "normalized" / f"year={year}" / f"month={month:02d}"
+        return self.normalized_dir / f"year={year}" / f"month={month:02d}"
 
     def normalized_month_file(self, year: int, month: int) -> Path:
         return self.normalized_month_dir(year, month) / f"era5_normalized_{year}_{month:02d}.parquet"
