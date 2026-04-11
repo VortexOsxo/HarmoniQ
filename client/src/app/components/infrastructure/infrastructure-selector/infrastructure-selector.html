@@ -12,11 +12,13 @@
                 (click)="openCreateModal()">
                 <i class="fa-solid fa-plus"></i>
             </button>
-            <button class="group-delete-btn" title="Supprimer ce groupe d'infrastructure"
-                *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== defaultInfraGroupId"
-                (click)="deleteInfraGroup()">
-                <i class="fa-solid fa-trash"></i>
-            </button>
+            <app-delete-confirm-button
+                *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== defaultInfraGroupId as group"
+                buttonTitle="Supprimer ce groupe d'infrastructure"
+                confirmTitle="Supprimer le groupe d'infrastructures"
+                [confirmMessage]="'Êtes-vous sûr de vouloir supprimer le groupe « ' + selectedInfrastructureGroup!.nom + ' » ? Cette action est irréversible.'"
+                (delete)="deleteInfraGroup()">
+            </app-delete-confirm-button>
         </div>
     </div>
 

@@ -12,6 +12,13 @@
                 title="Créer un nouveau scénario">
                 <i class="fa-solid fa-plus"></i>
             </button>
+            <app-delete-confirm-button 
+                *ngIf="canDeleteSelected && selectedScenario as scenario"
+                buttonTitle="Supprimer ce scénario"
+                confirmTitle="Supprimer le scénario"
+                [confirmMessage]="'Êtes-vous sûr de vouloir supprimer le scénario « ' + scenario.nom + ' » ? Cette action est irréversible.'"
+                (delete)="deleteScenario()">
+            </app-delete-confirm-button>
         </div>
     </div>
 
@@ -33,10 +40,5 @@
             <i class="fa-solid fa-cloud-sun detail-icon"></i>
             <span class="detail-text">Météo : <strong>{{ WeatherLabels[scenario.weather] }}</strong></span>
         </div>
-
-        <button *ngIf="canDeleteSelected" class="delete-btn" (click)="deleteScenario(scenario)">
-            <i class="fa-solid fa-trash me-1"></i>
-            Supprimer
-        </button>
     </div>
 </div>

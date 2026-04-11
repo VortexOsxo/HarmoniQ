@@ -11,7 +11,12 @@
         <i class="fas fa-info-circle" style="color: #007bff; cursor: pointer;" (click)="handleInfoClick($event)"
             title="Afficher les informations de cette infrastructure"></i>
         <span *ngIf="isUserCreated" class="mx-1"></span>
-        <i *ngIf="isUserCreated" class="fas fa-trash" style="color: #dc3545; cursor: pointer;"
-            (click)="deleteInfra($event)" title="Supprimer cette infrastructure"></i>
+        <app-delete-confirm-button
+            *ngIf="isUserCreated"
+            buttonTitle="Supprimer cette infrastructure"
+            confirmTitle="Supprimer l'infrastructure"
+            [confirmMessage]="'Êtes-vous sûr de vouloir supprimer l\'infrastructure « ' + nom + ' » ? Cette action est irréversible.'"
+            (delete)="deleteInfra()">
+        </app-delete-confirm-button>
     </div>
 </li>

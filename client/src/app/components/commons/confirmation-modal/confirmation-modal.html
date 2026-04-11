@@ -1,11 +1,10 @@
 <div class="modal-header border-bottom-0 pb-0">
-  <h5 class="modal-title fw-bold text-dark">{{ title }}</h5>
+  <h5 class="modal-title fw-bold">{{ title }}</h5>
   <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body py-4">
-  <p class="mb-0 text-secondary fs-5">{{ message }}</p>
+  <p class="mb-0 modal-message">{{ message }}</p>
 </div>
 <div class="modal-footer border-top-0 pt-0">
-  <button *ngIf="cancelText" type="button" class="btn btn-light fw-semibold" (click)="activeModal.close(false)">{{ cancelText }}</button>
-  <button type="button" class="btn fw-semibold" [ngClass]="confirmBtnClass" (click)="activeModal.close(true)">{{ confirmText }}</button>
+  <button type="button" class="btn btn-confirm" [ngClass]="confirmBtnClass" (click)="activeModal.close(true)">{{ confirmText }}</button>
 </div>

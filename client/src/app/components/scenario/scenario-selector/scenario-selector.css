@@ -120,22 +120,9 @@
     font-weight: 600;
 }
 
-/* ── Delete button ── */
-.delete-btn {
-    margin-top: 8px;
-    align-self: flex-end;
-    padding: 6px 14px;
-    border: 1px solid #e74c3c;
-    border-radius: 6px;
-    background: transparent;
-    color: #e74c3c;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-}
 
-.delete-btn:hover {
-    background: #e74c3c;
-    color: #fff;
+.scenario-delete-btn:hover {
+    background: rgba(231, 76, 60, 0.08);
+    color: #e74c3c;
+    border-color: #e74c3c;
 }
