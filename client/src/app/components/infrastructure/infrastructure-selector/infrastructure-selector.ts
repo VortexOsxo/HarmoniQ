@@ -6,8 +6,6 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 import { InfraListElement } from '../infra-list-element/infra-list-element';
 import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-group-modal';
-import { CapacityBar } from '../capacity-bar/capacity-bar';
-import { EnergyBar } from '../energy-bar/energy-bar';
 import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { DeleteConfirmButtonComponent } from '@app/components/commons/delete-confirm-button/delete-confirm-button';
 
@@ -19,7 +17,7 @@ interface InfraCategory {
 
 @Component({
   selector: 'app-infrastructure-selector',
-  imports: [CommonModule, FormsModule, InfraListElement, CapacityBar, EnergyBar, DeleteConfirmButtonComponent],
+  imports: [CommonModule, FormsModule, InfraListElement, DeleteConfirmButtonComponent],
   templateUrl: './infrastructure-selector.html',
   styleUrl: './infrastructure-selector.css',
 })

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, AfterViewInit } from '@angular/core';
 import { NavigationBar } from '@app/components/navigation-bar/navigation-bar';
-import { SimulationLauncher } from '@app/components/simulation/simulation-launcher/simulation-launcher';
 import { SimulationPanelLaunchButton } from '@app/components/simulation/simulation-panel-launch-button/simulation-panel-launch-button';
+import { CapacityBar } from '@app/components/infrastructure/capacity-bar/capacity-bar';
 import { ScenarioSelector } from '@app/components/scenario/scenario-selector/scenario-selector';
 import { InfrastructureSelector } from '@app/components/infrastructure/infrastructure-selector/infrastructure-selector';
 import { SimulationResults } from '@app/components/simulation/simulation-results/simulation-results';
@@ -18,8 +18,8 @@ import { Subscription } from 'rxjs';
   imports: [
     CommonModule,
     NavigationBar,
-    SimulationLauncher,
     SimulationPanelLaunchButton,
+    CapacityBar,
     ScenarioSelector,
     InfrastructureSelector,
     SimulationResults,
