@@ -36,15 +36,20 @@ export class InfraDetailModal {
     sliderValue = signal<number>(0);
     private basePuissance = signal<number>(0);
 
+    normalizedType = computed(() => {
+        const type = this.infra()?.type;
+        return type?.startsWith('hydro_') ? 'hydro' : type;
+    });
+
     isNewDam = computed(() => {
         const infra = this.infra();
-        return infra?.type === 'hydro' && !!infra.data?.nom?.endsWith('_new');
+        return this.normalizedType() === 'hydro' && !!infra?.data?.nom?.endsWith('_new');
     });
 
     pMin = computed(() => {
         const infra = this.infra();
         const base = this.basePuissance();
-        if (!infra || infra.type !== 'hydro' || base === 0) return 0;
+        if (!infra || this.normalizedType() !== 'hydro' || base === 0) return 0;
         if (this.isNewDam()) return Math.round(base / (infra.data.nb_turbines || 1));
         return base;
     });
@@ -132,7 +137,7 @@ export class InfraDetailModal {
                     this.loadingProtectionStatus = false;
                     this.closeExplanation();
 
-                    if (currentInfra.type === 'hydro' && currentInfra.data.puissance_nominal) {
+                    if (this.normalizedType() === 'hydro' && currentInfra.data.puissance_nominal) {
                         const p = parseFloat(currentInfra.data.puissance_nominal);
                         this.basePuissance.set(p);
                         const override = this.infrasService
@@ -224,7 +229,7 @@ export class InfraDetailModal {
 
     editInfra() {
         const infra = this.infra();
-        if (!infra || !infra.data?.isUserCreated || infra.type === 'hydro') return;
+        if (!infra || !infra.data?.isUserCreated || this.normalizedType() === 'hydro') return;
         this.close();
         this.infrasService.editInfra(infra.type, infra.data);
     }
@@ -254,7 +259,7 @@ export class InfraDetailModal {
         const val = parseFloat((event.target as HTMLInputElement).value);
         this.sliderValue.set(val);
         const infra = this.infra();
-        if (!infra || infra.type !== 'hydro') return;
+        if (!infra || this.normalizedType() !== 'hydro') return;
         this.infrasService.overrideHydroPuissance(infra.data.id, val);
     }
 
@@ -262,7 +267,7 @@ export class InfraDetailModal {
         const val = parseFloat((event.target as HTMLInputElement).value);
         this.sliderValue.set(val);
         const infra = this.infra();
-        if (!infra || infra.type !== 'hydro') return;
+        if (!infra || this.normalizedType() !== 'hydro') return;
         this.infrasService.overrideHydroPuissance(infra.data.id, val);
     }
 
@@ -329,6 +334,7 @@ export class InfraDetailModal {
     }
 
     getIconForType(type: string): string {
+        const baseType = type.startsWith('hydro_') ? 'hydro' : type;
         const icons: Record<string, string> = {
             hydro: '/icons/barrage.png',
             eolienneparc: '/icons/eolienne.png',
@@ -336,7 +342,7 @@ export class InfraDetailModal {
             thermique: '/icons/thermique.png',
             nucleaire: '/icons/nucelaire.png',
         };
-        return icons[type] || '';
+        return icons[baseType] || '';
     }
 
     openCycleVie() {
@@ -348,15 +354,14 @@ export class InfraDetailModal {
     }
 
     getCycleVieData(): CycleDeVieData | null {
-        const infra = this.infra();
-        if (!infra) return null;
-        return CYCLE_DE_VIE_DATA[infra.type] || null;
+        const type = this.normalizedType();
+        if (!type) return null;
+        return CYCLE_DE_VIE_DATA[type] || null;
     }
 
     getPluralCategoryName(): string {
-        const infra = this.infra();
-        if (!infra) return '';
-        const type = infra.type;
+        const type = this.normalizedType();
+        if (!type) return '';
         switch (type) {
             case 'hydro':
                 return 'barrages hydroélectriques';
@@ -369,7 +374,8 @@ export class InfraDetailModal {
             case 'nucleaire':
                 return 'centrales nucléaires';
             default:
-                return infra.categoryName.toLowerCase() + 's';
+                const infra = this.infra();
+                return (infra?.categoryName.toLowerCase() || '') + 's';
         }
     }
 
@@ -379,9 +385,9 @@ export class InfraDetailModal {
     }
 
     getImpactsData(): ImpactItem[] {
-        const infra = this.infra();
-        if (!infra) return [];
-        return IMPACTS_ENVIRONNEMENTAUX_DATA[infra.type] || [];
+        const type = this.normalizedType();
+        if (!type) return [];
+        return IMPACTS_ENVIRONNEMENTAUX_DATA[type] || [];
     }
 
     getInfoFields(): {
@@ -403,7 +409,8 @@ export class InfraDetailModal {
             tooltip?: string;
         }[] = [];
 
-        if (infra.type === 'hydro') {
+        const type = this.normalizedType();
+        if (type === 'hydro') {
             fields.push({
                 icon: 'fa-solid fa-water',
                 label: 'Type de barrage',
@@ -452,7 +459,7 @@ export class InfraDetailModal {
                     value: d.modele_turbine,
                 });
             }
-        } else if (infra.type === 'eolienneparc') {
+        } else if (type === 'eolienneparc') {
             fields.push({
                 icon: 'fa-solid fa-wind',
                 label: "Nombre d'éoliennes",
@@ -487,7 +494,7 @@ export class InfraDetailModal {
                     value: d.modele_turbine,
                 });
             }
-        } else if (infra.type === 'solaire') {
+        } else if (type === 'solaire') {
             fields.push({
                 icon: 'fa-solid fa-solar-panel',
                 label: 'Nombre de panneaux',
@@ -528,7 +535,7 @@ export class InfraDetailModal {
                     value: d.materiau_panneau,
                 });
             }
-        } else if (infra.type === 'thermique' || infra.type === 'nucleaire') {
+        } else if (type === 'thermique' || type === 'nucleaire') {
             fields.push({
                 icon: 'fa-solid fa-bolt',
                 label: 'Puissance nominale',
@@ -536,7 +543,7 @@ export class InfraDetailModal {
                 tooltip:
                     'Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production.',
             });
-            if (infra.type === 'thermique') {
+            if (type === 'thermique') {
                 fields.push({
                     icon: 'fa-solid fa-fire',
                     label: "Type d'intrant",

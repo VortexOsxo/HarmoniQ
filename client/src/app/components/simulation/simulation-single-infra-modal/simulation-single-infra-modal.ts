@@ -61,8 +61,9 @@ export class SimulationSingleInfraModal implements OnInit {
   }
 
   private initProduction() {
-    if (this.type === 'hydro') {
+    if (this.type === 'hydro' || this.type.startsWith('hydro_')) {
       this.isLoading = false;
+      this.error = "La simulation de production temporelle individuelle n'est pas encore supportée pour les barrages hydroélectriques.";
       return;
     }
     const obs = this.simulationService.launchSimulationSingleInfra(this.type, this.id);

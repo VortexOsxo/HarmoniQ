@@ -15,11 +15,6 @@
     <!-- Body -->
     <div class="sim-modal-body">
 
-        <!-- Error -->
-        <div class="sim-error" *ngIf="error" role="alert">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            {{ error }}
-        </div>
 
         <!-- Grouped stat cards -->
         <div class="sim-stats-grid" *ngIf="costs || emissions">
@@ -74,6 +69,12 @@
 
         </div>
 
+        <!-- Error -->
+        <div class="sim-error" *ngIf="error" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ error }}
+        </div>
+
         <!-- Loading spinner -->
         <div class="sim-loading" *ngIf="isLoading">
             <div class="sim-spinner">
@@ -83,7 +84,7 @@
         </div>
 
         <!-- Production chart section -->
-        <ng-container *ngIf="type !== 'hydro'">
+        <ng-container *ngIf="type !== 'hydro' && !type.startsWith('hydro_')">
             <div class="sim-chart-section" *ngIf="!isLoading && !error">
                 <div class="sim-chart-header">
                     <i class="fa-solid fa-chart-area"></i>

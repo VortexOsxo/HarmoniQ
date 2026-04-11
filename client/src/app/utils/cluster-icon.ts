@@ -2,6 +2,8 @@ import * as L from 'leaflet';
 
 const TYPE_ICON_URLS: Record<string, string> = {
     hydro: '/icons/barrage.png',
+    hydro_reservoir: '/icons/barrage.png',
+    hydro_fil: '/icons/barrage.png',
     eolienneparc: '/icons/eolienne.png',
     solaire: '/icons/solaire.png',
     thermique: '/icons/thermique.png',
@@ -10,6 +12,8 @@ const TYPE_ICON_URLS: Record<string, string> = {
 
 const TYPE_ICON_URLS_GRIS: Record<string, string> = {
     hydro: '/icons/barrage_gris.png',
+    hydro_reservoir: '/icons/barrage_gris.png',
+    hydro_fil: '/icons/barrage_gris.png',
     eolienneparc: '/icons/eolienne_gris.png',
     solaire: '/icons/solaire_gris.png',
     thermique: '/icons/thermique_gris.png',
@@ -23,8 +27,12 @@ export function createClusterIcon(cluster: any): L.DivIcon {
 
     for (const marker of childMarkers) {
         const opts = marker.options as any;
-        const type: string = opts.infraType || 'unknown';
+        let type: string = opts.infraType || 'unknown';
         const isActive: boolean = opts.infraActive || false;
+
+        if (type.startsWith('hydro_')) {
+            type = 'hydro';
+        }
 
         if (!counts[type]) counts[type] = { active: 0, inactive: 0 };
         if (isActive) {
