@@ -5,6 +5,7 @@ import { SimulationSingleInfraModal } from '../../simulation/simulation-single-i
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { MapService } from '@app/services/map-service';
 import { DeleteConfirmButtonComponent } from '@app/components/commons/delete-confirm-button/delete-confirm-button';
 
 @Component({
@@ -41,6 +42,7 @@ export class InfraListElement {
     private scenarioService: ScenariosService,
     private modalService: NgbModal,
     private infraDetailService: InfraDetailService,
+    private mapService: MapService,
   ) { }
 
   onRowClick() {
@@ -62,6 +64,7 @@ export class InfraListElement {
   handleInfoClick(event: any) {
     event.stopPropagation();
     this.infraDetailService.openDetail(this.type, this.id);
+    this.mapService.flyToInfra(this.type, this.id);
   }
 
   deleteInfra() {

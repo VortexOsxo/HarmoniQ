@@ -4,8 +4,10 @@ import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { InfrastructureSelector } from './infrastructure-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { MapService } from '@app/services/map-service';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 
+vi.mock('leaflet.markercluster', () => ({}));
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
   icon: vi.fn().mockReturnValue({}),
@@ -69,6 +71,7 @@ const providers = [
   { provide: NgbModal, useValue: mockModalService },
   { provide: SimulationTemporalGraphService, useValue: mockSimService },
   { provide: ScenariosService, useValue: mockScenariosService },
+  { provide: MapService, useValue: { flyToInfra: vi.fn() } },
 ];
 
 async function renderComponent() {
