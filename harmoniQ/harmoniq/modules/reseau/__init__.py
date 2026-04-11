@@ -256,25 +256,25 @@ class InfraReseau(Infrastructure):
             self.network.generators.carrier == 'hydro_reservoir'
         ].index.tolist()
 
+        niveaux_reservoirs = None
         if not barrages_reservoir:
-            logger.warning("Aucun barrage à réservoir trouvé dans le réseau")
-            return self.network, {}
+            logger.warning("Aucun barrage à réservoir trouvé dans le réseau — optimisation sans réservoirs")
+        else:
+            niveaux_reservoirs = EnergyUtils.generer_faux_niveaux_reservoirs(
+                self.network.snapshots, barrages_reservoir
+            )
 
-        niveaux_reservoirs = EnergyUtils.generer_faux_niveaux_reservoirs(
-            self.network.snapshots, barrages_reservoir
-        )
+            marginal_costs = niveaux_reservoirs.apply(
+                lambda col: EnergyUtils.calcul_cout_reservoir_vectorized(col.values)
+            )
 
-        marginal_costs = niveaux_reservoirs.apply(
-            lambda col: EnergyUtils.calcul_cout_reservoir_vectorized(col.values)
-        )
+            if not hasattr(self.network, 'generators_t'):
+                self.network.generators_t = {}
+            if 'marginal_cost' not in self.network.generators_t:
+                self.network.generators_t['marginal_cost'] = pd.DataFrame(index=self.network.snapshots)
 
-        if not hasattr(self.network, 'generators_t'):
-            self.network.generators_t = {}
-        if 'marginal_cost' not in self.network.generators_t:
-            self.network.generators_t['marginal_cost'] = pd.DataFrame(index=self.network.snapshots)
-
-        for barrage in barrages_reservoir:
-            self.network.generators_t['marginal_cost'][barrage] = marginal_costs[barrage]
+            for barrage in barrages_reservoir:
+                self.network.generators_t['marginal_cost'][barrage] = marginal_costs[barrage]
 
         bus_frontiere = EnergyUtils.obtenir_bus_frontiere(self.network, "Interconnexion")
         self.network = EnergyUtils.ajouter_interconnexion_import_export(self.network, Pmax)
