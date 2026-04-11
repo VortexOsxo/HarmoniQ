@@ -3,20 +3,26 @@ import { FormsModule } from '@angular/forms';
 import { NgbAccordionModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
-import { InfrastructureGroup } from '@app/models/infrastructure-group';
+import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 import { InfraListBody } from '../infra-list-body/infra-list-body';
 import { CreateInfraGroupModal } from '../create-infra-group-modal/create-infra-group-modal';
 import { ConfirmationModal } from '@app/components/commons/confirmation-modal/confirmation-modal';
 import { CapacityBar } from '../capacity-bar/capacity-bar';
 import { EnergyBar } from '../energy-bar/energy-bar';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
+import { DeleteConfirmButtonComponent } from '@app/components/commons/delete-confirm-button/delete-confirm-button';
 
 @Component({
   selector: 'app-infrastructure-selector',
-  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody, CapacityBar, EnergyBar],
+  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody, CapacityBar, EnergyBar, DeleteConfirmButtonComponent],
   templateUrl: './infrastructure-selector.html',
   styleUrl: './infrastructure-selector.css',
 })
 export class InfrastructureSelector {
+  readonly defaultInfraGroupId = DEFAULT_INFRA_GROUP_ID;
+  /** Mêmes teintes que le panneau « Ajouter une infrastructure » sur la carte. */
+  readonly infraColors = INFRA_COLORS;
+
   filterText = '';
   sortAsc = true;
 
@@ -89,18 +95,9 @@ export class InfrastructureSelector {
 
   deleteInfraGroup() {
     const group = this.selectedInfrastructureGroup;
-    if (!group || group.id === 1) return; // Cannot delete the default group
-
-    const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
-    modalRef.componentInstance.title = 'Supprimer le groupe d\'infrastructures';
-    modalRef.componentInstance.message = `Êtes-vous sûr de vouloir supprimer le groupe "${group.nom}" ? Cette action est irréversible.`;
-    modalRef.componentInstance.confirmText = 'Supprimer';
-
-    modalRef.result.then((confirmed) => {
-      if (confirmed) {
-        this.infrasService.deleteInfraGroup(group);
-      }
-    }).catch(() => { });
+    if (group && group.id !== DEFAULT_INFRA_GROUP_ID) {
+      this.infrasService.deleteInfraGroup(group);
+    }
   }
 
 }

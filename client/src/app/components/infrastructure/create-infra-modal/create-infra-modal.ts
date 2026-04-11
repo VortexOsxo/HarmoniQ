@@ -21,6 +21,7 @@ interface FieldDef {
   warnIfZero: boolean;
   warningMsg: string;
   errorMsgs: Record<string, string>;
+  maxLength?: number;
 }
 
 @Component({
@@ -34,10 +35,12 @@ export class CreateInfraModal {
   @Input() lat!: number;
   @Input() lon!: number;
   @Input() type!: string;
+  @Input() editData: any = null;
 
   form!: FormGroup;
   fields: FieldDef[] = [];
   prettyName = '';
+  improvedTitle = '';
   protectedAreaName: string | null = null;
 
   isSolar = false;
@@ -60,12 +63,27 @@ export class CreateInfraModal {
     });
   }
 
+  get isEditMode(): boolean {
+    return !!this.editData;
+  }
+
   processPrettyName() {
     const upname = this.type.split('/').pop() || '';
     if (upname === 'hydro') {
       alert("La fonctionnalité pour les infrastructures hydroélectriques est en cours de développement. Cette démonstration est fournie à titre indicatif.");
     }
     this.prettyName = prettyNames[upname] || upname;
+
+    const lowName = this.prettyName.toLowerCase();
+    if (this.isEditMode) {
+        this.improvedTitle = `Modifier ${lowName}`;
+    } else if (lowName.startsWith('centrale')) {
+        this.improvedTitle = `Nouvelle ${lowName}`;
+    } else {
+        this.improvedTitle = `Nouveau ${lowName}`;
+    }
+    this.improvedTitle = this.improvedTitle.charAt(0).toUpperCase() + this.improvedTitle.slice(1);
+
   }
 
   buildForm() {
@@ -83,10 +101,15 @@ export class CreateInfraModal {
       const prop = props[key];
       const isLatLon = key === 'latitude' || key === 'longitude';
       let value: any = '';
-      if (key === 'latitude') value = this.lat;
-      else if (key === 'longitude') value = this.lon;
+      if (this.editData && this.editData[key] !== undefined) {
+        value = this.editData[key];
+      } else if (key === 'latitude') {
+        value = this.lat;
+      } else if (key === 'longitude') {
+        value = this.lon;
+      }
 
-      const initialValue = prop.suggestion ?? value;
+      const initialValue = this.editData ? value : (prop.suggestion ?? value);
 
       let enumValues: string[] | undefined;
       if (prop['$ref']) {
@@ -97,7 +120,7 @@ export class CreateInfraModal {
         enumValues = prop.enum;
       }
 
-      const { validators, errorMsgs, nonNegative, warnIfZero, warningMsg } =
+      const { validators, errorMsgs, nonNegative, warnIfZero, warningMsg, maxLength } =
         this.resolveValidators(key, prop, typeKey);
 
       controls[key] = [initialValue, validators];
@@ -113,6 +136,7 @@ export class CreateInfraModal {
         warnIfZero,
         warningMsg,
         errorMsgs,
+        maxLength,
       });
     }
 
@@ -139,6 +163,11 @@ export class CreateInfraModal {
     const val = Number(control.value);
     if (control.value === '' || control.value === null || isNaN(val) || val < 0) {
       control.setValue(0);
+    } else if (field.type === 'number') {
+      const rounded = Math.round(val * 1000) / 1000;
+      if (val !== rounded) {
+        control.setValue(rounded);
+      }
     }
     control.markAsTouched();
   }
@@ -173,47 +202,56 @@ export class CreateInfraModal {
     nonNegative: boolean;
     warnIfZero: boolean;
     warningMsg: string;
+    maxLength?: number;
   } {
     const validators: ValidatorFn[] = [Validators.required];
     const errorMsgs: Record<string, string> = { required: 'Ce champ est obligatoire.' };
     let nonNegative = false;
     let warnIfZero = false;
     let warningMsg = '';
+    let maxLength: number | undefined;
 
     if (key === 'nom') {
+      maxLength = 50;
+      validators.push(Validators.maxLength(50));
+      errorMsgs['maxlength'] = 'Le nom ne peut pas dépasser 50 caractères.';
       validators.push(this.duplicateNameValidator(typeKey));
       errorMsgs['duplicateName'] = 'Une infrastructure avec ce nom existe déjà.';
-      return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg };
+      return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg, maxLength };
     }
 
     const isNumeric = prop.type === 'number' || prop.type === 'integer';
-    if (!isNumeric) return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg };
+    if (!isNumeric) return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg, maxLength };
 
     switch (key) {
       case 'nombre_eoliennes':
         nonNegative = true;
-        validators.push(Validators.min(0));
+        validators.push(Validators.min(0), Validators.max(1000));
         errorMsgs['min'] = "Le nombre d'éoliennes ne peut pas être négatif.";
+        errorMsgs['max'] = "Le nombre d'éoliennes ne peut pas dépasser 1 000.";
         warnIfZero = true;
         warningMsg = "Un parc sans éoliennes ne produira pas d'énergie.";
         break;
 
       case 'capacite_total':
         nonNegative = true;
-        validators.push(Validators.min(0));
+        validators.push(Validators.min(0), Validators.max(50000));
         errorMsgs['min'] = 'La capacité totale ne peut pas être négative.';
+        errorMsgs['max'] = 'La capacité totale ne peut pas dépasser 50 000 MW.';
         break;
 
       case 'hauteur_moyenne':
         nonNegative = true;
-        validators.push(Validators.min(0));
+        validators.push(Validators.min(0), Validators.max(300));
         errorMsgs['min'] = 'La hauteur moyenne ne peut pas être négative.';
+        errorMsgs['max'] = 'La hauteur moyenne ne peut pas dépasser 300 mètres.';
         break;
 
       case 'nombre_panneau':
         nonNegative = true;
-        validators.push(Validators.min(0));
+        validators.push(Validators.min(0), Validators.max(500000));
         errorMsgs['min'] = 'Le nombre de panneaux ne peut pas être négatif.';
+        errorMsgs['max'] = 'Le nombre de panneaux ne peut pas dépasser 500 000.';
         warnIfZero = true;
         warningMsg = "Un parc sans panneaux ne produira pas d'énergie.";
         break;
@@ -245,28 +283,30 @@ export class CreateInfraModal {
           warnIfZero = true;
           warningMsg = "Une puissance nominale de 0 MW ne produira pas d'énergie.";
         } else if (typeKey === 'nucleaire') {
-          validators.push(Validators.min(300), this.multipleOf300());
+          validators.push(Validators.min(300), Validators.max(10000), this.multipleOf300());
           errorMsgs['min'] = 'La puissance minimale est de 300 MW (1 réacteur SMR).';
+          errorMsgs['max'] = 'La puissance maximale est de 10 000 MW.';
           errorMsgs['multipleOf300'] = 'La puissance doit être un multiple de 300 MW (ex : 300, 600, 900, 1200…).';
         } else {
           nonNegative = true;
-          validators.push(Validators.min(0));
+          validators.push(Validators.min(0), Validators.max(50000));
           errorMsgs['min'] = 'La puissance nominale ne peut pas être négative.';
+          errorMsgs['max'] = 'La puissance nominale ne peut pas dépasser 50 000 MW.';
           warnIfZero = true;
           warningMsg = "Une puissance nominale de 0 MW ne produira pas d'énergie.";
         }
         break;
     }
 
-    return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg };
+    return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg, maxLength };
   }
 
   private duplicateNameValidator(typeKey: string): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const name = control.value?.trim().toLowerCase();
       if (!name) return null;
-      const exists = this.infrasService.getInfrasSignalByType(typeKey)()
-        .some((i: any) => i.nom?.trim().toLowerCase() === name);
+      if (this.editData && this.editData.nom?.trim().toLowerCase() === name) return null;
+      const exists = this.infrasService.isNameTaken(name);
       return exists ? { duplicateName: true } : null;
     };
   }

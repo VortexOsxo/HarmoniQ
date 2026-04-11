@@ -2,9 +2,16 @@
     <div class="form-group mb-3">
         <label class="form-label" for="nom">Nom</label>
         <input class="form-control" id="nom" type="text" placeholder="Ex : Parc solaire de Varennes"
-            formControlName="nom">
+            formControlName="nom" maxlength="50">
+        <small class="text-muted d-block text-end mt-1">{{ (form.get('nom')?.value?.length || 0) }} / 50</small>
+        <div *ngIf="form.get('nom')?.hasError('maxlength')" class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> Le nom ne peut pas dépasser 50 caractères.
+        </div>
         <div *ngIf="form.get('nom')?.hasError('duplicateName')" class="text-danger small mt-1">
             <i class="fas fa-exclamation-circle"></i> Une infrastructure avec ce nom existe déjà.
+        </div>
+        <div *ngIf="form.get('nom')?.hasError('required') && form.get('nom')?.touched" class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> Ce champ est obligatoire.
         </div>
     </div>
 
@@ -16,14 +23,18 @@
     <div class="form-group mb-3">
         <label class="form-label" for="orientation_panneau">
             Orientation (azimut °)
-            <i class="fas fa-info-circle text-muted"
-                ngbTooltip="Azimut des panneaux [0–360°, 180° = plein sud]"></i>
+            <i class="fas fa-info-circle text-muted" ngbTooltip="Azimut des panneaux [0–360°, 180° = plein sud]"></i>
         </label>
         <div class="d-flex align-items-start gap-3">
             <div class="flex-grow-1">
-                <input class="form-control" id="orientation_panneau" type="number"
-                    formControlName="orientation_panneau" min="0" max="360"
-                    (input)="updateOrientationSVG($any($event.target).value)">
+                <input class="form-control" id="orientation_panneau" type="number" formControlName="orientation_panneau"
+                    min="0" max="360" (keydown)="onKeydown($event)"
+                    (input)="updateOrientationSVG($any($event.target).value)"
+                    [class.is-invalid]="form.get('orientation_panneau')?.invalid && form.get('orientation_panneau')?.touched">
+                <div *ngIf="(form.get('orientation_panneau')?.hasError('min') || form.get('orientation_panneau')?.hasError('max')) && form.get('orientation_panneau')?.touched"
+                    class="text-danger small mt-1">
+                    <i class="fas fa-exclamation-circle"></i> L'orientation doit être comprise entre 0° et 360°.
+                </div>
             </div>
             <svg id="orientDiagram" width="100" height="100" viewBox="0 0 100 100"
                 style="flex-shrink:0; margin-top:2px;">
@@ -34,73 +45,47 @@
                     </radialGradient>
                 </defs>
                 <circle cx="50" cy="50" r="40" fill="url(#compassBg)" stroke="#ced4da" stroke-width="1" />
-                <circle cx="50" cy="50" r="28" fill="none" stroke="#dee2e6" stroke-width="0.5"
-                    stroke-dasharray="2,2" />
-                <text x="50" y="16" font-size="10" fill="#dc3545" text-anchor="middle"
-                    font-weight="bold">N</text>
+                <circle cx="50" cy="50" r="28" fill="none" stroke="#dee2e6" stroke-width="0.5" stroke-dasharray="2,2" />
+                <text x="50" y="16" font-size="10" fill="#dc3545" text-anchor="middle" font-weight="bold">N</text>
                 <text x="86" y="54" font-size="9" fill="#6c757d" text-anchor="middle">E</text>
-                <text x="50" y="94" font-size="10" fill="#0d6efd" text-anchor="middle"
-                    font-weight="bold">S</text>
+                <text x="50" y="94" font-size="10" fill="#0d6efd" text-anchor="middle" font-weight="bold">S</text>
                 <text x="14" y="54" font-size="9" fill="#6c757d" text-anchor="middle">O</text>
                 <circle cx="50" cy="50" r="3" fill="#0d6efd" opacity="0.3" />
                 <circle cx="50" cy="50" r="1.5" fill="#0d6efd" />
                 <line id="orientArrow" x1="50" y1="50" x2="50" y2="82" stroke="#0d6efd" stroke-width="2"
                     stroke-linecap="round" />
                 <polygon id="orientHead" points="50,82 46,74 54,74" fill="#0d6efd" />
-                <rect id="orientPanel" x="43" y="80" width="14" height="4" rx="1" fill="#0d6efd"
-                    opacity="0.5" />
+                <rect id="orientPanel" x="43" y="80" width="14" height="4" rx="1" fill="#0d6efd" opacity="0.5" />
                 <text id="orientText" x="50" y="54" font-size="8" fill="#0d6efd" text-anchor="middle"
                     font-weight="bold">180°</text>
             </svg>
         </div>
     </div>
 
-    <div class="form-group mb-3">
-        <label class="form-label" for="angle_panneau">
-            Inclinaison (angle °)
-            <i class="fas fa-info-circle text-muted"
-                ngbTooltip="Inclinaison des panneaux par rapport à l'horizontale [0–90°]"></i>
-        </label>
-        <div class="d-flex align-items-start gap-3">
-            <div class="flex-grow-1">
-                <input class="form-control" id="angle_panneau" type="number" formControlName="angle_panneau"
-                    min="0" max="90" (input)="updateAngleSVG($any($event.target).value)">
-            </div>
-            <svg id="angleDiagram" width="100" height="80" viewBox="0 0 100 80"
-                style="flex-shrink:0; margin-top:2px;">
-                <line x1="10" y1="65" x2="90" y2="65" stroke="#adb5bd" stroke-width="2" />
-                <circle cx="30" cy="65" r="3" fill="#0d6efd" />
-                <line id="panelLine" x1="30" y1="65" x2="75" y2="40" stroke="#0d6efd" stroke-width="3"
-                    stroke-linecap="round" />
-                <path id="angleArc" d="M 45 65 A 15 15 0 0 0 41.5 53.5" fill="none" stroke="#ffc107"
-                    stroke-width="1.5" />
-                <text id="angleText" x="50" y="58" font-size="10" fill="#ffc107" font-weight="bold">30°</text>
-                <circle cx="82" cy="14" r="6" fill="#ffc107" opacity="0.8" />
-                <g stroke="#ffc107" stroke-width="1" opacity="0.5">
-                    <line x1="82" y1="4" x2="82" y2="1" />
-                    <line x1="82" y1="24" x2="82" y2="27" />
-                    <line x1="72" y1="14" x2="69" y2="14" />
-                    <line x1="92" y1="14" x2="95" y2="14" />
-                    <line x1="75" y1="7" x2="73" y2="5" />
-                    <line x1="89" y1="21" x2="91" y2="23" />
-                    <line x1="75" y1="21" x2="73" y2="23" />
-                    <line x1="89" y1="7" x2="91" y2="5" />
-                </g>
-            </svg>
-        </div>
-    </div>
 
     <div class="form-group mb-3">
         <label class="form-label" for="puissance_nominal">
             Puissance totale (MW)
             <i class="fas fa-info-circle text-muted" ngbTooltip="Puissance crête totale du parc en MW"></i>
         </label>
-        <input class="form-control" id="puissance_nominal" type="number" formControlName="puissance_nominal"
-            min="0" step="0.1" (input)="calcPanneaux()">
-        <div
-            style="margin-top:6px; padding:6px 10px; background:#f0f4ff; border-radius:4px; border:1px solid #d6e0f5;">
-            <small style="color:#495057;"><i class="fas fa-solar-panel me-1"
-                    style="color:#0d6efd;"></i><strong>Module :</strong> Canadian Solar CS5P-220M</small>
+        <input class="form-control" id="puissance_nominal" type="number" formControlName="puissance_nominal" min="0"
+            step="0.001" (keydown)="onKeydown($event)" (input)="calcPanneaux()" (blur)="onBlurRound('puissance_nominal')"
+            [class.is-invalid]="form.get('puissance_nominal')?.invalid && form.get('puissance_nominal')?.touched">
+        <div *ngIf="form.get('puissance_nominal')?.hasError('required') && form.get('puissance_nominal')?.touched"
+            class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> Ce champ est obligatoire.
+        </div>
+        <div *ngIf="form.get('puissance_nominal')?.hasError('max') && form.get('puissance_nominal')?.touched"
+            class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> La puissance maximale pour un parc solaire est de 25 MW.
+        </div>
+        <div *ngIf="form.get('puissance_nominal')?.value === 0 && form.get('puissance_nominal')?.touched"
+            class="text-warning small mt-1" style="color: #b45309 !important;">
+            <i class="fas fa-exclamation-triangle"></i> Une puissance nominale de 0 MW ne produira pas d'énergie.
+        </div>
+        <div style="margin-top:6px; padding:6px 10px; background:#f0f4ff; border-radius:4px; border:1px solid #d6e0f5;">
+            <small style="color:#495057;"><i class="fas fa-solar-panel me-1" style="color:#0d6efd;"></i><strong>Module
+                    :</strong> Canadian Solar CS5P-220M</small>
         </div>
     </div>
 
@@ -109,8 +94,21 @@
             Nombre de panneaux
             <i class="fas fa-info-circle text-muted" ngbTooltip="Puissance par panneau = 220 W"></i>
         </label>
-        <input class="form-control" id="nombre_panneau" type="number" formControlName="nombre_panneau" min="0"
-            step="1" (input)="calcPuissance()">
+        <input class="form-control" id="nombre_panneau" type="number" formControlName="nombre_panneau" min="0" max="500000" step="1"
+            (keydown)="onKeydown($event)" (input)="calcPuissance()"
+            [class.is-invalid]="form.get('nombre_panneau')?.invalid && form.get('nombre_panneau')?.touched">
+        <div *ngIf="form.get('nombre_panneau')?.hasError('required') && form.get('nombre_panneau')?.touched"
+            class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> Ce champ est obligatoire.
+        </div>
+        <div *ngIf="form.get('nombre_panneau')?.hasError('max') && form.get('nombre_panneau')?.touched"
+            class="text-danger small mt-1">
+            <i class="fas fa-exclamation-circle"></i> Le nombre de panneaux ne peut pas dépasser 500 000.
+        </div>
+        <div *ngIf="form.get('nombre_panneau')?.value === 0 && form.get('nombre_panneau')?.touched"
+            class="text-warning small mt-1" style="color: #b45309 !important;">
+            <i class="fas fa-exclamation-triangle"></i> Un parc sans panneaux ne produira pas d'énergie.
+        </div>
     </div>
 
     <!-- Section Avancé -->
@@ -122,6 +120,44 @@
         </a>
         <div *ngIf="showAdvanced"
             style="margin-top:12px; padding:12px; background:#f8f9fa; border-radius:6px; border:1px solid #e9ecef;">
+
+            <div class="form-group mb-3">
+                <label class="form-label" for="angle_panneau">
+                    Inclinaison (angle °)
+                    <i class="fas fa-info-circle text-muted"
+                        ngbTooltip="Inclinaison des panneaux par rapport à l'horizontale [0–90°]"></i>
+                </label>
+                <div class="d-flex align-items-start gap-3">
+                    <div class="flex-grow-1">
+                        <input class="form-control" id="angle_panneau" type="number" formControlName="angle_panneau"
+                            min="0" max="90" (keydown)="onKeydown($event)"
+                            (input)="updateAngleSVG($any($event.target).value)"
+                            [class.is-invalid]="form.get('angle_panneau')?.invalid && form.get('angle_panneau')?.touched">
+                    </div>
+                    <svg id="angleDiagram" width="100" height="80" viewBox="0 0 100 80"
+                        style="flex-shrink:0; margin-top:2px;">
+                        <line x1="10" y1="65" x2="90" y2="65" stroke="#adb5bd" stroke-width="2" />
+                        <circle cx="30" cy="65" r="3" fill="#0d6efd" />
+                        <line id="panelLine" x1="30" y1="65" x2="75" y2="40" stroke="#0d6efd" stroke-width="3"
+                            stroke-linecap="round" />
+                        <path id="angleArc" d="M 45 65 A 15 15 0 0 0 41.5 53.5" fill="none" stroke="#ffc107"
+                            stroke-width="1.5" />
+                        <text id="angleText" x="50" y="58" font-size="10" fill="#ffc107" font-weight="bold">30°</text>
+                        <circle cx="82" cy="14" r="6" fill="#ffc107" opacity="0.8" />
+                        <g stroke="#ffc107" stroke-width="1" opacity="0.5">
+                            <line x1="82" y1="4" x2="82" y2="1" />
+                            <line x1="82" y1="24" x2="82" y2="27" />
+                            <line x1="72" y1="14" x2="69" y2="14" />
+                            <line x1="92" y1="14" x2="95" y2="14" />
+                            <line x1="75" y1="7" x2="73" y2="5" />
+                            <line x1="89" y1="21" x2="91" y2="23" />
+                            <line x1="75" y1="21" x2="73" y2="23" />
+                            <line x1="89" y1="7" x2="91" y2="5" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
             <label class="form-label">Technologie de captation</label>
             <div class="d-flex align-items-start gap-3">
                 <div>
@@ -144,8 +180,8 @@
                     <rect x="0" y="80" width="130" height="20" fill="#e9ecef" rx="2" />
                     <text x="65" y="93" font-size="8" fill="#adb5bd" text-anchor="middle">sol</text>
                     <line x1="55" y1="80" x2="55" y2="45" stroke="#6c757d" stroke-width="2" />
-                    <line x1="30" y1="55" x2="80" y2="35" stroke="#0d6efd" stroke-width="5"
-                        stroke-linecap="round" id="vizPanel" />
+                    <line x1="30" y1="55" x2="80" y2="35" stroke="#0d6efd" stroke-width="5" stroke-linecap="round"
+                        id="vizPanel" />
                     <circle cx="110" cy="14" r="8" fill="#ffc107" opacity="0.9" />
                     <g stroke="#ffc107" stroke-width="1" opacity="0.4">
                         <line x1="110" y1="2" x2="110" y2="-2" />

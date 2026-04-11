@@ -1,4 +1,4 @@
-import { Injectable, NgZone, effect, signal } from '@angular/core';
+import { Injectable, NgZone, effect, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
@@ -9,6 +9,28 @@ import { ProtectedAreasService } from './protected-areas-service';
 import { InfraDetailService } from './infra-detail-service';
 
 const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
+
+export interface WindMapCell {
+  latitude: number;
+  longitude: number;
+  mean_wind_kmh: number;
+}
+
+export interface WindMapAnnualResponse {
+  year: number;
+  metric: 'vitesse_vent_kmh_mean';
+  cells: WindMapCell[];
+  grid: {
+    lat_step_deg: number;
+    lon_step_deg: number;
+    lat_half_step_deg: number;
+    lon_half_step_deg: number;
+  };
+  value_range: {
+    min: number;
+    max: number;
+  };
+}
 
 // Water color on the CartoDB light basemap
 const WATER_COLOR = { r: 212, g: 218, b: 220 }; // #d4dadc
@@ -29,6 +51,17 @@ export class MapService {
 
   private _map?: L.Map;
   private clusterGroup?: L.MarkerClusterGroup;
+  private windLayerGroup?: L.LayerGroup;
+  private windLegendControl?: L.Control;
+  private windRenderToken = 0;
+  private readonly windSubdivisionFactor = 7;
+  private readonly windFillOpacity = 0.38;
+  private quebecBoundaryGeometry:
+    | { type: 'Polygon'; coordinates: number[][][] }
+    | { type: 'MultiPolygon'; coordinates: number[][][][] }
+    | null
+    | undefined;
+  private quebecBoundaryLoadPromise?: Promise<void>;
 
   private markers: any = {
     eolienneparc: {},
@@ -40,9 +73,14 @@ export class MapService {
 
   // Filter Signals
   mapFilterName = signal('');
-  mapFilterTypes = signal<Set<string>>(new Set(types));
+  mapFilterTypes = signal<Set<string>>(new Set(types)); // Show all by default
   mapFilterMinPower = signal<number | null>(null);
   mapFilterMaxPower = signal<number | null>(null);
+  showRealInfra = signal(true);
+  showUserInfra = signal(true);
+
+  hasSelection = computed(() => this.mapFilterTypes().size > 0 && (this.showRealInfra() || this.showUserInfra()));
+  private lastTypeSelection: Set<string> = new Set(types);
 
   private previousSelectedType: string | null = null;
   private previousSelectedId: string | null = null;
@@ -77,6 +115,8 @@ export class MapService {
       this.mapFilterTypes();
       this.mapFilterMinPower();
       this.mapFilterMaxPower();
+      this.showRealInfra();
+      this.showUserInfra();
       this.reloadMarkers();
     });
 
@@ -116,6 +156,28 @@ export class MapService {
   }
 
 
+  toggleVisibility(): void {
+    if (this.hasSelection()) {
+      this.lastTypeSelection = new Set(this.mapFilterTypes());
+      this.deselectAll();
+    } else {
+      if (!this.lastTypeSelection || this.lastTypeSelection.size === 0) {
+        this.selectAll();
+      } else {
+        this.mapFilterTypes.set(new Set(this.lastTypeSelection));
+      }
+    }
+    this.reloadMarkers();
+  }
+
+  selectAll() {
+    this.mapFilterTypes.set(new Set(types));
+  }
+
+  deselectAll() {
+    this.mapFilterTypes.set(new Set());
+  }
+
   onMapLoaded() { setTimeout(() => this.map?.invalidateSize(), 250); }
 
   createMap() {
@@ -123,7 +185,7 @@ export class MapService {
       throw new Error('Map already created');
 
     const map = L.map('map', {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: false,
       maxZoom: 12,
       minZoom: 5
@@ -154,6 +216,10 @@ export class MapService {
       const mapPos = map.getContainer().getBoundingClientRect();
       const x = e.clientX - mapPos.left;
       const y = e.clientY - mapPos.top;
+
+      if (type === 'hydro') {
+        return;
+      }
 
       // Check if drop is on water and type is blocked
       const isOnWater = self.isPixelWater(map, x, y);
@@ -190,6 +256,7 @@ export class MapService {
     if (!this.map)
       throw new Error('Map not created');
 
+    this.clearWindLayer();
     this.map.remove();
     this._map = undefined;
     this.clusterGroup = undefined;
@@ -224,6 +291,16 @@ export class MapService {
         });
       }
 
+      // Apply Origin filters
+      const showReal = this.showRealInfra();
+      const showUser = this.showUserInfra();
+      infras = infras.filter(i => {
+        const isUser = (i as any).isUserCreated === true;
+        if (isUser && !showUser) return false;
+        if (!isUser && !showReal) return false;
+        return true;
+      });
+
       this.addMarkers(type, infras);
     });
   }
@@ -236,6 +313,311 @@ export class MapService {
   reloadMarkers() {
     this.destroyMarkers();
     this.initMarkers();
+  }
+
+  async renderWindHeatmap(data: WindMapAnnualResponse): Promise<void> {
+    if (!this.map) return;
+
+    const token = ++this.windRenderToken;
+    this.clearWindLayerInternal();
+    await this.ensureQuebecBoundaryLoaded();
+    if (!this.map || token !== this.windRenderToken) return;
+
+    const group = L.layerGroup().addTo(this.map);
+    const subdivisions = this.windSubdivisionFactor;
+    const subLatStep = data.grid.lat_step_deg / subdivisions;
+    const subLonStep = data.grid.lon_step_deg / subdivisions;
+    const subLatHalf = subLatStep / 2.0;
+    const subLonHalf = subLonStep / 2.0;
+    const min = Number(data.value_range?.min ?? 0);
+    const max = Number(data.value_range?.max ?? 0);
+    const gridIndex = this.buildWindGridIndex(data.cells);
+
+    data.cells.forEach((cell) => {
+      const value = Number(cell.mean_wind_kmh);
+      const baseMinLat = Number(cell.latitude) - data.grid.lat_half_step_deg;
+      const baseMinLon = Number(cell.longitude) - data.grid.lon_half_step_deg;
+
+      for (let i = 0; i < subdivisions; i++) {
+        const centerLat = baseMinLat + subLatHalf + i * subLatStep;
+        for (let j = 0; j < subdivisions; j++) {
+          const centerLon = baseMinLon + subLonHalf + j * subLonStep;
+          if (!this.isInsideQuebecBoundary(centerLat, centerLon)) continue;
+          const interpolated = this.interpolateWindValue(centerLat, centerLon, gridIndex, value);
+          const fillColor = this.getWindColor(interpolated, min, max);
+
+          const bounds: L.LatLngBoundsExpression = [
+            [centerLat - subLatHalf, centerLon - subLonHalf],
+            [centerLat + subLatHalf, centerLon + subLonHalf],
+          ];
+
+          const rect = L.rectangle(bounds, {
+            color: fillColor,
+            weight: 0,
+            fillColor: fillColor,
+            fillOpacity: this.windFillOpacity,
+            interactive: false,
+          });
+          rect.addTo(group);
+        }
+      }
+    });
+
+    this.windLayerGroup = group;
+    this.windLegendControl = this.createWindLegend(data.year, min, max);
+    this.windLegendControl.addTo(this.map);
+  }
+
+  clearWindLayer() {
+    this.windRenderToken++;
+    this.clearWindLayerInternal();
+  }
+
+  private clearWindLayerInternal() {
+    if (this.windLegendControl && this.map) {
+      this.map.removeControl(this.windLegendControl);
+    }
+    this.windLegendControl = undefined;
+
+    if (this.windLayerGroup) {
+      this.windLayerGroup.clearLayers();
+      this.windLayerGroup.remove();
+    }
+    this.windLayerGroup = undefined;
+  }
+
+  private async ensureQuebecBoundaryLoaded(): Promise<void> {
+    if (this.quebecBoundaryGeometry !== undefined) return;
+    if (this.quebecBoundaryLoadPromise) {
+      await this.quebecBoundaryLoadPromise;
+      return;
+    }
+
+    this.quebecBoundaryLoadPromise = fetch('/quebec-boundary.geojson')
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to load Quebec boundary: HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((geojson: any) => {
+        this.quebecBoundaryGeometry = this.extractQuebecBoundaryGeometry(geojson);
+      })
+      .catch((error) => {
+        console.warn('Wind map boundary load failed, rendering without Quebec clip.', error);
+        this.quebecBoundaryGeometry = null;
+      })
+      .finally(() => {
+        this.quebecBoundaryLoadPromise = undefined;
+      });
+
+    await this.quebecBoundaryLoadPromise;
+  }
+
+  private extractQuebecBoundaryGeometry(geojson: any):
+    | { type: 'Polygon'; coordinates: number[][][] }
+    | { type: 'MultiPolygon'; coordinates: number[][][][] }
+    | null {
+    if (!geojson || !Array.isArray(geojson.features)) return null;
+    const feature = geojson.features.find((f: any) => {
+      const rawName = String(f?.properties?.name ?? f?.properties?.NAME ?? '').toLowerCase();
+      const normalized = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return normalized === 'quebec';
+    });
+    const geometry = feature?.geometry;
+    if (!geometry || !geometry.type || !geometry.coordinates) return null;
+    if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+      return geometry;
+    }
+    return null;
+  }
+
+  private isInsideQuebecBoundary(latitude: number, longitude: number): boolean {
+    if (this.quebecBoundaryGeometry === undefined) return true;
+    if (this.quebecBoundaryGeometry === null) return true;
+
+    if (this.quebecBoundaryGeometry.type === 'Polygon') {
+      return this.isPointInPolygon(latitude, longitude, this.quebecBoundaryGeometry.coordinates);
+    }
+
+    return this.quebecBoundaryGeometry.coordinates.some((polygon) =>
+      this.isPointInPolygon(latitude, longitude, polygon),
+    );
+  }
+
+  private isPointInPolygon(latitude: number, longitude: number, polygon: number[][][]): boolean {
+    if (!polygon.length) return false;
+    if (!this.isPointInRing(latitude, longitude, polygon[0])) return false;
+
+    for (let i = 1; i < polygon.length; i++) {
+      if (this.isPointInRing(latitude, longitude, polygon[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private isPointInRing(latitude: number, longitude: number, ring: number[][]): boolean {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = Number(ring[i][0]);
+      const yi = Number(ring[i][1]);
+      const xj = Number(ring[j][0]);
+      const yj = Number(ring[j][1]);
+      const intersects =
+        yi > latitude !== yj > latitude &&
+        longitude < ((xj - xi) * (latitude - yi)) / ((yj - yi) || 1e-12) + xi;
+      if (intersects) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  private buildWindGridIndex(cells: WindMapCell[]): {
+    latitudes: number[];
+    longitudes: number[];
+    valueByKey: Map<string, number>;
+  } {
+    const latitudes = Array.from(new Set(cells.map((c) => Number(c.latitude)))).sort((a, b) => a - b);
+    const longitudes = Array.from(new Set(cells.map((c) => Number(c.longitude)))).sort((a, b) => a - b);
+    const valueByKey = new Map<string, number>();
+
+    cells.forEach((cell) => {
+      valueByKey.set(this.windGridKey(Number(cell.latitude), Number(cell.longitude)), Number(cell.mean_wind_kmh));
+    });
+
+    return { latitudes, longitudes, valueByKey };
+  }
+
+  private windGridKey(latitude: number, longitude: number): string {
+    return `${latitude.toFixed(6)}|${longitude.toFixed(6)}`;
+  }
+
+  private getWindGridValue(
+    grid: { valueByKey: Map<string, number> },
+    latitude: number,
+    longitude: number,
+  ): number | null {
+    const value = grid.valueByKey.get(this.windGridKey(latitude, longitude));
+    return Number.isFinite(value) ? Number(value) : null;
+  }
+
+  private findBracket(values: number[], target: number): [number, number] {
+    if (values.length <= 1) return [0, 0];
+    if (target <= values[0]) return [0, 0];
+    const last = values.length - 1;
+    if (target >= values[last]) return [last, last];
+
+    let lo = 0;
+    let hi = last;
+    while (lo + 1 < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (values[mid] <= target) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return [lo, hi];
+  }
+
+  private interpolateWindValue(
+    latitude: number,
+    longitude: number,
+    grid: {
+      latitudes: number[];
+      longitudes: number[];
+      valueByKey: Map<string, number>;
+    },
+    fallback: number,
+  ): number {
+    const [lat0Idx, lat1Idx] = this.findBracket(grid.latitudes, latitude);
+    const [lon0Idx, lon1Idx] = this.findBracket(grid.longitudes, longitude);
+
+    const lat0 = grid.latitudes[lat0Idx];
+    const lat1 = grid.latitudes[lat1Idx];
+    const lon0 = grid.longitudes[lon0Idx];
+    const lon1 = grid.longitudes[lon1Idx];
+
+    const q11 = this.getWindGridValue(grid, lat0, lon0);
+    const q21 = this.getWindGridValue(grid, lat0, lon1);
+    const q12 = this.getWindGridValue(grid, lat1, lon0);
+    const q22 = this.getWindGridValue(grid, lat1, lon1);
+
+    if (q11 !== null && q21 !== null && q12 !== null && q22 !== null) {
+      const tx = lon1 !== lon0 ? (longitude - lon0) / (lon1 - lon0) : 0.0;
+      const ty = lat1 !== lat0 ? (latitude - lat0) / (lat1 - lat0) : 0.0;
+      const r1 = q11 * (1 - tx) + q21 * tx;
+      const r2 = q12 * (1 - tx) + q22 * tx;
+      return r1 * (1 - ty) + r2 * ty;
+    }
+
+    const candidates: Array<{ value: number; dist: number }> = [];
+    const addCandidate = (value: number | null, lat: number, lon: number) => {
+      if (value === null) return;
+      const dLat = latitude - lat;
+      const dLon = longitude - lon;
+      candidates.push({ value, dist: Math.hypot(dLat, dLon) });
+    };
+
+    addCandidate(q11, lat0, lon0);
+    addCandidate(q21, lat0, lon1);
+    addCandidate(q12, lat1, lon0);
+    addCandidate(q22, lat1, lon1);
+
+    if (!candidates.length) return fallback;
+    if (candidates.length === 1) return candidates[0].value;
+
+    let weightedSum = 0;
+    let weightTotal = 0;
+    candidates.forEach((candidate) => {
+      const weight = 1 / Math.max(candidate.dist, 1e-6);
+      weightedSum += candidate.value * weight;
+      weightTotal += weight;
+    });
+
+    return weightTotal > 0 ? weightedSum / weightTotal : fallback;
+  }
+
+  private getWindColor(value: number, min: number, max: number): string {
+    if (!Number.isFinite(value)) return '#999999';
+    const ratio = max > min ? (value - min) / (max - min) : 0.5;
+    const clamped = Math.max(0, Math.min(1, ratio));
+    const hue = 220 - clamped * 220;
+    return `hsl(${hue}, 85%, 48%)`;
+  }
+
+  private createWindLegend(year: number, min: number, max: number): L.Control {
+    const control = new L.Control({ position: 'bottomleft' });
+    control.onAdd = (_map: L.Map) => {
+      const div = L.DomUtil.create('div');
+      const maxLabel = Number.isFinite(max) ? max.toFixed(1) : '-';
+      const minLabel = Number.isFinite(min) ? min.toFixed(1) : '-';
+      div.style.background = 'rgba(255,255,255,0.95)';
+      div.style.padding = '10px 12px';
+      div.style.borderRadius = '8px';
+      div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+      div.style.fontSize = '12px';
+      div.style.lineHeight = '1.3';
+      div.style.minWidth = '190px';
+      div.innerHTML = `
+        <div style="font-weight:700; margin-bottom:6px;">Vent moyen ${year}</div>
+        <div style="height:10px; border-radius:6px; margin-bottom:6px;
+          background: linear-gradient(to right,
+          hsl(220, 85%, 48%),
+          hsl(160, 85%, 48%),
+          hsl(100, 85%, 48%),
+          hsl(40, 85%, 48%),
+          hsl(0, 85%, 48%));"></div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>${minLabel} km/h</span>
+          <span>${maxLabel} km/h</span>
+        </div>
+      `;
+      return div;
+    };
+    return control;
   }
 
   addMarkers(type: string, infras: any[]) {

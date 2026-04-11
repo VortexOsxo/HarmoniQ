@@ -83,7 +83,7 @@ export const map_icons: any = {
 export const prettyNames: any = {
     eolienneparc: "Parc éolien",
     solaire: "Parc solaire",
-    thermique: "Centale thermique",
+    thermique: "Centrale thermique",
     nucleaire: "Centrale nucléaire",
     hydro: "Barrage hydroélectrique"
 }

@@ -3,7 +3,7 @@
     <div class="status-section">
         <span class="status-label">CONFIGURATION ACTIVE</span>
         <div class="status-items">
-            <div class="status-item" [class.status-item-error]="showConfigHints() && missingScenario()">
+            <div class="status-item" [class.status-item-error]="simulationService.showLaunchConfigHints() && missingScenario()">
                 <i class="fa-solid fa-flask status-icon"></i>
                 <div class="status-item-content">
                     <span class="status-item-label">Scénario</span>
@@ -11,7 +11,7 @@
                 </div>
             </div>
             <!-- Help bubble for missing scenario -->
-            <div class="config-hint-bubble" *ngIf="showConfigHints() && missingScenario()">
+            <div class="config-hint-bubble" *ngIf="simulationService.showLaunchConfigHints() && missingScenario()">
                 <i class="fa-solid fa-triangle-exclamation hint-icon"></i>
                 <div class="hint-content">
                     <span class="hint-title">Scénario requis</span>
@@ -22,7 +22,7 @@
                 </button>
             </div>
 
-            <div class="status-item" [class.status-item-error]="showConfigHints() && missingInfra()">
+            <div class="status-item" [class.status-item-error]="simulationService.showLaunchConfigHints() && missingInfra()">
                 <i class="fa-solid fa-layer-group status-icon"></i>
                 <div class="status-item-content">
                     <span class="status-item-label">Groupe infra.</span>
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <!-- Help bubble for missing infrastructure -->
-            <div class="config-hint-bubble" *ngIf="showConfigHints() && missingInfra()">
+            <div class="config-hint-bubble" *ngIf="simulationService.showLaunchConfigHints() && missingInfra()">
                 <i class="fa-solid fa-triangle-exclamation hint-icon"></i>
                 <div class="hint-content">
                     <span class="hint-title">Groupe d'infrastructures requis</span>
@@ -42,12 +42,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Launch button -->
-    <button id="run" class="launch-btn" [class.launch-btn-disabled]="!canLaunch()"
-        [disabled]="isLaunching()" (click)="onLaunchClick()">
-        <span *ngIf="isLaunching()" class="spinner-border spinner-border-sm me-2"></span>
-        <i *ngIf="!isLaunching()" class="fa-solid fa-play me-2"></i>
-        {{ isLaunching() ? 'Lancement...' : 'Lancer Simulation' }}
-    </button>
 </div>

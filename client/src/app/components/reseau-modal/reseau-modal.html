@@ -1,0 +1,64 @@
+<div class="modal-header">
+    <h5 class="modal-title">
+        <i class="fa-solid fa-network-wired me-2" style="color: var(--hq-blue-start);"></i>
+        Sélection du réseau électrique
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body p-0">
+    <div class="controls-bar px-3 py-2 border-bottom bg-light d-flex gap-2">
+        <button class="btn btn-xs btn-outline-secondary rounded-pill px-3" (click)="reseauService.selectAll()">
+            <i class="fa-solid fa-check-double me-1"></i> Tout sélectionner
+        </button>
+        <button class="btn btn-xs btn-outline-secondary rounded-pill px-3" (click)="reseauService.deselectAll()">
+            <i class="fa-solid fa-xmark me-1"></i> Tout désélectionner
+        </button>
+    </div>
+
+
+
+    <div class="px-3 py-3">
+        <!-- Bus Section -->
+        <div class="mb-4">
+            <div class="filter-section-divider">
+                <label class="reseau-checkbox-label item-compact-label m-0">
+                    <input type="checkbox" [checked]="reseauService.isBusGroupSelected()"
+                        (change)="reseauService.toggleBusGroup()">
+                    Bus
+                </label>
+            </div>
+            <div class="reseau-column-list">
+                <div class="reseau-layer-item" *ngFor="let cat of busCategories">
+                    <label class="reseau-checkbox-label">
+                        <input type="checkbox" [checked]="reseauService.isBusTypeSelected(cat.key)"
+                            (change)="reseauService.toggleBusType(cat.key)">
+                        <span class="reseau-color-swatch" [style.background-color]="cat.color"></span>
+                        <span class="reseau-cat-label">{{ cat.label }}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lines Section -->
+        <div class="mb-2">
+            <div class="filter-section-divider">
+                <label class="reseau-checkbox-label item-compact-label m-0">
+                    <input type="checkbox" [checked]="reseauService.isLineGroupSelected()"
+                        (change)="reseauService.toggleLineGroup()">
+                    Lignes
+                </label>
+            </div>
+            <div class="reseau-column-list">
+                <div class="reseau-layer-item" *ngFor="let cat of lineCategories">
+                    <label class="reseau-checkbox-label">
+                        <input type="checkbox" [checked]="reseauService.isLineTypeSelected(cat.key)"
+                            (change)="reseauService.toggleLineType(cat.key)">
+                        <span class="reseau-color-swatch" [style.background-color]="cat.color"></span>
+                        <span class="reseau-cat-label">{{ cat.label }}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

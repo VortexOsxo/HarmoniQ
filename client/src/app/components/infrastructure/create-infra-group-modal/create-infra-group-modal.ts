@@ -12,6 +12,8 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
 })
 export class CreateInfraGroupModal {
     name: string = '';
+    readonly nameMaxLength = 100;
+
     currentGroup: InfrastructureGroup | null = null;
 
     constructor(public activeModal: NgbActiveModal, private infrastructuresService: InfrastruturesService) {
@@ -19,7 +21,7 @@ export class CreateInfraGroupModal {
     }
 
     create() {
-        if (!this.name) return;
+        if (!this.name || this.name.length > this.nameMaxLength) return;
 
         const newGroup: InfrastructureGroup = {
             id: 0,
@@ -31,7 +33,7 @@ export class CreateInfraGroupModal {
             central_nucleaire: this.currentGroup?.central_nucleaire || []
         };
 
-        const created = this.infrastructuresService.createInfraGroup(newGroup);
+        this.infrastructuresService.createInfraGroup(newGroup);
         this.activeModal.close('created');
     }
 }

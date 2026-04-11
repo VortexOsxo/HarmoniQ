@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 
 @Component({
   selector: 'app-top-bar-logo',
@@ -8,4 +8,6 @@ import { RouterModule } from '@angular/router';
   templateUrl: './top-bar-logo.html',
   styleUrl: './top-bar-logo.css',
 })
-export class TopBarLogo { }
+export class TopBarLogo {
+  constructor(public router: Router) {}
+}

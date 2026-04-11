@@ -7,7 +7,6 @@ import { Consumption } from '@app/models/consumption';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
 
-const VALID_YEARS = [2035, 2050];
 
 @Component({
   selector: 'app-scenario-creation-modal',
@@ -22,24 +21,28 @@ export class ScenarioCreationModal {
     date_de_fin: '2035-12-31',
   };
 
+
+  readonly nomMaxLength = 50;
+  readonly descriptionMaxLength = 1000;
+
   public Weather = Weather;
   public Consumption = Consumption;
 
   constructor(public activeModal: NgbActiveModal, private scenariosService: ScenariosService) { }
 
   get dateError(): string | null {
-    const startYear = this.yearOf(this.scenario.date_de_debut);
-    const endYear   = this.yearOf(this.scenario.date_de_fin);
-
-    if ((startYear !== null && !VALID_YEARS.includes(startYear)) ||
-        (endYear !== null && !VALID_YEARS.includes(endYear)) ||
-        (startYear !== null && endYear !== null && startYear !== endYear))
-      return "L'étendue de temps doit être en 2035 ou 2050.";
+    const start = this.scenario.date_de_debut;
+    const end   = this.scenario.date_de_fin;
+    if (start && end && end < start)
+      return 'La date de fin doit être après la date de début.';
     return null;
   }
 
   get canSubmit(): boolean {
-    return this.scenario.nom.trim().length > 0 && this.dateError === null;
+    return this.scenario.nom.trim().length > 0
+      && this.scenario.nom.length <= this.nomMaxLength
+      && this.scenario.description.length <= this.descriptionMaxLength
+      && this.dateError === null;
   }
 
   onSubmit() {
@@ -52,9 +55,4 @@ export class ScenarioCreationModal {
     this.activeModal.dismiss();
   }
 
-  private yearOf(dateStr: string): number | null {
-    if (!dateStr) return null;
-    const y = parseInt(dateStr.split('-')[0], 10);
-    return isNaN(y) ? null : y;
-  }
 }

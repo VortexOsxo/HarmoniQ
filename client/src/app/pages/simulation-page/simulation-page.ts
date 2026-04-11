@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostListener, inject, ViewChild } from '@angular/core';
 import { SimulationTopBar } from '@app/components/simulation/simulation-top-bar/simulation-top-bar';
 import { CommonModule } from '@angular/common';
 import { ScenarioDemandProdSankey } from '@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey';
@@ -14,6 +14,9 @@ import { SimulationCo2GraphService } from '@app/services/graph-services/simulati
 import { SimulationAnalysisGraphService } from '@app/services/graph-services/simulation-analysis-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { TutorialOverlay } from '@app/components/tutorial-overlay/tutorial-overlay';
+import { TutorialService } from '@app/services/tutorial-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { graphServiceConfig } from '@app/services/graph-service';
 
 interface Section {
@@ -35,6 +38,7 @@ interface Section {
         ScenarioDemandProdSankey,
         ScenarioTemporalSimulation,
         GranularitySelectorComponent,
+        TutorialOverlay,
     ],
     templateUrl: './simulation-page.html',
     styleUrl: './simulation-page.css',
@@ -51,6 +55,7 @@ export class SimulationPage implements AfterViewInit {
     co2Service = inject(SimulationCo2GraphService);
     analysisService = inject(SimulationAnalysisGraphService);
     infrasService = inject(InfrastruturesService);
+    tutorialService = inject(TutorialService);
 
     readonly config = graphServiceConfig;
 
@@ -59,42 +64,42 @@ export class SimulationPage implements AfterViewInit {
             key: 'parc_eoliens',
             label: 'Éolien',
             img: '/icons/eolienne.png',
-            color: '#6abbc4',
+            color: INFRA_COLORS['eolienneparc'],
             hydroFilter: null,
         },
         {
             key: 'central_hydroelectriques',
             label: "Hydro (fil de l'eau)",
             img: '/icons/barrage.png',
-            color: '#7bbfe8',
+            color: INFRA_COLORS['hydro_fil'],
             hydroFilter: "Fil de l'eau",
         },
         {
             key: 'central_hydroelectriques',
             label: 'Hydro (réservoir)',
             img: '/icons/barrage.png',
-            color: '#2b6fa8',
+            color: INFRA_COLORS['hydro_reservoir'],
             hydroFilter: 'Réservoir',
         },
         {
             key: 'parc_solaires',
             label: 'Solaire',
             img: '/icons/solaire.png',
-            color: '#e8c53c',
+            color: INFRA_COLORS['solaire'],
             hydroFilter: null,
         },
         {
             key: 'central_nucleaire',
             label: 'Nucléaire',
             img: '/icons/nucelaire.png',
-            color: '#e8754a',
+            color: INFRA_COLORS['nucleaire'],
             hydroFilter: null,
         },
         {
             key: 'central_thermique',
             label: 'Thermique',
             img: '/icons/thermique.png',
-            color: '#e25c5c',
+            color: INFRA_COLORS['thermique'],
             hydroFilter: null,
         },
     ];
@@ -145,14 +150,14 @@ export class SimulationPage implements AfterViewInit {
             title: 'Flux de production',
             desc: 'Répartition production → demande',
             icon: 'fa-diagram-project',
-            isReady: () => !this.isSimulating,
+            isReady: () => !this.isSimulating && this.simulationService.productionNodes() !== null,
         },
         {
             id: 'section-temporal',
             title: 'Production & Demande',
             desc: 'Évolution temporelle',
             icon: 'fa-chart-line',
-            isReady: () => !this.isSimulating,
+            isReady: () => !this.isSimulating && this.simulationService.productionNodes() !== null,
         },
         {
             id: 'section-repartition',
@@ -187,17 +192,23 @@ export class SimulationPage implements AfterViewInit {
         return this.stepService.currentStepName();
     }
 
-    getSectionIndicator(section: Section): { icon: string; color: string } {
+    getSectionIndicator(section: Section): { icon: string; color?: string; cssClass?: string } {
         if (section.isReady()) {
-            return { icon: 'fa-circle-check', color: '#20c997' };
+            return { icon: 'fa-circle-check', cssClass: 'hq-text-gradient-green' };
         }
         return this.isSimulating
-            ? { icon: 'fa-circle-notch fa-spin', color: '#4361ee' }
+            ? { icon: 'fa-circle-notch fa-spin', cssClass: 'hq-text-gradient-blue' }
             : { icon: 'fa-circle', color: '#ced4da' };
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    onBeforeUnload(event: BeforeUnloadEvent): void {
+        event.preventDefault();
     }
 
     ngAfterViewInit(): void {
         this.simulationService.launchSimulation();
+        setTimeout(() => this.tutorialService.autoStart(), 500);
     }
 
     get temporalGranularity(): string {

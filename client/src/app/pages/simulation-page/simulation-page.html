@@ -5,7 +5,9 @@
         <aside class="sidebar">
             <div class="sidebar-content">
                 <div class="sidebar-header">
-                    <h3 class="sidebar-title">Sections</h3>
+                    <div class="sidebar-header-top">
+                        <h3 class="sidebar-title">Étapes de simulation</h3>
+                    </div>
                 </div>
 
                 @if (isSimulating) {
@@ -25,7 +27,7 @@
                             </div>
                             <span class="section-indicator">
                                 <i
-                                    class="fa-solid {{ getSectionIndicator(section).icon }}"
+                                    class="fa-solid {{ getSectionIndicator(section).icon }} {{ getSectionIndicator(section).cssClass ?? '' }}"
                                     [style.color]="getSectionIndicator(section).color"
                                 ></i>
                             </span>
@@ -34,14 +36,17 @@
                 </nav>
 
                 <div class="sidebar-footer">
+                    <button id="tutorial-quiz-btn" class="hq-btn-green w-100 mb-2" (click)="openQuiz()">
+                        <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
+                    </button>
+
                     <button
-                        class="btn btn-export w-100 mb-2"
-                        (click)="simulationService.exportSimulationToCSV()"
+                        id="tutorial-export-btn"
+                        class="hq-btn-blue w-100"
+                        (click)="simulationService.exportAllToCSV()"
+                        title="Exporter tous les rapports (Production, Coûts, CO2)"
                     >
                         <i class="fa-solid fa-file-arrow-down me-2"></i>Exporter
-                    </button>
-                    <button class="btn btn-quiz w-100" (click)="openQuiz()">
-                        <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
                     </button>
                 </div>
             </div>
@@ -303,4 +308,7 @@
             </div>
         </main>
     </div>
+
+    <!-- Tutorial overlay -->
+    <app-tutorial-overlay />
 </div>

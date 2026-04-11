@@ -10,22 +10,21 @@ import { InfrastruturesService } from '../infrastrutures-service';
 import { SimulationStep } from '@app/models/interfaces/simulation-step';
 import { ProductionNode } from '@app/components/scenario/scenario-demand-prod-sankey/sankey-data.types';
 import { INFRA_COLORS, INFRA_LABELS } from '@app/data/infra-colors.data';
+import { SimulationCo2GraphService } from './simulation-co2-graph-service';
 
 const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
     hydro_fil: {
         id: 'hydro_fil',
         label: "Hydro (fil de l'eau)",
-        color: '#7bbfe8',
+        color: INFRA_COLORS['hydro_fil'],
         icon: 'fa-droplet',
-        co2FactorKgMWh: 8,
         energyType: 'electricity',
     },
     hydro_res: {
         id: 'hydro_res',
         label: 'Hydro (réservoir)',
-        color: '#2b6fa8',
+        color: INFRA_COLORS['hydro_reservoir'],
         icon: 'fa-droplet',
-        co2FactorKgMWh: 20,
         energyType: 'electricity',
     },
     eolien: {
@@ -33,7 +32,6 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         label: INFRA_LABELS['eolien'],
         color: INFRA_COLORS['eolien'],
         icon: 'fa-wind',
-        co2FactorKgMWh: 12,
         energyType: 'electricity',
     },
     solaire: {
@@ -41,7 +39,6 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         label: INFRA_LABELS['solaire'],
         color: INFRA_COLORS['solaire'],
         icon: 'fa-sun',
-        co2FactorKgMWh: 48,
         energyType: 'electricity',
     },
     thermique: {
@@ -49,7 +46,6 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         label: INFRA_LABELS['thermique'],
         color: INFRA_COLORS['thermique'],
         icon: 'fa-bolt',
-        co2FactorKgMWh: 820,
         energyType: 'electricity',
     },
     nucleaire: {
@@ -57,7 +53,6 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         label: INFRA_LABELS['nucleaire'],
         color: INFRA_COLORS['nucleaire'],
         icon: 'fa-radiation',
-        co2FactorKgMWh: 12,
         energyType: 'electricity',
     },
     import: {
@@ -65,7 +60,6 @@ const CARRIER_NODE_DEFS: Record<string, Omit<ProductionNode, 'value'>> = {
         label: INFRA_LABELS['import'],
         color: INFRA_COLORS['import'],
         icon: 'fa-right-to-bracket',
-        co2FactorKgMWh: 200,
         energyType: 'electricity',
     },
 };
@@ -101,6 +95,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
         private infrastructuresService: InfrastruturesService,
         private graphService: GraphService,
         private http: HttpClient,
+        private co2GraphService: SimulationCo2GraphService,
     ) {}
 
     getStepName(): string {
@@ -143,8 +138,8 @@ export class SimulationTemporalGraphService implements SimulationStep {
         const components = [
             { key: 'total_eolien', name: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'] },
             { key: 'total_solaire', name: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'] },
-            { key: 'total_hydro_fil', name: 'Hydro (fil de l\'eau)', color: '#7bbfe8' },
-            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: '#2b6fa8' },
+            { key: 'total_hydro_fil', name: 'Hydro (fil de l\'eau)', color: INFRA_COLORS['hydro_fil'] },
+            { key: 'total_hydro_reservoir', name: 'Hydro (réservoir)', color: INFRA_COLORS['hydro_reservoir'] },
             {
                 key: 'total_nucleaire',
                 name: INFRA_LABELS['nucleaire'],
@@ -269,40 +264,38 @@ export class SimulationTemporalGraphService implements SimulationStep {
         const avg = (key: string) =>
             data.reduce((sum: number, row: any) => sum + (row[key] ?? 0), 0) / n;
 
-        // tCO2/MWh per simulation production key
-        const CO2_INTENSITY: Record<string, number> = {
-            total_hydro_fil:       8    / 1000,
-            total_hydro_reservoir: 20   / 1000,
-            total_eolien:          0,
-            total_solaire:         0,
-            total_thermique:       1.2  / 1000,
-            total_nucleaire:       9    / 1000,
-            total_import:          200  / 1000,
-        };
-
-        // co2Tph = avg MW × tCO2/MWh = tCO2/h
-        const co2Tph: Record<string, number> = {
-            hydro_fil:  avg('total_hydro_fil')       * CO2_INTENSITY['total_hydro_fil'],
-            hydro_res:  avg('total_hydro_reservoir') * CO2_INTENSITY['total_hydro_reservoir'],
-            eolien:     0,
-            solaire:    0,
-            thermique:  avg('total_thermique')       * CO2_INTENSITY['total_thermique'],
-            nucleaire:  avg('total_nucleaire')       * CO2_INTENSITY['total_nucleaire'],
-            import:     avg('total_import')          * CO2_INTENSITY['total_import'],
-        };
+        // CO₂ from emission API (annual tonnes) → convert to t CO₂/h
+        const scenario = this.scenariosService.selectedScenario();
+        const simHours = scenario
+            ? (new Date(scenario.date_de_fin).getTime() - new Date(scenario.date_de_debut).getTime()) / 3_600_000
+            : 8760;
+        const annualCo2 = this.co2GraphService.getAnnualCo2ByCarrier();
+        const toTph = (key: string) => (annualCo2[key] ?? 0) / simHours;
 
         const carriers: [string, number][] = [
-            ['hydro_fil', avg('total_hydro_fil')],
-            ['hydro_res', avg('total_hydro_reservoir')],
-            ['eolien', avg('total_eolien')],
-            ['solaire', avg('total_solaire')],
-            ['thermique', avg('total_thermique')],
-            ['nucleaire', avg('total_nucleaire')],
-            ['import', avg('total_import')],
+            ['hydro_fil',  avg('total_hydro_fil')],
+            ['hydro_res',  avg('total_hydro_reservoir')],
+            ['thermique',  avg('total_thermique')],
+            ['nucleaire',  avg('total_nucleaire')],
+            ['import',     avg('total_import')],
+            ['eolien',     avg('total_eolien')],
+            ['solaire',    avg('total_solaire')],
         ];
+
+        const importAvgMW = carriers.find(([k]) => k === 'import')?.[1] ?? 0;
+        const co2Tph: Record<string, number> = {
+            hydro_fil:  toTph('hydro_fil'),
+            hydro_res:  toTph('hydro_res'),
+            eolien:     toTph('eolienneparc'),
+            solaire:    toTph('solaire'),
+            thermique:  toTph('thermique'),
+            nucleaire:  toTph('nucleaire'),
+            import:     (importAvgMW * 100) / 1000, // ~100 kg CO₂/MWh grid-mix factor
+        };
+
         return carriers.map(([carrier, value]) => ({
             ...CARRIER_NODE_DEFS[carrier],
-            value: Math.round(value),
+            value: value,
             co2Tph: co2Tph[carrier],
         }));
     }

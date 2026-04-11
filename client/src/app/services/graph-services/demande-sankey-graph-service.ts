@@ -103,7 +103,7 @@ export class DemandeSankeyGraphService implements SimulationStep {
         this.demandNodes.set(nodes);
         this.energyTypeNodes.set([
             { id: 'electricity', label: 'Électricité',     value: totalElec, color: '#3a7abf', icon: 'fa-bolt' },
-            { id: 'gas',         label: 'Énergie Fossile', value: totalGaz,  color: '#b05c1a', icon: 'fa-fire' },
+            { id: 'gas',         label: 'Énergie Fossile', value: totalGaz,  color: '#b05c1a', icon: 'fa-fire', co2FactorKgMWh: 50 },
         ]);
         this.tempShouldShowSignal.set(true);
     }

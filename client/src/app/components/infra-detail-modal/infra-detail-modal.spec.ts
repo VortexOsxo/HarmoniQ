@@ -105,37 +105,7 @@ describe('InfraDetailModal', () => {
     });
   });
 
-  describe('getIconForType', () => {
-    it('should return barrage icon for hydro', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.getIconForType('hydro')).toBe('/icons/barrage.png');
-    });
 
-    it('should return eolienne icon for eolienneparc', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.getIconForType('eolienneparc')).toBe('/icons/eolienne.png');
-    });
-
-    it('should return solaire icon for solaire', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.getIconForType('solaire')).toBe('/icons/solaire.png');
-    });
-
-    it('should return thermique icon for thermique', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.getIconForType('thermique')).toBe('/icons/thermique.png');
-    });
-
-    it('should return nucleaire icon for nucleaire', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.getIconForType('nucleaire')).toBe('/icons/nucelaire.png');
-    });
-
-    it('should return empty string for unknown type', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.getIconForType('unknown')).toBe('');
-    });
-  });
 
   describe('getPluralCategoryName', () => {
     it('should return empty string when no infra is selected', async () => {

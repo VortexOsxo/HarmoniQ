@@ -19,7 +19,7 @@ export function createEmptyScenario(): Scenario {
         description: '',
         date_de_debut: new Date().toISOString().split('T')[0],
         date_de_fin: new Date().toISOString().split('T')[0],
-        pas_de_temps: 'PT1H',
+        pas_de_temps: 'PT1H', // Pour l'instant toujours a 1h
         weather: Weather.Typical,
         consomation: Consumption.Normal,
     };

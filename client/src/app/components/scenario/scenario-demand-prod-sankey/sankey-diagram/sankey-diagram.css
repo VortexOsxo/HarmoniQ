@@ -89,8 +89,20 @@
     flex-shrink: 0;
 }
 
+.energy-type-column .column-nodes {
+    justify-content: space-between;
+    padding-top: 100%;
+    padding-bottom: 60%;
+}
+
 .energy-type-card {
     font-weight: 700;
+}
+
+.production-column .column-nodes {
+    padding-top: 20%;
+    justify-content: flex-start;
+    gap: 30px;
 }
 
 .co2-column {
@@ -176,12 +188,12 @@
 }
 
 .co2-total-card {
-    background: linear-gradient(135deg, #e25c5c 0%, #c94040 100%);
+    background: #c24848;
     color: #fff;
     border-radius: 12px;
     padding: 16px 14px;
     text-align: center;
-    box-shadow: 0 3px 10px rgba(194, 64, 64, 0.35);
+    box-shadow: 0 3px 10px rgba(194, 72, 72, 0.35);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -195,7 +207,7 @@
 
 .co2-total-card:hover {
     transform: scale(1.03);
-    box-shadow: 0 5px 16px rgba(194, 64, 64, 0.45);
+    box-shadow: 0 5px 16px rgba(194, 72, 72, 0.45);
 }
 
 .co2-cloud-icon {
