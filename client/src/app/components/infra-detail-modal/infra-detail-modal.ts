@@ -482,8 +482,8 @@ export class InfraDetailModal {
             const puissanceMW = parseFloat(d.puissance_nominal);
             if (!isNaN(puissanceMW) && puissanceMW > 0) {
                 const telephones = (puissanceMW * 1000000) / 20;
-                // User's formula: Puissance x 365 x 24 x 60 x 10^9 divisé par 20 000
-                const foyers = (puissanceMW * 365 * 24 * 60 * 1000000000) / 20000;
+                // Formule corrigée : Énergie annuelle en kWh (Puissance MW x 1000 kW/MW x 365 jours x 24 heures) divisée par 20 000 kWh/foyer
+                const foyers = (puissanceMW * 1000 * 365 * 24) / 20000;
 
                 const millionsTelephones = (telephones / 1000000).toFixed(1);
                 const foyersFormatted = this.formatBigNumber(foyers);
