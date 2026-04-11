@@ -3,7 +3,26 @@ import numpy as np
 
 # data_solaire.py
 
-# Définition des centrales solaires avec leurs puissances
+# ===========================================================================
+#  MODULES SOLAIRES DISPONIBLES
+# ---------------------------------------------------------------------------
+#  Clés   = nom lisible (affiché dans le frontend)
+#  Valeurs = clé exacte dans la base Sandia (pvlib.pvsystem.retrieve_sam)
+#  Puissance par panneau = Impo × Vmpo, déduite automatiquement par pvlib.
+# ===========================================================================
+MODULES_DISPONIBLES = {
+    "SunPower SPR-315E":        "SunPower_SPR_315E_WHT__2007__E__",       # ~315W — défaut (26 000 pann. ≈ 8 MW)
+    "Canadian Solar CS6X-300M": "Canadian_Solar_CS6X_300M__2013_",         # ~284W
+    "Canadian Solar CS5P-220M": "Canadian_Solar_CS5P_220M___2009_",         # ~221W — ancien défaut
+}
+
+ONDULEURS_DISPONIBLES = {
+    "ABB MICRO-0.3 (300W)":   "ABB__MICRO_0_3_I_OUTD_US_240__240V_",        # Paco=300W, Vdco=40V - défaut
+    "ABB MICRO-0.25 (250W) 240V": "ABB__MICRO_0_25_I_OUTD_US_240__240V_",    # Paco=250W, Vdco=40V
+    "ABB MICRO-0.25 (250W) 208V": "ABB__MICRO_0_25_I_OUTD_US_208__208V_",    # Paco=250W, Vdco=40V
+}
+
+# -Données dans la db - Définition des centrales solaires avec leurs puissances -IGNORE -
 coordinates_centrales = [
     (45.4167, -73.4999, "La Prairie", 0, "Etc/GMT+5", 8000),  # 8 MW = 8000 kW
     (45.6833, -73.4333, "Varennes", 0, "Etc/GMT+5", 1500),  # 1.5 MW = 1500 kW
@@ -152,17 +171,9 @@ population_relative = {
 
 
 # ===========================================================================
-#  FACTEUR TOITURE PAR RA
+#  IGNORE
 # ---------------------------------------------------------------------------
-#  Surface de toit utilisable par habitant (m²/hab).
-#  Formule : S_toit_util = (S_hab_par_hab / N_étages) × η_toit
-#
-#  Sources / hypothèses :
-#    S_hab_par_hab : ~35-50 m²/hab selon le type de bâti régional
-
-#    N_étages      : estimé par paliers de densité (hab/km²)
-#                    < 100 → 1.5  |  100-1000 → 2.0  |  1000-3000 → 3.0
-#                    3000-5000 → 4.5  |  > 5000 → 7.0
+#  
 
 # https://oee.nrcan.gc.ca/organisme/statistiques/bnce/apd/showTable.cfm?type=SHCMA&sector=aaa&juris=ca&year=2015&rn=9&page=1
 
@@ -326,7 +337,7 @@ mrc_to_ra = {
 }
 
 # ===========================================================================
-#  POPULATION RELATIVE PAR MRC  (F_intra = pop_MRC / pop_RA)
+#  IGNORE  
 # ---------------------------------------------------------------------------
 #  Source : ISQ, estimations au 1er juillet 2025
 #  Clés = noms exacts de coordinates_residential_MRC

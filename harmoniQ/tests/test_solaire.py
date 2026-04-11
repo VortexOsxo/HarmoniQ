@@ -67,7 +67,6 @@ PARAMS = dict(
     longitude=-73.5,
     angle_panneau=30.0,
     orientation_panneau=180.0,
-    puissance_nominal=0.22,   # kW par panneau (~220 W, cohérent avec module Sandia)
     nombre_panneau=100,
     date_start=pd.Timestamp("2035-01-01"),
     date_end=pd.Timestamp("2035-12-31 23:00:00"),
@@ -163,14 +162,6 @@ def test_plus_de_panneaux_plus_de_production(mock_pvgis):
     ratio = df_grand["production"].sum() / df_petit["production"].sum()
     assert abs(ratio - 2.0) < 0.01
 
-
-def test_plus_de_puissance_plus_de_production(mock_pvgis):
-    """Doubler la puissance nominale par panneau doit doubler la production."""
-    df_petit = calculate_energy_solar_plants(**PARAMS)
-    p_grand = {**PARAMS, "puissance_nominal": PARAMS["puissance_nominal"] * 2}
-    df_grand = calculate_energy_solar_plants(**p_grand)
-    ratio = df_grand["production"].sum() / df_petit["production"].sum()
-    assert abs(ratio - 2.0) < 0.01
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +289,6 @@ def test_integration_une_annee_reelle():
         longitude=-73.4999,
         angle_panneau=30.0,
         orientation_panneau=180.0,
-        puissance_nominal=0.22,
         nombre_panneau=1000,
         date_start=pd.Timestamp("2035-01-01"),
         date_end=pd.Timestamp("2035-12-31 23:00:00"),
@@ -323,7 +313,6 @@ if __name__ == "__main__":
     COMMUN = dict(
         angle_panneau=30.0,
         orientation_panneau=180.0,
-        puissance_nominal=0.22,
         date_start=pd.Timestamp("2035-01-01"),
         date_end=pd.Timestamp("2035-12-31 23:00:00"),
     )
@@ -384,10 +373,9 @@ if __name__ == "__main__":
     print("[OK] albedo_comparaison.png sauvegarde")
 
     # ── Graphique bifacial : mono vs bifacial (La Prairie) ───────────────────
-    print(f"\n>> Calcul bifacial pour {c_ref['nom']}...")
-    df_bi = calculate_energy_solar_plants(**c_ref, **COMMUN, bifacial=True)
-
-    df_mono = df_avec.copy()   # monofacial avec albedo saisonnier
+    print(f"\n>> Calcul mono/bifacial pour {c_ref['nom']}...")
+    df_mono = calculate_energy_solar_plants(**c_ref, **COMMUN, bifacial=False)
+    df_bi   = calculate_energy_solar_plants(**c_ref, **COMMUN, bifacial=True)
     df_mono["mois"] = pd.to_datetime(df_mono["date"]).dt.month
     df_bi["mois"]   = pd.to_datetime(df_bi["date"]).dt.month
     m_mono = df_mono.groupby("mois")["production"].sum() / 1_000   # MWh
@@ -487,27 +475,23 @@ if __name__ == "__main__":
     base_df.to_csv("base_production_mrc.csv", index=False)
     print(f"\n[OK] base_production_mrc.csv sauvegardé ({len(base_df):,} lignes, {base_df['mrc'].nunique()} MRCs)")
 
-    # ── Graphique : production mensuelle moyenne W/m² par MRC ─────────────────
-    base_df["mois"] = pd.to_datetime(base_df["datetime"]).dt.month
-    mensuel = base_df.groupby(["mrc", "mois"])["production_w_per_m2"].mean().unstack("mois")
+    # ── Graphique : production annuelle kWh/m² — 3 MRCs clés ────────────────
+    MRC_AFFICHEES = ["Montréal", "Laval", "Longueuil"]
+    annuel = (
+        base_df[base_df["mrc"].isin(MRC_AFFICHEES)]
+        .groupby("mrc")["production_w_per_m2"].sum() / 1000  # Wh/m² → kWh/m²
+    ).reindex(MRC_AFFICHEES)
 
-    fig5, ax5 = plt.subplots(figsize=(12, 5))
-    x = np.arange(12)
-    width = 0.25
+    fig5, ax5 = plt.subplots(figsize=(8, 5))
     colors_mrc = ["#5fa2dd", "#f4a261", "#2a9d8f"]
+    bars = ax5.bar(MRC_AFFICHEES, annuel.values, color=colors_mrc, alpha=0.85)
+    ax5.bar_label(bars, fmt="%.0f kWh/m²", padding=4)
 
-    for i, mrc in enumerate(mensuel.index):
-        ax5.bar(x + i * width, mensuel.loc[mrc].values, width, label=mrc,
-                color=colors_mrc[i], alpha=0.85)
-
-    ax5.set_xticks(x + width)
-    ax5.set_xticklabels(MOIS)
-    ax5.set_ylabel("Production moyenne (W/m²)")
-    ax5.set_title("Base W/m² mensuelle moyenne par MRC — TMY")
-    ax5.legend(title="MRC")
+    ax5.set_ylabel("Production annuelle (kWh/m²)")
+    ax5.set_title("Production solaire annuelle — Montréal, Laval, Longueuil — TMY")
     ax5.grid(axis="y", alpha=0.3)
     plt.tight_layout()
-    plt.savefig("base_production_mrc.png", dpi=120)
-    print("[OK] base_production_mrc.png sauvegardé")
+    plt.savefig("resid_production_mensuelle.png", dpi=120)
+    print("[OK] resid_production_mensuelle.png sauvegardé")
 
     plt.show()

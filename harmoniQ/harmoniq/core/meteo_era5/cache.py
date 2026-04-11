@@ -27,7 +27,7 @@ class Era5Cache:
         return ts
 
     def has_year(self, year: int) -> bool:
-        year_dir = self.config.cache_dir / "normalized" / f"year={year}"
+        year_dir = self.config.normalized_dir / f"year={year}"
         return year_dir.exists() and any(year_dir.rglob("*.parquet"))
 
     def write_monthly_parquet(self, df: pd.DataFrame, year: int) -> list[Path]:
