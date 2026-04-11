@@ -10,11 +10,16 @@
                     <div id="scenario-identity-group">
                         <label for="scenario-nom">Nom du scenario <span class="required-star">*</span></label>
                         <input type="text" class="form-control" id="scenario-nom" name="nom" [(ngModel)]="scenario.nom"
-                            placeholder="Nom du scenario" required />
+                            placeholder="Nom du scenario" required [maxlength]="nomMaxLength"
+                            [class.is-invalid]="scenario.nom.length > nomMaxLength" />
+                        <small class="text-muted d-block text-end mt-1">{{ scenario.nom.length }} / {{ nomMaxLength }}</small>
 
                         <label for="scenario-description">Description</label>
                         <textarea class="form-control" id="scenario-description" name="description"
-                            [(ngModel)]="scenario.description" rows="3"></textarea>
+                            [(ngModel)]="scenario.description" rows="3" [maxlength]="descriptionMaxLength"
+                            [class.is-invalid]="scenario.description.length > descriptionMaxLength"></textarea>
+                        <small class="text-muted d-block text-end mt-1"
+                            [class.text-danger]="scenario.description.length > descriptionMaxLength">{{ scenario.description.length }} / {{ descriptionMaxLength }}</small>
 
                         <label>Étendue de temps</label>
                         <app-date-picker id="scenario-dates"

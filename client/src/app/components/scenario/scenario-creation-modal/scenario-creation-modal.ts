@@ -22,6 +22,9 @@ export class ScenarioCreationModal {
   };
 
 
+  readonly nomMaxLength = 50;
+  readonly descriptionMaxLength = 1000;
+
   public Weather = Weather;
   public Consumption = Consumption;
 
@@ -36,7 +39,10 @@ export class ScenarioCreationModal {
   }
 
   get canSubmit(): boolean {
-    return this.scenario.nom.trim().length > 0 && this.dateError === null;
+    return this.scenario.nom.trim().length > 0
+      && this.scenario.nom.length <= this.nomMaxLength
+      && this.scenario.description.length <= this.descriptionMaxLength
+      && this.dateError === null;
   }
 
   onSubmit() {
