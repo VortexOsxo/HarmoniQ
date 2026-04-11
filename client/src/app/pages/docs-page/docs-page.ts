@@ -10,7 +10,7 @@ import { NavigationBar } from '@app/components/navigation-bar/navigation-bar';
   styleUrl: './docs-page.css'
 })
 export class DocsPage {
-  selectedProduction = signal<string>('');
+  selectedProduction = signal<string>('eolienne');
   activeDetails = signal<Set<string>>(new Set());
 
   images: { [key: string]: string } = {
