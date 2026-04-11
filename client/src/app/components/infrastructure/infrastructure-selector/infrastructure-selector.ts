@@ -121,4 +121,30 @@ export class InfrastructureSelector {
       this.infrasService.deleteInfraGroup(group);
     }
   }
+
+  selectAllVisible() {
+    const byType: Record<string, any[]> = {};
+    for (const cat of this.infras) {
+      if (!this.activeFilters.has(cat.type)) continue;
+      byType[cat.type] = this.getFilteredAndSortedInfras(cat.type).map((i: any) => i.id.toString());
+    }
+    this.infrasService.setInfrasForTypes(byType);
+  }
+
+  deselectAllVisible() {
+    const visibleByType = new Map<string, Set<string>>();
+    for (const item of this.flatFilteredInfras) {
+      const ids = visibleByType.get(item.type) ?? new Set();
+      ids.add(item.infra.id.toString());
+      visibleByType.set(item.type, ids);
+    }
+    const byType: Record<string, any[]> = {};
+    for (const [type, visibleIds] of visibleByType) {
+      const allInfras = this.infrasService.getInfrasSignalByType(type)();
+      byType[type] = allInfras
+        .filter((i: any) => !visibleIds.has(i.id.toString()) && this.infrasService.isInfraSelected(type, i.id.toString()))
+        .map((i: any) => i.id.toString());
+    }
+    this.infrasService.setInfrasForTypes(byType);
+  }
 }

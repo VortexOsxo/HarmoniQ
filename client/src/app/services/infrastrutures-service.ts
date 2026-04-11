@@ -429,6 +429,10 @@ export class InfrastruturesService {
   }
 
   setInfrasForType(type: string, infrasIds: any[]) {
+    this.setInfrasForTypes({ [type]: infrasIds });
+  }
+
+  setInfrasForTypes(infrasByType: Record<string, any[]>) {
     const currentGroup: any = this.selectedInfraGroup();
     if (!currentGroup) return;
 
@@ -437,9 +441,11 @@ export class InfrastruturesService {
       ? { ...currentGroup, id: 0, nom: this._getNextDefaultGroupName() }
       : { ...currentGroup };
 
-    const key = typeKeyMap[type];
-    if (!key) return;
-    infraGroup[key] = infrasIds;
+    for (const [type, infrasIds] of Object.entries(infrasByType)) {
+      const key = typeKeyMap[type];
+      if (!key) continue;
+      infraGroup[key] = infrasIds;
+    }
 
     if (isDefault) {
       this.createInfraGroup(infraGroup);
