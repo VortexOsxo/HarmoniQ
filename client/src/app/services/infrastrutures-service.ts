@@ -30,6 +30,13 @@ const INFRA_KEY = 'harmoniq_local_infras';
 const INFRA_GROUPS_KEY = 'harmoniq_local_infra_groups';
 const FICTIONAL_HYDRO_IDS_KEY = 'harmoniq_added_fictional_hydros';
 
+const typeSchemaMap: Record<string, string> = {
+  'eolienneparc': 'EolienneParcBase',
+  'solaire': 'SolaireBase',
+  'thermique': 'ThermiqueBase',
+  'nucleaire': 'NucleaireBase',
+};
+
 export class InfrasContainer<T extends Infra<T>> {
 
   infras = signal<T[]>([]);
@@ -86,6 +93,12 @@ export class InfrasContainer<T extends Infra<T>> {
 
   removeLocal(id: number): void {
     this.infras.update(list => list.filter(i => i.id !== id));
+  }
+
+  updateLocal(raw: any): void {
+    const infra = this.factory.fromJson(raw);
+    infra.isUserCreated = true;
+    this.infras.update(list => list.map(i => i.id === infra.id ? infra : i));
   }
 
   /** Ajoute un barrage fictif au signal infras (le marque comme userCreated). */
@@ -202,6 +215,31 @@ export class InfrastruturesService {
 
       const detailService = this.injector.get(InfraDetailService);
       detailService.openDetail(type, idStr);
+    }).catch(() => { });
+  }
+
+  editInfra(type: string, infraData: any) {
+    const schemaName = typeSchemaMap[type];
+    if (!schemaName) return;
+
+    const schemas = this.openApiService.getOpenApiSchemas();
+    const modalRef = this.modalService.open(CreateInfraModal, { centered: true, scrollable: true });
+
+    modalRef.componentInstance.schema = schemas[schemaName];
+    modalRef.componentInstance.type = type;
+    modalRef.componentInstance.lat = parseFloat(infraData.latitude || infraData.lat);
+    modalRef.componentInstance.lon = parseFloat(infraData.longitude || infraData.lng);
+    modalRef.componentInstance.editData = infraData;
+
+    modalRef.result.then(result => {
+      if (!result) return;
+
+      const updated = { ...result, id: infraData.id, isUserCreated: true };
+      this.storageService.updateElement(`${INFRA_KEY}_${type}`, updated);
+      this.infrasContainer.get(type)?.updateLocal(updated);
+
+      const detailService = this.injector.get(InfraDetailService);
+      detailService.openDetail(type, String(infraData.id));
     }).catch(() => { });
   }
 

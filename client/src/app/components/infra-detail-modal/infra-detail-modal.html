@@ -11,6 +11,10 @@
             </div>
         </div>
         <div class="detail-header-actions">
+            <!-- Edit Button (non-hydro only) -->
+            <button class="detail-edit-btn" *ngIf="infra()?.data?.isUserCreated && infra()?.type !== 'hydro'" (click)="editInfra()" title="Modifier l'infrastructure">
+                <i class="fa-solid fa-pen"></i>
+            </button>
             <!-- Delete Button -->
             <button class="detail-delete-btn" *ngIf="infra()?.data?.isUserCreated" (click)="deleteInfra()" title="Supprimer l'infrastructure">
                 <i class="fa-solid fa-trash"></i>
