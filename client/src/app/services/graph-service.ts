@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as Plotly from 'plotly.js-dist-min';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 
 export const graphServiceConfig = {
     PRODUCTION_SINGLE_INFRA_ID: 'production-single-infra-id',
@@ -19,7 +20,28 @@ export const graphServiceConfig = {
     providedIn: 'root',
 })
 export class GraphService {
-    constructor() {}
+    constructor() {
+        (Plotly as any).register({
+            moduleType: 'locale',
+            name: 'fr',
+            dictionary: {},
+            format: {
+                months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+                shortMonths: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+                days: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+                shortDays: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+                decimal: ',',
+                thousands: '\u00a0',
+                grouping: [3],
+                currency: ['', '\u00a0€'],
+                periods: ['', ''],
+                dateTime: '%A %e %B %Y %X',
+                date: '%d/%m/%Y',
+                time: '%H:%M:%S',
+            },
+        });
+        (Plotly as any).setPlotConfig({ locale: 'fr' });
+    }
 
     public generateProductionSingleInfraGraph(
         type: string,
@@ -51,16 +73,27 @@ export class GraphService {
         }
 
         const layout = this.getStandardLayout(
-            `Production de l'infrastructure`,
+            null,
             `Production (${unit})`,
             granularity,
+            { margin: { t: 20 } }
         );
 
+        const lineColor =
+            type === 'eolienneparc'
+                ? INFRA_COLORS['eolienneparc']
+                : type === 'solaire'
+                  ? INFRA_COLORS['solaire']
+                  : type === 'thermique'
+                    ? INFRA_COLORS['thermique']
+                    : type === 'nucleaire'
+                      ? INFRA_COLORS['nucleaire']
+                      : '#3498db';
         const trace = this.getStandardTrace(
             'Production',
             xval,
             yval,
-            '#3498db',
+            lineColor,
             `%{y:.2f} ${unit}<extra></extra>`,
         );
 
@@ -79,7 +112,7 @@ export class GraphService {
                       }
                     : title,
             xaxis: {
-                title: { text: 'Date', font: { size: 14, color: '#7f8c8d' } },
+                title: null,
                 tickformat:
                     granularity === 'monthly'
                         ? '%b %Y'

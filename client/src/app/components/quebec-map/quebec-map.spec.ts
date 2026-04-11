@@ -6,6 +6,9 @@ import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
+
 vi.mock('leaflet.markercluster', () => ({}));
 
 vi.mock('leaflet', () => ({
@@ -84,6 +87,15 @@ const mockInfraDetailService = {
   selectedInfra: signal(null),
 };
 
+const mockModalService = {
+  open: vi.fn(),
+};
+
+const mockInfrastruturesService = {
+  selectedInfraGroup: signal(null),
+  getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
+};
+
 async function renderComponent() {
   return render(QuebecMap, {
     providers: [
@@ -91,6 +103,8 @@ async function renderComponent() {
       { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
       { provide: ReseauService, useValue: mockReseauService },
       { provide: InfraDetailService, useValue: mockInfraDetailService },
+      { provide: NgbModal, useValue: mockModalService },
+      { provide: InfrastruturesService, useValue: mockInfrastruturesService },
     ],
     schemas: [NO_ERRORS_SCHEMA],
   });

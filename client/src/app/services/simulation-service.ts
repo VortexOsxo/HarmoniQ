@@ -1,4 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
 import { HttpClient } from '@angular/common/http';
@@ -25,6 +26,8 @@ export class SimulationService {
 
     openSourcesPanel$ = new Subject<void>();
     productionNodes = signal<ProductionNode[] | null>(null);
+    /** Shown when the user clicks « Lancer Simulation » with an incomplete map configuration. */
+    showLaunchConfigHints = signal(false);
 
     private simulationStepService = inject(SimulationStepService);
     step = computed(() => this.simulationStepService.currentStepName());
@@ -39,7 +42,14 @@ export class SimulationService {
         private simulationCo2GraphService: SimulationCo2GraphService,
         private simulationAnalysisGraphService: SimulationAnalysisGraphService,
         private snackbar: SnackbarService,
+        private router: Router,
     ) {
+        effect(() => {
+            if (this.canLaunch()) {
+                this.showLaunchConfigHints.set(false);
+            }
+        });
+
         effect(() => {
             this.scenariosService.selectedScenario(); // track scenario changes
             this.simulationTemporalGraphService.cachedScenarioId = undefined;
@@ -75,6 +85,19 @@ export class SimulationService {
             this.simulationAnalysisGraphService.reset();
             this.productionNodes.set(null);
         });
+    }
+
+    /** Navigate to the simulation page, or surface configuration hints on the map panel. */
+    requestLaunchFromMap(): void {
+        if (this.canLaunch()) {
+            this.router.navigate(['/simulation']);
+        } else {
+            this.showLaunchConfigHints.set(true);
+        }
+    }
+
+    dismissLaunchHints(): void {
+        this.showLaunchConfigHints.set(false);
     }
 
     private getInfraScenarioPayload(type: string, infraId: number) {
@@ -115,6 +138,8 @@ export class SimulationService {
         const infraGroup = this.infrastructuresService.selectedInfraGroup();
 
         if (!scenario || !infraGroup) return;
+
+        await this.infrastructuresService.ensureInfrasLoaded();
 
         const steps = [
             this.simulationCostGraphService,

@@ -4,24 +4,26 @@ import { graphServiceConfig } from '../graph-service';
 import { InfrastruturesService } from '../infrastrutures-service';
 import { DemandeSankeyGraphService } from './demande-sankey-graph-service';
 
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
+
 const PROD_SEGMENTS = [
-    { prodKey: 'total_eolien', label: 'Éolien', color: '#6abbc4', segKey: 'eolien' },
-    { prodKey: 'total_solaire', label: 'Solaire', color: '#e8c53c', segKey: 'solaire' },
+    { prodKey: 'total_eolien', label: 'Éolien', color: INFRA_COLORS['eolien'], segKey: 'eolien' },
+    { prodKey: 'total_solaire', label: 'Solaire', color: INFRA_COLORS['solaire'], segKey: 'solaire' },
     {
         prodKey: 'total_hydro_fil',
         label: "Hydro (fil de l'eau)",
-        color: '#7bbfe8',
+        color: INFRA_COLORS['hydro_fil'],
         segKey: 'hydro_fil',
     },
     {
         prodKey: 'total_hydro_reservoir',
         label: 'Hydro (réservoir)',
-        color: '#2b6fa8',
+        color: INFRA_COLORS['hydro_reservoir'],
         segKey: 'hydro_res',
     },
-    { prodKey: 'total_nucleaire', label: 'Nucléaire', color: '#e8754a', segKey: 'nucleaire' },
-    { prodKey: 'total_thermique', label: 'Thermique', color: '#e25c5c', segKey: 'thermique' },
-    { prodKey: 'total_import', label: 'Importations', color: '#a29bfe', segKey: 'import' },
+    { prodKey: 'total_nucleaire', label: 'Nucléaire', color: INFRA_COLORS['nucleaire'], segKey: 'nucleaire' },
+    { prodKey: 'total_thermique', label: 'Thermique', color: INFRA_COLORS['thermique'], segKey: 'thermique' },
+    { prodKey: 'total_import', label: 'Importations', color: INFRA_COLORS['import'], segKey: 'import' },
 ];
 
 const SEASONS = [

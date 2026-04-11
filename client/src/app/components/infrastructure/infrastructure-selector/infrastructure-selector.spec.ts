@@ -40,6 +40,7 @@ const mockInfrasService = {
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
   deleteInfraGroup: vi.fn(),
   isInfraSelected: vi.fn().mockReturnValue(false),
+  isDefaultInfraGroup: vi.fn().mockReturnValue(false),
   guaranteedPowerMW: signal(0),
   windInstalledMW: signal(0),
   solarInstalledMW: signal(0),

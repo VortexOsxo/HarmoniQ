@@ -327,3 +327,21 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   box-shadow: none;
 }
 
+/* ── Simulation Single Infra Modal overrides ── */
+.sim-infra-modal .modal-dialog {
+  max-width: 90vw;
+  width: 1200px;
+}
+
+.sim-infra-modal .modal-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  height: 85vh;
+}
+
+/* ── Disable Leaflet Attribution Footer ── */
+.leaflet-control-attribution {
+  display: none !important;
+}
+

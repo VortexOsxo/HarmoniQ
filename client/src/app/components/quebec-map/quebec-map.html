@@ -173,18 +173,26 @@
 <div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
     <p>Ajouter une infrastructure :</p>
 
-    <img src="/icons/barrage.png" infraNom="Barrage Hydro-Électrique" class="icon-draggable" type="Hydro" route="hydro"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-barrage icon-clickable"
+        (click)="openHydroSelectModal()"
+        ngbTooltip="Cliquez pour ajouter un barrage hydraulique" placement="top"
+        role="button" aria-label="Ajouter un barrage hydroélectrique"
+        [style.background-color]="infraColors['hydro']"></div>
 
-    <img src="/icons/eolienne.png" infraNom="Parc Éolien" class="icon-draggable" type="EolienneParc"
-        route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-eolienne" infraNom="Parc Éolien"
+        type="EolienneParc" route="eolienneparc" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Parc éolien"
+        [style.background-color]="infraColors['eolienneparc']"></div>
 
-    <img src="/icons/solaire.png" infraNom="Parc Solaire" class="icon-draggable" type="Solaire" route="solaire"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-solaire" infraNom="Parc Solaire" type="Solaire"
+        route="solaire" draggable="true" ngbTooltip="{{toolTipText}}" placement="top" role="img"
+        aria-label="Parc solaire" [style.background-color]="infraColors['solaire']"></div>
 
-    <img src="/icons/thermique.png" infraNom="Parc Thermique" class="icon-draggable" type="Thermique" route="thermique"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-thermique" infraNom="Parc Thermique"
+        type="Thermique" route="thermique" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Centrale thermique" [style.background-color]="infraColors['thermique']"></div>
 
-    <img src="/icons/nucelaire.png" infraNom="Parc Nucléaire" class="icon-draggable" type="Nucleaire" route="nucleaire"
-        draggable="true" ngbTooltip="{{toolTipText}}" placement="top" />
+    <div class="icon-draggable icon-draggable-tinted icon-draggable-nucleaire" infraNom="Parc Nucléaire"
+        type="Nucleaire" route="nucleaire" draggable="true" ngbTooltip="{{toolTipText}}" placement="top"
+        role="img" aria-label="Centrale nucléaire" [style.background-color]="infraColors['nucleaire']"></div>
 </div>

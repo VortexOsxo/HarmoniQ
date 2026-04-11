@@ -13,7 +13,7 @@
                 <i class="fa-solid fa-plus"></i>
             </button>
             <button class="group-delete-btn" title="Supprimer ce groupe d'infrastructure"
-                *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== 1"
+                *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== defaultInfraGroupId"
                 (click)="deleteInfraGroup()">
                 <i class="fa-solid fa-trash"></i>
             </button>
@@ -48,7 +48,23 @@
     <div ngbAccordion class="infra-accordion" *ngIf="visibleCategories.length > 0">
         <div ngbAccordionItem *ngFor="let infra of visibleCategories" [id]="infra.type">
             <h2 ngbAccordionHeader>
-                <button ngbAccordionButton>{{ infra.name }}</button>
+                <button ngbAccordionButton type="button">
+                    <span class="infra-accordion-heading">
+                        <span
+                            class="infra-category-icon infra-category-icon-tinted"
+                            [ngClass]="{
+                                'infra-category-barrage': infra.type === 'hydro',
+                                'infra-category-eolienne': infra.type === 'eolienneparc',
+                                'infra-category-solaire': infra.type === 'solaire',
+                                'infra-category-thermique': infra.type === 'thermique',
+                                'infra-category-nucleaire': infra.type === 'nucleaire'
+                            }"
+                            [style.background-color]="infraColors[infra.type]"
+                            aria-hidden="true"
+                        ></span>
+                        <span class="infra-accordion-title-text">{{ infra.name }}</span>
+                    </span>
+                </button>
             </h2>
             <div ngbAccordionCollapse>
                 <div ngbAccordionBody>

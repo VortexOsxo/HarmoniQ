@@ -90,7 +90,7 @@ div.map-overlay p {
     margin: 0 0.25em;
 }
 
-div.map-overlay img.icon-draggable {
+div.map-overlay .icon-draggable {
     width: 2.5em;
     height: 2.5em;
     cursor: grab;

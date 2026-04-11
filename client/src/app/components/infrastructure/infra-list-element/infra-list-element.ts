@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { CommonModule } from '@angular/common';
-import { SimulationSingleInfraModal } from '@app/components/simulation/simulation-single-infra-modal/simulation-single-infra-modal';
+import { SimulationSingleInfraModal } from '../../simulation/simulation-single-infra-modal/simulation-single-infra-modal';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
@@ -11,6 +11,7 @@ import { ConfirmationModal } from '@app/components/commons/confirmation-modal/co
   selector: 'app-infra-list-element',
   imports: [CommonModule],
   templateUrl: './infra-list-element.html',
+  styleUrl: './infra-list-element.css',
 })
 export class InfraListElement {
   @Input({ required: true }) nom!: string;
@@ -22,6 +23,18 @@ export class InfraListElement {
     return this.infrastructuresService.isInfraSelected(this.type, this.id);
   }
 
+  get isToggleLocked(): boolean {
+    return false;
+  }
+
+  get rowTitle(): string {
+    const g = this.infrastructuresService.selectedInfraGroup();
+    if (g && this.infrastructuresService.isDefaultInfraGroup(g)) {
+      return 'Modifier cette infrastructure créera une copie modifiée du groupe québécois.';
+    }
+    return 'Cliquez pour sélectionner ou désélectionner cette infrastructure';
+  }
+
   constructor(
     private infrastructuresService: InfrastruturesService,
     private scenarioService: ScenariosService,
@@ -29,7 +42,7 @@ export class InfraListElement {
     private infraDetailService: InfraDetailService,
   ) { }
 
-  toggleInfra() {
+  onRowClick() {
     this.infrastructuresService.toggleInfra(this.type, this.id);
   }
 
@@ -38,7 +51,7 @@ export class InfraListElement {
     if (!this.scenarioService.selectedScenario())
       return;
 
-    const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl' });
+    const modalRef = this.modalService.open(SimulationSingleInfraModal, { size: 'xl', windowClass: 'sim-infra-modal' });
 
     modalRef.componentInstance.id = this.id;
     modalRef.componentInstance.name = this.nom;

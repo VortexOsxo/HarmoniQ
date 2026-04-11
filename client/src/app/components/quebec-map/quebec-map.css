@@ -31,10 +31,59 @@ div.map-overlay p {
     margin: 0 0.25em;
 }
 
-div.map-overlay img.icon-draggable {
+div.map-overlay .icon-draggable {
     width: 2.5em;
     height: 2.5em;
+    min-width: 2.5em;
+    min-height: 2.5em;
+    flex-shrink: 0;
     cursor: grab;
+    box-sizing: border-box;
+}
+
+/* Silhouettes PNG → teinte = couleurs du panneau résultats (INFRA_COLORS) */
+div.map-overlay .icon-draggable.icon-draggable-tinted {
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.icon-draggable-barrage {
+    -webkit-mask-image: url(/icons/barrage.png);
+    mask-image: url(/icons/barrage.png);
+}
+
+.icon-clickable {
+    cursor: pointer !important;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.icon-clickable:hover {
+    transform: scale(1.15);
+    filter: brightness(1.15);
+}
+
+.icon-draggable-eolienne {
+    -webkit-mask-image: url(/icons/eolienne.png);
+    mask-image: url(/icons/eolienne.png);
+}
+
+.icon-draggable-solaire {
+    -webkit-mask-image: url(/icons/solaire.png);
+    mask-image: url(/icons/solaire.png);
+}
+
+.icon-draggable-thermique {
+    -webkit-mask-image: url(/icons/thermique.png);
+    mask-image: url(/icons/thermique.png);
+}
+
+.icon-draggable-nucleaire {
+    -webkit-mask-image: url(/icons/nucelaire.png);
+    mask-image: url(/icons/nucelaire.png);
 }
 
 .pa-legend-reopen {
