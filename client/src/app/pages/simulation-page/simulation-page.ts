@@ -14,6 +14,8 @@ import { SimulationCo2GraphService } from '@app/services/graph-services/simulati
 import { SimulationAnalysisGraphService } from '@app/services/graph-services/simulation-analysis-graph-service';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { TutorialOverlay } from '@app/components/tutorial-overlay/tutorial-overlay';
+import { TutorialService } from '@app/services/tutorial-service';
 import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { graphServiceConfig } from '@app/services/graph-service';
 
@@ -36,6 +38,7 @@ interface Section {
         ScenarioDemandProdSankey,
         ScenarioTemporalSimulation,
         GranularitySelectorComponent,
+        TutorialOverlay,
     ],
     templateUrl: './simulation-page.html',
     styleUrl: './simulation-page.css',
@@ -52,6 +55,7 @@ export class SimulationPage implements AfterViewInit {
     co2Service = inject(SimulationCo2GraphService);
     analysisService = inject(SimulationAnalysisGraphService);
     infrasService = inject(InfrastruturesService);
+    tutorialService = inject(TutorialService);
 
     readonly config = graphServiceConfig;
 
@@ -204,6 +208,7 @@ export class SimulationPage implements AfterViewInit {
 
     ngAfterViewInit(): void {
         this.simulationService.launchSimulation();
+        setTimeout(() => this.tutorialService.autoStart(), 500);
     }
 
     get temporalGranularity(): string {

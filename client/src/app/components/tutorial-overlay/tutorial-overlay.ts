@@ -21,8 +21,10 @@ import { TutorialService, TutorialStep, TutorialState } from '@app/services/tuto
 export class TutorialOverlay implements OnInit, OnDestroy {
     state: TutorialState = { active: false, currentStep: 0, showWelcome: false };
     highlightRect: DOMRect | null = null;
+    isPositioned = false;
     bubbleTop = 0;
     bubbleLeft = 0;
+    Math = Math;
 
     @ViewChild('nextButton') nextButton?: ElementRef<HTMLButtonElement>;
 
@@ -57,17 +59,31 @@ export class TutorialOverlay implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.sub = this.tutorialService.tutorialState$.subscribe((s) => {
-            if (!s.active || s.showWelcome) {
-                this.cleanupActiveTarget();
-            }
+            const previousStep = this.state?.currentStep;
             this.state = s;
+
+            if (!s.active || s.showWelcome) {
+                this.isPositioned = false;
+                this.cleanupActiveTarget();
+                this.cd.detectChanges();
+                return;
+            }
+
+            // New step = hide bubble until positioned
+            if (s.currentStep !== previousStep) {
+                this.isPositioned = false;
+                this.cd.detectChanges();
+            }
+
             if (s.active && !s.showWelcome) {
                 // Allow DOM to render before positioning
                 setTimeout(() => {
                     this.positionBubble();
+                    this.isPositioned = true;
                     if (!this.currentStep.requireAction && this.nextButton?.nativeElement) {
                         this.nextButton.nativeElement.focus();
                     }
+                    this.cd.detectChanges();
                 }, this.currentStep?.delayBeforePosition ?? 10);
             }
             this.cd.markForCheck();
@@ -163,6 +179,9 @@ export class TutorialOverlay implements OnInit, OnDestroy {
         if (step.requireAction) {
             htmlEl.classList.add('tutorial-interactive-target');
             this.activeTargetClickHandler = (e: Event) => {
+                // Prevent premature advance if they click empty space on footer
+                if (step.title === 'Lancer la Simulation') return;
+
                 // We advance the tutorial, native click still happens
                 this.tutorialService.nextStep();
             };
@@ -248,7 +267,7 @@ export class TutorialOverlay implements OnInit, OnDestroy {
                     Math.min(rect.top, vh - bubbleHeight - this.GAP),
                 );
                 this.bubbleLeft = rect.right + this.GAP;
-                if (this.bubbleLeft + this.BUBBLE_WIDTH > vw) {
+                if (this.bubbleLeft + this.BUBBLE_WIDTH > vw - this.GAP) {
                     this.bubbleLeft = rect.left - this.BUBBLE_WIDTH - this.GAP;
                 }
                 break;
@@ -258,14 +277,15 @@ export class TutorialOverlay implements OnInit, OnDestroy {
                 break;
         }
 
-        // Apply optional horizontal offset
+        // Apply custom offset if defined
         if (step.bubbleOffsetX) {
             this.bubbleLeft = Math.max(
                 this.GAP,
-                Math.min(this.bubbleLeft + step.bubbleOffsetX, vw - this.BUBBLE_WIDTH - this.GAP),
+                Math.min(this.bubbleLeft + step.bubbleOffsetX, vw - this.BUBBLE_WIDTH - this.GAP)
             );
         }
 
+        this.isPositioned = true;
         this.cd.detectChanges();
     }
 }
