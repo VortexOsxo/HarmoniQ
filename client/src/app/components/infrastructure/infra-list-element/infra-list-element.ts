@@ -18,6 +18,7 @@ export class InfraListElement {
   @Input({ required: true }) id!: string;
   @Input({ required: true }) type!: string;
   @Input() isUserCreated: boolean = false;
+  @Input() typeBadgeColor: string = '';
 
   get isSelected(): boolean {
     return this.infrastructuresService.isInfraSelected(this.type, this.id);

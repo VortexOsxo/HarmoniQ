@@ -46,39 +46,49 @@
         </button>
     </div>
 
-    <!-- Infrastructure accordions -->
-    <div ngbAccordion class="infra-accordion" *ngIf="visibleCategories.length > 0">
-        <div ngbAccordionItem *ngFor="let infra of visibleCategories" [id]="infra.type">
-            <h2 ngbAccordionHeader>
-                <button ngbAccordionButton type="button">
-                    <span class="infra-accordion-heading">
-                        <span
-                            class="infra-category-icon infra-category-icon-tinted"
-                            [ngClass]="{
-                                'infra-category-barrage': infra.type === 'hydro',
-                                'infra-category-eolienne': infra.type === 'eolienneparc',
-                                'infra-category-solaire': infra.type === 'solaire',
-                                'infra-category-thermique': infra.type === 'thermique',
-                                'infra-category-nucleaire': infra.type === 'nucleaire'
-                            }"
-                            [style.background-color]="infraColors[infra.type]"
-                            aria-hidden="true"
-                        ></span>
-                        <span class="infra-accordion-title-text">{{ infra.name }}</span>
-                    </span>
-                </button>
-            </h2>
-            <div ngbAccordionCollapse>
-                <div ngbAccordionBody>
-                    <app-infra-list-body [infras]="getFilteredAndSortedInfras(infra.type)" [type]="infra.type" />
-                </div>
-            </div>
-        </div>
+    <!-- Type filter chips -->
+    <div class="infra-type-chips">
+        <button
+            *ngFor="let cat of infras"
+            class="infra-chip"
+            [class.infra-chip--active]="isFilterActive(cat.type)"
+            [style.--chip-color]="infraColors[cat.type]"
+            (click)="toggleFilter(cat.type)"
+            [title]="cat.name">
+            <span
+                class="infra-chip-icon infra-category-icon-tinted"
+                [ngClass]="{
+                    'infra-category-barrage': cat.type === 'hydro',
+                    'infra-category-eolienne': cat.type === 'eolienneparc',
+                    'infra-category-solaire': cat.type === 'solaire',
+                    'infra-category-thermique': cat.type === 'thermique',
+                    'infra-category-nucleaire': cat.type === 'nucleaire'
+                }"
+                [style.background-color]="isFilterActive(cat.type) ? '#fff' : infraColors[cat.type]"
+                aria-hidden="true"
+            ></span>
+            <span class="infra-chip-label">{{ cat.shortName }}</span>
+        </button>
     </div>
 
-    <!-- Empty state for search -->
-    <div class="infra-empty-state" *ngIf="filterText.trim() && visibleCategories.length === 0">
+    <!-- Flat infrastructure list -->
+    <div class="infra-flat-list" *ngIf="flatFilteredInfras.length > 0">
+        <ul class="list-group">
+            <app-infra-list-element
+                *ngFor="let item of flatFilteredInfras"
+                [nom]="item.infra.nom"
+                [id]="item.infra.id.toString()"
+                [type]="item.type"
+                [isUserCreated]="item.infra.isUserCreated"
+                [typeBadgeColor]="infraColors[item.type]"
+            />
+        </ul>
+    </div>
+
+    <!-- Empty state -->
+    <div class="infra-empty-state" *ngIf="flatFilteredInfras.length === 0">
         <i class="fa-solid fa-search"></i>
-        <p>Aucune infrastructure trouvée pour "{{ filterText }}"</p>
+        <p *ngIf="filterText.trim()">Aucune infrastructure trouvée pour "{{ filterText }}"</p>
+        <p *ngIf="!filterText.trim()">Aucun type sélectionné</p>
     </div>
 </div>

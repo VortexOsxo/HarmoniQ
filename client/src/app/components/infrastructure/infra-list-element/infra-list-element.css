@@ -6,3 +6,38 @@
 .infra-list-item--locked:hover {
     filter: brightness(0.98);
 }
+
+.infra-name-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.infra-type-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.infra-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+:host ::ng-deep .infra-actions .btn-delete-confirm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+}
+
+.infra-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
