@@ -13,6 +13,7 @@ import { SimulationCostGraphService } from './graph-services/simulation-cost-gra
 import { SimulationCo2GraphService } from './graph-services/simulation-co2-graph-service';
 import { SimulationAnalysisGraphService } from './graph-services/simulation-analysis-graph-service';
 import { SnackbarService } from './snackbar-service';
+import { TutorialService } from './tutorial-service';
 
 @Injectable({
     providedIn: 'root',
@@ -30,6 +31,7 @@ export class SimulationService {
     showLaunchConfigHints = signal(false);
 
     private simulationStepService = inject(SimulationStepService);
+    private tutorialService = inject(TutorialService);
     step = computed(() => this.simulationStepService.currentStepName());
 
     constructor(
@@ -90,6 +92,9 @@ export class SimulationService {
     /** Navigate to the simulation page, or surface configuration hints on the map panel. */
     requestLaunchFromMap(): void {
         if (this.canLaunch()) {
+            if (this.tutorialService.currentState.active && this.tutorialService.currentState.currentStep === 8) {
+                this.tutorialService.nextStep();
+            }
             this.router.navigate(['/simulation']);
         } else {
             this.showLaunchConfigHints.set(true);

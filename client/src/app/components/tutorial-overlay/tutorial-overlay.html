@@ -21,20 +21,33 @@
     </div>
 </div>
 
-<!-- Step overlay -->
-<ng-container *ngIf="state.active && !state.showWelcome">
-    <!-- Dark backdrop with cutout -->
-    <div class="tutorial-backdrop step-backdrop" (click)="focusNext($event)">
-        <!-- Highlight cutout -->
-        <div class="highlight-cutout" *ngIf="highlightRect" [style.top.px]="highlightRect.top - 8"
-            [style.left.px]="highlightRect.left - 8" [style.width.px]="highlightRect.width + 16"
-            [style.height.px]="highlightRect.height + 16" (click)="$event.stopPropagation()">
-        </div>
+<!-- Visual Darkening Fallback -->
+<div class="tutorial-backdrop" style="z-index: 10006" *ngIf="state.active && !state.showWelcome && !highlightRect" (click)="focusNext($event)"></div>
+
+<!-- Step overlay with visual shadowing and absolute precise click blocking -->
+<ng-container *ngIf="state.active && !state.showWelcome && highlightRect">
+    
+    <!-- Cutout visual shadow (lets clicks pass through) -->
+    <div class="highlight-cutout-container"
+        [style.top.px]="highlightRect.top - 8"
+        [style.left.px]="highlightRect.left - 8"
+        [style.width.px]="highlightRect.width + 16"
+        [style.height.px]="highlightRect.height + 16">
+        <div class="highlight-cutout"></div>
     </div>
+
+    <!-- 4 Click walls (invisible solid blocks that absorb clicks outside the cutout) -->
+    <div class="click-wall" [style.top.px]="0" [style.left.px]="0" [style.right.px]="0" [style.height.px]="Math.max(0, highlightRect.top - 8)" (click)="focusNext($event)"></div>
+    <div class="click-wall" [style.top.px]="highlightRect.bottom + 8" [style.left.px]="0" [style.right.px]="0" [style.bottom.px]="0" (click)="focusNext($event)"></div>
+    <div class="click-wall" [style.top.px]="Math.max(0, highlightRect.top - 8)" [style.height.px]="highlightRect.height + 16" [style.left.px]="0" [style.width.px]="Math.max(0, highlightRect.left - 8)" (click)="focusNext($event)"></div>
+    <div class="click-wall" [style.top.px]="Math.max(0, highlightRect.top - 8)" [style.height.px]="highlightRect.height + 16" [style.left.px]="highlightRect.right + 8" [style.right.px]="0" (click)="focusNext($event)"></div>
+</ng-container>
+
+<ng-container *ngIf="state.active && !state.showWelcome">
 
     <!-- Tooltip bubble -->
     <div class="tooltip-bubble" [style.top.px]="bubbleTop" [style.left.px]="bubbleLeft"
-        [class.centered]="!highlightRect" (click)="$event.stopPropagation()">
+        [class.centered]="!highlightRect" [class.invisible]="!isPositioned" (click)="$event.stopPropagation()">
 
         <!-- Header -->
         <div class="bubble-header">
