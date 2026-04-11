@@ -1,14 +1,14 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from harmoniq import ERA5_CACHE_PATH
+from harmoniq import ERA5_NORMALIZED_PATH
 from harmoniq.webserver import app
 
 client = TestClient(app)
 
 
 def _has_era5_year_cache(year: int) -> bool:
-    base = ERA5_CACHE_PATH / "normalized" / f"year={year}"
+    base = ERA5_NORMALIZED_PATH / f"year={year}"
     if not base.exists():
         return False
     return any(base.rglob("*.parquet"))

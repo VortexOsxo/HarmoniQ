@@ -27,7 +27,7 @@ class Era5WindMapService:
         self._lock = threading.Lock()
 
     def _normalized_root(self) -> Path:
-        return self.config.cache_dir / "normalized"
+        return self.config.normalized_dir
 
     def _parse_year_dir(self, path: Path) -> int | None:
         token = path.name
