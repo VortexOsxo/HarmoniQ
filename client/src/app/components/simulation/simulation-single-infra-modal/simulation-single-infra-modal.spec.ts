@@ -21,6 +21,15 @@ vi.mock('plotly.js-dist-min', () => ({
   newPlot: vi.fn(),
   purge: vi.fn(),
   downloadImage: vi.fn(),
+  register: vi.fn(),
+  setPlotConfig: vi.fn(),
+  default: {
+    newPlot: vi.fn(),
+    purge: vi.fn(),
+    downloadImage: vi.fn(),
+    register: vi.fn(),
+    setPlotConfig: vi.fn(),
+  },
 }));
 
 const MOCK_SCENARIO: Scenario = {
@@ -87,8 +96,8 @@ describe('SimulationSingleInfraModal', () => {
 
   describe('ngOnInit', () => {
     it('should call launchSimulationSingleInfra with type and id', async () => {
-      await renderComponent();
-      expect(mockSimulationService.launchSimulationSingleInfra).toHaveBeenCalledWith('hydro', '7');
+      await renderComponent({ type: 'eolienneparc' });
+      expect(mockSimulationService.launchSimulationSingleInfra).toHaveBeenCalledWith('eolienneparc', '7');
     });
 
     it('should call getInfraCost with type and id', async () => {
@@ -102,11 +111,12 @@ describe('SimulationSingleInfraModal', () => {
     });
 
     it('should call generateProductionSingleInfraGraph after receiving data', async () => {
-      await renderComponent();
+      await renderComponent({ type: 'eolienneparc' });
+      await new Promise(resolve => setTimeout(resolve, 0));
       expect(mockGraphService.generateProductionSingleInfraGraph).toHaveBeenCalledWith(
-        'hydro',
+        'eolienneparc',
         MOCK_PRODUCTION_DATA,
-        'original',
+        'weekly',
       );
     });
 
@@ -125,7 +135,7 @@ describe('SimulationSingleInfraModal', () => {
 
   describe('granularity selector', () => {
     it('should render the granularity selector after loading completes', async () => {
-      const { container } = await renderComponent();
+      const { container } = await renderComponent({ type: 'eolienneparc' });
       expect(container.querySelector('app-granularity-selector')).toBeTruthy();
     });
   });
@@ -134,7 +144,7 @@ describe('SimulationSingleInfraModal', () => {
     it('should call activeModal.dismiss when the close button is clicked', async () => {
       const user = userEvent.setup();
       await renderComponent();
-      const closeBtn = screen.getByRole('button', { name: /close/i });
+      const closeBtn = screen.getByRole('button', { name: /fermer/i });
       await user.click(closeBtn);
       expect(mockActiveModal.dismiss).toHaveBeenCalled();
     });

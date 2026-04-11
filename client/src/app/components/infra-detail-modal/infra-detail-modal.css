@@ -25,9 +25,20 @@
     justify-content: space-between;
     padding: 18px 20px 14px;
     background: #fff;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 2px solid var(--type-color);
     position: relative;
     overflow: hidden;
+}
+
+.detail-header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--type-color);
+    opacity: 0.05;
+    pointer-events: none;
 }
 
 .detail-header-left {
@@ -37,12 +48,6 @@
     min-width: 0;
     position: relative;
     z-index: 1;
-}
-
-.detail-header-icon {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
 }
 
 .detail-title {
@@ -59,6 +64,62 @@
     font-weight: 500;
 }
 
+.detail-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+}
+
+.detail-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--type-color, #3498db);
+    font-size: 0.9rem;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+}
+
+.detail-edit-btn:hover {
+    background: rgba(52, 152, 219, 0.1);
+}
+
+.detail-edit-btn:active {
+    transform: scale(0.95);
+}
+
+.detail-delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e74c3c;
+    font-size: 1rem;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+}
+
+.detail-delete-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.detail-delete-btn:active {
+    transform: scale(0.95);
+}
+
 .detail-close-btn {
     background: none;
     border: none;
@@ -73,8 +134,6 @@
     font-size: 1.1rem;
     transition: background 0.15s, color 0.15s;
     flex-shrink: 0;
-    position: relative;
-    z-index: 1;
 }
 
 .detail-close-btn:hover {
@@ -107,24 +166,6 @@
     }
 }
 
-/* ── Informations card ── */
-.info-card {
-    background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    padding: 18px 16px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.info-card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e9ecef;
-}
-
 .info-field {
     display: flex;
     align-items: center;
@@ -139,7 +180,7 @@
 .info-field-icon {
     width: 22px;
     text-align: center;
-    color: #3498db;
+    color: var(--type-color);
     font-size: 0.9rem;
     flex-shrink: 0;
 }
@@ -159,7 +200,7 @@
     padding: 10px;
     border-radius: 6px;
     margin-top: 8px;
-    border: 1px dashed #ced4da;
+    border: 1.5px solid #ced4da;
 }
 
 .cycle-vie-link-container {
@@ -178,7 +219,7 @@
 .cycle-vie-link {
     margin: 0;
     font-size: 0.85rem;
-    color: #2980b9;
+    color: var(--type-color);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -206,7 +247,7 @@
     padding: 0;
     margin: 0;
     font-size: 0.85rem;
-    color: #2980b9;
+    color: var(--type-color);
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -277,15 +318,15 @@
 
 .impact-blue {
     background: #f0f8ff;
-    border-left-color: #3498db;
+    border-left-color: var(--hq-blue-start);
 }
 
 .impact-blue .impact-card-header i {
-    color: #3498db;
+    color: var(--hq-blue-start);
 }
 
 .impact-blue .impact-card-title strong {
-    color: #2980b9;
+    color: var(--hq-blue-end);
 }
 
 .impact-green {
@@ -336,34 +377,6 @@
 }
 
 /* ── Action buttons ── */
-.delete-btn-container {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.delete-infra-btn {
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
-.delete-infra-btn:hover {
-    background-color: #c0392b;
-}
-
-.delete-infra-btn:active {
-    transform: scale(0.98);
-}
 
 /* ── Cycle de vie Modal Inner ── */
 .cycle-vie-overlay {
@@ -394,32 +407,60 @@
 }
 
 .cv-header {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
-    background: #f8f9fa;
+    padding: 18px 20px 14px;
+    background: #fff;
+    border-bottom: 2px solid var(--type-color);
+    overflow: hidden;
+}
+
+.cv-header-bg {
+    position: absolute;
+    inset: 0;
+    background-color: var(--type-color);
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cv-header-left {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .cv-header h5 {
     margin: 0;
-    font-size: 1.1rem;
-    color: #2c3e50;
+    font-size: 1.05rem;
+    color: #000;
     font-weight: 700;
+    line-height: 1.2;
 }
 
 .cv-close {
+    position: relative;
+    z-index: 1;
     background: none;
     border: none;
-    font-size: 1.2rem;
-    color: #7f8c8d;
+    font-size: 1.1rem;
+    color: #000;
     cursor: pointer;
-    transition: color 0.15s;
+    transition: background 0.15s, color 0.15s;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .cv-close:hover {
-    color: #e74c3c;
+    background: rgba(0, 0, 0, 0.08);
 }
 
 .cv-body-grid {
@@ -461,7 +502,7 @@
     margin-bottom: 20px;
     position: relative;
     padding-left: 16px;
-    border-left: 2px solid #3498db;
+    border-left: 2px solid var(--type-color);
 }
 
 .cv-step:last-child {
@@ -471,7 +512,7 @@
 .cv-step h6 {
     margin: 0 0 6px;
     font-size: 0.9rem;
-    color: #3498db;
+    color: var(--type-color);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -607,7 +648,7 @@
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
     border: 1px solid #e9ecef;
-    border-left: 4px solid #3498db;
+    border-left: 4px solid var(--type-color);
     z-index: 1200;
     display: flex;
     flex-direction: column;
@@ -632,7 +673,7 @@
 }
 
 .mini-explication-header h6 i {
-    color: #3498db;
+    color: var(--type-color);
 }
 
 .mini-explication-close {
@@ -675,7 +716,7 @@
 .slider-card-title {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #1a6fa8;
+    color: var(--type-color);
     margin: 0 0 10px 0;
     display: flex;
     align-items: center;
@@ -698,7 +739,7 @@
 
 .slider-current {
     font-weight: 700;
-    color: #1a6fa8;
+    color: var(--type-color);
     font-size: 0.9rem;
     display: flex;
     align-items: center;
@@ -712,7 +753,7 @@
 
 .hydro-range-slider {
     width: 100%;
-    accent-color: #1a6fa8;
+    accent-color: var(--type-color);
     cursor: pointer;
     height: 6px;
 }

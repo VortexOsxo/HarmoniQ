@@ -20,6 +20,7 @@ vi.mock('leaflet', () => ({
 }));
 
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SimulationService } from './simulation-service';
@@ -28,6 +29,7 @@ import { InfrastruturesService } from './infrastrutures-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from './simulation-step-service';
+import { SnackbarService } from './snackbar-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
@@ -57,13 +59,17 @@ const MOCK_INFRA_GROUP: InfrastructureGroup = {
 
 describe('SimulationService', () => {
   let service: SimulationService;
+  let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let mockScenariosService: Partial<ScenariosService>;
   let mockInfrastruturesService: Partial<InfrastruturesService>;
   let mockDemandeSankeyService: Partial<DemandeSankeyGraphService>;
   let mockSimulationTemporalService: Partial<SimulationTemporalGraphService>;
   let mockStepService: Partial<SimulationStepService>;
+  let mockSnackbarService: Partial<SnackbarService>;
 
   beforeEach(() => {
+    mockRouter = { navigate: vi.fn() };
+
     const selectedScenarioSignal = signal<Scenario | null>(null);
     mockScenariosService = {
       selectedScenario: selectedScenarioSignal,
@@ -93,6 +99,11 @@ describe('SimulationService', () => {
       currentStepName: vi.fn().mockReturnValue('Initialisation') as any,
     };
 
+    mockSnackbarService = {
+      show: vi.fn(),
+      close: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         SimulationService,
@@ -101,6 +112,8 @@ describe('SimulationService', () => {
         { provide: DemandeSankeyGraphService, useValue: mockDemandeSankeyService },
         { provide: SimulationTemporalGraphService, useValue: mockSimulationTemporalService },
         { provide: SimulationStepService, useValue: mockStepService },
+        { provide: SnackbarService, useValue: mockSnackbarService },
+        { provide: Router, useValue: mockRouter },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],

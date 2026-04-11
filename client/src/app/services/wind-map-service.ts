@@ -125,9 +125,7 @@ export class WindMapService {
 
   private snapshotCurrentState(): void {
     this.previousInfraTypes = new Set(this.mapService.mapFilterTypes());
-    this.previousProtectedVisible = this.protectedAreasService.isVisible();
     this.previousProtectedLegendOpen = this.protectedAreasService.legendOpen();
-    this.previousReseauVisible = this.reseauService.isVisible();
     this.previousReseauLegendOpen = this.reseauService.legendOpen();
     this.previousReseauBusTypes = new Set(this.reseauService.selectedBusTypes());
     this.previousReseauLineTypes = new Set(this.reseauService.selectedLineTypes());
@@ -137,7 +135,6 @@ export class WindMapService {
     this.mapService.mapFilterTypes.set(new Set());
 
     this.reseauService.deselectAll();
-    if (this.reseauService.isVisible()) this.reseauService.toggleVisibility();
     this.reseauService.legendOpen.set(false);
 
     this.protectedAreasService.hide();
@@ -158,10 +155,6 @@ export class WindMapService {
       }
       this.reseauService.rebuildLayers();
 
-      const currentReseauVisible = this.reseauService.isVisible();
-      if (this.previousReseauVisible !== currentReseauVisible) {
-        this.reseauService.toggleVisibility();
-      }
       if (this.previousReseauLegendOpen !== null) {
         this.reseauService.legendOpen.set(this.previousReseauLegendOpen);
       }

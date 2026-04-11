@@ -1,12 +1,31 @@
-<label>{{ title }}</label>
 <div class="date-range">
     <div class="date-field">
-        <label class="field-label" for="start-date">Début</label>
-        <input type="date" id="start-date" [(ngModel)]="startDateStr" [min]="minDate" [max]="maxDate">
+        <label class="field-label">Début</label>
+        <div class="selects-row">
+            <select [(ngModel)]="startYear" (ngModelChange)="onStartChange()">
+                <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+            </select>
+            <select [(ngModel)]="startMonth" (ngModelChange)="onStartChange()">
+                <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+            </select>
+            <input type="number" [(ngModel)]="startDay" (ngModelChange)="onStartChange()"
+                (input)="onStartInput($event)" (blur)="onStartBlur($event)"
+                min="1" [max]="daysIn(startYear, startMonth)" placeholder="1" title="Jour">
+        </div>
     </div>
 
     <div class="date-field">
-        <label class="field-label" for="end-date">Fin</label>
-        <input type="date" id="end-date" [(ngModel)]="endDateStr" [min]="startDateStr" [max]="maxDate">
+        <label class="field-label">Fin</label>
+        <div class="selects-row">
+            <select [(ngModel)]="endYear" (ngModelChange)="onEndChange()">
+                <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+            </select>
+            <select [(ngModel)]="endMonth" (ngModelChange)="onEndChange()">
+                <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+            </select>
+            <input type="number" [(ngModel)]="endDay" (ngModelChange)="onEndChange()"
+                (input)="onEndInput($event)" (blur)="onEndBlur($event)"
+                min="1" [max]="daysIn(endYear, endMonth)" placeholder="31" title="Jour">
+        </div>
     </div>
 </div>

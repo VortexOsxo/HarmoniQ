@@ -3,10 +3,19 @@
     margin-bottom: 1rem;
 }
 
+.picker-title {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .date-range {
     display: flex;
     gap: 1rem;
-    align-items: flex-end;
 }
 
 .date-field {
@@ -22,36 +31,60 @@
     font-weight: 500;
 }
 
-input[type="date"] {
+.selects-row {
+    display: flex;
+    gap: 0.2rem;
+}
+
+.selects-row select,
+.selects-row input[type="number"] {
+    flex: 1;
     appearance: none;
     -webkit-appearance: none;
-    background-color: #f9fafb;
     border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
     color: #111827;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
-    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    min-width: 0;
+}
+
+.selects-row select {
+    background: #f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b7280' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+    padding: 0.4rem 1.4rem 0.4rem 0.5rem;
     cursor: pointer;
 }
 
-input[type="date"]:hover {
-    border-color: #9ca3af;
-    background-color: #ffffff;
+.selects-row input[type="number"] {
+    background-color: #f9fafb;
+    padding: 0.4rem 0.5rem;
+    text-align: center;
+}
+.selects-row input[type="number"]::-webkit-outer-spin-button,
+.selects-row input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
-input[type="date"]:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background-color: #ffffff;
+.selects-row select:hover,
+.selects-row input[type="number"]:hover {
+    border-color: #9ca3af;
+    background-color: #fff;
 }
+
+.selects-row select:focus,
+.selects-row input[type="number"]:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    background-color: #fff;
+}
+
+/* Year gets more space than day */
+.selects-row > :first-child  { flex: 2; }
+.selects-row > :nth-child(2) { flex: 3; }
+.selects-row > :last-child   { flex: 1.2; }
 
 @media (max-width: 640px) {
-    .date-range {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-    }
+    .date-range { flex-direction: column; }
 }

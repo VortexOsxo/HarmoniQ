@@ -1,4 +1,4 @@
-from sqlalchemy import Table
+from sqlalchemy import Table, Integer, Float, Boolean, String
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -27,10 +27,19 @@ def hydrate_model(model_class, infra_pydantic_obj):
     for column in model_class.__table__.columns:
         col_name = column.name
         if col_name in infra_dict:
-            model_kwargs[col_name] = infra_dict[col_name]
+            value = infra_dict[col_name]
+            if value is not None:
+                col_type = type(column.type)
+                if col_type is Float:
+                    value = float(value)
+                elif col_type is Integer:
+                    value = int(value)
+                elif col_type is Boolean:
+                    value = bool(value)
+            model_kwargs[col_name] = value
             
     if "puissance_nominale" in infra_dict and "puissance_nominal" not in model_kwargs:
-        model_kwargs["puissance_nominal"] = infra_dict["puissance_nominale"]
+        model_kwargs["puissance_nominal"] = float(infra_dict["puissance_nominale"])
 
     if "nom" not in model_kwargs and "nom" in infra_dict:
         model_kwargs["nom"] = infra_dict["nom"]

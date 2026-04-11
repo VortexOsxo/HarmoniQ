@@ -497,7 +497,6 @@ class NucleaireBase(BaseModel):
     )
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
-    type_intrant: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -511,7 +510,6 @@ class Nucleaire(SQLBase):
     latitude = Column(Float)
     longitude = Column(Float)
     puissance_nominal = Column(Float)
-    type_intrant = Column(String)
     semaine_maintenance = Column(Integer)
     annee_commission = Column(Integer, nullable=True)
     type_generateur = Column(Integer, nullable=True)

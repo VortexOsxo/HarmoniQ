@@ -1,5 +1,5 @@
 <div class="modal-header w-100 d-flex justify-content-between">
-    <h5 class="modal-title">Créer {{ prettyName }}</h5>
+    <h5 class="modal-title">{{ improvedTitle }}</h5>
     <button class="btn-close" (click)="activeModal.close()"></button>
 </div>
 
@@ -42,8 +42,15 @@
                 <input class="form-control" [id]="field.key" [type]="field.type" [readonly]="field.readonly"
                     [formControlName]="field.key" [class.readonly-field]="field.readonly"
                     [class.is-invalid]="form.get(field.key)?.invalid && form.get(field.key)?.touched"
-                    [attr.min]="field.nonNegative ? 0 : null" (keydown)="onKeydown($event, field)"
+                    [attr.min]="field.nonNegative ? 0 : null" [attr.maxlength]="field.maxLength || null"
+                    [attr.step]="field.type === 'number' ? '0.001' : null"
+                    (keydown)="onKeydown($event, field)"
                     (blur)="onBlur(field)">
+                @if (field.maxLength && field.type === 'text') {
+                <small class="text-muted d-block text-end mt-1">
+                    {{ (form.get(field.key)?.value?.length || 0) }} / {{ field.maxLength }}
+                </small>
+                }
                 }
 
                 @if (getFieldError(field); as errMsg) {
@@ -64,7 +71,6 @@
     </div>
 
     <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" (click)="activeModal.close()">Fermer</button>
-        <input type="submit" class="btn btn-primary submit-btn" value="Créer" [disabled]="form.invalid">
+        <button type="submit" class="hq-btn-green" [disabled]="form.invalid">{{ editData ? 'Enregistrer' : 'Créer' }}</button>
     </div>
 </form>

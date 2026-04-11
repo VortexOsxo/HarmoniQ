@@ -1,40 +1,52 @@
-<div class="infra-detail-panel" [class.open]="isOpen()">
+<div class="infra-detail-panel" [class.open]="isOpen()"
+    [style.--type-color]="infra() ? infraColors[infra()!.type] : '#3498db'">
     <!-- Header -->
     <div class="detail-header">
+        <div class="detail-header-bg"></div>
         <div class="detail-header-left">
-            <img *ngIf="infra()" [src]="getIconForType(infra()!.type)" class="detail-header-icon" alt="" />
+            <app-infra-icon *ngIf="infra()" [type]="infra()!.type" [size]="40"></app-infra-icon>
             <div>
                 <h5 class="detail-title">{{ infra()?.data?.nom }}</h5>
                 <span class="detail-subtitle">{{ infra()?.categoryName }}</span>
             </div>
         </div>
-        <button class="detail-close-btn" (click)="close()" title="Fermer">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+        <div class="detail-header-actions">
+            <!-- Edit Button (non-hydro only) -->
+            <button class="detail-edit-btn" *ngIf="infra()?.data?.isUserCreated && infra()?.type !== 'hydro'" (click)="editInfra()" title="Modifier l'infrastructure">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <!-- Delete Button -->
+            <button class="detail-delete-btn" *ngIf="infra()?.data?.isUserCreated" (click)="deleteInfra()" title="Supprimer l'infrastructure">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+            <button class="detail-close-btn" (click)="close()" title="Fermer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Tab content -->
     <div class="detail-body">
         <!-- Informations content -->
         <div class="detail-tab-content">
-            <div class="info-card">
-                <h6 class="info-card-title">{{ infra()?.data?.nom }}</h6>
-                <div class="info-field" *ngFor="let field of getInfoFields()"
-                    [class.vulgarisation-field]="field.isVulgarisation">
-                    <i [class]="field.icon" class="info-field-icon"></i>
-                    <span class="info-field-text" *ngIf="!field.isVulgarisation">
-                        {{ field.label }} : 
-                        <strong *ngIf="field.tooltip" (click)="showExplanationFromTooltip(field.tooltip)" style="cursor: pointer; border-bottom: 1px dotted #888; color: #2980b9;" title="Cliquez pour plus d'informations">
-                            {{ field.value }} <i class="fa-solid fa-circle-info" style="font-size: 0.8em; margin-left: 2px;"></i>
-                        </strong>
-                        <strong *ngIf="!field.tooltip">
-                            {{ field.value }}
-                        </strong>
-                    </span>
-                    <span class="info-field-text" *ngIf="field.isVulgarisation">
-                        <strong>{{ field.label }}</strong> : {{ field.value }}
-                    </span>
-                </div>
+            <div class="info-field" *ngFor="let field of getInfoFields()"
+                [class.vulgarisation-field]="field.isVulgarisation">
+                <i [class]="field.icon" class="info-field-icon"></i>
+                <span class="info-field-text" *ngIf="!field.isVulgarisation">
+                    {{ field.label }} :
+                    <strong *ngIf="field.tooltip" (click)="showExplanationFromTooltip(field.tooltip)"
+                        style="cursor: pointer; color: var(--type-color);"
+                        title="Cliquez pour plus d'informations">
+                        {{ field.value }} <i class="fa-solid fa-circle-info"
+                            style="font-size: 0.8em; margin-left: 2px;"></i>
+                    </strong>
+                    <strong *ngIf="!field.tooltip">
+                        {{ field.value }}
+                    </strong>
+                </span>
+                <span class="info-field-text" *ngIf="field.isVulgarisation">
+                    <strong>{{ field.label }}</strong> : {{ field.value }}
+                </span>
             </div>
 
             <!-- Hydro power slider -->
@@ -50,21 +62,11 @@
                     </span>
                     <span class="slider-label-max">{{ pMax() }} MW</span>
                 </div>
-                <input
-                    type="range"
-                    class="hydro-range-slider"
-                    [min]="pMin()"
-                    [max]="pMax()"
-                    [step]="1"
-                    [value]="sliderValue()"
-                    (input)="onPuissanceSliderInput($event)"
-                    (change)="onPuissanceSliderChange($event)"
-                />
+                <input type="range" class="hydro-range-slider" [min]="pMin()" [max]="pMax()" [step]="1"
+                    [value]="sliderValue()" (input)="onPuissanceSliderInput($event)"
+                    (change)="onPuissanceSliderChange($event)" />
                 <p class="slider-hint" *ngIf="isNewDam()">
                     Plage : puissance nominale / nb turbines → +15 %
-                </p>
-                <p class="slider-hint" *ngIf="!isNewDam()">
-                    Plage : valeur installée → +10 % (gains d'efficacité)
                 </p>
             </div>
 
@@ -84,7 +86,7 @@
             <div class="cycle-vie-link-container" *ngIf="getCycleVieData()">
                 <p class="cycle-vie-link" (click)="openCycleVie()">
                     <i class="fa-solid fa-recycle"></i>
-                    Cliquez ici pour en apprendre plus sur les {{ getPluralCategoryName() }}
+                    En apprendre plus sur les {{ getPluralCategoryName() }}
                 </p>
             </div>
 
@@ -98,19 +100,22 @@
         </div>
 
 
-        <!-- Delete Button -->
-        <div class="delete-btn-container" *ngIf="infra()?.data?.isUserCreated">
-            <button class="delete-infra-btn" (click)="deleteInfra()" title="Supprimer l'infrastructure">
-                <i class="fa-solid fa-trash"></i> Supprimer
+        <!-- Simulate Button -->
+        <div class="view-image-container" *ngIf="hasSelectedScenario()">
+            <button class="view-image-btn" (click)="simulateSingle()" title="Simuler cette infrastructure">
+                <i class="fas fa-line-chart"></i>
+                Simuler cette infrastructure
             </button>
         </div>
+
     </div>
 
     <!-- Mini Explication Modal -->
     <div class="mini-explication-modal" *ngIf="selectedExplanationText">
         <div class="mini-explication-header">
             <h6><i class="fa-solid fa-circle-info"></i> {{ selectedExplanationTitle }}</h6>
-            <button class="mini-explication-close" (click)="closeExplanation()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="mini-explication-close" (click)="closeExplanation()"><i
+                    class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="mini-explication-body">
             <p>{{ selectedExplanationText }}</p>
@@ -121,8 +126,12 @@
 <!-- Cycle de vie / Impacts Modal Inner -->
 <div class="cycle-vie-overlay" *ngIf="showCycleVieModal" (click)="closeCycleVie()">
     <div class="cycle-vie-modal" (click)="$event.stopPropagation()">
-        <div class="cv-header">
-            <h5>{{ getCapitalizedPluralCategoryName() }}</h5>
+        <div class="cv-header" [style.--type-color]="infra() ? infraColors[infra()!.type] : '#3498db'">
+            <div class="cv-header-bg"></div>
+            <div class="cv-header-left">
+                <app-infra-icon *ngIf="infra()" [type]="infra()!.type" [size]="32"></app-infra-icon>
+                <h5>{{ getCapitalizedPluralCategoryName() }}</h5>
+            </div>
             <button class="cv-close" (click)="closeCycleVie()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="cv-body-grid">

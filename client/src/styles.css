@@ -1,6 +1,44 @@
 @import 'leaflet/dist/leaflet.css';
 @import './app/utils/cluster-icon.css';
 
+:root {
+  /* Green Palette */
+  --hq-green-start: #27ae60;
+  --hq-green-end: #2ecc71;
+  --hq-green-hover: #219a52;
+  --hq-green-shadow: rgba(39, 174, 96, 0.25);
+  --hq-green-shadow-hover: rgba(39, 174, 96, 0.35);
+
+  /* Gray/Inactive Palette */
+  --hq-gray-start: #95a5a6;
+  --hq-gray-end: #bdc3c7;
+  --hq-gray-hover-start: #7f8c8d;
+  --hq-gray-hover-end: #95a5a6;
+
+  /* Blue Palette (Unified Light Blue) */
+  --hq-blue-start: #3498db;
+  --hq-blue-end: #2980b9;
+  --hq-blue-hover: #217dbb;
+  --hq-blue-shadow: rgba(52, 152, 219, 0.3);
+  --hq-blue-shadow-hover: rgba(52, 152, 219, 0.4);
+}
+
+.hq-text-gradient-green {
+  background: linear-gradient(135deg, var(--hq-green-start), var(--hq-green-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+.hq-text-gradient-blue {
+  background: linear-gradient(135deg, var(--hq-blue-start), var(--hq-blue-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
 /* You can add global styles to this file, and also import other style files */
 /* Base styles */
 * {
@@ -110,3 +148,255 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   opacity: 0;
   transition: transform 0.35s cubic-bezier(0.4, 0, 1, 1), opacity 0.35s ease;
 }
+
+/* ── Global Snackbar (Energy Info Style) ── */
+.hq-snackbar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 350px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e9ecef;
+  border-left: 4px solid var(--hq-blue-start);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: auto;
+}
+
+.hq-snackbar--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hq-snackbar--exit {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: all 0.3s ease;
+}
+
+.hq-snackbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.hq-snackbar-header h6 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hq-snackbar-body {
+  padding: 12px 16px 16px;
+}
+
+.hq-snackbar-body p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.hq-snackbar-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #95a5a6;
+  font-size: 1rem;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.hq-snackbar-close:hover {
+  color: #e74c3c;
+}
+
+/* Variants */
+.hq-snackbar--success {
+  border-left-color: var(--hq-green-start);
+}
+.hq-snackbar--success .hq-snackbar-header h6 i {
+  color: var(--hq-green-start);
+}
+
+.hq-snackbar--error {
+  border-left-color: #e74c3c;
+}
+.hq-snackbar--error .hq-snackbar-header h6 i {
+  color: #e74c3c;
+}
+
+.hq-snackbar--info {
+  border-left-color: var(--hq-blue-start);
+}
+.hq-snackbar--info .hq-snackbar-header h6 i {
+  color: var(--hq-blue-start);
+}
+
+/* ── Green Button (Global) ── */
+.hq-btn-green {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--hq-green-start), var(--hq-green-end));
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px var(--hq-green-shadow);
+}
+
+.hq-btn-green:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--hq-green-hover), var(--hq-green-start));
+  box-shadow: 0 4px 12px var(--hq-green-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.hq-btn-green:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.hq-btn-green:disabled {
+  background: var(--hq-gray-end);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Inactive state ── */
+.hq-btn-green-inactive {
+  background: linear-gradient(135deg, var(--hq-gray-start), var(--hq-gray-end)) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.hq-btn-green-inactive:hover {
+  background: linear-gradient(135deg, var(--hq-gray-hover-start), var(--hq-gray-hover-end)) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Blue Button (Global) ── */
+.hq-btn-blue {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--hq-blue-start), var(--hq-blue-end));
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px var(--hq-blue-shadow);
+}
+
+.hq-btn-blue:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--hq-blue-end), var(--hq-blue-start));
+  box-shadow: 0 4px 12px var(--hq-blue-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.hq-btn-blue:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.hq-btn-blue:disabled {
+  background: var(--hq-gray-end);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Simulation Single Infra Modal overrides ── */
+.sim-infra-modal .modal-dialog {
+  max-width: 90vw;
+  width: 1200px;
+}
+
+.sim-infra-modal .modal-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  height: 85vh;
+}
+
+/* ── Disable Leaflet Attribution Footer ── */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Side Filter Modal Styling - Repositions modals to the right-center of the screen */
+.side-filter-modal .modal-dialog {
+    position: fixed;
+    top: 60%;
+    right: 20px;
+    left: auto;
+    transform: translateY(-50%) !important;
+    margin: 0;
+    width: fit-content;
+    min-width: 320px;
+    max-width: 500px;
+    height: auto;
+    max-height: calc(100vh - 40px);
+}
+
+.side-filter-modal .modal-content {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+}
+
+.side-filter-modal .modal-body {
+    max-height: calc(85vh - 60px);
+    overflow-y: auto;
+}
+
+.transparent-backdrop {
+    background-color: transparent !important;
+    opacity: 0 !important;
+}
+
+/* ── Shared Map Filter Modal Utilities ── */
+.item-compact-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #34495e !important; /* Force Premium Dark Navy */
+    text-transform: none !important; /* Force Sentence Case */
+    margin: 0;
+    padding-bottom: 2px;
+}
+
+.btn-xs {
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.filter-section-divider {
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+}
+
+

@@ -40,6 +40,7 @@ const mockInfrasService = {
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
   deleteInfraGroup: vi.fn(),
   isInfraSelected: vi.fn().mockReturnValue(false),
+  isDefaultInfraGroup: vi.fn().mockReturnValue(false),
   guaranteedPowerMW: signal(0),
   windInstalledMW: signal(0),
   solarInstalledMW: signal(0),
@@ -160,14 +161,15 @@ describe('InfrastructureSelector', () => {
       expect(mockModalService.open).not.toHaveBeenCalled();
     });
 
-    it('should open ConfirmationModal if custom group selected', async () => {
+    it('should call deleteInfraGroup on service when method is called', async () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.selectedInfrastructureGroup = MOCK_GROUP_B; // id: 2
       fixture.componentInstance.deleteInfraGroup();
-      expect(mockModalService.open).toHaveBeenCalled();
+      expect(mockInfrasService.deleteInfraGroup).toHaveBeenCalledWith(MOCK_GROUP_B);
     });
 
-    it('should call deleteInfraGroup on service if confirmed', async () => {
+    it('should call deleteInfraGroup on service if confirmed via UI button', async () => {
+      const user = userEvent.setup();
       const { fixture } = await renderComponent();
       mockInfrasService.deleteInfraGroup = vi.fn();
       
@@ -177,8 +179,10 @@ describe('InfrastructureSelector', () => {
         result: Promise.resolve(true) 
       });
 
-      fixture.componentInstance.selectedInfrastructureGroup = MOCK_GROUP_B; // id: 2
-      fixture.componentInstance.deleteInfraGroup();
+      selectedInfraGroup.set(MOCK_GROUP_B); // id: 2
+      fixture.detectChanges();
+
+      await user.click(screen.getByRole('button', { name: /Supprimer ce groupe d'infrastructure/i }));
       
       // Wait for promise resolution
       await Promise.resolve();

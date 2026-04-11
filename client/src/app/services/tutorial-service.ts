@@ -42,13 +42,6 @@ export class TutorialService {
             position: 'center',
         },
         {
-            title: 'Vues de Résultats',
-            icon: 'fa-solid fa-chart-pie',
-            description: 'Basculez entre la vue Carte, la vue Production et la vue Temporelle pour analyser vos résultats de simulation sous différents angles.',
-            targetSelector: '.view-buttons',
-            position: 'bottom',
-        },
-        {
             title: 'Aires Protégées',
             icon: 'fa-solid fa-shield-halved',
             description: 'Activez ou désactivez l\'affichage des aires protégées sur la carte. Vous pouvez ouvrir la légende pour filtrer les types de zones à afficher.',
@@ -82,44 +75,9 @@ export class TutorialService {
         {
             title: 'Créer un Scénario',
             icon: 'fa-solid fa-plus',
-            description: 'Cliquez sur ce bouton pour créer un nouveau scénario et découvrir la configuration possible.',
+            description: 'Vous pouvez cliquer sur ce bouton pour créer un nouveau scénario et découvrir la configuration possible.',
             targetSelector: '#tutorial-create-scenario-btn',
             position: 'bottom',
-            requireAction: true,
-            actionHint: 'Cliquez sur « + » pour créer un scénario',
-        },
-        {
-            title: 'Identité du Scénario',
-            icon: 'fa-solid fa-file-lines',
-            description: 'Donnez un nom, une description et sélectionnez les dates de début et de fin de votre simulation.',
-            targetSelector: '#scenario-identity-group',
-            position: 'right',
-            delayBeforePosition: 200,
-        },
-        {
-            title: 'Pas de Temps',
-            icon: 'fa-solid fa-stopwatch',
-            description: 'Le pas de temps définit la précision de la simulation (ex: toutes les heures, tous les jours).',
-            targetSelector: '#scenario-pas-de-temps-group',
-            position: 'right',
-        },
-        {
-            title: 'Conditions',
-            icon: 'fa-solid fa-cloud-sun',
-            description: 'Configurez la météo ainsi que le modèle de consommation pour votre scénario.',
-            targetSelector: '#scenario-conditions-group',
-            position: 'right',
-        },
-        {
-            title: 'Fermer le Formulaire',
-            icon: 'fa-solid fa-xmark',
-            description: 'C\'est un tutoriel, donc on ne crée rien pour le moment. Cliquez sur « Fermer » pour revenir au panneau principal.',
-            targetSelector: '#tutorial-close-scenario',
-            position: 'top',
-            requireAction: true,
-            actionHint: 'Cliquez sur le bouton « Fermer »',
-            bubbleOffsetX: 200,
-            disableSelectors: ['#tutorial-submit-scenario'],
         },
         {
             title: 'Groupes d\'Infrastructures',
@@ -130,18 +88,42 @@ export class TutorialService {
             delayBeforePosition: 200,
         },
         {
-            title: 'Lancement',
+            title: 'Lancer la Simulation',
             icon: 'fa-solid fa-play',
-            description: 'Vérifiez le scénario et le groupe actifs, puis lancez la simulation depuis ce panneau pour voir les résultats.',
-            targetSelector: 'app-simulation-launcher',
+            description: 'Tout est prêt ! Cliquez maintenant sur le bouton « Lancer Simulation » ci-dessous pour démarrer la simulation et voir les résultats.',
+            targetSelector: 'app-simulation-panel-launch-button',
+            position: 'right',
+            requireAction: true,
+            actionHint: 'Cliquez sur « Lancer Simulation » pour continuer',
+        },
+        {
+            title: 'Graphiques et Rapports',
+            icon: 'fa-solid fa-chart-line',
+            description: 'Pendant et après la simulation, vous pouvez consulter les divers graphiques et rapports générés. Le calcul peut prendre quelques instants pour tout générer.',
+            targetSelector: '.page-content',
+            position: 'center',
+            delayBeforePosition: 500,
+        },
+        {
+            title: 'Lancer le Quiz',
+            icon: 'fa-solid fa-gamepad',
+            description: 'Vous pouvez également participer à un quiz interactif pour enrichir et tester vos connaissances sur les systèmes énergétiques.',
+            targetSelector: '#tutorial-quiz-btn',
             position: 'right',
         },
         {
-            title: 'Tutoriel Terminé !',
+            title: 'Exporter',
+            icon: 'fa-solid fa-file-arrow-down',
+            description: 'Utilisez ce bouton pour exporter tous vos rapports (Production, Coûts, CO2) au format CSV.',
+            targetSelector: '#tutorial-export-btn',
+            position: 'right',
+        },
+        {
+            title: 'Prêt à explorer !',
             icon: 'fa-solid fa-circle-check',
-            description: 'Vous êtes prêt à explorer HarmoniQ ! N\'hésitez pas à relancer le tutoriel à tout moment via le bouton Aide dans la barre de navigation.',
-            targetSelector: null,
-            position: 'center',
+            description: 'Vous connaissez désormais l\'essentiel d\'HarmoniQ ! Vous pouvez utiliser « Retour à la carte » pour revenir au planificateur ou relancer le tutoriel à tout moment via l\'Aide.',
+            targetSelector: '#tutorial-retour-btn',
+            position: 'bottom',
         },
     ];
 
@@ -167,18 +149,28 @@ export class TutorialService {
     autoStart(): void {
         const completed = localStorage.getItem(this.STORAGE_KEY);
         if (!completed) {
-            this.state$.next({ active: true, currentStep: 0, showWelcome: true });
+            const savedStateStr = localStorage.getItem(this.STORAGE_KEY + '_progress');
+            if (savedStateStr) {
+                try {
+                    const savedState = JSON.parse(savedStateStr);
+                    if (savedState && savedState.active) {
+                        this.state$.next(savedState);
+                        return;
+                    }
+                } catch (e) { }
+            }
+            this.updateState({ active: true, currentStep: 0, showWelcome: true });
         }
     }
 
     startTutorial(): void {
-        this.state$.next({ active: true, currentStep: 0, showWelcome: false });
+        this.updateState({ active: true, currentStep: 0, showWelcome: false });
     }
 
     nextStep(): void {
         const s = this.state$.value;
         if (s.currentStep < this.steps.length - 1) {
-            this.state$.next({ ...s, currentStep: s.currentStep + 1 });
+            this.updateState({ ...s, currentStep: s.currentStep + 1 });
         } else {
             this.completeTutorial();
         }
@@ -187,7 +179,7 @@ export class TutorialService {
     previousStep(): void {
         const s = this.state$.value;
         if (s.currentStep > 0) {
-            this.state$.next({ ...s, currentStep: s.currentStep - 1 });
+            this.updateState({ ...s, currentStep: s.currentStep - 1 });
         }
     }
 
@@ -197,11 +189,18 @@ export class TutorialService {
 
     resetTutorial(): void {
         localStorage.removeItem(this.STORAGE_KEY);
-        this.state$.next({ active: true, currentStep: 0, showWelcome: true });
+        localStorage.removeItem(this.STORAGE_KEY + '_progress');
+        this.updateState({ active: true, currentStep: 0, showWelcome: true });
     }
 
     private completeTutorial(): void {
         localStorage.setItem(this.STORAGE_KEY, 'true');
+        localStorage.removeItem(this.STORAGE_KEY + '_progress');
         this.state$.next({ active: false, currentStep: 0, showWelcome: false });
+    }
+
+    private updateState(newState: TutorialState): void {
+        this.state$.next(newState);
+        localStorage.setItem(this.STORAGE_KEY + '_progress', JSON.stringify(newState));
     }
 }

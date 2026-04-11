@@ -1,17 +1,19 @@
-<div>
-    <a class="navbar-brand text-white" routerLink="/">
-        <span style="color: #ffffff;">H</span><span style="color: #ff0000; ">a</span><span
-            style="color: #ff8c00; ">r</span><span style="color: #ffff00; ">m</span><span
-            style="color: #008000; ">o</span><span style="color: #4e4e8a; ">n</span><span
-            style="color: #aa5ae2; ">i</span><span style="color: #ffffff; ">Q</span>
+<div class="d-flex align-items-center" style="margin-left: 1rem;">
+    <a class="navbar-brand d-flex align-items-center" [routerLink]="router.url === '/map' ? '/' : '/map'" style="gap: 2px; margin-right: 0; cursor: pointer;">
+        <span
+            style="color: #ffffff; font-weight: 800; font-family: 'Inter', 'Arial', sans-serif; padding-right: 2px;">Harmoni</span>
+        <img src="/icons/hqLogo.png" alt="Q"
+            style="height: 1.1em; width: auto; margin-left: 2px; transform: translateY(0.12em);">
     </a>
-    <span style="color: #ffffff;" class="mx-2">|</span>
+    <span style="color: rgba(255, 255, 255, 0.5);" class="mx-2">|</span>
     <a href="https://www.polymtl.ca/programmes/cours/projet-integrateur-iv-en-genie-mecanique-0" target="_blank"
         rel="noopener noreferrer">
-        <img style="height: 2em; margin-left: 1em;" src="/icons/polymtlLogo.png">
+        <img style="height: 2em; margin-left: 1em;"
+            src="/icons/polymtlLogo.png" alt="Polytechnique">
     </a>
     <a href="https://www.hydroquebec.com/projets/planifier/prevoir-demande-electricite.html" target="_blank"
         rel="noopener noreferrer">
-        <img style="height: 2em; margin-left: 1em;" src="/icons/hqLogo.png" alt="Logo de Hydro-Québec">
+        <img style="height: 2em; margin-left: 1em;"
+            src="/icons/hqLogo.png" alt="Logo de Hydro-Québec">
     </a>
 </div>

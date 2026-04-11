@@ -13,7 +13,16 @@ const mockInfrastruturesService = {
   isInfraSelected: vi.fn().mockReturnValue(false),
   toggleInfra: vi.fn(),
   deleteLocalInfra: vi.fn(),
-  selectedInfraGroup: signal({ id: 1, nom: 'Groupe', parc_eoliens: [], parc_solaires: [], central_hydroelectriques: ['1'], central_thermique: [], central_nucleaire: [] }),
+  isDefaultInfraGroup: vi.fn().mockReturnValue(false),
+  selectedInfraGroup: signal({
+    id: 100,
+    nom: 'Groupe',
+    parc_eoliens: [],
+    parc_solaires: [],
+    central_hydroelectriques: ['1'],
+    central_thermique: [],
+    central_nucleaire: [],
+  }),
 };
 
 describe('InfraListBody', () => {

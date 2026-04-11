@@ -1,7 +1,8 @@
-<li class="list-group-item d-flex justify-content-between align-items-center" role="button"
+<li class="list-group-item d-flex justify-content-between align-items-center"
+    [attr.role]="isToggleLocked ? null : 'button'"
     style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px;"
-    (click)="toggleInfra()" [ngClass]="{ 'list-group-item-secondary': isSelected }"
-    title="Cliquez pour sélectionner ou désélectionner cette infrastructure">
+    (click)="onRowClick()" [ngClass]="{ 'list-group-item-secondary': isSelected, 'infra-list-item--locked': isToggleLocked }"
+    [attr.title]="rowTitle">
     <span>{{nom}}</span>
     <div>
         <i class="fas fa-line-chart" style="color: #007bff; cursor: pointer;" (click)="simulate_single($event)"
@@ -10,7 +11,12 @@
         <i class="fas fa-info-circle" style="color: #007bff; cursor: pointer;" (click)="handleInfoClick($event)"
             title="Afficher les informations de cette infrastructure"></i>
         <span *ngIf="isUserCreated" class="mx-1"></span>
-        <i *ngIf="isUserCreated" class="fas fa-trash" style="color: #dc3545; cursor: pointer;"
-            (click)="deleteInfra($event)" title="Supprimer cette infrastructure"></i>
+        <app-delete-confirm-button
+            *ngIf="isUserCreated"
+            buttonTitle="Supprimer cette infrastructure"
+            confirmTitle="Supprimer l'infrastructure"
+            [confirmMessage]="'Êtes-vous sûr de vouloir supprimer l\'infrastructure « ' + nom + ' » ? Cette action est irréversible.'"
+            (delete)="deleteInfra()">
+        </app-delete-confirm-button>
     </div>
 </li>
