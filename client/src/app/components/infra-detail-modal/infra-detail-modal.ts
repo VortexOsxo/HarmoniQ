@@ -246,6 +246,9 @@ export class InfraDetailModal {
     onPuissanceSliderInput(event: Event) {
         const val = parseFloat((event.target as HTMLInputElement).value);
         this.sliderValue.set(val);
+        const infra = this.infra();
+        if (!infra || infra.type !== 'hydro') return;
+        this.infrasService.overrideHydroPuissance(infra.data.id, val);
     }
 
     onPuissanceSliderChange(event: Event) {
