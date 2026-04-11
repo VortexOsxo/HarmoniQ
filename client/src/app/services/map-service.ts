@@ -1,4 +1,4 @@
-import { Injectable, NgZone, effect, signal } from '@angular/core';
+import { Injectable, NgZone, effect, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { map_icons, prettyNames } from '@app/utils/map-utils';
@@ -40,9 +40,14 @@ export class MapService {
 
   // Filter Signals
   mapFilterName = signal('');
-  mapFilterTypes = signal<Set<string>>(new Set(types));
+  mapFilterTypes = signal<Set<string>>(new Set(types)); // Show all by default
   mapFilterMinPower = signal<number | null>(null);
   mapFilterMaxPower = signal<number | null>(null);
+  showRealInfra = signal(true);
+  showUserInfra = signal(true);
+
+  hasSelection = computed(() => this.mapFilterTypes().size > 0 && (this.showRealInfra() || this.showUserInfra()));
+  private lastTypeSelection: Set<string> = new Set(types);
 
   private previousSelectedType: string | null = null;
   private previousSelectedId: string | null = null;
@@ -77,6 +82,8 @@ export class MapService {
       this.mapFilterTypes();
       this.mapFilterMinPower();
       this.mapFilterMaxPower();
+      this.showRealInfra();
+      this.showUserInfra();
       this.reloadMarkers();
     });
 
@@ -116,6 +123,28 @@ export class MapService {
   }
 
 
+  toggleVisibility(): void {
+    if (this.hasSelection()) {
+      this.lastTypeSelection = new Set(this.mapFilterTypes());
+      this.deselectAll();
+    } else {
+      if (!this.lastTypeSelection || this.lastTypeSelection.size === 0) {
+        this.selectAll();
+      } else {
+        this.mapFilterTypes.set(new Set(this.lastTypeSelection));
+      }
+    }
+    this.reloadMarkers();
+  }
+
+  selectAll() {
+    this.mapFilterTypes.set(new Set(types));
+  }
+
+  deselectAll() {
+    this.mapFilterTypes.set(new Set());
+  }
+
   onMapLoaded() { setTimeout(() => this.map?.invalidateSize(), 250); }
 
   createMap() {
@@ -123,7 +152,7 @@ export class MapService {
       throw new Error('Map already created');
 
     const map = L.map('map', {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: false,
       maxZoom: 12,
       minZoom: 5
@@ -227,6 +256,16 @@ export class MapService {
           return true;
         });
       }
+
+      // Apply Origin filters
+      const showReal = this.showRealInfra();
+      const showUser = this.showUserInfra();
+      infras = infras.filter(i => {
+        const isUser = (i as any).isUserCreated === true;
+        if (isUser && !showUser) return false;
+        if (!isUser && !showReal) return false;
+        return true;
+      });
 
       this.addMarkers(type, infras);
     });

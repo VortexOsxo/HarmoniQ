@@ -42,8 +42,8 @@ describe('ProtectedAreasService', () => {
   });
 
   describe('initial state', () => {
-    it('should start with isVisible as false', () => {
-      expect(service.isVisible()).toBe(false);
+    it('should start with hasSelection as false', () => {
+      expect(service.hasSelection()).toBe(false);
     });
 
     it('should start with legendOpen as false', () => {
@@ -85,16 +85,12 @@ describe('ProtectedAreasService', () => {
   });
 
   describe('isLayerSelected', () => {
-    it('should return true for layers selected by default', () => {
-      const selectedLayers = service.selectedLayers();
-      const firstSelectedId = [...selectedLayers][0];
-
-      expect(service.isLayerSelected(firstSelectedId)).toBe(true);
+    it('should return false for a layer id that is not selected by default', () => {
+      const allIds = [...service.selectedLayers()];
+      expect(allIds.length).toBe(0);
     });
 
-    it('should return false for a layer id that is not selected', () => {
-      service.deselectAll();
-
+    it('should return false for a specific layer id that is not selected', () => {
       expect(service.isLayerSelected(999)).toBe(false);
     });
   });

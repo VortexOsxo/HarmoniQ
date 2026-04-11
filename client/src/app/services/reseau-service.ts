@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import { environment } from 'environments/environment';
 
@@ -65,11 +65,14 @@ const GREY = '#AAAAAA';
   providedIn: 'root',
 })
 export class ReseauService {
-  isVisible = signal(false);
   legendOpen = signal(false);
 
-  selectedBusTypes = signal<Set<string>>(new Set(BUS_CATEGORIES.map(c => c.key)));
-  selectedLineTypes = signal<Set<string>>(new Set(LINE_CATEGORIES.map(c => c.key)));
+  selectedBusTypes = signal<Set<string>>(new Set());
+  selectedLineTypes = signal<Set<string>>(new Set());
+  hasSelection = computed(() => this.selectedBusTypes().size > 0 || this.selectedLineTypes().size > 0);
+
+  private lastBusSelection: Set<string> = new Set(BUS_CATEGORIES.map(c => c.key));
+  private lastLineSelection: Set<string> = new Set(LINE_CATEGORIES.map(c => c.key));
 
   private map?: L.Map;
   private buses: ReseauBus[] = [];
@@ -111,12 +114,18 @@ export class ReseauService {
   private busLookup: Record<string, ReseauBus> = {};
 
   toggleVisibility(): void {
-    const nextState = !this.isVisible();
-    this.isVisible.set(nextState);
-    if (nextState) {
-      this.legendOpen.set(true);
-    } else {
+    if (this.hasSelection()) {
+      this.lastBusSelection = new Set(this.selectedBusTypes());
+      this.lastLineSelection = new Set(this.selectedLineTypes());
+      this.deselectAll();
       this.legendOpen.set(false);
+    } else {
+      if (this.lastBusSelection.size === 0 && this.lastLineSelection.size === 0) {
+        this.selectAll();
+      } else {
+        this.selectedBusTypes.set(new Set(this.lastBusSelection));
+        this.selectedLineTypes.set(new Set(this.lastLineSelection));
+      }
     }
     this.rebuildLayers();
   }
@@ -245,7 +254,7 @@ export class ReseauService {
   rebuildLayers(): void {
     if (!this.map || !this.dataLoaded) return;
 
-    const highlight = this.isVisible();
+    const highlight = true; // Any selection is highlighted
     const selectedBus = this.selectedBusTypes();
     const selectedLine = this.selectedLineTypes();
 
@@ -310,7 +319,6 @@ export class ReseauService {
     this.busMarkers = [];
     this.linePolylines = [];
     this.map = undefined;
-    this.isVisible.set(false);
     this.legendOpen.set(false);
   }
 }
