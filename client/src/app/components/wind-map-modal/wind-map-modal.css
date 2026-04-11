@@ -1,0 +1,14 @@
+.x-small {
+    font-size: 0.72rem;
+}
+
+.modal-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.form-select-sm {
+    font-size: 0.82rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}

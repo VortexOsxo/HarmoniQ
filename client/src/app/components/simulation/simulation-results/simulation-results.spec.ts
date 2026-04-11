@@ -9,6 +9,7 @@ import { TutorialService, TutorialState } from '@app/services/tutorial-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { MapService } from '@app/services/map-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { WindMapService } from '@app/services/wind-map-service';
 
 vi.mock('leaflet.markercluster', () => ({}));
 vi.mock('leaflet', () => ({
@@ -78,6 +79,17 @@ const mockInfraDetailService = {
     closeDetail: vi.fn(),
 };
 
+const mockWindMapService = {
+    isWindMode: signal(false),
+    isLoading: signal(false),
+    errorMessage: signal<string | null>(null),
+    availableYears: signal<number[]>([2024]),
+    selectedYear: signal<number | null>(2024),
+    toggleWindMode: vi.fn(),
+    setYear: vi.fn(),
+    disableWindMode: vi.fn(),
+};
+
 const mockMapService = {
     mapFilterName: signal(''),
     mapFilterTypes: signal(new Set()),
@@ -106,6 +118,7 @@ const providers = [
     { provide: ReseauService, useValue: mockReseauService },
     { provide: TutorialService, useValue: mockTutorialService },
     { provide: InfraDetailService, useValue: mockInfraDetailService },
+    { provide: WindMapService, useValue: mockWindMapService },
     { provide: MapService, useValue: mockMapService },
     { provide: NgbModal, useValue: mockNgbModal },
 ];
@@ -121,6 +134,7 @@ describe('SimulationResults', () => {
     beforeEach(() => {
         isDetailOpen.set(false);
         tutorialState$.next({ active: false, currentStep: 0, showWelcome: false });
+        mockWindMapService.isWindMode.set(false);
     });
 
     afterEach(() => vi.clearAllMocks());

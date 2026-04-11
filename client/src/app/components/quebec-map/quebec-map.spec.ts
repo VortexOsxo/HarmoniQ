@@ -5,7 +5,6 @@ import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
-
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
@@ -95,6 +94,7 @@ const mockInfrastruturesService = {
   selectedInfraGroup: signal(null),
   getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
 };
+
 
 async function renderComponent() {
   return render(QuebecMap, {

@@ -23,6 +23,7 @@ div#plots {
 
 .protected-areas-btn,
 .reseau-btn,
+.wind-btn,
 .infrastructures-btn {
     display: flex;
     align-items: center;
@@ -41,6 +42,7 @@ div#plots {
 
 .protected-areas-btn .btn-label,
 .reseau-btn .btn-label,
+.wind-btn .btn-label,
 .infrastructures-btn .btn-label {
     flex-grow: 1;
     text-align: left;
@@ -64,6 +66,7 @@ div#plots {
 
 .protected-areas-btn.btn-success .settings-trigger,
 .reseau-btn.btn-reseau-active .settings-trigger,
+.wind-btn.btn-wind-active .settings-trigger,
 .infrastructures-btn.btn-infrastructures-active .settings-trigger {
     background: rgba(255, 255, 255, 0.2);
     color: #fff;
@@ -71,6 +74,7 @@ div#plots {
 
 .protected-areas-btn.btn-success .settings-trigger:hover,
 .reseau-btn.btn-reseau-active .settings-trigger:hover,
+.wind-btn.btn-wind-active .settings-trigger:hover,
 .infrastructures-btn.btn-infrastructures-active .settings-trigger:hover {
     background: rgba(255, 255, 255, 0.35);
 }
@@ -78,6 +82,14 @@ div#plots {
 .protected-areas-btn.btn-success,
 .reseau-btn.btn-reseau-active,
 .infrastructures-btn.btn-infrastructures-active {
+    background: var(--hq-blue-start) !important;
+    color: #fff !important;
+    border-color: var(--hq-blue-start) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.35);
+}
+
+/* Wind button */
+.wind-btn.btn-wind-active {
     background: var(--hq-blue-start) !important;
     color: #fff !important;
     border-color: var(--hq-blue-start) !important;
