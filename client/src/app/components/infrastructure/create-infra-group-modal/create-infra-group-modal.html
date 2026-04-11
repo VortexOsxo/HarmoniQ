@@ -5,7 +5,8 @@
 <div class="modal-body">
     <div class="mb-3">
         <label for="name" class="form-label">Nom du groupe</label>
-        <input type="text" class="form-control" id="name" [(ngModel)]="name" placeholder="Nom du nouveau groupe">
+        <input type="text" class="form-control" id="name" [(ngModel)]="name" placeholder="Nom du nouveau groupe" [maxlength]="nameMaxLength">
+        <small class="text-muted d-block text-end mt-1">{{ name.length }} / {{ nameMaxLength }}</small>
         <div class="form-text">Les infrastructures du groupe actuel seront copiées dans le nouveau groupe.</div>
     </div>
 </div>

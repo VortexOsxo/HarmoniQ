@@ -16,7 +16,7 @@
                 *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== defaultInfraGroupId as group"
                 buttonTitle="Supprimer ce groupe d'infrastructure"
                 confirmTitle="Supprimer le groupe d'infrastructures"
-                [confirmMessage]="'Êtes-vous sûr de vouloir supprimer le groupe « ' + selectedInfrastructureGroup!.nom + ' » ? Cette action est irréversible.'"
+                [confirmMessage]="'Êtes-vous sûr de vouloir supprimer ce groupe d\'infrastructures? L\'action est irréversible.'"
                 (delete)="deleteInfraGroup()">
             </app-delete-confirm-button>
         </div>

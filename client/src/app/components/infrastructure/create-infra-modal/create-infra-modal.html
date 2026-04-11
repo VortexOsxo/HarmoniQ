@@ -42,8 +42,15 @@
                 <input class="form-control" [id]="field.key" [type]="field.type" [readonly]="field.readonly"
                     [formControlName]="field.key" [class.readonly-field]="field.readonly"
                     [class.is-invalid]="form.get(field.key)?.invalid && form.get(field.key)?.touched"
-                    [attr.min]="field.nonNegative ? 0 : null" (keydown)="onKeydown($event, field)"
+                    [attr.min]="field.nonNegative ? 0 : null" [attr.maxlength]="field.maxLength || null"
+                    [attr.step]="field.type === 'number' ? '0.001' : null"
+                    (keydown)="onKeydown($event, field)"
                     (blur)="onBlur(field)">
+                @if (field.maxLength && field.type === 'text') {
+                <small class="text-muted d-block text-end mt-1">
+                    {{ (form.get(field.key)?.value?.length || 0) }} / {{ field.maxLength }}
+                </small>
+                }
                 }
 
                 @if (getFieldError(field); as errMsg) {

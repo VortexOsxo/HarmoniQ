@@ -43,6 +43,18 @@ export class SolarInfraForm implements OnInit, AfterViewInit {
     }
   }
 
+  onBlurRound(controlName: string) {
+    const control = this.form.get(controlName);
+    if (!control) return;
+    const val = Number(control.value);
+    if (!isNaN(val) && val >= 0) {
+      const rounded = Math.round(val * 1000) / 1000;
+      if (val !== rounded) {
+        control.setValue(rounded);
+      }
+    }
+  }
+
   updateAngleSVG(val: any) {
     let raw = parseFloat(val);
     if (isNaN(raw)) raw = 0;

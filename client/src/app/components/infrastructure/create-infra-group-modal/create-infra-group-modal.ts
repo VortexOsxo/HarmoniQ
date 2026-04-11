@@ -12,6 +12,7 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
 })
 export class CreateInfraGroupModal {
     name: string = '';
+    readonly nameMaxLength = 100;
 
     currentGroup: InfrastructureGroup | null = null;
 
@@ -20,7 +21,7 @@ export class CreateInfraGroupModal {
     }
 
     create() {
-        if (!this.name) return;
+        if (!this.name || this.name.length > this.nameMaxLength) return;
 
         const newGroup: InfrastructureGroup = {
             id: 0,
