@@ -6,11 +6,13 @@ import { InfraListElement } from './infra-list-element';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { MapService } from '@app/services/map-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
 import { DEFAULT_INFRA_GROUP_ID } from '@app/models/infrastructure-group';
 
+vi.mock('leaflet.markercluster', () => ({}));
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
   icon: vi.fn().mockReturnValue({}),
@@ -53,6 +55,10 @@ const mockInfraDetailService = {
   openDetail: vi.fn(),
 };
 
+const mockMapService = {
+  flyToInfra: vi.fn(),
+};
+
 const defaultInputs = {
   nom: 'Barrage Test',
   id: '42',
@@ -64,6 +70,7 @@ const defaultProviders = [
   { provide: ScenariosService, useValue: mockScenariosService },
   { provide: NgbModal, useValue: mockModalService },
   { provide: InfraDetailService, useValue: mockInfraDetailService },
+  { provide: MapService, useValue: mockMapService },
 ];
 
 describe('InfraListElement', () => {
@@ -152,6 +159,7 @@ describe('InfraListElement', () => {
       await user.click(screen.getByTitle(/Afficher les informations/i));
 
       expect(mockInfraDetailService.openDetail).toHaveBeenCalledWith('hydro', '42');
+      expect(mockMapService.flyToInfra).toHaveBeenCalledWith('hydro', '42');
     });
   });
 

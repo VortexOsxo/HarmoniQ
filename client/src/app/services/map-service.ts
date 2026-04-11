@@ -666,6 +666,19 @@ export class MapService {
     this.infraDetailService.openDetail(type, id);
   }
 
+  flyToInfra(type: string, id: string) {
+    if (!this._map) return;
+    const marker = this.markers[type]?.[parseInt(id)];
+    if (marker) {
+      this._map.setView(marker.getLatLng(), 10, { animate: false });
+    } else {
+      const infra = this.infrasService.getInfraByTypeAndId(type, id);
+      if (infra) {
+        this._map.setView([infra.latitude, infra.longitude], 10, { animate: false });
+      }
+    }
+  }
+
   private updateMarker(type: string, id: string, isActive: boolean) {
     let infraId = parseInt(id);
     const marker = this.markers[type][infraId];

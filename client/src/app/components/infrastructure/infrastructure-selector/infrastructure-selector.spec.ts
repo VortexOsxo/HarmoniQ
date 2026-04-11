@@ -4,8 +4,10 @@ import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { InfrastructureSelector } from './infrastructure-selector';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { MapService } from '@app/services/map-service';
 import { InfrastructureGroup } from '@app/models/infrastructure-group';
 
+vi.mock('leaflet.markercluster', () => ({}));
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
   icon: vi.fn().mockReturnValue({}),
@@ -69,6 +71,7 @@ const providers = [
   { provide: NgbModal, useValue: mockModalService },
   { provide: SimulationTemporalGraphService, useValue: mockSimService },
   { provide: ScenariosService, useValue: mockScenariosService },
+  { provide: MapService, useValue: { flyToInfra: vi.fn() } },
 ];
 
 async function renderComponent() {
@@ -191,63 +194,100 @@ describe('InfrastructureSelector', () => {
     });
   });
 
-  describe('getInfrasFromType', () => {
-    it('should delegate to infrasService.getInfrasSignalByType', async () => {
+  describe('filter chips (activeFilters, toggleFilter, isFilterActive)', () => {
+    it('should have all types active by default', async () => {
       const { fixture } = await renderComponent();
-      fixture.componentInstance.getInfrasFromType('hydro');
-      expect(mockInfrasService.getInfrasSignalByType).toHaveBeenCalledWith('hydro');
+      expect(fixture.componentInstance.isFilterActive('hydro')).toBe(true);
+      expect(fixture.componentInstance.isFilterActive('eolienneparc')).toBe(true);
+      expect(fixture.componentInstance.isFilterActive('solaire')).toBe(true);
+      expect(fixture.componentInstance.isFilterActive('thermique')).toBe(true);
+      expect(fixture.componentInstance.isFilterActive('nucleaire')).toBe(true);
+    });
+
+    it('should deactivate a type when toggled off', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.toggleFilter('hydro');
+      expect(fixture.componentInstance.isFilterActive('hydro')).toBe(false);
+    });
+
+    it('should reactivate a type when toggled back on', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.toggleFilter('hydro');
+      fixture.componentInstance.toggleFilter('hydro');
+      expect(fixture.componentInstance.isFilterActive('hydro')).toBe(true);
     });
   });
 
-  describe('visibleCategories & getFilteredAndSortedInfras', () => {
+  describe('flatFilteredInfras & getFilteredAndSortedInfras', () => {
     const mockHydroInfras = [
       { id: 101, nom: 'Barrage Robert-Bourassa' },
       { id: 102, nom: 'Centrale La Grande-1' },
       { id: 103, nom: 'Barrage Manic-5' }
     ];
 
+    const mockEolienInfras = [
+      { id: 201, nom: 'Parc Rivière-du-Moulin' },
+    ];
+
     beforeEach(() => {
       mockInfrasService.getInfrasSignalByType.mockImplementation((type: string) => {
         if (type === 'hydro') return signal(mockHydroInfras);
+        if (type === 'eolienneparc') return signal(mockEolienInfras);
         return signal([]);
       });
     });
 
-    it('should return all categories when filter is empty', async () => {
+    it('should return infras from all active types in a flat sorted list', async () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.filterText = '';
-      expect(fixture.componentInstance.visibleCategories).toEqual(fixture.componentInstance.infras);
+
+      const flat = fixture.componentInstance.flatFilteredInfras;
+      const names = flat.map(i => i.infra.nom);
+      expect(names).toEqual([
+        'Barrage Manic-5',
+        'Barrage Robert-Bourassa',
+        'Centrale La Grande-1',
+        'Parc Rivière-du-Moulin',
+      ]);
     });
 
-    it('should only show categories with matching infras when filtered', async () => {
+    it('should exclude infras from deactivated types', async () => {
       const { fixture } = await renderComponent();
-      fixture.componentInstance.filterText = 'manic';
-      
-      const visible = fixture.componentInstance.visibleCategories;
-      expect(visible.length).toBe(1);
-      expect(visible[0].type).toBe('hydro');
+      fixture.componentInstance.toggleFilter('eolienneparc');
+
+      const flat = fixture.componentInstance.flatFilteredInfras;
+      expect(flat.every(i => i.type !== 'eolienneparc')).toBe(true);
+      expect(flat.length).toBe(3);
     });
 
-    it('should hide all categories when no infras match', async () => {
+    it('should return empty list when all types are deactivated', async () => {
       const { fixture } = await renderComponent();
-      fixture.componentInstance.filterText = 'introuvable';
-      expect(fixture.componentInstance.visibleCategories.length).toBe(0);
+      for (const cat of fixture.componentInstance.infras) {
+        fixture.componentInstance.toggleFilter(cat.type);
+      }
+      expect(fixture.componentInstance.flatFilteredInfras.length).toBe(0);
     });
 
-    it('should filter infras by name within a category', async () => {
+    it('should filter infras by name across types', async () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.filterText = 'barrage';
-      
-      const filtered = fixture.componentInstance.getFilteredAndSortedInfras('hydro');
-      expect(filtered.length).toBe(2);
-      expect(filtered.map((i: any) => i.nom)).toContain('Barrage Robert-Bourassa');
-      expect(filtered.map((i: any) => i.nom)).toContain('Barrage Manic-5');
+
+      const flat = fixture.componentInstance.flatFilteredInfras;
+      expect(flat.length).toBe(2);
+      expect(flat.map(i => i.infra.nom)).toContain('Barrage Robert-Bourassa');
+      expect(flat.map(i => i.infra.nom)).toContain('Barrage Manic-5');
+    });
+
+    it('should return empty when no infras match the text filter', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.filterText = 'introuvable';
+      expect(fixture.componentInstance.flatFilteredInfras.length).toBe(0);
     });
 
     it('should sort infras A-Z by default', async () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.filterText = '';
-      
+
       const sorted = fixture.componentInstance.getFilteredAndSortedInfras('hydro');
       expect(sorted[0].nom).toBe('Barrage Manic-5');
       expect(sorted[1].nom).toBe('Barrage Robert-Bourassa');
@@ -258,11 +298,20 @@ describe('InfrastructureSelector', () => {
       const { fixture } = await renderComponent();
       fixture.componentInstance.filterText = '';
       fixture.componentInstance.sortAsc = false;
-      
+
       const sorted = fixture.componentInstance.getFilteredAndSortedInfras('hydro');
       expect(sorted[0].nom).toBe('Centrale La Grande-1');
       expect(sorted[1].nom).toBe('Barrage Robert-Bourassa');
       expect(sorted[2].nom).toBe('Barrage Manic-5');
+    });
+
+    it('should attach the correct type to each item in flatFilteredInfras', async () => {
+      const { fixture } = await renderComponent();
+      const flat = fixture.componentInstance.flatFilteredInfras;
+      const hydroItems = flat.filter(i => i.type === 'hydro');
+      const eolienItems = flat.filter(i => i.type === 'eolienneparc');
+      expect(hydroItems.length).toBe(3);
+      expect(eolienItems.length).toBe(1);
     });
   });
 
