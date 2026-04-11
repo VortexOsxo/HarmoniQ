@@ -28,6 +28,7 @@ export class SimulationService {
     productionNodes = signal<ProductionNode[] | null>(null);
     /** Shown when the user clicks « Lancer Simulation » with an incomplete map configuration. */
     showLaunchConfigHints = signal(false);
+    launchRequested = signal(false);
 
     private simulationStepService = inject(SimulationStepService);
     step = computed(() => this.simulationStepService.currentStepName());
@@ -74,6 +75,7 @@ export class SimulationService {
     /** Navigate to the simulation page, or surface configuration hints on the map panel. */
     requestLaunchFromMap(): void {
         if (this.canLaunch()) {
+            this.launchRequested.set(true);
             this.router.navigate(['/simulation']);
         } else {
             this.showLaunchConfigHints.set(true);

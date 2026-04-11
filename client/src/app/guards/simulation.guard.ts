@@ -1,16 +1,10 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { ScenariosService } from '@app/services/scenarios-service';
-import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { SimulationService } from '@app/services/simulation-service';
 
 export const simulationGuard: CanActivateFn = () => {
-    const scenariosService = inject(ScenariosService);
-    const infrastructuresService = inject(InfrastruturesService);
+    const simulationService = inject(SimulationService);
     const router = inject(Router);
 
-    const ready =
-        scenariosService.selectedScenario() !== null &&
-        infrastructuresService.selectedInfraGroup() !== null;
-
-    return ready || router.createUrlTree(['/map']);
+    return simulationService.launchRequested() || router.createUrlTree(['/map']);
 };
