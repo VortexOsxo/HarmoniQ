@@ -41,7 +41,21 @@
     <div class="click-wall" [style.top.px]="highlightRect.bottom + 8" [style.left.px]="0" [style.right.px]="0" [style.bottom.px]="0" (click)="focusNext($event)"></div>
     <div class="click-wall" [style.top.px]="Math.max(0, highlightRect.top - 8)" [style.height.px]="highlightRect.height + 16" [style.left.px]="0" [style.width.px]="Math.max(0, highlightRect.left - 8)" (click)="focusNext($event)"></div>
     <div class="click-wall" [style.top.px]="Math.max(0, highlightRect.top - 8)" [style.height.px]="highlightRect.height + 16" [style.left.px]="highlightRect.right + 8" [style.right.px]="0" (click)="focusNext($event)"></div>
+
+    <!-- 5th Click wall explicitly covering the cutout if action NOT required -->
+    <div class="click-wall target-shield" *ngIf="!currentStep.requireAction"
+        [style.top.px]="highlightRect.top - 8"
+        [style.left.px]="highlightRect.left - 8"
+        [style.width.px]="highlightRect.width + 16"
+        [style.height.px]="highlightRect.height + 16"
+        (click)="onInvalidClick($event)">
+    </div>
 </ng-container>
+
+<!-- Error Alert Tooltip -->
+<div class="tutorial-error-alert" *ngIf="showErrorAlert" [style.top.px]="errorAlertY" [style.left.px]="errorAlertX">
+    <i class="fa-solid fa-circle-exclamation"></i> Action non permise pendant le tutoriel
+</div>
 
 <ng-container *ngIf="state.active && !state.showWelcome">
 
