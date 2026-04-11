@@ -52,24 +52,8 @@ export class SimulationService {
 
         effect(() => {
             this.scenariosService.selectedScenario(); // track scenario changes
-            this.simulationTemporalGraphService.cachedScenarioId = undefined;
-            this.simulationTemporalGraphService.cachedSimulationResult = undefined;
-            this.simulationCostGraphService.cachedScenarioId = undefined;
-            this.simulationCostGraphService.cachedData = undefined;
-            this.simulationCostGraphService.costMode = 'annuel';
-            this.simulationCostGraphService.rentabiliteFromSimulation = undefined;
-            this.simulationCostGraphService.isLoading.set(true);
-            this.simulationCostGraphService.rentabiliteLoading.set(true);
-            this.simulationCo2GraphService.cachedScenarioId = undefined;
-            this.simulationCo2GraphService.cachedData = undefined;
-            this.simulationCo2GraphService.costMode = 'construction';
-            this.simulationCo2GraphService.isLoading.set(true);
-            this.simulationAnalysisGraphService.reset();
-            this.productionNodes.set(null);
-        });
-
-        effect(() => {
             this.infrastructuresService.selectedInfraGroup(); // track infra group changes
+
             this.simulationTemporalGraphService.cachedScenarioId = undefined;
             this.simulationTemporalGraphService.cachedSimulationResult = undefined;
             this.simulationCostGraphService.cachedScenarioId = undefined;
@@ -138,8 +122,6 @@ export class SimulationService {
         const infraGroup = this.infrastructuresService.selectedInfraGroup();
 
         if (!scenario || !infraGroup) return;
-
-        await this.infrastructuresService.ensureInfrasLoaded();
 
         const steps = [
             this.simulationCostGraphService,
