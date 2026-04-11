@@ -269,13 +269,6 @@ export class InfrastruturesService {
     this.infrasContainer.get(type)?.refresh();
   }
 
-  async ensureInfrasLoaded(): Promise<void> {
-    const pending = Array.from(this.infrasContainer.values())
-      .filter(c => c.infras().length === 0);
-    if (pending.length === 0) return;
-    await Promise.all(pending.map(c => firstValueFrom(c.loaded)));
-  }
-
   overrideHydroPuissance(id: number, puissance: number): void {
     this.hydroPuissanceOverrides.update(map => {
       const next = new Map(map);

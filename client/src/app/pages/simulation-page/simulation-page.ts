@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostListener, inject, ViewChild } from '@angular/core';
 import { SimulationTopBar } from '@app/components/simulation/simulation-top-bar/simulation-top-bar';
 import { CommonModule } from '@angular/common';
 import { ScenarioDemandProdSankey } from '@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey';
@@ -199,6 +199,11 @@ export class SimulationPage implements AfterViewInit {
         return this.isSimulating
             ? { icon: 'fa-circle-notch fa-spin', cssClass: 'hq-text-gradient-blue' }
             : { icon: 'fa-circle', color: '#ced4da' };
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    onBeforeUnload(event: BeforeUnloadEvent): void {
+        event.preventDefault();
     }
 
     ngAfterViewInit(): void {
