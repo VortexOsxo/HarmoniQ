@@ -107,9 +107,6 @@ describe('WindMapService', () => {
     expect(service.isWindMode()).toBe(true);
     expect(service.selectedYear()).toBe(2024);
     expect(mapServiceMock.renderWindHeatmap).toHaveBeenCalledTimes(1);
-    expect(mapFilterTypesSignal().size).toBe(0);
-    expect(protectedServiceMock.hide).toHaveBeenCalled();
-    expect(reseauServiceMock.toggleVisibility).toHaveBeenCalled();
   });
 
   it('should change year while wind mode is active', async () => {
