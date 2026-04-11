@@ -3,6 +3,7 @@ import { NgbNavModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuebecMap } from '@app/components/quebec-map/quebec-map';
 import { ProtectedAreasModal } from '@app/components/protected-areas-modal/protected-areas-modal';
 import { ReseauModal } from '@app/components/reseau-modal/reseau-modal';
+import { WindMapModal } from '@app/components/wind-map-modal/wind-map-modal';
 import { InfrastructuresModal } from '@app/components/infrastructures-modal/infrastructures-modal';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
@@ -65,6 +66,17 @@ export class SimulationResults implements OnInit, OnDestroy {
     this.modalService.open(InfrastructuresModal, {
       scrollable: true,
       size: 'lg',
+      windowClass: 'side-filter-modal',
+      backdrop: true,
+      backdropClass: 'transparent-backdrop'
+    });
+  }
+
+  openWindMapSettings(event: Event): void {
+    event.stopPropagation();
+    this.modalService.open(WindMapModal, {
+      scrollable: true,
+      size: 'md',
       windowClass: 'side-filter-modal',
       backdrop: true,
       backdropClass: 'transparent-backdrop'

@@ -59,16 +59,6 @@ export class QuebecMap implements AfterViewInit, OnDestroy {
       scrollable: true,
       size: 'md',
     });
-
-    effect(() => {
-      if (this.windMapService.isWindMode()) {
-        untracked(() => {
-          this.infraFiltersOpen.set(false);
-          this.protectedAreasService.legendOpen.set(false);
-          this.reseauService.legendOpen.set(false);
-        });
-      }
-    }, { allowSignalWrites: true });
   }
 
   ngAfterViewInit(): void {

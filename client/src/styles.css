@@ -107,8 +107,28 @@ ngb-modal-window.modal.modal-static .modal-dialog {
   transform: none !important;
 }
 
+.btn-close {
+  width: 0.65em !important;
+  height: 0.65em !important;
+  background-size: 0.65em !important;
+  padding: 0.5rem !important;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+.btn-close:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* Fix tooltip z-index over side panels */
-.tooltip, ngb-tooltip-window, .bs-tooltip-top {
+.tooltip,
+ngb-tooltip-window,
+.bs-tooltip-top {
   z-index: 2000 !important;
 }
 
@@ -230,6 +250,7 @@ ngb-modal-window.modal.modal-static .modal-dialog {
 .hq-snackbar--success {
   border-left-color: var(--hq-green-start);
 }
+
 .hq-snackbar--success .hq-snackbar-header h6 i {
   color: var(--hq-green-start);
 }
@@ -237,6 +258,7 @@ ngb-modal-window.modal.modal-static .modal-dialog {
 .hq-snackbar--error {
   border-left-color: #e74c3c;
 }
+
 .hq-snackbar--error .hq-snackbar-header h6 i {
   color: #e74c3c;
 }
@@ -244,6 +266,7 @@ ngb-modal-window.modal.modal-static .modal-dialog {
 .hq-snackbar--info {
   border-left-color: var(--hq-blue-start);
 }
+
 .hq-snackbar--info .hq-snackbar-header h6 i {
   color: var(--hq-blue-start);
 }
@@ -347,56 +370,57 @@ ngb-modal-window.modal.modal-static .modal-dialog {
 
 /* Side Filter Modal Styling - Repositions modals to the right-center of the screen */
 .side-filter-modal .modal-dialog {
-    position: fixed;
-    top: 60%;
-    right: 20px;
-    left: auto;
-    transform: translateY(-50%) !important;
-    margin: 0;
-    width: fit-content;
-    min-width: 320px;
-    max-width: 500px;
-    height: auto;
-    max-height: calc(100vh - 40px);
+  position: fixed;
+  top: 300px;
+  right: 20px;
+  left: auto;
+  transform: none !important;
+  margin: 0;
+  width: fit-content;
+  min-width: 320px;
+  max-width: 500px;
+  height: auto;
 }
 
 .side-filter-modal .modal-content {
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+  max-height: calc(100vh - 250px);
+  display: flex;
+  flex-direction: column;
 }
 
 .side-filter-modal .modal-body {
-    max-height: calc(85vh - 60px);
-    overflow-y: auto;
+  max-height: 450px;
+  /* Force scrollable area as requested */
+  overflow-y: auto;
 }
 
 .transparent-backdrop {
-    background-color: transparent !important;
-    opacity: 0 !important;
+  background-color: transparent !important;
+  opacity: 0 !important;
 }
 
 /* ── Shared Map Filter Modal Utilities ── */
 .item-compact-label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #34495e !important; /* Force Premium Dark Navy */
-    text-transform: none !important; /* Force Sentence Case */
-    margin: 0;
-    padding-bottom: 2px;
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #34495e !important;
+  text-transform: none !important;
+  margin: 0;
+  padding-bottom: 2px;
 }
 
 .btn-xs {
-    padding: 2px 8px;
-    font-size: 0.72rem;
-    font-weight: 500;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
 }
 
 .filter-section-divider {
-    border-bottom: 1px solid #f1f5f9;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
 }
-
-

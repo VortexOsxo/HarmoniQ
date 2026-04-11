@@ -21,14 +21,6 @@ export class WindMapService {
   availableYears = signal<number[]>([]);
   selectedYear = signal<number | null>(null);
 
-  private previousInfraTypes: Set<string> | null = null;
-  private previousProtectedVisible: boolean | null = null;
-  private previousProtectedLegendOpen: boolean | null = null;
-  private previousReseauVisible: boolean | null = null;
-  private previousReseauLegendOpen: boolean | null = null;
-  private previousReseauBusTypes: Set<string> | null = null;
-  private previousReseauLineTypes: Set<string> | null = null;
-
   constructor(
     private http: HttpClient,
     private mapService: MapService,
@@ -55,12 +47,9 @@ export class WindMapService {
         throw new Error('Aucune annee ERA5 disponible pour la carte des vents.');
       }
 
-      this.snapshotCurrentState();
-      this.hideNonWindLayers();
       await this.loadAndRenderYear(year);
       this.isWindMode.set(true);
     } catch (error: any) {
-      this.restorePreviousState();
       this.mapService.clearWindLayer();
       this.isWindMode.set(false);
       this.errorMessage.set(error?.message || "Impossible d'activer la carte des vents.");
@@ -71,7 +60,6 @@ export class WindMapService {
 
   disableWindMode(): void {
     this.mapService.clearWindLayer();
-    this.restorePreviousState();
     this.isWindMode.set(false);
     this.errorMessage.set(null);
   }
@@ -123,60 +111,4 @@ export class WindMapService {
     await this.mapService.renderWindHeatmap(payload);
   }
 
-  private snapshotCurrentState(): void {
-    this.previousInfraTypes = new Set(this.mapService.mapFilterTypes());
-    this.previousProtectedLegendOpen = this.protectedAreasService.legendOpen();
-    this.previousReseauLegendOpen = this.reseauService.legendOpen();
-    this.previousReseauBusTypes = new Set(this.reseauService.selectedBusTypes());
-    this.previousReseauLineTypes = new Set(this.reseauService.selectedLineTypes());
-  }
-
-  private hideNonWindLayers(): void {
-    this.mapService.mapFilterTypes.set(new Set());
-
-    this.reseauService.deselectAll();
-    this.reseauService.legendOpen.set(false);
-
-    this.protectedAreasService.hide();
-    this.protectedAreasService.legendOpen.set(false);
-  }
-
-  private restorePreviousState(): void {
-    if (this.previousInfraTypes) {
-      this.mapService.mapFilterTypes.set(new Set(this.previousInfraTypes));
-    }
-
-    if (this.previousReseauVisible !== null) {
-      if (this.previousReseauBusTypes) {
-        this.reseauService.selectedBusTypes.set(new Set(this.previousReseauBusTypes));
-      }
-      if (this.previousReseauLineTypes) {
-        this.reseauService.selectedLineTypes.set(new Set(this.previousReseauLineTypes));
-      }
-      this.reseauService.rebuildLayers();
-
-      if (this.previousReseauLegendOpen !== null) {
-        this.reseauService.legendOpen.set(this.previousReseauLegendOpen);
-      }
-    }
-
-    if (this.previousProtectedVisible !== null) {
-      if (this.previousProtectedVisible) {
-        this.protectedAreasService.show();
-      } else {
-        this.protectedAreasService.hide();
-      }
-      if (this.previousProtectedLegendOpen !== null) {
-        this.protectedAreasService.legendOpen.set(this.previousProtectedLegendOpen);
-      }
-    }
-
-    this.previousInfraTypes = null;
-    this.previousProtectedVisible = null;
-    this.previousProtectedLegendOpen = null;
-    this.previousReseauVisible = null;
-    this.previousReseauLegendOpen = null;
-    this.previousReseauBusTypes = null;
-    this.previousReseauLineTypes = null;
-  }
 }

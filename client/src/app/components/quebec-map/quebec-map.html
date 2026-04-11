@@ -1,16 +1,5 @@
 <div id="map" style="height: 100%; width: 100%;"></div>
-
-
-
-
-
-
-
-
-
-
-<div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()"
-    *ngIf="!windMapService.isWindMode()">
+<div class="map-overlay card p-2 m-2" [class.detail-open]="infraDetailService.isOpen()">
     <p>Ajouter une infrastructure :</p>
 
     <div class="icon-draggable icon-draggable-tinted icon-draggable-barrage icon-clickable"
