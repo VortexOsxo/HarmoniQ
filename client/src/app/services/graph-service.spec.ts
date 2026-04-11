@@ -11,7 +11,6 @@ vi.mock('plotly.js-dist-min', () => ({
     register: vi.fn(),
     setPlotConfig: vi.fn(),
   },
-  __esModule: true,
 }));
 
 import { GraphService } from './graph-service';

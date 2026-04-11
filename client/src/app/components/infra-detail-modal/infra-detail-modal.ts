@@ -222,6 +222,13 @@ export class InfraDetailModal {
         modalRef.componentInstance.type = infra.type;
     }
 
+    editInfra() {
+        const infra = this.infra();
+        if (!infra || !infra.data?.isUserCreated || infra.type === 'hydro') return;
+        this.close();
+        this.infrasService.editInfra(infra.type, infra.data);
+    }
+
     deleteInfra() {
         const infra = this.infra();
         if (infra && infra.data.isUserCreated) {
@@ -423,6 +430,28 @@ export class InfraDetailModal {
                 tooltip:
                     "Volume d'eau emmagasiné dans le réservoir. Référé en km³, Mm³ (Millions de m³), ou Gm³.",
             });
+            if (d.hauteur_chute) {
+                fields.push({
+                    icon: 'fa-solid fa-arrow-down-long',
+                    label: 'Hauteur de chute',
+                    value: `${d.hauteur_chute} m`,
+                    tooltip: "Hauteur de chute (m) : Dénivelé entre le niveau d'eau du réservoir et la turbine.",
+                });
+            }
+            if (d.nb_turbines) {
+                fields.push({
+                    icon: 'fa-solid fa-gears',
+                    label: 'Nombre de turbines',
+                    value: `${d.nb_turbines}`,
+                });
+            }
+            if (d.modele_turbine) {
+                fields.push({
+                    icon: 'fa-solid fa-gear',
+                    label: 'Modèle de turbine',
+                    value: d.modele_turbine,
+                });
+            }
         } else if (infra.type === 'eolienneparc') {
             fields.push({
                 icon: 'fa-solid fa-wind',
@@ -443,6 +472,21 @@ export class InfraDetailModal {
                 tooltip:
                     'Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts.',
             });
+            if (d.hauteur_moyenne) {
+                fields.push({
+                    icon: 'fa-solid fa-arrows-up-down',
+                    label: 'Hauteur moyenne',
+                    value: `${d.hauteur_moyenne} m`,
+                    tooltip: "Hauteur moyenne (m) : Hauteur du moyeu de l'éolienne par rapport au sol.",
+                });
+            }
+            if (d.modele_turbine) {
+                fields.push({
+                    icon: 'fa-solid fa-gear',
+                    label: 'Modèle de turbine',
+                    value: d.modele_turbine,
+                });
+            }
         } else if (infra.type === 'solaire') {
             fields.push({
                 icon: 'fa-solid fa-solar-panel',
@@ -455,6 +499,14 @@ export class InfraDetailModal {
                 value: d.orientation_panneau ? `${d.orientation_panneau}° S` : 'N/A',
                 tooltip: "Degrés Sud (° S) : Angle d'orientation des panneaux par rapport au Sud.",
             });
+            if (d.angle_panneau != null) {
+                fields.push({
+                    icon: 'fa-solid fa-angle-up',
+                    label: 'Angle d\'inclinaison',
+                    value: `${d.angle_panneau}°`,
+                    tooltip: "Angle d'inclinaison (°) : Angle entre le panneau et le sol.",
+                });
+            }
             fields.push({
                 icon: 'fa-solid fa-bolt',
                 label: 'Puissance nominale',
@@ -462,6 +514,20 @@ export class InfraDetailModal {
                 tooltip:
                     'Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production.',
             });
+            if (d.panneau_type) {
+                fields.push({
+                    icon: 'fa-solid fa-layer-group',
+                    label: 'Type de panneau',
+                    value: d.panneau_type,
+                });
+            }
+            if (d.materiau_panneau) {
+                fields.push({
+                    icon: 'fa-solid fa-cube',
+                    label: 'Matériau du panneau',
+                    value: d.materiau_panneau,
+                });
+            }
         } else if (infra.type === 'thermique' || infra.type === 'nucleaire') {
             fields.push({
                 icon: 'fa-solid fa-bolt',
@@ -475,6 +541,21 @@ export class InfraDetailModal {
                     icon: 'fa-solid fa-fire',
                     label: "Type d'intrant",
                     value: d.type_intrant || 'N/A',
+                });
+            }
+            if (d.type_generateur) {
+                fields.push({
+                    icon: 'fa-solid fa-gear',
+                    label: 'Type de générateur',
+                    value: d.type_generateur,
+                });
+            }
+            if (d.semaine_maintenance) {
+                fields.push({
+                    icon: 'fa-solid fa-wrench',
+                    label: 'Semaine de maintenance',
+                    value: `Semaine ${d.semaine_maintenance}`,
+                    tooltip: 'Semaine de maintenance : Numéro de la semaine dans l\'année où la maintenance est planifiée (1 à 52).',
                 });
             }
         }

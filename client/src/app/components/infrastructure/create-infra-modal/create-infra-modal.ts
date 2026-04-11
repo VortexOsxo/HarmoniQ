@@ -35,6 +35,7 @@ export class CreateInfraModal {
   @Input() lat!: number;
   @Input() lon!: number;
   @Input() type!: string;
+  @Input() editData: any = null;
 
   form!: FormGroup;
   fields: FieldDef[] = [];
@@ -62,21 +63,25 @@ export class CreateInfraModal {
     });
   }
 
+  get isEditMode(): boolean {
+    return !!this.editData;
+  }
+
   processPrettyName() {
     const upname = this.type.split('/').pop() || '';
     if (upname === 'hydro') {
       alert("La fonctionnalité pour les infrastructures hydroélectriques est en cours de développement. Cette démonstration est fournie à titre indicatif.");
     }
     this.prettyName = prettyNames[upname] || upname;
-    
-    // Determine the improved title based on grammatical gender
+
     const lowName = this.prettyName.toLowerCase();
-    if (lowName.startsWith('centrale')) {
+    if (this.isEditMode) {
+        this.improvedTitle = `Modifier ${lowName}`;
+    } else if (lowName.startsWith('centrale')) {
         this.improvedTitle = `Nouvelle ${lowName}`;
     } else {
         this.improvedTitle = `Nouveau ${lowName}`;
     }
-    // Capitalize only the first letter
     this.improvedTitle = this.improvedTitle.charAt(0).toUpperCase() + this.improvedTitle.slice(1);
 
   }
@@ -96,10 +101,15 @@ export class CreateInfraModal {
       const prop = props[key];
       const isLatLon = key === 'latitude' || key === 'longitude';
       let value: any = '';
-      if (key === 'latitude') value = this.lat;
-      else if (key === 'longitude') value = this.lon;
+      if (this.editData && this.editData[key] !== undefined) {
+        value = this.editData[key];
+      } else if (key === 'latitude') {
+        value = this.lat;
+      } else if (key === 'longitude') {
+        value = this.lon;
+      }
 
-      const initialValue = prop.suggestion ?? value;
+      const initialValue = this.editData ? value : (prop.suggestion ?? value);
 
       let enumValues: string[] | undefined;
       if (prop['$ref']) {
@@ -295,6 +305,7 @@ export class CreateInfraModal {
     return (control: AbstractControl): ValidationErrors | null => {
       const name = control.value?.trim().toLowerCase();
       if (!name) return null;
+      if (this.editData && this.editData.nom?.trim().toLowerCase() === name) return null;
       const exists = this.infrasService.isNameTaken(name);
       return exists ? { duplicateName: true } : null;
     };
