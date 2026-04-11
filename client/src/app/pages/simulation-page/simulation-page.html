@@ -36,11 +36,12 @@
                 </nav>
 
                 <div class="sidebar-footer">
-                    <button class="hq-btn-green w-100 mb-2" (click)="openQuiz()">
+                    <button id="tutorial-quiz-btn" class="hq-btn-green w-100 mb-2" (click)="openQuiz()">
                         <i class="fa-solid fa-gamepad me-2"></i>Lancer le Quiz
                     </button>
 
                     <button
+                        id="tutorial-export-btn"
                         class="hq-btn-blue w-100"
                         (click)="simulationService.exportAllToCSV()"
                         title="Exporter tous les rapports (Production, Coûts, CO2)"
@@ -307,4 +308,7 @@
             </div>
         </main>
     </div>
+
+    <!-- Tutorial overlay -->
+    <app-tutorial-overlay />
 </div>
