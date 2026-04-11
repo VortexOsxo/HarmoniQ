@@ -10,10 +10,11 @@ import { ConfirmationModal } from '@app/components/commons/confirmation-modal/co
 import { CapacityBar } from '../capacity-bar/capacity-bar';
 import { EnergyBar } from '../energy-bar/energy-bar';
 import { INFRA_COLORS } from '@app/data/infra-colors.data';
+import { DeleteConfirmButtonComponent } from '@app/components/commons/delete-confirm-button/delete-confirm-button';
 
 @Component({
   selector: 'app-infrastructure-selector',
-  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody, CapacityBar, EnergyBar],
+  imports: [CommonModule, FormsModule, NgbAccordionModule, InfraListBody, CapacityBar, EnergyBar, DeleteConfirmButtonComponent],
   templateUrl: './infrastructure-selector.html',
   styleUrl: './infrastructure-selector.css',
 })
@@ -94,18 +95,9 @@ export class InfrastructureSelector {
 
   deleteInfraGroup() {
     const group = this.selectedInfrastructureGroup;
-    if (!group || group.id === DEFAULT_INFRA_GROUP_ID) return;
-
-    const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
-    modalRef.componentInstance.title = 'Supprimer le groupe d\'infrastructures';
-    modalRef.componentInstance.message = `Êtes-vous sûr de vouloir supprimer le groupe "${group.nom}" ? Cette action est irréversible.`;
-    modalRef.componentInstance.confirmText = 'Supprimer';
-
-    modalRef.result.then((confirmed) => {
-      if (confirmed) {
-        this.infrasService.deleteInfraGroup(group);
-      }
-    }).catch(() => { });
+    if (group && group.id !== DEFAULT_INFRA_GROUP_ID) {
+      this.infrasService.deleteInfraGroup(group);
+    }
   }
 
 }
