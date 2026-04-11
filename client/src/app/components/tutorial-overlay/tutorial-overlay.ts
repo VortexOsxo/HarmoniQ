@@ -25,6 +25,11 @@ export class TutorialOverlay implements OnInit, OnDestroy {
     bubbleTop = 0;
     bubbleLeft = 0;
     Math = Math;
+    
+    showErrorAlert = false;
+    errorAlertX = 0;
+    errorAlertY = 0;
+    private errorTimeoutId: any;
 
     @ViewChild('nextButton') nextButton?: ElementRef<HTMLButtonElement>;
 
@@ -127,6 +132,26 @@ export class TutorialOverlay implements OnInit, OnDestroy {
         if (!this.currentStep.requireAction && this.nextButton?.nativeElement) {
             this.nextButton.nativeElement.focus();
         }
+    }
+
+    onInvalidClick(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        this.errorAlertX = event.clientX;
+        this.errorAlertY = event.clientY - 40; // Position slightly above cursor
+        this.showErrorAlert = true;
+        
+        if (this.errorTimeoutId) {
+            clearTimeout(this.errorTimeoutId);
+        }
+        
+        this.errorTimeoutId = setTimeout(() => {
+            this.showErrorAlert = false;
+            this.cd.detectChanges();
+        }, 2000);
+        
+        this.cd.detectChanges();
     }
 
     private cleanupActiveTarget(): void {
