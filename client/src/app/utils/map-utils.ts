@@ -85,5 +85,7 @@ export const prettyNames: any = {
     solaire: "Parc solaire",
     thermique: "Centrale thermique",
     nucleaire: "Centrale nucléaire",
-    hydro: "Barrage hydroélectrique"
+    hydro: "Barrage hydroélectrique",
+    hydro_reservoir: "Barrage réservoir",
+    hydro_fil: "Barrage au fil de l'eau"
 }

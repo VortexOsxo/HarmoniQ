@@ -35,7 +35,7 @@
                     <label class="infra-checkbox-label">
                         <input type="checkbox" [checked]="isInfraTypeSelected(type.key)"
                             (change)="toggleInfraType(type.key)">
-                        <span class="infra-color-swatch" [style.background-color]="type.color"></span>
+                        <app-infra-icon [type]="type.key" [size]="24"></app-infra-icon>
                         <span class="infra-cat-label">{{ type.label }}</span>
                     </label>
                 </div>

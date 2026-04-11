@@ -12,7 +12,7 @@
         </div>
         <div class="detail-header-actions">
             <!-- Edit Button (non-hydro only) -->
-            <button class="detail-edit-btn" *ngIf="infra()?.data?.isUserCreated && infra()?.type !== 'hydro'" (click)="editInfra()" title="Modifier l'infrastructure">
+            <button class="detail-edit-btn" *ngIf="infra()?.data?.isUserCreated && normalizedType() !== 'hydro'" (click)="editInfra()" title="Modifier l'infrastructure">
                 <i class="fa-solid fa-pen"></i>
             </button>
             <!-- Delete Button -->
@@ -50,7 +50,7 @@
             </div>
 
             <!-- Hydro power slider -->
-            <div class="hydro-power-slider-card" *ngIf="infra()?.type === 'hydro' && pMax() > 0">
+            <div class="hydro-power-slider-card" *ngIf="normalizedType() === 'hydro' && pMax() > 0">
                 <h6 class="slider-card-title">
                     <i class="fa-solid fa-sliders"></i>
                     Ajustement de la puissance nominale

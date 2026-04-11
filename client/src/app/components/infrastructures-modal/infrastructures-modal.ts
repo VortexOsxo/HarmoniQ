@@ -4,17 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MapService } from '@app/services/map-service';
 import { INFRA_COLORS } from '@app/data/infra-colors.data';
+import { InfraIconComponent } from '../commons/infra-icon';
 
 @Component({
   selector: 'app-infrastructures-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, InfraIconComponent],
   templateUrl: './infrastructures-modal.html',
   styleUrls: ['./infrastructures-modal.css'],
 })
 export class InfrastructuresModal {
   infraTypes = [
-    { key: 'hydro', label: 'Barrage Hydro-Électrique', color: INFRA_COLORS['hydro'] },
+    { key: 'hydro_reservoir', label: 'Barrage Réservoir', color: INFRA_COLORS['hydro_reservoir'] },
+    { key: 'hydro_fil', label: 'Barrage au Fil de l\'eau', color: INFRA_COLORS['hydro_fil'] },
     { key: 'eolienneparc', label: 'Parc Éolien', color: INFRA_COLORS['eolienneparc'] },
     { key: 'solaire', label: 'Parc Solaire', color: INFRA_COLORS['solaire'] },
     { key: 'thermique', label: 'Centrale Thermique', color: INFRA_COLORS['thermique'] },

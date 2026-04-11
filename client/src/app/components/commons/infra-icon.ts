@@ -38,6 +38,7 @@ export class InfraIconComponent {
   }
 
   get iconUrl(): string {
+    const baseType = this.type.startsWith('hydro_') ? 'hydro' : this.type;
     const icons: Record<string, string> = {
       hydro: '/icons/barrage.png',
       eolienneparc: '/icons/eolienne.png',
@@ -45,7 +46,7 @@ export class InfraIconComponent {
       thermique: '/icons/thermique.png',
       nucleaire: '/icons/nucelaire.png',
     };
-    const path = icons[this.type] || '';
+    const path = icons[baseType] || '';
     return path ? `url(${path})` : '';
   }
 }

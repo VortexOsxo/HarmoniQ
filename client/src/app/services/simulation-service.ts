@@ -104,21 +104,24 @@ export class SimulationService {
     }
 
     launchSimulationSingleInfra(type: string, infraId: number) {
-        const url = `${environment.apiUrl}/production/${type}`;
+        const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+        const url = `${environment.apiUrl}/production/${baseType}`;
         const payload = this.getInfraScenarioPayload(type, infraId);
         if (!payload) return;
         return this.http.post(url, payload);
     }
 
     getInfraCost(type: string, infraId: number) {
-        const url = `${environment.apiUrl}/cout/${type}`;
+        const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+        const url = `${environment.apiUrl}/cout/${baseType}`;
         const payload = this.getInfraScenarioPayload(type, infraId);
         if (!payload) return;
         return this.http.post(url, payload);
     }
 
     getInfraEmission(type: string, infraId: number) {
-        const url = `${environment.apiUrl}/emission/${type}`;
+        const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+        const url = `${environment.apiUrl}/emission/${baseType}`;
         const payload = this.getInfraScenarioPayload(type, infraId);
         if (!payload) return;
         return this.http.post(url, payload);

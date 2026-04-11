@@ -20,6 +20,8 @@ import { InfraDetailService } from './infra-detail-service';
 // Hack pcq le code etait ass et j'ai la flemme
 const typeKeyMap: Record<string, string> = {
   'hydro': 'central_hydroelectriques',
+  'hydro_reservoir': 'central_hydroelectriques',
+  'hydro_fil': 'central_hydroelectriques',
   'eolienneparc': 'parc_eoliens',
   'solaire': 'parc_solaires',
   'thermique': 'central_thermique',
@@ -155,11 +157,11 @@ export class InfrastruturesService {
     for (const type of types) {
       const key = typeKeyMap[type];
       const selectedIds: string[] = group[key] ?? [];
-      const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
+      const allInfras = this.getInfrasSignalByType(type)() ?? [];
       for (const id of selectedIds) {
         const infra = allInfras.find((i: any) => String(i.id) === id) as any;
         if (infra?.puissance_nominal) {
-          const p = type === 'hydro' ? (overrides.get(Number(infra.id)) ?? Number(infra.puissance_nominal)) : Number(infra.puissance_nominal);
+          const p = (type === 'hydro' || type.startsWith('hydro_')) ? (overrides.get(Number(infra.id)) ?? Number(infra.puissance_nominal)) : Number(infra.puissance_nominal);
           total += p;
         }
       }
@@ -209,7 +211,8 @@ export class InfrastruturesService {
 
       const localInfra = this.storageService.createElement(`${INFRA_KEY}_${type}`, { ...result, isUserCreated: true });
       const idStr = localInfra.id.toString();
-      this.infrasContainer.get(type)?.addLocal(localInfra);
+      const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+      this.infrasContainer.get(baseType)?.addLocal(localInfra);
 
       this.toggleInfra(type, idStr);
 
@@ -236,7 +239,8 @@ export class InfrastruturesService {
 
       const updated = { ...result, id: infraData.id, isUserCreated: true };
       this.storageService.updateElement(`${INFRA_KEY}_${type}`, updated);
-      this.infrasContainer.get(type)?.updateLocal(updated);
+      const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+      this.infrasContainer.get(baseType)?.updateLocal(updated);
 
       const detailService = this.injector.get(InfraDetailService);
       detailService.openDetail(type, String(infraData.id));
@@ -255,7 +259,8 @@ export class InfrastruturesService {
     }
 
     this.storageService.deleteElement(`${INFRA_KEY}_${type}`, id);
-    this.infrasContainer.get(type)?.removeLocal(id);
+    const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+    this.infrasContainer.get(baseType)?.removeLocal(id);
 
     const key = typeKeyMap[type];
     if (key) {
@@ -284,7 +289,8 @@ export class InfrastruturesService {
   }
 
   getInfrasSignalByType(type: string) {
-    const container = this.infrasContainer.get(type);
+    const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+    const container = this.infrasContainer.get(baseType);
     return container?.infras ?? signal([]);
   }
 
@@ -304,7 +310,8 @@ export class InfrastruturesService {
   }
 
   refreshService(type: string) {
-    this.infrasContainer.get(type)?.refresh();
+    const baseType = type.startsWith('hydro_') ? 'hydro' : type;
+    this.infrasContainer.get(baseType)?.refresh();
   }
 
   overrideHydroPuissance(id: number, puissance: number): void {
@@ -439,7 +446,24 @@ export class InfrastruturesService {
 
     const key = typeKeyMap[type];
     if (!key) return;
-    infraGroup[key] = infrasIds;
+
+    if (type === 'hydro_reservoir' || type === 'hydro_fil') {
+      const isReservoir = type === 'hydro_reservoir';
+      const allHydro = this.getInfrasSignalByType('hydro')();
+      
+      const otherHydroIds = allHydro
+        .filter((i: any) => {
+          const t = (i.type_barrage || '').toLowerCase();
+          const isItemReservoir = (t === 'reservoir' || t === 'réservoir');
+          return isReservoir ? !isItemReservoir : isItemReservoir;
+        })
+        .map((i: any) => i.id.toString());
+
+      const existingOtherSelected = (infraGroup[key] as string[]).filter(id => otherHydroIds.includes(id));
+      infraGroup[key] = [...existingOtherSelected, ...infrasIds];
+    } else {
+      infraGroup[key] = infrasIds;
+    }
 
     if (isDefault) {
       this.createInfraGroup(infraGroup);
@@ -487,10 +511,14 @@ export class InfrastruturesService {
     if (!group) return null;
 
     const payload: any = { nom: group.nom };
+    const processedKeys = new Set<string>();
 
     for (const [type, groupKey] of Object.entries(typeKeyMap)) {
+      if (processedKeys.has(groupKey)) continue;
+      processedKeys.add(groupKey);
+
       const selectedIds: string[] = group[groupKey] ?? [];
-      const allInfras = this.infrasContainer.get(type)?.infras() ?? [];
+      const allInfras = this.getInfrasSignalByType(type)() ?? [];
 
       const overrides = this.hydroPuissanceOverrides();
       const selectedInfras = selectedIds
@@ -498,7 +526,7 @@ export class InfrastruturesService {
         .filter(Boolean)
         .map((infra: any) => {
           const { isUserCreated, ...raw } = infra;
-          if (type === 'hydro' && overrides.has(raw.id)) {
+          if ((type === 'hydro' || type.startsWith('hydro_')) && overrides.has(raw.id)) {
             raw.puissance_nominal = overrides.get(raw.id);
           }
           return raw;

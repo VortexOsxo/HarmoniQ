@@ -8,7 +8,7 @@ import { MapLineService } from './map-line-service';
 import { ProtectedAreasService } from './protected-areas-service';
 import { InfraDetailService } from './infra-detail-service';
 
-const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
+const types = ['hydro_reservoir', 'hydro_fil', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
 
 export interface WindMapCell {
   latitude: number;
@@ -67,7 +67,8 @@ export class MapService {
     eolienneparc: {},
     solaire: {},
     thermique: {},
-    hydro: {},
+    hydro_reservoir: {},
+    hydro_fil: {},
     nucleaire: {},
   }
 
@@ -126,10 +127,12 @@ export class MapService {
 
       // Restore previously selected marker to its normal icon
       if (this.previousSelectedType && this.previousSelectedId) {
-        const prevMarker = this.markers[this.previousSelectedType]?.[parseInt(this.previousSelectedId)];
+        const prevMarker = this.getMarker(this.previousSelectedType, parseInt(this.previousSelectedId));
         if (prevMarker) {
           const isActive = this.infrasService.isInfraSelected(this.previousSelectedType, this.previousSelectedId);
-          const iconName = !isActive ? `${this.previousSelectedType}gris` : this.previousSelectedType;
+          // For icon name, we need to handle hydro sub-types which use the 'hydro' icon
+          const baseIconName = (this.previousSelectedType.startsWith('hydro_')) ? 'hydro' : this.previousSelectedType;
+          const iconName = !isActive ? `${baseIconName}gris` : baseIconName;
           prevMarker.setIcon(map_icons[iconName]);
           (prevMarker.options as any).infraActive = isActive;
           if (this.clusterGroup) {
@@ -142,9 +145,10 @@ export class MapService {
 
       // Highlight the newly selected marker in blue
       if (selected) {
-        const marker = this.markers[selected.type]?.[parseInt(selected.id)];
+        const marker = this.getMarker(selected.type, parseInt(selected.id));
         if (marker) {
-          marker.setIcon(map_icons[`${selected.type}bleu`]);
+          const baseType = selected.type.startsWith('hydro_') ? 'hydro' : selected.type;
+          marker.setIcon(map_icons[`${baseType}bleu`]);
           if (this.clusterGroup) {
             this.clusterGroup.refreshClusters();
           }
@@ -217,7 +221,7 @@ export class MapService {
       const x = e.clientX - mapPos.left;
       const y = e.clientY - mapPos.top;
 
-      if (type === 'hydro') {
+      if (type === 'hydro' || type.startsWith('hydro_')) {
         return;
       }
 
@@ -274,6 +278,19 @@ export class MapService {
       if (!allowedTypes.has(type)) return;
 
       let infras = this.infrasService.getInfrasSignalByType(type)();
+
+      // For hydro, apply sub-type filtering
+      if (type === 'hydro_reservoir') {
+        infras = infras.filter((i: any) => {
+          const t = (i.type_barrage || '').toLowerCase();
+          return t === 'reservoir' || t === 'réservoir';
+        });
+      } else if (type === 'hydro_fil') {
+        infras = infras.filter((i: any) => {
+          const t = (i.type_barrage || '').toLowerCase();
+          return t.includes('fil');
+        });
+      }
 
       // Apply Name filter
       if (searchTerm) {
@@ -639,7 +656,8 @@ export class MapService {
   addMarker(type: string, data: any) {
     if (!this.map) return;
     const isActive = this.infrasService.isInfraSelected(type, data.id.toString());
-    const iconName = !isActive ? `${type}gris` : type;
+    const baseIconName = type.startsWith('hydro_') ? 'hydro' : type;
+    const iconName = !isActive ? `${baseIconName}gris` : baseIconName;
     const icon = map_icons[iconName];
 
     const marker = L.marker([data.latitude, data.longitude], {
@@ -668,15 +686,23 @@ export class MapService {
 
   private updateMarker(type: string, id: string, isActive: boolean) {
     let infraId = parseInt(id);
-    const marker = this.markers[type][infraId];
+    const marker = this.getMarker(type, infraId);
 
     if (!marker) return;
-    marker.setIcon(!isActive ? map_icons[`${type}gris`] : map_icons[type]);
+    const baseIconName = type.startsWith('hydro_') ? 'hydro' : type;
+    marker.setIcon(!isActive ? map_icons[`${baseIconName}gris`] : map_icons[baseIconName]);
     (marker.options as any).infraActive = isActive;
 
     if (this.clusterGroup) {
       this.clusterGroup.refreshClusters();
     }
+  }
+
+  private getMarker(type: string, id: number): L.Marker | undefined {
+    if (type === 'hydro' || type.startsWith('hydro_')) {
+      return this.markers['hydro_reservoir'][id] || this.markers['hydro_fil'][id];
+    }
+    return this.markers[type]?.[id];
   }
 
   /**
