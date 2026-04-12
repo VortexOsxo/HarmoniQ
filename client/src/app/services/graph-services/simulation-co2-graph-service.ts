@@ -54,7 +54,7 @@ export class SimulationCo2GraphService implements SimulationStep {
     constructor(
         private infrastructuresService: InfrastruturesService,
         private http: HttpClient,
-    ) {}
+    ) { }
 
     getStepName(): string {
         return 'Simulation des emissions du reseau';
@@ -142,7 +142,7 @@ export class SimulationCo2GraphService implements SimulationStep {
 
         const graphDiv = document.getElementById(graphServiceConfig.CO2_SIMULATION_ID);
         if (graphDiv) {
-            Plotly.newPlot(graphDiv, data, layout);
+            Plotly.newPlot(graphDiv, data, layout, { responsive: true });
             attachCustomLegend(graphDiv, labels, colors);
 
             (graphDiv as any).on('plotly_relayout', () => {
