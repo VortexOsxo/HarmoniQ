@@ -34,4 +34,9 @@ export class SimulationTopBar {
       }
     }).catch(() => { });
   }
+
+  onLogoClick(event: Event) {
+    event.preventDefault();
+    this.goBack();
+  }
 }
