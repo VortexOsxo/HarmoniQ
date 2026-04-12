@@ -3,9 +3,9 @@
     <div class="form-group mb-3">
         <label class="form-label" for="nom">Nom</label>
         <input class="form-control" id="nom" type="text" placeholder="Ex : Parc solaire de Varennes"
-            formControlName="nom" maxlength="30">
+            formControlName="nom" maxlength="35">
         <div *ngIf="form.get('nom')?.hasError('maxlength')" class="field-error">
-            <i class="fas fa-exclamation-circle"></i> Le nom ne peut pas dépasser 30 caractères.
+            <i class="fas fa-exclamation-circle"></i> Le nom ne peut pas dépasser 35 caractères.
         </div>
         <div *ngIf="form.get('nom')?.hasError('duplicateName')" class="field-error">
             <i class="fas fa-exclamation-circle"></i> Une infrastructure avec ce nom existe déjà.
@@ -28,17 +28,20 @@
             Puissance totale crête (MW)
             <i class="fas fa-info-circle text-muted" ngbTooltip="Puissance crête totale du parc en MW"></i>
         </label>
-        <input class="form-control" id="puissance_nominal" type="number" formControlName="puissance_nominal" min="0" max="25"
-            step="0.001" (keydown)="onKeydown($event)" (input)="calcPanneaux()"
+        <input class="form-control" id="puissance_nominal" type="number" formControlName="puissance_nominal" min="0"
+            max="25" step="0.001" (keydown)="onKeydown($event)" (input)="calcPanneaux()"
             (blur)="onBlurRound('puissance_nominal')"
             [class.is-invalid]="form.get('puissance_nominal')?.invalid && form.get('puissance_nominal')?.touched">
-        <div *ngIf="form.get('puissance_nominal')?.hasError('max') && form.get('puissance_nominal')?.touched" class="field-error">
+        <div *ngIf="form.get('puissance_nominal')?.hasError('max') && form.get('puissance_nominal')?.touched"
+            class="field-error">
             <i class="fas fa-exclamation-circle"></i> La puissance maximale pour un parc solaire est de 25 MW.
         </div>
-        <div *ngIf="form.get('puissance_nominal')?.hasError('min') && form.get('puissance_nominal')?.touched" class="field-error">
+        <div *ngIf="form.get('puissance_nominal')?.hasError('min') && form.get('puissance_nominal')?.touched"
+            class="field-error">
             <i class="fas fa-exclamation-circle"></i> La puissance nominale ne peut pas être négative.
         </div>
-        <div *ngIf="form.get('puissance_nominal')?.hasError('required') && form.get('puissance_nominal')?.touched" class="field-error">
+        <div *ngIf="form.get('puissance_nominal')?.hasError('required') && form.get('puissance_nominal')?.touched"
+            class="field-error">
             <i class="fas fa-exclamation-circle"></i> Ce champ est obligatoire.
         </div>
     </div>
