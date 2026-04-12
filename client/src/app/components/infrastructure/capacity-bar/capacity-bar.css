@@ -41,17 +41,11 @@
   font-size: 0.72rem;
 }
 
-.capacity-note-toggle {
-  margin-left: 5px;
-  color: #3498db;
-  cursor: pointer;
-  font-size: 0.8em;
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.capacity-note-toggle:hover {
-  opacity: 1;
+.bg-imports {
+  background-color: #f0a500 !important;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .capacity-note {
