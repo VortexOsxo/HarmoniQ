@@ -1,10 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { effect, Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
 import { LocalStorageService } from './local-storage-service';
 
 const SCENARIOS_KEY = 'harmoniq_local_scenarios';
+const LAST_SCENARIO_KEY = 'harmoniq_last_selected_scenario_id';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,13 @@ export class ScenariosService {
 
   constructor(private storageService: LocalStorageService) {
     this.refreshScenarios();
+
+    effect(() => {
+      const selected = this.selectedScenario();
+      if (selected) {
+        this.storageService.saveObject(LAST_SCENARIO_KEY, selected.id);
+      }
+    });
   }
 
   refreshScenarios() {
@@ -22,7 +30,9 @@ export class ScenariosService {
     const scenarios = [...this.getDefaultScenarios(), ...loaded];
     this.scenarios.set(scenarios);
     if (scenarios.length > 0 && !this.selectedScenario()) {
-      this.selectedScenario.set(scenarios[0]);
+      const lastId = this.storageService.loadObject(LAST_SCENARIO_KEY);
+      const last = lastId != null ? scenarios.find(s => s.id === lastId) : null;
+      this.selectedScenario.set(last ?? scenarios[0]);
     }
   }
 

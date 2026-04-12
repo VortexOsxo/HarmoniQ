@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, EventEmitter, Injectable, signal, inject, Injector } from '@angular/core';
+import { computed, effect, EventEmitter, Injectable, signal, inject, Injector } from '@angular/core';
 import { DEFAULT_INFRA_GROUP_ID, InfrastructureGroup } from '@app/models/infrastructure-group';
 import { environment } from 'environments/environment';
 import { OpenApiService } from './open-api-service';
@@ -29,6 +29,7 @@ const typeKeyMap: Record<string, string> = {
 const INFRA_KEY = 'harmoniq_local_infras';
 const INFRA_GROUPS_KEY = 'harmoniq_local_infra_groups';
 const FICTIONAL_HYDRO_IDS_KEY = 'harmoniq_added_fictional_hydros';
+const LAST_INFRA_GROUP_KEY = 'harmoniq_last_selected_infra_group_id';
 
 const typeSchemaMap: Record<string, string> = {
   'eolienneparc': 'EolienneParcBase',
@@ -181,7 +182,10 @@ export class InfrastruturesService {
     private snackbarService: SnackbarService,
   ) {
     this.refreshInfraGroups();
-    this.selectedInfraGroup.set(this.getDefaultInfraGroup());
+
+    const lastId = this.storageService.loadObject(LAST_INFRA_GROUP_KEY);
+    const lastGroup = lastId != null ? this.infraGroups().find(g => g.id === lastId) : null;
+    this.selectedInfraGroup.set(lastGroup ?? this.getDefaultInfraGroup());
 
     const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
     factories.forEach((Factory) => {
@@ -195,6 +199,13 @@ export class InfrastruturesService {
           return;
         this.selectedInfraGroup.set(this.getDefaultInfraGroup());
       });
+    });
+
+    effect(() => {
+      const selected = this.selectedInfraGroup();
+      if (selected) {
+        this.storageService.saveObject(LAST_INFRA_GROUP_KEY, selected.id);
+      }
     });
   }
 
