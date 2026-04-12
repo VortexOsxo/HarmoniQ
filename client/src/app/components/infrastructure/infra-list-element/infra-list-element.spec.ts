@@ -35,7 +35,6 @@ const selectedInfraGroup = signal<any>(null);
 const mockInfrasService = {
   isInfraSelected: vi.fn().mockReturnValue(false),
   toggleInfra: vi.fn(),
-  deleteLocalInfra: vi.fn(),
   selectedInfraGroup,
   isDefaultInfraGroup: vi.fn().mockReturnValue(false),
 };
@@ -212,42 +211,4 @@ describe('InfraListElement', () => {
     });
   });
 
-  describe('deleteInfra', () => {
-    it('should open a confirmation modal when delete icon is clicked', async () => {
-      const user = userEvent.setup();
-      await render(InfraListElement, {
-        componentInputs: { ...defaultInputs, isUserCreated: true },
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      await user.click(screen.getByTitle(/Supprimer cette infrastructure/i));
-
-      expect(mockModalService.open).toHaveBeenCalled();
-    });
-
-    it('should call deleteLocalInfra when confirmation is accepted', async () => {
-      const user = userEvent.setup();
-      await render(InfraListElement, {
-        componentInputs: { ...defaultInputs, isUserCreated: true },
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      await user.click(screen.getByTitle(/Supprimer cette infrastructure/i));
-      await mockModalRef.result;
-
-      expect(mockInfrasService.deleteLocalInfra).toHaveBeenCalledWith('hydro', 42);
-    });
-
-    it('should not render the delete icon when isUserCreated is false', async () => {
-      await render(InfraListElement, {
-        componentInputs: { ...defaultInputs, isUserCreated: false },
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      expect(screen.queryByTitle(/Supprimer cette infrastructure/i)).not.toBeInTheDocument();
-    });
-  });
 });

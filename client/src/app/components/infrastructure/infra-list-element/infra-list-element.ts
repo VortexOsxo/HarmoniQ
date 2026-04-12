@@ -6,11 +6,9 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
 import { MapService } from '@app/services/map-service';
-import { DeleteConfirmButtonComponent } from '@app/components/commons/delete-confirm-button/delete-confirm-button';
-
 @Component({
   selector: 'app-infra-list-element',
-  imports: [CommonModule, DeleteConfirmButtonComponent],
+  imports: [CommonModule],
   templateUrl: './infra-list-element.html',
   styleUrl: './infra-list-element.css',
 })
@@ -18,7 +16,6 @@ export class InfraListElement {
   @Input({ required: true }) nom!: string;
   @Input({ required: true }) id!: string;
   @Input({ required: true }) type!: string;
-  @Input() isUserCreated: boolean = false;
   @Input() typeBadgeColor: string = '';
 
   get isSelected(): boolean {
@@ -67,7 +64,4 @@ export class InfraListElement {
     this.mapService.flyToInfra(this.type, this.id);
   }
 
-  deleteInfra() {
-    this.infrastructuresService.deleteLocalInfra(this.type, parseInt(this.id));
-  }
 }

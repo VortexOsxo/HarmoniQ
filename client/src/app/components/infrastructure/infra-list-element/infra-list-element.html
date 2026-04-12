@@ -12,12 +12,5 @@
             title="Simuler cette infrastructure"></i>
         <i class="fas fa-info-circle" style="color: #007bff; cursor: pointer;" (click)="handleInfoClick($event)"
             title="Afficher les informations de cette infrastructure"></i>
-        <app-delete-confirm-button
-            *ngIf="isUserCreated"
-            buttonTitle="Supprimer cette infrastructure"
-            confirmTitle="Supprimer l'infrastructure"
-            [confirmMessage]="'Êtes-vous sûr de vouloir supprimer l\'infrastructure « ' + nom + ' » ? Cette action est irréversible.'"
-            (delete)="deleteInfra()">
-        </app-delete-confirm-button>
     </div>
 </li>
