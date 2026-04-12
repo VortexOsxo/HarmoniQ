@@ -1,29 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
 :host {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     font-family: 'Poppins', sans-serif;
     background-color: #f9f9f9;
     color: #fff;
     text-align: center;
     margin: 0;
     padding: 0;
-    height: calc(100vh - 72px);
+    overflow: hidden;
 }
 
 .hero-section {
     position: relative;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 3.125rem;
     align-items: center;
     text-align: center;
     color: white;
-    transition: background-image 0.5s ease-in-out;
 }
 
 .hero-section::before {
@@ -39,56 +43,78 @@
 
 .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 10;
 }
 
-select {
-    font-size: 1.4em;
-    padding: 10px;
-    border-radius: 10px;
-    border: 2px solid #555;
-    background: white;
-    cursor: pointer;
-    transition: 0.3s ease-in-out;
-    outline: none;
-    color: #333;
-}
-
-select:hover {
-    border-color: rgb(97, 191, 235);
+.hero-content:has(.show) {
+    z-index: 1001;
 }
 
 .description-container {
-    padding-bottom: 50px;
+    padding-bottom: 3.125rem;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .description {
     display: none;
-    background: white;
-    margin: 30px auto;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(0.9375rem);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+    margin: 1.875rem auto;
+    padding: 0;
+    border-radius: 1.25rem;
+    box-shadow: 0 0.9375rem 2.5rem rgba(0, 0, 0, 0.25);
+    width: 90vw;
+    max-width: 53.125rem;
+    overflow: hidden;
     text-align: left;
     line-height: 1.6;
-    animation: fadeIn 0.4s ease-in-out;
     position: relative;
     z-index: 2;
-    color: #333;
+    color: #1a202c;
+    flex: 1;
+    min-height: 0;
 }
 
 .description.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+}
+
+.description-inner {
+    padding: 2.1875rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.description-inner::-webkit-scrollbar {
+    width: 0.375rem;
+}
+
+.description-inner::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.description-inner::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.1875rem;
 }
 
 .function-detail {
     display: none;
-    margin-top: 10px;
-    padding: 10px;
-    border-left: 4px solid #007bff;
-    background-color: #eef4ff;
-    border-radius: 5px;
+    margin-top: 0.625rem;
+    margin-bottom: 1.25rem;
+    padding: 0.9375rem 1.25rem;
+    border-left: 0.25rem solid transparent;
+    background-color: transparent;
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: #34495e;
 }
 
 .function-detail.active {
@@ -103,22 +129,123 @@ select:hover {
 }
 
 .cliquable:hover {
-    color: var(--hq-blue-start);
     transform: scale(1.02);
+}
+
+#eolienne .function-detail {
+    border-left-color: #70b2c1;
+    background-color: rgba(112, 178, 193, 0.08);
+}
+
+#eolienne .cliquable:hover {
+    color: #70b2c1;
+}
+
+#hydro .function-detail {
+    border-left-color: #1d6799;
+    background-color: rgba(29, 103, 153, 0.08);
+}
+
+#hydro .cliquable:hover {
+    color: #1d6799;
+}
+
+#solaire .function-detail {
+    border-left-color: #de8c28;
+    background-color: rgba(222, 140, 40, 0.08);
+}
+
+#solaire .cliquable:hover {
+    color: #de8c28;
+}
+
+#thermique .function-detail {
+    border-left-color: #698c77;
+    background-color: rgba(105, 140, 119, 0.08);
+}
+
+#thermique .cliquable:hover {
+    color: #698c77;
+}
+
+#nucleaire .function-detail {
+    border-left-color: #703A70;
+    background-color: rgba(112, 58, 112, 0.08);
+}
+
+#nucleaire .cliquable:hover {
+    color: #703A70;
 }
 
 .marge {
     margin-left: 0.5cm;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
+.custom-dropdown-btn {
+    font-size: 1.2rem;
+    padding: 0.75rem 2.5rem 0.75rem 1.875rem;
+    border-radius: 50px;
+    background-color: white;
+    color: #0A3254;
+    font-weight: 700;
+    border: none;
+    box-shadow: 0 0.625rem 1.5625rem rgba(0, 0, 0, 0.2);
+    min-width: 250px;
+    position: relative;
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.custom-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 1.5rem;
+    border: none;
+    box-shadow: 0 0.9375rem 2.5rem rgba(0, 0, 0, 0.3);
+    padding: 0;
+    min-width: 250px;
+    z-index: 9999;
+    background: white;
+    overflow: hidden;
+}
+
+.custom-dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 0.8rem 1.5rem;
+    font-weight: 500;
+    color: #0A3254;
+    border: none;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item.item-eolienne:hover {
+    background-color: rgba(112, 178, 193, 0.1);
+    color: #70b2c1;
+}
+
+.dropdown-item.item-hydro:hover {
+    background-color: rgba(29, 103, 153, 0.1);
+    color: #1d6799;
+}
+
+.dropdown-item.item-solaire:hover {
+    background-color: rgba(222, 140, 40, 0.1);
+    color: #de8c28;
+}
+
+.dropdown-item.item-thermique:hover {
+    background-color: rgba(105, 140, 119, 0.1);
+    color: #698c77;
+}
+
+.dropdown-item.item-nucleaire:hover {
+    background-color: rgba(112, 58, 112, 0.1);
+    color: #703A70;
 }
