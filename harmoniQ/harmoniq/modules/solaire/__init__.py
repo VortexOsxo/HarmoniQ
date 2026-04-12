@@ -37,6 +37,16 @@ class InfraSolaire(Infrastructure):
         nom = self.donnees.nom
         logger.info(f"Calcul de la production pour {nom}")
 
+        # Mapping des clés frontend vers les clés Sandia du backend
+        mapping_modules = {
+            'CS6X_300M': 'Canadian_Solar_CS6X_300M__2013_',
+            'CS5P_220M': 'Canadian_Solar_CS5P_220M___2009_',
+            'SPR_315E': 'SunPower_SPR_315E_WHT__2007__E__',
+            'SPR_305': 'SunPower_SPR_305_WHT__2007__E__',
+        }
+        
+        module_ref = mapping_modules.get(self.donnees.materiau_panneau, 'Canadian_Solar_CS6X_300M__2013_')
+
         return calculate_energy_solar_plants(
             nom=self.donnees.nom,
             latitude=self.donnees.latitude,
@@ -44,6 +54,7 @@ class InfraSolaire(Infrastructure):
             angle_panneau=self.donnees.angle_panneau,
             orientation_panneau=self.donnees.orientation_panneau,
             nombre_panneau=self.donnees.nombre_panneau,
+            module_ref=module_ref,
             bifacial=(self.donnees.panneau_type == 'biface'),
             date_start=self.scenario.date_de_debut,
             date_end=self.scenario.date_de_fin + pd.DateOffset(days=1),
