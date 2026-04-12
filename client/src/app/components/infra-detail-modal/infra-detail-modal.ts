@@ -474,10 +474,16 @@ export class InfraDetailModal {
             }
         } else if (infra.type === 'eolienneparc') {
             fields.push({
+                icon: 'fa-solid fa-droplet',
+                label: 'Type d\'implantation',
+                value: d.is_offshore ? 'Offshore' : 'Onshore',
+            });
+            fields.push({
                 icon: 'fa-solid fa-wind',
                 label: "Nombre d'éoliennes",
                 value: d.nombre_eoliennes || 'N/A',
             });
+
             fields.push({
                 icon: 'fa-solid fa-bolt',
                 label: 'Puissance nominale',

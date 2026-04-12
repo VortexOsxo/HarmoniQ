@@ -207,8 +207,10 @@ class EolienneParcBase(BaseModel):
     hauteur_moyenne: float = Field(
         ..., description="Hauteur moyenne des éoliennes du parc (m)", json_schema_extra={"suggestion": 80},)
     modele_turbine: TurbineModel = Field(
-        ..., description="Modèle de turbine utilisé dans le parc", json_schema_extra={"suggestion": TurbineModel.MM92}
+        ..., description="Modele de turbine utilise dans le parc", json_schema_extra={"suggestion": TurbineModel.MM92}
     )
+    is_offshore: bool = Field(False, description="Indique si le parc est situe en mer (offshore)")
+
     puissance_nominal: float = Field(
         ..., description="Puissance nominale des turbines dans le parc (kW)", json_schema_extra={"suggestion": 2000}
     )
@@ -276,6 +278,8 @@ class EolienneParc(SQLBase):
     weibull_granularity = Column(String, nullable=True)
     weibull_weighting = Column(String, nullable=True)
     weibull_fit_details = Column(String, nullable=True)
+    is_offshore = Column(Boolean, default=False)
+
 
 
 class QuebecOffshoreMeshMetaBase(BaseModel):
