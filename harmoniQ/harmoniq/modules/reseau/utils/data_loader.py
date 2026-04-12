@@ -308,8 +308,8 @@ class NetworkDataLoader:
             df = pd.DataFrame([c.__dict__ for c in centrales])
             if not df.empty:
                 df['name'] = df['nom']
-                df['p_nom'] = df['puissance_nominal'] * 1e-3  # MW
-                df['carrier'] = 'nucléaire'
+                df['p_nom'] = df['puissance_nominal']  # Déjà en MW
+                df['carrier'] = 'nucleaire'
         else:
             raise DataLoadError(f"Type de centrale non pris en charge: {source_type}")
             
@@ -389,7 +389,7 @@ class NetworkDataLoader:
             df = pd.DataFrame([c.__dict__ for c in centrales])
             if not df.empty:
                 df['name'] = df['nom']
-                df['p_nom'] = df['puissance_nominal'] * 1e-3  # MW
+                df['p_nom'] = df['puissance_nominal']  # Déjà en MW
                 df['carrier'] = 'thermique'
         else:
             raise DataLoadError(f"Type de centrale pilotable non pris en charge: {source_type}")
@@ -513,20 +513,14 @@ class NetworkDataLoader:
                 if production_df is not None:
                     nom = centrale.nom
                     if nom in network.generators.index:
-                        # Vérifier si on a des données horaires
-                        if 'production_horaire_wh' in production_df.columns:
-                            # Calculer p_max_pu pour chaque heure = production_horaire_wh / (puissance_nominale * 1e6)
-                            p_nom = centrale.puissance_nominal  # Déjà en W
-                            
-                            p_values = production_df['production_horaire_wh'].values
-                            hourly_index = production_df.index if 'datetime' not in production_df.columns else pd.to_datetime(production_df['datetime'])
-                            hourly_production = pd.Series(p_values, index=hourly_index)
-                            
+                        if 'production_mwh' in production_df.columns:
+                            p_nom = centrale.puissance_nominal  # Déjà en MW
+                            hourly_production = pd.Series(
+                                production_df['production_mwh'].values,
+                                index=production_df.index
+                            )
                             aligned_production = hourly_production.reindex(network.snapshots).fillna(0)
-                            
-                            # Calculer p_max_pu = production_horaire / puissance_nominale
-                            p_max_pu_df[nom] = aligned_production / p_nom
-                            p_max_pu_df[nom] = p_max_pu_df[nom].fillna(0.85)
+                            p_max_pu_df[nom] = (aligned_production / p_nom).fillna(0.85)
 
         # Génération pour les parcs éoliens en parallele
         if self.eolienne_data is not None:
@@ -585,7 +579,7 @@ class NetworkDataLoader:
             'hydro_fil': 0.1,      # Faible coût - priorité haute
             'solaire': 0.1,        # Faible coût - priorité haute 
             'eolien': 0.1,         # Faible coût - priorité haute
-            'nucléaire': 0.2,      # Coût très légèrement plus élevé
+            'nucleaire': 0.2,      # Coût très légèrement plus élevé
             'hydro_reservoir': 7.0, # Coût de base pour les réservoirs (sera dynamique)
             'thermique': 30.0,     # Coût élevé - basse priorité
             'emergency': 800.0,    # Très coûteux - dernier recours

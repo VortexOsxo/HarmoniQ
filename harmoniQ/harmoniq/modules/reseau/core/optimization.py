@@ -112,7 +112,7 @@ class NetworkOptimizer:
         carriers = generators['carrier'].values
         
         carriers_by_priority = [
-            'eolien', 'solaire', 'hydro_fil', 'nucléaire',  # Priorité 1: Fatales
+            'eolien', 'solaire', 'hydro_fil', 'nucleaire',  # Priorité 1: Fatales
             'hydro_reservoir',                              # Priorité 2: Réservoirs  
             'thermique', 'import', 'emergency'              # Priorité 3: Thermiques
         ]
@@ -160,7 +160,7 @@ class NetworkOptimizer:
         else:
             max_hydro_reservoir_per_snap = np.zeros(n_snapshots, dtype=np.float64)
         
-        fatale_carriers = ['eolien', 'solaire', 'hydro_fil', 'nucléaire']
+        fatale_carriers = ['eolien', 'solaire', 'hydro_fil', 'nucleaire']
         thermique_carriers = ['thermique', 'import', 'emergency']
         
         for t in range(n_snapshots):
@@ -334,7 +334,7 @@ class NetworkOptimizer:
                     'hydro_fil': 0.1,
                     'solaire': 0.1,
                     'eolien': 0.1,
-                    'nucléaire': 0.2,
+                    'nucleaire': 0.2,
                     'hydro_reservoir': 7.0,
                     'thermique': 30.0,
                     'emergency': 800.0,
