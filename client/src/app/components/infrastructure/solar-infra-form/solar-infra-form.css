@@ -26,6 +26,18 @@
     transform: translateY(-1px);
 }
 
+.field-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.field-warning {
+    color: #b45309;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
 svg {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
 }

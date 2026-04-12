@@ -389,6 +389,11 @@ ngb-tooltip-window,
   min-width: 320px;
   max-width: 500px;
   height: auto;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.detail-panel-open .side-filter-modal .modal-dialog {
+  right: 420px;
 }
 
 .side-filter-modal .modal-content {

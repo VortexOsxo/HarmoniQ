@@ -134,6 +134,27 @@
     flex-shrink: 0;
 }
 
+/* ── Info ── */
+.sim-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #eef7ff;
+    border: 1px solid #c9e1f5;
+    border-left: 4px solid #3498db;
+    color: #1a517a;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.sim-info i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
 /* ── Grouped stat cards ── */
 .sim-stats-grid {
     display: grid;

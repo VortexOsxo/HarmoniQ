@@ -1,5 +1,6 @@
 <div class="d-flex align-items-center" style="margin-left: 1rem;">
-    <a class="navbar-brand d-flex align-items-center" [routerLink]="router.url === '/map' ? '/' : '/map'" style="gap: 2px; margin-right: 0; cursor: pointer;">
+    <a class="navbar-brand d-flex align-items-center" [routerLink]="disableDefaultRouting ? null : (router.url === '/map' ? '/' : '/map')" 
+        (click)="onBrandClick($event)" style="gap: 2px; margin-right: 0; cursor: pointer;">
         <span
             style="color: #ffffff; font-weight: 800; font-family: 'Inter', 'Arial', sans-serif; padding-right: 2px;">Harmoni</span>
         <img src="/icons/hqLogo.png" alt="Q"

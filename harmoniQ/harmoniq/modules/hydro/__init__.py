@@ -14,7 +14,6 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List
-from fastapi import HTTPException
 
 CURRENT_DIR = Path(__file__).parent
 DEBIT_DIR = CURRENT_DIR / "debits"
@@ -106,9 +105,26 @@ class InfraHydro(Infrastructure):
             self.charger_debit()
             return get_run_of_river_dam_power(self)
 
-        raise HTTPException(
-                status_code=400, detail="Production calculation is only available for run-of-river dams"
-            )
+        # Reservoir: estimated production based on capacity factor with seasonal variation
+        start = pd.Timestamp(self.scenario.date_de_debut)
+        end = pd.Timestamp(self.scenario.date_de_fin)
+        freq = 'h' if self.scenario.pas_de_temps.total_seconds() == 3600 else 'D'
+        timestamps = pd.date_range(start=start, end=end, freq=freq)
+
+        p_nom = float(self.donnees.puissance_nominal)
+        nb_turb = max(self.donnees.nb_turbines, 1)
+        nb_maint = self.donnees.nb_turbines_maintenance
+        availability = (nb_turb - nb_maint) / nb_turb
+
+        # Base capacity factor 0.55 with seasonal variation (spring peak from snowmelt)
+        base_cf = 0.55
+        day_of_year = timestamps.dayofyear.values
+        seasonal = 1.0 + 0.15 * np.sin(2 * np.pi * (day_of_year - 120) / 365)
+        production_mw = p_nom * base_cf * seasonal * availability
+
+        result = pd.Series(production_mw, index=timestamps, name='power_MW')
+        self.production = result
+        return result
   
     def calculer_energie(self, production):
         return get_energy(production)

@@ -41,6 +41,32 @@ const TYPE_KEY_MAP: Record<string, string> = {
     hydro: 'central_hydroelectriques',
 };
 
+function formatLabel(label: string, maxLen = 22): string {
+    if (!label) return '';
+    let arr = [];
+    let current = '';
+    const parts = label.split(' ');
+    
+    for (let word of parts) {
+        if (word.length > maxLen) {
+            if (current) arr.push(current);
+            let w = word;
+            while (w.length > maxLen) {
+                arr.push(w.substring(0, maxLen));
+                w = w.substring(maxLen);
+            }
+            current = w;
+        } else if (current.length + word.length + 1 <= maxLen) {
+            current = current ? current + ' ' + word : word;
+        } else {
+            if (current) arr.push(current);
+            current = word;
+        }
+    }
+    if (current) arr.push(current);
+    return arr.join('<br>');
+}
+
 @Injectable({ providedIn: 'root' })
 export class SimulationAnalysisGraphService {
     public isLoading = signal(true);
@@ -222,7 +248,7 @@ export class SimulationAnalysisGraphService {
             const totalCap = infras.reduce((s: number, i: any) => {
                 return (
                     s +
-                    (def.infraType === 'eolienneparc'
+                    Number(def.infraType === 'eolienneparc'
                         ? (i.capacite_total ?? 0)
                         : (i.puissance_nominal ?? 0))
                 );
@@ -232,10 +258,11 @@ export class SimulationAnalysisGraphService {
             const seg = PROD_SEGMENTS.find((s) => s.segKey === def.segKey);
 
             for (const infra of infras) {
-                const cap =
+                const cap = Number(
                     def.infraType === 'eolienneparc'
                         ? (infra.capacite_total ?? 0)
-                        : (infra.puissance_nominal ?? 0);
+                        : (infra.puissance_nominal ?? 0)
+                );
                 const estimatedMWh = typeTotalMWh * (cap / totalCap);
                 entries.push({ name: infra.nom, mwh: estimatedMWh, color: seg?.color ?? '#999' });
             }
@@ -250,7 +277,7 @@ export class SimulationAnalysisGraphService {
                 {
                     type: 'bar',
                     orientation: 'h',
-                    y: top10.map((e) => e.name),
+                    y: top10.map((e) => formatLabel(e.name)),
                     x: top10.map((e) => e.mwh / 1e6), // TWh
                     text: top10.map((e) => `${(e.mwh / 1e6).toFixed(2)} TWh`),
                     textposition: 'outside',
@@ -268,7 +295,7 @@ export class SimulationAnalysisGraphService {
                     gridcolor: '#eee',
                     range: [0, Math.max(...top10.map((e) => e.mwh / 1e6), 0) * 1.3],
                 },
-                yaxis: { tickfont: { size: 12 }, automargin: true },
+                yaxis: { type: 'category', tickfont: { size: 12 }, automargin: true },
                 height: Math.max(250, top10.length * 40 + 80),
                 margin: { t: 20, b: 60, l: 20, r: 100 },
                 paper_bgcolor: 'white',
