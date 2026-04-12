@@ -452,6 +452,14 @@ export class InfraDetailModal {
                     value: d.modele_turbine,
                 });
             }
+            if (d.maintenance) {
+                fields.push({
+                    icon: 'fa-solid fa-screwdriver-wrench',
+                    label: 'Fréquence de maintenance',
+                    value: d.maintenance,
+                    tooltip: 'Fréquence à laquelle les équipements du barrage (turbines, vannes, etc.) sont inspectés et entretenus.',
+                });
+            }
         } else if (infra.type === 'eolienneparc') {
             fields.push({
                 icon: 'fa-solid fa-wind',
