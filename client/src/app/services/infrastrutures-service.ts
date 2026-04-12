@@ -279,27 +279,26 @@ export class InfrastruturesService {
 
     const key = typeKeyMap[type];
     if (key) {
-      let groupsChanged = false;
       const updatedGroups = this.localInfraGroups().map(group => {
         const anyGroup = group as any;
         if (anyGroup[key] && anyGroup[key].includes(id.toString())) {
           anyGroup[key] = anyGroup[key].filter((i: string) => i !== id.toString());
           this.storageService.updateElement(INFRA_GROUPS_KEY, anyGroup);
-          groupsChanged = true;
         }
         return anyGroup as InfrastructureGroup;
       });
 
-      if (groupsChanged) {
-        this.localInfraGroups.set(updatedGroups);
-        const selected = this.selectedInfraGroup();
-        if (selected) {
-          const selectedUpdated = updatedGroups.find(g => g.id === selected.id);
-          if (selectedUpdated) {
-            this.selectedInfraGroup.set({ ...selectedUpdated });
-          }
-        }
+      this.localInfraGroups.set(updatedGroups);
+    }
+
+    const group: any = this.selectedInfraGroup();
+    if (group) {
+      const updated = { ...group };
+      if (key && updated[key]) {
+        updated[key] = updated[key].filter((i: string) => i !== id.toString());
       }
+      this.selectedInfraGroup.set(updated);
+      this._persistSelectedGroup();
     }
   }
 
