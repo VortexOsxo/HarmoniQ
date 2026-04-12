@@ -3,18 +3,21 @@
 :host {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
     font-family: 'Poppins', sans-serif;
     background-color: #f9f9f9;
     color: #fff;
     text-align: center;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 .hero-section {
     position: relative;
     flex: 1;
+    min-height: 0;
+    overflow: hidden;
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -64,6 +67,12 @@ select:hover {
 
 .description-container {
     padding-bottom: 3.125rem;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .description {
@@ -72,23 +81,44 @@ select:hover {
     backdrop-filter: blur(0.9375rem);
     border: 0.0625rem solid rgba(255, 255, 255, 0.3);
     margin: 1.875rem auto;
-    padding: 2.1875rem;
+    padding: 0;
     border-radius: 1.25rem;
     box-shadow: 0 0.9375rem 2.5rem rgba(0, 0, 0, 0.25);
     width: 90vw;
     max-width: 53.125rem;
-    height: auto;
-    max-height: calc(100vh - 30rem);
-    overflow-y: auto;
+    overflow: hidden;
     text-align: left;
     line-height: 1.6;
     position: relative;
     z-index: 2;
     color: #1a202c;
+    flex: 1;
+    min-height: 0;
 }
 
 .description.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+}
+
+.description-inner {
+    padding: 2.1875rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.description-inner::-webkit-scrollbar {
+    width: 0.375rem;
+}
+
+.description-inner::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.description-inner::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.1875rem;
 }
 
 .function-detail {
@@ -124,6 +154,7 @@ select:hover {
     border-left-color: #70b2c1;
     background-color: rgba(112, 178, 193, 0.08);
 }
+
 #eolienne .cliquable:hover {
     color: #70b2c1;
 }
@@ -133,6 +164,7 @@ select:hover {
     border-left-color: #1d6799;
     background-color: rgba(29, 103, 153, 0.08);
 }
+
 #hydro .cliquable:hover {
     color: #1d6799;
 }
@@ -142,6 +174,7 @@ select:hover {
     border-left-color: #de8c28;
     background-color: rgba(222, 140, 40, 0.08);
 }
+
 #solaire .cliquable:hover {
     color: #de8c28;
 }
@@ -151,6 +184,7 @@ select:hover {
     border-left-color: #698c77;
     background-color: rgba(105, 140, 119, 0.08);
 }
+
 #thermique .cliquable:hover {
     color: #698c77;
 }
@@ -160,6 +194,7 @@ select:hover {
     border-left-color: #703A70;
     background-color: rgba(112, 58, 112, 0.08);
 }
+
 #nucleaire .cliquable:hover {
     color: #703A70;
 }

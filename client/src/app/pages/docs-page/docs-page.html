@@ -6,45 +6,50 @@
         <h2>Sélectionnez un moyen de production électrique</h2>
         <select id="productionSelect" (change)="onSelectionChange($event)" [value]="selectedProduction()">
             @for (category of categories; track category.id) {
-                <option [value]="category.id">{{ category.title }}</option>
+            <option [value]="category.id">{{ category.title }}</option>
             }
         </select>
     </div>
-    
+
     <!-- Début descriptions incluses dans le hero-section pour être sur le même fond -->
     <div id="descriptions" class="description-container">
         @for (category of categories; track category.id) {
-            <div [id]="category.id" class="description" [class.active]="selectedProduction() === category.id">
+        <div [id]="category.id" class="description" [class.active]="selectedProduction() === category.id">
+            <div class="description-inner">
+
                 <h3>{{ category.title }}</h3>
                 <p>Fonctions / Classes utilisées :</p>
                 <ul>
                     @for (doc of category.data; track doc.functionName) {
-                        <li>
-                            <strong class="cliquable" (click)="toggleDetail(doc.functionName)">
-                                {{ getDisplayName(doc.functionName) }}
-                            </strong>
-                        </li>
-                        <div [id]="doc.functionName" class="function-detail" [class.active]="isDetailActive(doc.functionName)">
-                            {{ doc.functionResume }}
-                            
-                            @if (doc.params && doc.params.length > 0) {
-                                <br>
-                                paramètres:
-                                <div class="marge">
-                                    @for (param of doc.params; track param) {
-                                        - {{ param }}<br>
-                                    }
-                                </div>
-                            }
-                            
-                            @if (doc.returns) {
-                                <br>
-                                retourne: {{ doc.returns }}
+                    <li>
+                        <strong class="cliquable" (click)="toggleDetail(doc.functionName)">
+                            {{ getDisplayName(doc.functionName) }}
+                        </strong>
+                    </li>
+                    <div [id]="doc.functionName" class="function-detail"
+                        [class.active]="isDetailActive(doc.functionName)">
+                        {{ doc.functionResume }}
+
+                        @if (doc.params && doc.params.length > 0) {
+                        <br>
+                        paramètres:
+                        <div class="marge">
+                            @for (param of doc.params; track param) {
+                            - {{ param }}<br>
                             }
                         </div>
+                        }
+
+                        @if (doc.returns) {
+                        <br>
+                        retourne: {{ doc.returns }}
+                        }
+                    </div>
                     }
                 </ul>
             </div>
+        </div>
+
         }
     </div>
 </div>
