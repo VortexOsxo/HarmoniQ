@@ -511,7 +511,7 @@ export class InfraDetailModal {
             }
             fields.push({
                 icon: 'fa-solid fa-bolt',
-                label: 'Puissance nominale',
+                label: 'Puissance totale crête',
                 value: d.puissance_nominal ? `${d.puissance_nominal} MW` : 'N/A',
                 tooltip:
                     'Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production.',
@@ -519,14 +519,14 @@ export class InfraDetailModal {
             if (d.panneau_type) {
                 fields.push({
                     icon: 'fa-solid fa-layer-group',
-                    label: 'Type de panneau',
+                    label: 'Technologie de captation',
                     value: d.panneau_type,
                 });
             }
             if (d.materiau_panneau) {
                 fields.push({
                     icon: 'fa-solid fa-cube',
-                    label: 'Matériau du panneau',
+                    label: 'Type de panneau',
                     value: d.materiau_panneau,
                 });
             }

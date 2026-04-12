@@ -25,31 +25,36 @@
     <!-- Configuration Principale -->
     <div class="form-group mb-3">
         <label class="form-label" for="puissance_nominal">
-            Puissance totale (MW)
+            Puissance totale crête (MW)
             <i class="fas fa-info-circle text-muted" ngbTooltip="Puissance crête totale du parc en MW"></i>
         </label>
         <input class="form-control" id="puissance_nominal" type="number" formControlName="puissance_nominal" min="0"
-            step="0.001" (keydown)="onKeydown($event)" (input)="calcPanneaux()" (blur)="onBlurRound('puissance_nominal')"
+            step="0.001" (keydown)="onKeydown($event)" (input)="calcPanneaux()"
+            (blur)="onBlurRound('puissance_nominal')"
             [class.is-invalid]="form.get('puissance_nominal')?.invalid && form.get('puissance_nominal')?.touched">
     </div>
     <div class="form-group mb-4">
         <label class="form-label" for="materiau_panneau">
             Type de panneau
         </label>
-        <select class="form-select" id="materiau_panneau" formControlName="materiau_panneau" (change)="onModuleChange()">
+        <select class="form-select" id="materiau_panneau" formControlName="materiau_panneau"
+            (change)="onModuleChange()">
             <option *ngFor="let m of modules" [value]="m.key">{{ m.name }}</option>
         </select>
     </div>
 
 
     <!-- Calculs en temps réel (Premium design) -->
-    <div class="mb-4" style="padding:14px 16px; background:linear-gradient(135deg, #f0f4ff 0%, #e6eeff 100%); border-radius:10px; border:1px solid #d6e0f5; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);">
-        <div style="font-size:11px; color:#5c6b89; margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center;">
+    <div class="mb-4"
+        style="padding:14px 16px; background:linear-gradient(135deg, #f0f4ff 0%, #e6eeff 100%); border-radius:10px; border:1px solid #d6e0f5; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);">
+        <div
+            style="font-size:11px; color:#5c6b89; margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center;">
             <i class="fas fa-microchip me-2" style="color:#0d6efd; font-size:14px;"></i>Informations calculées
         </div>
         <div class="d-flex justify-content-between align-items-center mb-2">
             <span style="font-size:13px; color:#495057;">Nombre de panneaux</span>
-            <strong id="infoNbPanneaux" style="font-size:15px; color:#212529;">{{ (form.get('nombre_panneau')?.value || 0) | number:'1.0-0':'fr-CA' }}</strong>
+            <strong id="infoNbPanneaux" style="font-size:15px; color:#212529;">{{ (form.get('nombre_panneau')?.value ||
+                0) | number:'1.0-0':'fr-CA' }}</strong>
         </div>
         <div class="d-flex justify-content-between align-items-center">
             <span style="font-size:13px; color:#495057;">Surface totale estimée</span>
@@ -59,12 +64,13 @@
 
     <!-- Section Avancé -->
     <div class="mb-3">
-        <a href="#" id="toggleAdvanced" style="font-size:13px; font-weight: 600; text-decoration:none; color:#0d6efd; display: flex; align-items: center;"
+        <a href="#" id="toggleAdvanced"
+            style="font-size:13px; font-weight: 600; text-decoration:none; color:#0d6efd; display: flex; align-items: center;"
             (click)="toggleAdvanced($event)">
             <i id="advChevron" class="fas me-2" style="font-size:10px;"
                 [ngClass]="showAdvanced ? 'fa-chevron-down' : 'fa-chevron-right'"></i> Paramètres avancés
         </a>
-        
+
         <div [hidden]="!showAdvanced"
             style="margin-top:16px; padding:16px; background:#fcfcfd; border-radius:10px; border:1px solid #edf0f5;">
 
@@ -73,18 +79,20 @@
             <div class="form-group mb-4">
                 <label class="form-label fw-bold" for="orientation_panneau">
                     Orientation (azimut °)
-                    <i class="fas fa-info-circle text-muted ms-1" ngbTooltip="Azimut des panneaux [0–360°, 180° = plein sud]"></i>
+                    <i class="fas fa-info-circle text-muted ms-1"
+                        ngbTooltip="Azimut des panneaux [0–360°, 180° = plein sud]"></i>
                 </label>
                 <div class="d-flex align-items-start gap-3">
                     <div class="flex-grow-1">
-                        <input class="form-control" id="orientation_panneau" type="number" formControlName="orientation_panneau"
-                            min="0" max="360" (keydown)="onKeydown($event)"
+                        <input class="form-control" id="orientation_panneau" type="number"
+                            formControlName="orientation_panneau" min="0" max="360" (keydown)="onKeydown($event)"
                             (blur)="onBlurClamped('orientation_panneau', 0, 360)"
                             [class.is-invalid]="form.get('orientation_panneau')?.invalid && form.get('orientation_panneau')?.touched">
 
 
                         <div class="form-range-simple mt-2">
-                            <input type="range" class="form-range" min="0" max="360" formControlName="orientation_panneau" 
+                            <input type="range" class="form-range" min="0" max="360"
+                                formControlName="orientation_panneau"
                                 (input)="form.get('orientation_panneau')?.setValue($any($event.target).value)">
                         </div>
 
@@ -97,16 +105,22 @@
                             </radialGradient>
                         </defs>
                         <circle cx="50" cy="50" r="45" fill="url(#compassBg)" stroke="#e9ecef" stroke-width="1" />
-                        <circle cx="50" cy="50" r="32" fill="none" stroke="#dee2e6" stroke-width="0.5" stroke-dasharray="2,2" />
-                        <text x="50" y="16" font-size="10" fill="#dc3545" text-anchor="middle" font-weight="bold">N</text>
+                        <circle cx="50" cy="50" r="32" fill="none" stroke="#dee2e6" stroke-width="0.5"
+                            stroke-dasharray="2,2" />
+                        <text x="50" y="16" font-size="10" fill="#dc3545" text-anchor="middle"
+                            font-weight="bold">N</text>
                         <text x="86" y="54" font-size="9" fill="#adb5bd" text-anchor="middle">E</text>
-                        <text x="50" y="94" font-size="10" fill="#0d6efd" text-anchor="middle" font-weight="bold">S</text>
+                        <text x="50" y="94" font-size="10" fill="#0d6efd" text-anchor="middle"
+                            font-weight="bold">S</text>
                         <text x="14" y="54" font-size="9" fill="#adb5bd" text-anchor="middle">O</text>
                         <circle cx="50" cy="50" r="3" fill="#0d6efd" opacity="0.2" />
-                        <line id="orientArrow" x1="50" y1="50" x2="50" y2="82" stroke="#0d6efd" stroke-width="3" stroke-linecap="round" />
+                        <line id="orientArrow" x1="50" y1="50" x2="50" y2="82" stroke="#0d6efd" stroke-width="3"
+                            stroke-linecap="round" />
                         <polygon id="orientHead" points="50,82 46,74 54,74" fill="#0d6efd" />
-                        <rect id="orientPanel" x="43" y="80" width="14" height="4" rx="1" fill="#0d6efd" opacity="0.4" />
-                        <text id="orientText" x="50" y="54" font-size="9" fill="#0d6efd" text-anchor="middle" font-weight="bold">180°</text>
+                        <rect id="orientPanel" x="43" y="80" width="14" height="4" rx="1" fill="#0d6efd"
+                            opacity="0.4" />
+                        <text id="orientText" x="50" y="54" font-size="9" fill="#0d6efd" text-anchor="middle"
+                            font-weight="bold">180°</text>
                     </svg>
                 </div>
             </div>
@@ -115,7 +129,8 @@
             <div class="form-group mb-4">
                 <label class="form-label fw-bold" for="angle_panneau">
                     Inclinaison (angle °)
-                    <i class="fas fa-info-circle text-muted ms-1" ngbTooltip="Inclinaison des panneaux par rapport à l'horizontale [0–90°]"></i>
+                    <i class="fas fa-info-circle text-muted ms-1"
+                        ngbTooltip="Inclinaison des panneaux par rapport à l'horizontale [0–90°]"></i>
                 </label>
                 <div class="d-flex align-items-start gap-1">
                     <div class="flex-grow-1">
@@ -133,25 +148,32 @@
                     </div>
 
                     <svg id="angleDiagram" width="160" height="110" viewBox="0 0 170 130" style="flex-shrink:0;">
-                        <line x1="5" y1="105" x2="165" y2="105" stroke="#adb5bd" stroke-width="2"/>
-                        <circle cx="85" cy="105" r="3" fill="#0d6efd"/>
-                        <path d="M 5 105 A 80 80 0 0 1 85 25" fill="none" stroke="#dee2e6" stroke-width="0.8" stroke-dasharray="2,2"/>
-                        
+                        <line x1="5" y1="105" x2="165" y2="105" stroke="#adb5bd" stroke-width="2" />
+                        <circle cx="85" cy="105" r="3" fill="#0d6efd" />
+                        <path d="M 5 105 A 80 80 0 0 1 85 25" fill="none" stroke="#dee2e6" stroke-width="0.8"
+                            stroke-dasharray="2,2" />
+
                         <!-- Soleil Été -->
-                        <circle cx="57" cy="36" r="6" fill="#ffc107" opacity="0.95"/>
-                        <line id="raySummer" x1="61" y1="40" x2="105" y2="84" stroke="#ffc107" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.6"/>
-                        <polygon id="raySummerHead" points="105,84 100,80 102,87" fill="#ffc107" opacity="0.6"/>
-                        <text x="40" y="18" font-size="8" fill="#e69500" text-anchor="middle" font-weight="bold">été</text>
+                        <circle cx="57" cy="36" r="6" fill="#ffc107" opacity="0.95" />
+                        <line id="raySummer" x1="61" y1="40" x2="105" y2="84" stroke="#ffc107" stroke-width="1.2"
+                            stroke-dasharray="3,2" opacity="0.6" />
+                        <polygon id="raySummerHead" points="105,84 100,80 102,87" fill="#ffc107" opacity="0.6" />
+                        <text x="40" y="18" font-size="8" fill="#e69500" text-anchor="middle"
+                            font-weight="bold">été</text>
 
                         <!-- Soleil Hiver -->
-                        <circle cx="16" cy="77" r="6" fill="#ffc107" opacity="0.95"/>
-                        <line id="rayWinter" x1="20" y1="79" x2="105" y2="84" stroke="#ffc107" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.6"/>
-                        <polygon id="rayWinterHead" points="105,84 99,82 100,88" fill="#ffc107" opacity="0.6"/>
-                        <text x="16" y="98" font-size="8" fill="#e69500" text-anchor="middle" font-weight="bold">hiver</text>
+                        <circle cx="16" cy="77" r="6" fill="#ffc107" opacity="0.95" />
+                        <line id="rayWinter" x1="20" y1="79" x2="105" y2="84" stroke="#ffc107" stroke-width="1.2"
+                            stroke-dasharray="3,2" opacity="0.6" />
+                        <polygon id="rayWinterHead" points="105,84 99,82 100,88" fill="#ffc107" opacity="0.6" />
+                        <text x="16" y="98" font-size="8" fill="#e69500" text-anchor="middle"
+                            font-weight="bold">hiver</text>
 
                         <!-- Panneau -->
-                        <line id="panelLine" x1="85" y1="105" x2="126" y2="64" stroke="#0d6efd" stroke-width="5" stroke-linecap="round"/>
-                        <path id="angleArc" d="M 107 105 A 22 22 0 0 0 99 89" fill="none" stroke="#0d6efd" stroke-width="2"/>
+                        <line id="panelLine" x1="85" y1="105" x2="126" y2="64" stroke="#0d6efd" stroke-width="5"
+                            stroke-linecap="round" />
+                        <path id="angleArc" d="M 107 105 A 22 22 0 0 0 99 89" fill="none" stroke="#0d6efd"
+                            stroke-width="2" />
                         <text id="angleText" x="115" y="94" font-size="11" fill="#0d6efd" font-weight="bold">45°</text>
                     </svg>
                 </div>
@@ -164,48 +186,57 @@
                     <div style="flex: 1;">
                         <div class="d-flex gap-2" role="group">
                             <div class="flex-grow-1">
-                                <input type="radio" class="btn-check" formControlName="panneau_type" id="typeBiface" value="biface">
-                                <label class="btn btn-outline-primary btn-sm w-100 px-2" for="typeBiface">Bifacial</label>
+                                <input type="radio" class="btn-check" formControlName="panneau_type" id="typeBiface"
+                                    value="biface">
+                                <label class="btn btn-outline-primary btn-sm w-100 px-2"
+                                    for="typeBiface">Bifacial</label>
                             </div>
                             <div class="flex-grow-1">
-                                <input type="radio" class="btn-check" formControlName="panneau_type" id="typeMonoface" value="monoface">
-                                <label class="btn btn-outline-primary btn-sm w-100 px-2" for="typeMonoface">Monofacial</label>
+                                <input type="radio" class="btn-check" formControlName="panneau_type" id="typeMonoface"
+                                    value="monoface">
+                                <label class="btn btn-outline-primary btn-sm w-100 px-2"
+                                    for="typeMonoface">Monofacial</label>
                             </div>
                         </div>
 
                         <p class="text-muted mt-2 mb-0" style="font-size: 11px; line-height: 1.4;">
-                            {{ form.get('panneau_type')?.value === 'biface' 
-                                ? 'Face arrière : capte l\'albédo (réflexion du sol). Gain de 10-20% selon le sol.' 
-                                : 'Face avant uniquement. Pas de captation de la réflexion du sol.' 
+                            {{ form.get('panneau_type')?.value === 'biface'
+                            ? 'Face arrière : capte l\'albédo (réflexion du sol). Gain de 10-20% selon le sol.'
+                            : 'Face avant uniquement. Pas de captation de la réflexion du sol.'
                             }}
                         </p>
                     </div>
                     <svg id="panelViz" width="120" height="90" viewBox="0 0 150 115" style="flex-shrink:0;">
-                         <defs>
+                        <defs>
                             <linearGradient id="groundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#e9ecef"/>
-                                <stop offset="100%" stop-color="#dee2e6"/>
+                                <stop offset="0%" stop-color="#e9ecef" />
+                                <stop offset="100%" stop-color="#dee2e6" />
                             </linearGradient>
                             <radialGradient id="albedoGlow" cx="50%" cy="100%" r="70%">
-                                <stop offset="0%" stop-color="#ffc107" stop-opacity="0.4"/>
-                                <stop offset="100%" stop-color="#ffc107" stop-opacity="0"/>
+                                <stop offset="0%" stop-color="#ffc107" stop-opacity="0.4" />
+                                <stop offset="100%" stop-color="#ffc107" stop-opacity="0" />
                             </radialGradient>
                         </defs>
-                        <rect x="0" y="92" width="150" height="23" fill="url(#groundGrad)" rx="2"/>
-                        <ellipse *ngIf="form.get('panneau_type')?.value === 'biface'" cx="65" cy="92" rx="45" ry="12" fill="url(#albedoGlow)"/>
-                        
-                        <line x1="65" y1="92" x2="65" y2="55" stroke="#6c757d" stroke-width="2.5"/>
-                        <line x1="35" y1="68" x2="95" y2="42" stroke="#0d6efd" stroke-width="7" stroke-linecap="round" />
-                        
+                        <rect x="0" y="92" width="150" height="23" fill="url(#groundGrad)" rx="2" />
+                        <ellipse *ngIf="form.get('panneau_type')?.value === 'biface'" cx="65" cy="92" rx="45" ry="12"
+                            fill="url(#albedoGlow)" />
+
+                        <line x1="65" y1="92" x2="65" y2="55" stroke="#6c757d" stroke-width="2.5" />
+                        <line x1="35" y1="68" x2="95" y2="42" stroke="#0d6efd" stroke-width="7"
+                            stroke-linecap="round" />
+
                         <!-- Soleil -->
-                        <circle cx="22" cy="18" r="8" fill="#ffc107" opacity="0.95"/>
-                        <line x1="30" y1="22" x2="55" y2="47" stroke="#ffc107" stroke-width="2" stroke-dasharray="5,3"/>
+                        <circle cx="22" cy="18" r="8" fill="#ffc107" opacity="0.95" />
+                        <line x1="30" y1="22" x2="55" y2="47" stroke="#ffc107" stroke-width="2"
+                            stroke-dasharray="5,3" />
                         <polygon points="58,50 51,48 55,42" fill="#ffc107" />
 
                         <!-- Albédo (Bifacial) -->
                         <g *ngIf="form.get('panneau_type')?.value === 'biface'">
-                            <line x1="28" y1="24" x2="60" y2="92" stroke="#ffc107" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.4"/>
-                            <line x1="60" y1="92" x2="63" y2="64" stroke="#ffc107" stroke-width="2" stroke-dasharray="3,2" />
+                            <line x1="28" y1="24" x2="60" y2="92" stroke="#ffc107" stroke-width="1.5"
+                                stroke-dasharray="2,2" opacity="0.4" />
+                            <line x1="60" y1="92" x2="63" y2="64" stroke="#ffc107" stroke-width="2"
+                                stroke-dasharray="3,2" />
                             <polygon points="63,64 59,69 67,68" fill="#ffc107" />
                         </g>
                     </svg>
