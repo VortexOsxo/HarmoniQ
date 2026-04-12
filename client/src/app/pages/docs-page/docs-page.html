@@ -4,11 +4,27 @@
     <div class="hero-content">
         <h1>Documentation</h1>
         <h2>Sélectionnez un moyen de production électrique</h2>
-        <select id="productionSelect" (change)="onSelectionChange($event)" [value]="selectedProduction()">
-            @for (category of categories; track category.id) {
-            <option [value]="category.id">{{ category.title }}</option>
-            }
-        </select>
+        <div class="dropdown">
+    <button 
+        class="btn dropdown-toggle custom-dropdown-btn" 
+        type="button" 
+        (click)="toggleDropdown($event)">
+        {{ getSelectedTitle() }}
+    </button>
+    
+    <ul class="dropdown-menu custom-dropdown-menu" [class.show]="isDropdownOpen">
+    @for (category of categories; track category.id) {
+    <li>
+        <button 
+            class="dropdown-item item-{{category.id}}" 
+            type="button" 
+            (click)="selectCategory(category.id)">
+            {{ category.title }}
+        </button>
+    </li>
+    }
+</ul>
+</div>
     </div>
 
     <!-- Début descriptions incluses dans le hero-section pour être sur le même fond -->

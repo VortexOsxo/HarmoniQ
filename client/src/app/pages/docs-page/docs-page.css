@@ -43,26 +43,11 @@
 
 .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 10;
 }
 
-select {
-    font-size: 1.2rem;
-    padding: 0.75rem 1.875rem;
-    border-radius: 3.125rem;
-    border: none;
-    background: white;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    outline: none;
-    color: #0A3254;
-    font-weight: 700;
-    box-shadow: 0 0.625rem 1.5625rem rgba(0, 0, 0, 0.2);
-    margin-top: 1rem;
-}
-
-select:hover {
-    box-shadow: 0 0.9375rem 2.1875rem rgba(0, 0, 0, 0.3);
+.hero-content:has(.show) {
+    z-index: 1001;
 }
 
 .description-container {
@@ -147,9 +132,6 @@ select:hover {
     transform: scale(1.02);
 }
 
-/* --- Dynamic Colors Based on Category ID (Matching Map Info) --- */
-
-/* Éolienne (#70b2c1 -> 112, 178, 193) */
 #eolienne .function-detail {
     border-left-color: #70b2c1;
     background-color: rgba(112, 178, 193, 0.08);
@@ -159,7 +141,6 @@ select:hover {
     color: #70b2c1;
 }
 
-/* Hydro (#1d6799 -> 29, 103, 153) */
 #hydro .function-detail {
     border-left-color: #1d6799;
     background-color: rgba(29, 103, 153, 0.08);
@@ -169,7 +150,6 @@ select:hover {
     color: #1d6799;
 }
 
-/* Solaire (#de8c28 -> 222, 140, 40) */
 #solaire .function-detail {
     border-left-color: #de8c28;
     background-color: rgba(222, 140, 40, 0.08);
@@ -179,7 +159,6 @@ select:hover {
     color: #de8c28;
 }
 
-/* Thermique (#698c77 -> 105, 140, 119) */
 #thermique .function-detail {
     border-left-color: #698c77;
     background-color: rgba(105, 140, 119, 0.08);
@@ -189,7 +168,6 @@ select:hover {
     color: #698c77;
 }
 
-/* Nucléaire (#703A70 -> 112, 58, 112) */
 #nucleaire .function-detail {
     border-left-color: #703A70;
     background-color: rgba(112, 58, 112, 0.08);
@@ -201,4 +179,73 @@ select:hover {
 
 .marge {
     margin-left: 0.5cm;
+}
+
+.custom-dropdown-btn {
+    font-size: 1.2rem;
+    padding: 0.75rem 2.5rem 0.75rem 1.875rem;
+    border-radius: 50px;
+    background-color: white;
+    color: #0A3254;
+    font-weight: 700;
+    border: none;
+    box-shadow: 0 0.625rem 1.5625rem rgba(0, 0, 0, 0.2);
+    min-width: 250px;
+    position: relative;
+}
+
+.custom-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 1.5rem;
+    border: none;
+    box-shadow: 0 0.9375rem 2.5rem rgba(0, 0, 0, 0.3);
+    padding: 0;
+    min-width: 250px;
+    z-index: 9999;
+    background: white;
+    overflow: hidden;
+}
+
+.custom-dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 0.8rem 1.5rem;
+    font-weight: 500;
+    color: #0A3254;
+    border: none;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item.item-eolienne:hover {
+    background-color: rgba(112, 178, 193, 0.1);
+    color: #70b2c1;
+}
+
+.dropdown-item.item-hydro:hover {
+    background-color: rgba(29, 103, 153, 0.1);
+    color: #1d6799;
+}
+
+.dropdown-item.item-solaire:hover {
+    background-color: rgba(222, 140, 40, 0.1);
+    color: #de8c28;
+}
+
+.dropdown-item.item-thermique:hover {
+    background-color: rgba(105, 140, 119, 0.1);
+    color: #698c77;
+}
+
+.dropdown-item.item-nucleaire:hover {
+    background-color: rgba(112, 58, 112, 0.1);
+    color: #703A70;
 }

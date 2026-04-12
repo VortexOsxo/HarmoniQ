@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationBar } from '@app/components/navigation-bar/navigation-bar';
 import { docsWind, docsHydro, docsNuclear, docsSolar, docsThermal } from '@app/data/documentation.data';
@@ -57,5 +57,30 @@ export class DocsPage {
     if (!name) return '';
     return name[0] === name[0].toUpperCase() ? name : `${name}()`;
   }
+
+  isDropdownOpen = false;
+
+// 2. Fonction pour ouvrir/fermer
+toggleDropdown(event: Event) {
+    event.stopPropagation(); // Empêche de fermer immédiatement
+    this.isDropdownOpen = !this.isDropdownOpen;
+}
+
+// 3. Fonction pour sélectionner et fermer
+selectCategory(id: string) {
+    this.onSelectionChange({ target: { value: id } } as any);
+    this.isDropdownOpen = false; // Ferme le menu après sélection
+}
+
+// 4. (Optionnel) Fermer si on clique ailleurs sur la page
+@HostListener('document:click')
+closeDropdown() {
+    this.isDropdownOpen = false;
+}
+
+getSelectedTitle() {
+    const selected = this.categories.find(c => c.id === this.selectedProduction());
+    return selected ? selected.title : 'Sélectionnez';
+}
 }
 
