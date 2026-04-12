@@ -44,14 +44,14 @@ export class TutorialService {
         {
             title: 'Aires Protégées',
             icon: 'fa-solid fa-shield-halved',
-            description: 'Activez ou désactivez l\'affichage des aires protégées sur la carte. Vous pouvez ouvrir la légende pour filtrer les types de zones à afficher.',
+            description: 'Activez ou désactivez l\'affichage des infrastructures, aires protégées, du réseau et de la carte des vents. Vous pouvez ouvrir la légende pour filtrer les éléments à afficher.',
             targetSelector: '.protected-areas-btn-container',
             position: 'bottom',
         },
         {
             title: 'Barre de Navigation',
             icon: 'fa-solid fa-compass',
-            description: 'Naviguez entre les différentes sections de l\'application : À Propos, Documentation, Flux d\'Énergie et Simulation.',
+            description: 'Naviguez entre les différentes sections de l\'application : À Propos et Documentation.',
             targetSelector: 'app-navigation-bar',
             position: 'bottom',
         },
@@ -82,7 +82,7 @@ export class TutorialService {
         {
             title: 'Groupes d\'Infrastructures',
             icon: 'fa-solid fa-city',
-            description: 'Sélectionnez un groupe d\'infrastructures prédéfini. Vos installations de base y sont enregistrées.',
+            description: 'Vous pouvez sélectionner et créer des groupes d\'infrastructures pour organiser et sauvegarder vos installations.',
             targetSelector: 'app-infrastructure-selector',
             position: 'left',
             delayBeforePosition: 200,
@@ -149,16 +149,6 @@ export class TutorialService {
     autoStart(): void {
         const completed = localStorage.getItem(this.STORAGE_KEY);
         if (!completed) {
-            const savedStateStr = localStorage.getItem(this.STORAGE_KEY + '_progress');
-            if (savedStateStr) {
-                try {
-                    const savedState = JSON.parse(savedStateStr);
-                    if (savedState && savedState.active) {
-                        this.state$.next(savedState);
-                        return;
-                    }
-                } catch (e) { }
-            }
             this.updateState({ active: true, currentStep: 0, showWelcome: true });
         }
     }
@@ -189,18 +179,15 @@ export class TutorialService {
 
     resetTutorial(): void {
         localStorage.removeItem(this.STORAGE_KEY);
-        localStorage.removeItem(this.STORAGE_KEY + '_progress');
         this.updateState({ active: true, currentStep: 0, showWelcome: true });
     }
 
     private completeTutorial(): void {
         localStorage.setItem(this.STORAGE_KEY, 'true');
-        localStorage.removeItem(this.STORAGE_KEY + '_progress');
         this.state$.next({ active: false, currentStep: 0, showWelcome: false });
     }
 
     private updateState(newState: TutorialState): void {
         this.state$.next(newState);
-        localStorage.setItem(this.STORAGE_KEY + '_progress', JSON.stringify(newState));
     }
 }
