@@ -6,6 +6,7 @@
       <i class="fa-solid fa-bolt"></i>
       Puissance garantie&nbsp;:
       <strong>{{ guaranteedMW() | number:'1.0-0' }} MW</strong>
+      <i class="fa-solid fa-circle-info capacity-note-toggle" (click)="showNote = !showNote" title="En savoir plus"></i>
     </span>
 
     <span class="label-demand">
@@ -16,6 +17,16 @@
       }
     </span>
   </div>
+
+  <!-- Guaranteed power note -->
+  @if (showNote) {
+  <div class="capacity-note">
+    <p>La puissance garantie correspond à la capacité de production disponible de manière fiable à un moment donné.
+      Elle n'inclut pas les importations d'énergie provenant d'autres réseaux ou régions. Ainsi, cette valeur reflète
+      uniquement les ressources internes du système et permet d'évaluer sa capacité réelle à répondre à la demande
+      sans dépendre de sources externes.</p>
+  </div>
+  }
 
   <!-- Progress bar -->
   <div class="progress capacity-progress" title="{{ fillPercent() }}% de la demande couverte">

@@ -12,6 +12,8 @@ import { SimulationTemporalGraphService } from '@app/services/graph-services/sim
 })
 export class CapacityBar {
 
+  showNote = false;
+
   private infrasService = inject(InfrastruturesService);
   private simService = inject(SimulationTemporalGraphService);
 
