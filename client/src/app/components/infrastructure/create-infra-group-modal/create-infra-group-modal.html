@@ -5,11 +5,16 @@
 <div class="modal-body">
     <div class="mb-3">
         <label for="name" class="form-label">Nom du groupe</label>
-        <input type="text" class="form-control" id="name" [(ngModel)]="name" placeholder="Nom du nouveau groupe" [maxlength]="nameMaxLength">
+        <input type="text" class="form-control" id="name" [(ngModel)]="name" placeholder="Nom du nouveau groupe" [maxlength]="nameMaxLength" [class.is-invalid]="nameExistsError !== null">
         <small class="text-muted d-block text-end mt-1">{{ name.length }} / {{ nameMaxLength }}</small>
+        @if (nameExistsError) {
+        <div class="field-error text-danger" style="font-size: 0.875rem;">
+            <i class="fas fa-exclamation-circle"></i> {{ nameExistsError }}
+        </div>
+        }
         <div class="form-text">Les infrastructures du groupe actuel seront copiées dans le nouveau groupe.</div>
     </div>
 </div>
 <div class="modal-footer">
-    <button type="button" class="hq-btn-green" (click)="create()" [disabled]="!name">Créer</button>
+    <button type="button" class="hq-btn-green" (click)="create()" [disabled]="!name || nameExistsError !== null">Créer</button>
 </div>
