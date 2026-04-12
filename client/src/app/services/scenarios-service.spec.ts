@@ -24,6 +24,8 @@ describe('ScenariosService', () => {
     loadElements: ReturnType<typeof vi.fn>;
     createElement: ReturnType<typeof vi.fn>;
     deleteElement: ReturnType<typeof vi.fn>;
+    loadObject: ReturnType<typeof vi.fn>;
+    saveObject: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -31,6 +33,8 @@ describe('ScenariosService', () => {
       loadElements: vi.fn().mockReturnValue([]),
       createElement: vi.fn().mockImplementation((_key: string, el: Scenario) => ({ ...el, id: 999 })),
       deleteElement: vi.fn(),
+      loadObject: vi.fn().mockReturnValue(null),
+      saveObject: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -107,11 +111,11 @@ describe('ScenariosService', () => {
       expect(service.scenarios()).toHaveLength(countAfterCreate - 1);
     });
 
-    it('should clear selectedScenario when the selected scenario is deleted', () => {
+    it('should set selectedScenario to default when the selected scenario is deleted', () => {
       service.createScenario(MOCK_SCENARIO);
       service.deleteScenario(CREATED_SCENARIO);
 
-      expect(service.selectedScenario()).toBeNull();
+      expect(service.selectedScenario()?.id).toBe(1);
     });
 
     it('should keep selectedScenario when a different scenario is deleted', () => {

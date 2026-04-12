@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import { LayerNode, LAYER_TREE, ALL_LAYER_IDS, DEFAULT_SELECTED_LAYERS, buildIdentifyHtml, LAYER_NODE_MAP } from './protected-areas-utils';
 
@@ -9,9 +9,11 @@ export class ProtectedAreasService {
     private readonly MAP_SERVER_URL = 'https://geo.environnement.gouv.qc.ca/donnees/rest/services/Biodiversite/Aires_protegees/MapServer';
     readonly layerTree = LAYER_TREE;
 
-    isVisible = signal(false);
+
     legendOpen = signal(false);
     selectedLayers = signal<Set<number>>(new Set(DEFAULT_SELECTED_LAYERS));
+    hasSelection = computed(() => this.selectedLayers().size > 0);
+    private lastSelection: Set<number> = new Set(ALL_LAYER_IDS);
 
     private tileLayers: L.TileLayer[] = [];
     private map?: L.Map;
@@ -19,6 +21,7 @@ export class ProtectedAreasService {
 
     initLayer(map: L.Map): void {
         this.map = map;
+        this.registerClickHandler();
         this.rebuildTileLayer();
     }
 
@@ -130,9 +133,7 @@ export class ProtectedAreasService {
 
                 return finalUrl;
             };
-            if (this.isVisible()) {
-                tiledLayer.addTo(this.map);
-            }
+            tiledLayer.addTo(this.map);
             this.tileLayers.push(tiledLayer);
         }
     }
@@ -227,45 +228,33 @@ export class ProtectedAreasService {
     }
 
     toggleVisibility(): void {
-        if (this.tileLayers.length === 0 || !this.map) {
-            this.rebuildTileLayer();
-        }
-
-        if (this.isVisible()) {
-            this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
-            this.map?.closePopup();
-            this.isVisible.set(false);
-            this.legendOpen.set(false);
-            this.unregisterClickHandler();
+        if (this.hasSelection()) {
+            this.lastSelection = new Set(this.selectedLayers());
+            this.deselectAll();
         } else {
-            this.tileLayers.forEach(layer => layer.addTo(this.map!));
-            this.isVisible.set(true);
-            this.legendOpen.set(true);
-            this.registerClickHandler();
+            if (!this.lastSelection || this.lastSelection.size === 0) {
+                this.selectAll();
+            } else {
+                this.selectedLayers.set(new Set(this.lastSelection));
+                this.rebuildTileLayer();
+            }
         }
     }
 
     show(): void {
-        if (!this.map || this.isVisible()) return;
-        if (this.tileLayers.length === 0) this.rebuildTileLayer();
-        this.tileLayers.forEach(layer => layer.addTo(this.map!));
-        this.isVisible.set(true);
-        this.registerClickHandler();
+        if (this.hasSelection()) return;
+        this.selectAll();
     }
 
     hide(): void {
-        if (!this.map || !this.isVisible()) return;
-        this.tileLayers.forEach(layer => this.map!.removeLayer(layer));
-        this.isVisible.set(false);
-        this.legendOpen.set(false);
-        this.unregisterClickHandler();
+        this.deselectAll();
     }
 
     private registerClickHandler(): void {
         if (!this.map || this.clickHandler) return;
 
         this.clickHandler = (e: L.LeafletMouseEvent) => {
-            if (!this.map || !this.isVisible()) return;
+            if (!this.map || !this.hasSelection()) return;
             if (this.map.getZoom() < 6) return;
 
             this.identify(e.latlng).then(html => {
@@ -363,19 +352,23 @@ export class ProtectedAreasService {
         return null;
     }
 
-    private protectedAreaCache = new Map<string, Promise<string | null>>();
+    private protectedAreaDetailsCache = new Map<string, Promise<{ name: string, categoryId: number } | null>>();
 
     checkProtectedArea(lat: number, lng: number): Promise<string | null> {
+        return this.checkProtectedAreaWithDetails(lat, lng).then(res => res ? res.name : null);
+    }
+
+    checkProtectedAreaWithDetails(lat: number, lng: number): Promise<{ name: string, categoryId: number } | null> {
         const cacheKey = `${lat},${lng}`;
-        if (this.protectedAreaCache.has(cacheKey)) {
-            return this.protectedAreaCache.get(cacheKey)!;
+        if (this.protectedAreaDetailsCache.has(cacheKey)) {
+            return this.protectedAreaDetailsCache.get(cacheKey)!;
         }
-        const promise = this.fetchProtectedArea(lat, lng);
-        this.protectedAreaCache.set(cacheKey, promise);
+        const promise = this.fetchProtectedAreaWithDetails(lat, lng);
+        this.protectedAreaDetailsCache.set(cacheKey, promise);
         return promise;
     }
 
-    private async fetchProtectedArea(lat: number, lng: number): Promise<string | null> {
+    private async fetchProtectedAreaWithDetails(lat: number, lng: number): Promise<{ name: string, categoryId: number } | null> {
         const R = 6378137;
         const x = R * lng * Math.PI / 180;
         const y = R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
@@ -431,12 +424,33 @@ export class ProtectedAreasService {
                 const response = await fetch(reqUrl);
                 const data = await response.json();
                 if (data.results && data.results.length > 0) {
-                    const attrs = data.results[0].attributes;
+                    const result = data.results[0];
+                    const attrs = result.attributes;
                     let title = attrs['Toponyme'] || attrs['TOPONYME'] || attrs['NOM_ID_MGE'] || attrs['Nom_identification'] || attrs['NAME_F'] || attrs['NAME_E'] || attrs['FNAME'] || attrs['Nom de la réserve indienne ou de la terre indienne'];
                     const isAuto = attrs['GEOCODE'] || attrs['Identifiant_unique'] || attrs['DOMANIALIT'] || attrs['Domanialité'] || attrs['NOM_ID_MGE'] || attrs['Nom_identification'];
-                    if (isAuto && title) return `Communauté autochtone de ${title}`;
-                    if (isAuto) return 'Communauté autochtone';
-                    return title || 'Aire protégée';
+
+                    let finalName = title || 'Aire protégée';
+                    if (isAuto && title) finalName = `Communauté autochtone de ${title}`;
+                    else if (isAuto) finalName = 'Communauté autochtone';
+
+                    let matchedCategoryId = -1;
+                    const resultLayerId = result.layerId;
+                    for (const id of ALL_LAYER_IDS) {
+                        const node = LAYER_NODE_MAP.get(id);
+                        if (!node) continue;
+                        const nodeUrl = node.mapServerUrl || this.MAP_SERVER_URL;
+                        if (nodeUrl !== url) continue;
+                        
+                        if (node.serverLayerIds && node.serverLayerIds.includes(resultLayerId)) {
+                            matchedCategoryId = node.id;
+                            break;
+                        } else if (node.serverLayerId === resultLayerId || (node.serverLayerId === undefined && id === resultLayerId)) {
+                            matchedCategoryId = node.id;
+                            break;
+                        }
+                    }
+
+                    return { name: finalName, categoryId: matchedCategoryId };
                 }
             } catch {
             }
@@ -453,7 +467,6 @@ export class ProtectedAreasService {
         });
         this.tileLayers = [];
         this.map = undefined;
-        this.isVisible.set(false);
         this.legendOpen.set(false);
     }
 }

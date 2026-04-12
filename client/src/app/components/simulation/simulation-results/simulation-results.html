@@ -1,24 +1,44 @@
 <div id="plots">
-    <!-- Aires protégées button below view buttons -->
     <div class="protected-areas-btn-container" [class.detail-open]="isDetailOpen">
-        <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.isVisible()"
-            [class.btn-outline-secondary]="!protectedAreasService.isVisible()"
+        <button class="btn btn-sm infrastructures-btn" [class.btn-infrastructures-active]="mapService.hasSelection()"
+            [class.btn-outline-secondary]="!mapService.hasSelection()" (click)="mapService.toggleVisibility()">
+            <i class="fa-solid fa-industry"></i>
+            <span class="btn-label">Infrastructures</span>
+            <span class="settings-trigger" (click)="openInfrastructuresSettings($event)"
+                title="Filtrer les infrastructures">
+                <i class="fa-solid fa-gear"></i>
+            </span>
+        </button>
+        <button class="btn btn-sm protected-areas-btn" [class.btn-success]="protectedAreasService.hasSelection()"
+            [class.btn-outline-secondary]="!protectedAreasService.hasSelection()"
             (click)="protectedAreasService.toggleVisibility()">
             <i class="fa-solid fa-layer-group"></i>
-            Aires protégées
+            <span class="btn-label">Aires protégées</span>
+            <span class="settings-trigger" (click)="openProtectedAreasSettings($event)" title="Ouvrir les paramètres">
+                <i class="fa-solid fa-gear"></i>
+            </span>
         </button>
-        <button class="btn btn-sm reseau-btn" [class.btn-reseau-active]="reseauService.isVisible()"
-            [class.btn-outline-secondary]="!reseauService.isVisible()"
-            (click)="reseauService.toggleVisibility()">
+        <button class="btn btn-sm reseau-btn" [class.btn-reseau-active]="reseauService.hasSelection()"
+            [class.btn-outline-secondary]="!reseauService.hasSelection()" (click)="reseauService.toggleVisibility()">
             <i class="fa-solid fa-network-wired"></i>
-            Réseau
+            <span class="btn-label">Réseau</span>
+            <span class="settings-trigger" (click)="openReseauSettings($event)" title="Ouvrir les paramètres">
+                <i class="fa-solid fa-gear"></i>
+            </span>
+        </button>
+
+        <button class="btn btn-sm wind-btn" [class.btn-wind-active]="windMapService.isWindMode()"
+            [class.btn-outline-secondary]="!windMapService.isWindMode()" (click)="toggleWindMode()">
+            <i class="fa-solid fa-wind"></i>
+            <span class="btn-label">Carte des vents</span>
+            <span class="settings-trigger" (click)="openWindMapSettings($event)" title="Ouvrir les paramètres">
+                <i class="fa-solid fa-gear"></i>
+            </span>
         </button>
     </div>
 
-    <!-- Infrastructure detail side panel -->
     <app-infra-detail-modal />
 
-    <!-- Content views (hidden via ngIf for cleaner lifecycle management) -->
     <div class="view-content">
         <app-quebec-map class="d-block h-100 w-100" />
     </div>

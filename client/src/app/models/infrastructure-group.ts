@@ -1,3 +1,6 @@
+/** Groupe système « Infrastructures québécoises » (non modifiable, non persisté). */
+export const DEFAULT_INFRA_GROUP_ID = 1;
+
 export interface InfrastructureGroup {
     id: number;
     nom: string;

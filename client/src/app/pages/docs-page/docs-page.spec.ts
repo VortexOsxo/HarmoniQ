@@ -1,124 +1,72 @@
-import { render, screen } from '@testing-library/angular';
-import userEvent from '@testing-library/user-event';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DocsPage } from './docs-page';
-
-async function renderComponent() {
-    return render(DocsPage, {
-        providers: [provideRouter([])],
-        schemas: [NO_ERRORS_SCHEMA],
-    });
-}
+import { provideRouter } from '@angular/router';
 
 describe('DocsPage', () => {
-    it('should render the docs page component', async () => {
-        const { container } = await renderComponent();
-        expect(container).toBeTruthy();
-    });
+  let component: DocsPage;
+  let fixture: ComponentFixture<DocsPage>;
 
-    it('should render the production type selector', async () => {
-        await renderComponent();
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
-    });
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DocsPage],
+      providers: [
+        provideRouter([])
+      ]
+    }).compileComponents();
 
-    describe('toggleDetail', () => {
-        it('should expand a function detail section when its title is clicked', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
+    fixture = TestBed.createComponent(DocsPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
 
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'eolienne');
+  it('devrait créer le composant', () => {
+    expect(component).toBeTruthy();
+  });
 
-            const adjustWindSpeedLink = screen.getByText(/adjust_wind_speed/i);
-            await user.click(adjustWindSpeedLink);
+  it('devrait initialiser avec la production eolienne par défaut', () => {
+    expect(component.selectedProduction()).toBe('eolienne');
+  });
 
-            const detailSection = document.getElementById('adjust_wind_speed');
-            expect(detailSection).toHaveClass('active');
-        });
+  it('devrait mettre à jour la sélection et vider les détails actifs sur onSelectionChange', () => {
+    const mockEvent = { target: { value: 'hydro' } } as unknown as Event;
 
-        it('should collapse a function detail section when its title is clicked twice', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
+    component.activeDetails.set(new Set(['test_func']));
 
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'eolienne');
+    component.onSelectionChange(mockEvent);
 
-            const adjustWindSpeedLink = screen.getByText(/adjust_wind_speed/i);
-            await user.click(adjustWindSpeedLink);
-            await user.click(adjustWindSpeedLink);
+    expect(component.selectedProduction()).toBe('hydro');
+    expect(component.activeDetails().size).toBe(0);
+  });
 
-            const detailSection = document.getElementById('adjust_wind_speed');
-            expect(detailSection).not.toHaveClass('active');
-        });
+  it('devrait retourner le style diviser par le type de production courant', () => {
+    component.selectedProduction.set('eolienne');
+    const style: any = component.getHeroStyle();
 
-        it('should handle multiple independent detail sections toggled simultaneously', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
+    expect(style['background-image']).toContain("https://images.pexels.com/photos/414837/pexels-photo-414837.jpeg");
+    expect(style['background-image']).toContain("linear-gradient");
+  });
 
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'eolienne');
+  it('devrait retourner un objet vide si la sélection est introuvable', () => {
+    component.selectedProduction.set('inexistant' as any);
+    const style = component.getHeroStyle();
+    expect(style).toEqual({});
+  });
 
-            await user.click(screen.getByText(/adjust_wind_speed/i));
-            await user.click(screen.getByText(/air_density/i));
+  it('devrait basculer l\'état et la visibilité des descriptions de fonctions (toggleDetail)', () => {
+    const funcName = 'test_function';
 
-            expect(document.getElementById('adjust_wind_speed')).toHaveClass('active');
-            expect(document.getElementById('air_density')).toHaveClass('active');
-        });
-    });
+    expect(component.isDetailActive(funcName)).toBe(false);
 
-    describe('onSelectionChange', () => {
-        it('should show the corresponding description section when a production type is selected', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
+    component.toggleDetail(funcName);
+    expect(component.isDetailActive(funcName)).toBe(true);
 
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'hydro');
+    component.toggleDetail(funcName);
+    expect(component.isDetailActive(funcName)).toBe(false);
+  });
 
-            const hydroSection = document.getElementById('hydro');
-            expect(hydroSection).toHaveClass('active');
-        });
-
-        it('should hide other sections when a different production type is selected', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
-
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'eolienne');
-
-            const hydroSection = document.getElementById('hydro');
-            expect(hydroSection).not.toHaveClass('active');
-        });
-
-        it('should hide all sections when the empty option is selected', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
-
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'hydro');
-            await user.selectOptions(select, '');
-
-            const hydroSection = document.getElementById('hydro');
-            expect(hydroSection).not.toHaveClass('active');
-        });
-    });
-
-    describe('getHeroStyle', () => {
-        it('should apply no inline background-image when no production type is selected', async () => {
-            await renderComponent();
-            const heroSection = document.querySelector('.hero-section') as HTMLElement;
-            expect(heroSection?.style.backgroundImage).toBeFalsy();
-        });
-
-        it('should apply a background-image style when a valid production type is selected', async () => {
-            const user = userEvent.setup();
-            await renderComponent();
-
-            const select = screen.getByRole('combobox');
-            await user.selectOptions(select, 'hydro');
-
-            const heroSection = document.querySelector('.hero-section') as HTMLElement;
-            expect(heroSection?.style.backgroundImage).toContain('url(');
-        });
-    });
+  it('devrait formater correctement les noms affichés (ajout de () pour les fonctions)', () => {
+    expect(component.getDisplayName('myFunction')).toBe('myFunction()');
+    expect(component.getDisplayName('MyClass')).toBe('MyClass');
+    expect(component.getDisplayName('')).toBe('');
+  });
 });

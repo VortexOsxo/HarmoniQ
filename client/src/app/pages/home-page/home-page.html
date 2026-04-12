@@ -1,19 +1,47 @@
 <div id="content">
+    <div class="bg-layer" #layer1></div>
+    <div class="bg-layer hidden" #layer2></div>
+    <div class="bg-overlay"></div>
     <div id="hero-content">
-        <h1>HarmoniQ</h1>
-        <h3>Modèle de Production Électrique Québecoise</h3>
+        <h1>
+            <span class="brand-text">Harmoni</span>
+            <img src="/icons/hqLogo.png" alt="Q" class="brand-logo">
+        </h1>
+        <h3 class="hero-subtitle">
+            Et si vous pouviez concevoir le réseau électrique de demain ?
+        </h3>
+        <p class="hero-description">
+            Une simulation interactive de l'avenir énergétique du Québec pour les années 2035 et 2050.
+        </p>
+
+        <div id="feature-cards">
+            <div class="feature-card">
+                <i class="fas fa-calendar-alt feature-icon"></i>
+                <h4 class="feature-title">Choisissez un scénario</h4>
+                <p class="feature-text">Québec 2035 ou 2050 ou créez le vôtre</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-industry feature-icon"></i>
+                <h4 class="feature-title">Ajoutez des installations</h4>
+                <p class="feature-text">Éoliennes, barrages, solaire, thermique...</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-pie feature-icon"></i>
+                <h4 class="feature-title">Voyez l'impact</h4>
+                <p class="feature-text">CO2, coût, autochtone, réserve</p>
+            </div>
+        </div>
     </div>
     <div id="nav">
-        <button (click)="navigate('à-propos')">À Propos</button>
-        <button (click)="navigate('documentation')">Documentation</button>
-        <button (click)="navigate('map')">Simulation</button>
+        <div class="cta-container">
+            <button (click)="navigate('map')" class="cta-button">Lancez une simulation !</button>
+        </div>
     </div>
-    <div>
+    <div class="footer-logos">
         <a href="https://www.polymtl.ca/programmes/cours/projet-integrateur-iv-en-genie-mecanique-0" target="_blank"
             rel="noopener noreferrer">
             <img class="logo" src="/icons/polymtlLogo.png" alt="Logo de Polytechnique Montréal">
         </a>
-        <span style="margin: 0 2em"></span>
         <a href="https://www.hydroquebec.com/projets/planifier/prevoir-demande-electricite.html" target="_blank"
             rel="noopener noreferrer">
             <img class="logo" src="/icons/hqLogo.png" alt="Logo de Hydro-Québec">

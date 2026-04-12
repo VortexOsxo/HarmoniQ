@@ -22,7 +22,9 @@ div#plots {
 }
 
 .protected-areas-btn,
-.reseau-btn {
+.reseau-btn,
+.wind-btn,
+.infrastructures-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -35,22 +37,63 @@ div#plots {
     background: #fff !important;
     color: #555 !important;
     border: 1px solid #ddd !important;
-    min-width: 180px;
+    min-width: 190px;
 }
 
-.protected-areas-btn.btn-success {
-    background: #27ae60 !important;
-    color: #fff !important;
-    border-color: #27ae60 !important;
-    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.35);
+.protected-areas-btn .btn-label,
+.reseau-btn .btn-label,
+.wind-btn .btn-label,
+.infrastructures-btn .btn-label {
+    flex-grow: 1;
+    text-align: left;
 }
 
-/* ── Réseau button ── */
-.reseau-btn.btn-reseau-active {
-    background: #4A90D9 !important;
+.settings-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.settings-trigger:hover {
+    background: rgba(0, 0, 0, 0.15);
+    transform: rotate(30deg);
+}
+
+.protected-areas-btn.btn-success .settings-trigger,
+.reseau-btn.btn-reseau-active .settings-trigger,
+.wind-btn.btn-wind-active .settings-trigger,
+.infrastructures-btn.btn-infrastructures-active .settings-trigger {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.protected-areas-btn.btn-success .settings-trigger:hover,
+.reseau-btn.btn-reseau-active .settings-trigger:hover,
+.wind-btn.btn-wind-active .settings-trigger:hover,
+.infrastructures-btn.btn-infrastructures-active .settings-trigger:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.protected-areas-btn.btn-success,
+.reseau-btn.btn-reseau-active,
+.infrastructures-btn.btn-infrastructures-active {
+    background: var(--hq-blue-start) !important;
     color: #fff !important;
-    border-color: #4A90D9 !important;
-    box-shadow: 0 2px 8px rgba(74, 144, 217, 0.35);
+    border-color: var(--hq-blue-start) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.35);
+}
+
+/* Wind button */
+.wind-btn.btn-wind-active {
+    background: var(--hq-blue-start) !important;
+    color: #fff !important;
+    border-color: var(--hq-blue-start) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.35);
 }
 
 /* ── Content area ── */
@@ -65,7 +108,6 @@ div#plots {
 }
 
 /* Add padding for graph views so content isn't hidden behind floating buttons */
-app-scenario-temporal-demand-graph,
 app-scenario-demand-prod-sankey {
     display: block;
     width: 100%;
@@ -91,7 +133,7 @@ div.map-overlay p {
     margin: 0 0.25em;
 }
 
-div.map-overlay img.icon-draggable {
+div.map-overlay .icon-draggable {
     width: 2.5em;
     height: 2.5em;
     cursor: grab;

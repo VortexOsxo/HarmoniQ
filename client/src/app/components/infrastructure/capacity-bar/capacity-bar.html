@@ -1,0 +1,67 @@
+<div class="capacity-bar-wrapper">
+
+  <!-- Row: labels -->
+  <div class="capacity-bar-labels">
+    <span class="label-guaranteed">
+      <i class="fa-solid fa-bolt"></i>
+      Puissance garantie&nbsp;:
+      <strong>{{ guaranteedMW() | number:'1.0-0' }} MW</strong>
+      <i class="fa-solid fa-circle-info info-tooltip-icon"
+         [ngbTooltip]="guaranteedPowerTip"
+         placement="top"
+         tooltipClass="capacity-info-tooltip"
+         container="body"></i>
+      <ng-template #guaranteedPowerTip>
+        La puissance garantie correspond à la capacité de production disponible de manière fiable à un moment donné.
+        Elle n'inclut pas les importations d'énergie provenant d'autres réseaux ou régions. Ainsi, cette valeur reflète
+        uniquement les ressources internes du système et permet d'évaluer sa capacité réelle à répondre à la demande
+        sans dépendre de sources externes.
+      </ng-template>
+    </span>
+
+    <span class="label-demand">
+      @if (peakDemandMW() !== null) {
+      Pointe&nbsp;: <strong>{{ peakDemandMW() | number:'1.0-0' }} MW</strong>
+      } @else {
+      <span class="text-muted fst-italic">Lancez une simulation pour voir la pointe</span>
+      }
+    </span>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress capacity-progress" title="{{ fillPercent() }}% de la demande couverte">
+    <div class="progress-bar {{ barColorClass() }}" role="progressbar" [style.width.%]="fillPercent()"
+      [attr.aria-valuenow]="fillPercent()" aria-valuemin="0" aria-valuemax="100">
+      @if (fillPercent() >= 15) {
+      {{ fillPercent() }}%
+      }
+    </div>
+    @if (peakDemandMW() !== null && fillPercent() < 100) {
+    <div class="progress-bar bg-imports" role="progressbar" [style.width.%]="100 - fillPercent()"
+      aria-valuemin="0" aria-valuemax="100">
+      @if ((100 - fillPercent()) >= 10) {
+      Importations {{ 100 - fillPercent() }}%
+      }
+    </div>
+    }
+  </div>
+
+
+
+  <!-- Coverage status badge -->
+  @if (peakDemandMW() !== null) {
+  <div class="coverage-status">
+    @if (fillPercent() >= 100) {
+    <span class="badge text-bg-success">
+      <i class="fa-solid fa-circle-check me-1"></i>Pointe couverte
+    </span>
+    } @else {
+    <span class="badge text-bg-danger">
+      <i class="fa-solid fa-triangle-exclamation me-1"></i>
+      Déficit à la pointe : {{ (peakDemandMW()! - guaranteedMW()) | number:'1.0-0' }} MW
+    </span>
+    }
+  </div>
+  }
+
+</div>

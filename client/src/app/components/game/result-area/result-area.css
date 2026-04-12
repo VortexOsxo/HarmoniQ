@@ -168,33 +168,7 @@
   margin-top: 1rem;
 }
 
-.resultButton {
-  min-width: 160px;
-  padding: 0.6rem 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #4361ee, #3a56d4);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
 
-.resultButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
-  color: #fff;
-}
-
-.resultButton:active {
-  transform: translateY(0);
-}
 
 .infoMessage {
   font-size: 0.85rem;

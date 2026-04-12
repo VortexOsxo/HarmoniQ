@@ -1,7 +1,15 @@
+vi.mock('leaflet.markercluster', () => ({}));
+vi.mock('leaflet', () => ({
+  default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
+  icon: vi.fn().mockReturnValue({}),
+  divIcon: vi.fn().mockReturnValue({}),
+}));
+
 import { render } from '@testing-library/angular';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { InfraListBody } from './infra-list-body';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { MapService } from '@app/services/map-service';
 
 const MOCK_INFRAS = [
   { id: 1, nom: 'Barrage A', isUserCreated: false },
@@ -13,7 +21,16 @@ const mockInfrastruturesService = {
   isInfraSelected: vi.fn().mockReturnValue(false),
   toggleInfra: vi.fn(),
   deleteLocalInfra: vi.fn(),
-  selectedInfraGroup: signal({ id: 1, nom: 'Groupe', parc_eoliens: [], parc_solaires: [], central_hydroelectriques: ['1'], central_thermique: [], central_nucleaire: [] }),
+  isDefaultInfraGroup: vi.fn().mockReturnValue(false),
+  selectedInfraGroup: signal({
+    id: 100,
+    nom: 'Groupe',
+    parc_eoliens: [],
+    parc_solaires: [],
+    central_hydroelectriques: ['1'],
+    central_thermique: [],
+    central_nucleaire: [],
+  }),
 };
 
 describe('InfraListBody', () => {
@@ -24,6 +41,7 @@ describe('InfraListBody', () => {
       componentInputs: { infras: MOCK_INFRAS, type: 'hydro' },
       providers: [
         { provide: InfrastruturesService, useValue: mockInfrastruturesService },
+        { provide: MapService, useValue: { flyToInfra: vi.fn() } },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });

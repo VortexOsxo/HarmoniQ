@@ -1,0 +1,86 @@
+.energy-bar-wrapper {
+  padding: 10px 12px 8px;
+  background: #f0f4f8;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.energy-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.78rem;
+  margin-bottom: 5px;
+  gap: 6px;
+}
+
+.label-supply {
+  color: #212529;
+  white-space: nowrap;
+}
+
+.label-demand {
+  color: #6c757d;
+  text-align: right;
+  font-size: 0.75rem;
+}
+
+.energy-progress {
+  height: 18px;
+  border-radius: 4px;
+  background-color: #dee2e6;
+}
+
+.energy-progress .progress-bar {
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: width 0.4s ease;
+}
+
+.energy-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 0.70rem;
+  color: #6c757d;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.energy-progress .progress-bar.energy-wind {
+  background-color: #70b2c1;
+}
+
+.legend-dot.energy-wind-dot {
+  background-color: #70b2c1;
+}
+
+.energy-progress .progress-bar.energy-solar {
+  background-color: #de8c28;
+}
+
+.legend-dot.energy-solar-dot {
+  background-color: #de8c28;
+}
+
+.energy-status {
+  margin-top: 5px;
+  text-align: right;
+  font-size: 0.72rem;
+}
+
+.legend-est {
+  color: #adb5bd;
+  font-style: italic;
+  margin-left: 2px;
+}

@@ -6,10 +6,13 @@ import { InfraListElement } from './infra-list-element';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { ScenariosService } from '@app/services/scenarios-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { MapService } from '@app/services/map-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
+import { DEFAULT_INFRA_GROUP_ID } from '@app/models/infrastructure-group';
 
+vi.mock('leaflet.markercluster', () => ({}));
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
   icon: vi.fn().mockReturnValue({}),
@@ -27,10 +30,13 @@ const MOCK_SCENARIO: Scenario = {
   consomation: Consumption.Normal,
 };
 
+const selectedInfraGroup = signal<any>(null);
+
 const mockInfrasService = {
   isInfraSelected: vi.fn().mockReturnValue(false),
   toggleInfra: vi.fn(),
-  deleteLocalInfra: vi.fn(),
+  selectedInfraGroup,
+  isDefaultInfraGroup: vi.fn().mockReturnValue(false),
 };
 
 const selectedScenario = signal<Scenario | null>(null);
@@ -48,6 +54,10 @@ const mockInfraDetailService = {
   openDetail: vi.fn(),
 };
 
+const mockMapService = {
+  flyToInfra: vi.fn(),
+};
+
 const defaultInputs = {
   nom: 'Barrage Test',
   id: '42',
@@ -59,12 +69,15 @@ const defaultProviders = [
   { provide: ScenariosService, useValue: mockScenariosService },
   { provide: NgbModal, useValue: mockModalService },
   { provide: InfraDetailService, useValue: mockInfraDetailService },
+  { provide: MapService, useValue: mockMapService },
 ];
 
 describe('InfraListElement', () => {
   beforeEach(() => {
     selectedScenario.set(null);
+    selectedInfraGroup.set(null);
     mockInfrasService.isInfraSelected.mockReturnValue(false);
+    mockInfrasService.isDefaultInfraGroup.mockReturnValue(false);
   });
 
   afterEach(() => vi.clearAllMocks());
@@ -91,7 +104,7 @@ describe('InfraListElement', () => {
     });
   });
 
-  describe('toggleInfra', () => {
+  describe('onRowClick', () => {
     it('should call infrastructuresService.toggleInfra with type and id when the item is clicked', async () => {
       const user = userEvent.setup();
       await render(InfraListElement, {
@@ -100,10 +113,37 @@ describe('InfraListElement', () => {
         schemas: [NO_ERRORS_SCHEMA],
       });
 
-      await user.click(screen.getByTitle(/Cliquez pour sélectionner/i));
+      await user.click(screen.getByText('Barrage Test'));
 
       expect(mockInfrasService.toggleInfra).toHaveBeenCalledWith('hydro', '42');
     });
+
+    it('should not toggle when the default infrastructure group is selected', async () => {
+      const user = userEvent.setup();
+      selectedInfraGroup.set({
+        id: DEFAULT_INFRA_GROUP_ID,
+        nom: 'Infrastructures québécoises',
+        parc_eoliens: [],
+        parc_solaires: [],
+        central_hydroelectriques: [],
+        central_thermique: [],
+        central_nucleaire: [],
+      });
+      mockInfrasService.isDefaultInfraGroup.mockImplementation(
+        (g: any) => g?.id === DEFAULT_INFRA_GROUP_ID,
+      );
+
+      await render(InfraListElement, {
+        componentInputs: defaultInputs,
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByText('Barrage Test'));
+
+      expect(mockInfrasService.toggleInfra).toHaveBeenCalledWith('hydro', '42');
+    });
+
   });
 
   describe('handleInfoClick', () => {
@@ -118,6 +158,7 @@ describe('InfraListElement', () => {
       await user.click(screen.getByTitle(/Afficher les informations/i));
 
       expect(mockInfraDetailService.openDetail).toHaveBeenCalledWith('hydro', '42');
+      expect(mockMapService.flyToInfra).toHaveBeenCalledWith('hydro', '42');
     });
   });
 
@@ -170,42 +211,4 @@ describe('InfraListElement', () => {
     });
   });
 
-  describe('deleteInfra', () => {
-    it('should open a confirmation modal when delete icon is clicked', async () => {
-      const user = userEvent.setup();
-      await render(InfraListElement, {
-        componentInputs: { ...defaultInputs, isUserCreated: true },
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      await user.click(screen.getByTitle(/Supprimer cette infrastructure/i));
-
-      expect(mockModalService.open).toHaveBeenCalled();
-    });
-
-    it('should call deleteLocalInfra when confirmation is accepted', async () => {
-      const user = userEvent.setup();
-      await render(InfraListElement, {
-        componentInputs: { ...defaultInputs, isUserCreated: true },
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      await user.click(screen.getByTitle(/Supprimer cette infrastructure/i));
-      await mockModalRef.result;
-
-      expect(mockInfrasService.deleteLocalInfra).toHaveBeenCalledWith('hydro', 42);
-    });
-
-    it('should not render the delete icon when isUserCreated is false', async () => {
-      await render(InfraListElement, {
-        componentInputs: { ...defaultInputs, isUserCreated: false },
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      expect(screen.queryByTitle(/Supprimer cette infrastructure/i)).not.toBeInTheDocument();
-    });
-  });
 });

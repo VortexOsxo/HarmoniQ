@@ -4,13 +4,14 @@ import { SimulationService } from '@app/services/simulation-service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { GraphService, graphServiceConfig } from '@app/services/graph-service';
-import { forkJoin } from 'rxjs';
-
+import { InfraIconComponent } from '@app/components/commons/infra-icon';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
 import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
 
 @Component({
   selector: 'app-simulation-single-infra-modal',
-  imports: [CommonModule, GranularitySelectorComponent],
+  standalone: true,
+  imports: [CommonModule, GranularitySelectorComponent, InfraIconComponent],
   templateUrl: './simulation-single-infra-modal.html',
   styleUrl: './simulation-single-infra-modal.css',
 })
@@ -18,19 +19,25 @@ export class SimulationSingleInfraModal implements OnInit {
   @Input({ required: true }) name!: string;
   @Input({ required: true }) type!: string;
   @Input({ required: true }) id!: any;
+  @Input() type_barrage?: string;
 
   error?: string;
+  info?: string;
   isLoading = true;
 
   config = graphServiceConfig;
   costs?: any;
   emissions?: any;
 
-  selectedGranularity = 'original';
+  selectedGranularity = 'weekly';
   productionData: any;
 
   get label() {
     return `Simulation de ${this.name} (Scénario: ${this.scenarioService.selectedScenario()?.nom})`;
+  }
+
+  get typeColor(): string {
+    return INFRA_COLORS[this.type] ?? '#3498db';
   }
 
   constructor(
@@ -42,7 +49,6 @@ export class SimulationSingleInfraModal implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.initProduction();
     this.initCosts();
     this.initEmissions();
   }
@@ -50,11 +56,19 @@ export class SimulationSingleInfraModal implements OnInit {
   onGranularityChange(granularity: string) {
     this.selectedGranularity = granularity;
     if (this.productionData) {
-      this.graphService.generateProductionSingleInfraGraph(this.type, this.productionData, this.selectedGranularity);
+      setTimeout(() => {
+        this.graphService.generateProductionSingleInfraGraph(this.type, this.productionData, this.selectedGranularity);
+      }, 0);
     }
   }
 
   private initProduction() {
+    if (this.type === 'hydro' && this.type_barrage === "Fil de l'eau") {
+      this.info = "Il n'est pas possible de générer le graphique de production d'un barrage au fil de l'eau.";
+      this.isLoading = false;
+      this.cdr.detectChanges();
+      return;
+    }
     const obs = this.simulationService.launchSimulationSingleInfra(this.type, this.id);
     if (!obs) return;
 
@@ -62,8 +76,12 @@ export class SimulationSingleInfraModal implements OnInit {
       next: (data) => {
         this.isLoading = false;
         this.productionData = data;
-        this.graphService.generateProductionSingleInfraGraph(this.type, data, this.selectedGranularity);
+        // Flush Angular change detection first so the *ngIf renders the chart div,
+        // then defer Plotly to the next macrotask so the DOM element is guaranteed to exist.
         this.cdr.detectChanges();
+        setTimeout(() => {
+          this.graphService.generateProductionSingleInfraGraph(this.type, data, this.selectedGranularity);
+        }, 0);
       },
       error: (e) => {
         this.error = 'Une erreur est survenue. Cette infrastructure ne marche peut être pas.';
@@ -74,11 +92,21 @@ export class SimulationSingleInfraModal implements OnInit {
   }
 
   private initCosts() {
-    this.simulationService.getInfraCost(this.type, this.id)?.
-      subscribe((result) => {
-        this.costs = result;
-        this.cdr.detectChanges();
+    const obs = this.simulationService.getInfraCost(this.type, this.id);
+    if (obs) {
+      obs.subscribe({
+        next: (result) => {
+          this.costs = result;
+          this.cdr.detectChanges();
+          this.initProduction();
+        },
+        error: () => {
+          this.initProduction();
+        }
       });
+    } else {
+      this.initProduction();
+    }
   }
 
   private initEmissions() {

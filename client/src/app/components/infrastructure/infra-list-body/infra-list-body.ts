@@ -12,10 +12,14 @@ export class InfraListBody {
   @Input({ required: true }) infras!: any;
   @Input({ required: true }) type!: string;
 
-  constructor(private infrastructuresService: InfrastruturesService) { }
+  constructor(private infrastructuresService: InfrastruturesService) {}
+
 
   selectAll() {
-    this.infrastructuresService.setInfrasForType(this.type, this.infras.map((infra: any) => infra.id.toString()));
+    this.infrastructuresService.setInfrasForType(
+      this.type,
+      this.infras.map((infra: any) => infra.id.toString()),
+    );
   }
 
   selectNone() {

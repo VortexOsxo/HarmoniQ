@@ -21,7 +21,7 @@
     align-items: center;
     padding: 10px 16px;
     border-bottom: 1px solid #e9ecef;
-    background: #f8f9fa;
+    background: #fff;
     flex-shrink: 0;
 }
 
@@ -58,7 +58,7 @@
 
 .filter-input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
 }
 
@@ -97,9 +97,9 @@
 }
 
 .sort-toggle-btn:hover {
-    background: #3498db;
+    background: var(--hq-blue-start);
     color: #fff;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
 }
 
 .infra-empty-state {
@@ -158,8 +158,12 @@
 
 .group-select:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
+}
+
+input.group-select {
+    cursor: text;
 }
 
 .group-add-btn {
@@ -169,7 +173,7 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     background: #fff;
-    color: #3498db;
+    color: var(--hq-blue-start);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -179,77 +183,113 @@
 }
 
 .group-add-btn:hover {
-    background: #3498db;
+    background: var(--hq-blue-start);
     color: #fff;
-    border-color: #3498db;
+    border-color: var(--hq-blue-start);
 }
 
-.group-delete-btn {
-    width: 36px;
-    height: 36px;
+
+/* ── Type filter chips ── */
+.infra-type-chips {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px;
     flex-shrink: 0;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #fff;
-    color: #e74c3c;
-    cursor: pointer;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.infra-chip {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1.5px solid #ddd;
+    border-radius: 20px;
+    background: #fff;
+    color: #555;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
     transition: all 0.15s;
+    white-space: nowrap;
 }
 
-.group-delete-btn:hover {
-    background: rgba(231, 76, 60, 0.08);
-    color: #e74c3c;
-    border-color: #e74c3c;
+.infra-chip:hover {
+    border-color: var(--chip-color, #999);
+    background: color-mix(in srgb, var(--chip-color, #999) 8%, white);
 }
 
-/* ── Infrastructure accordion list ── */
-.infra-accordion {
+.infra-chip--active {
+    background: var(--chip-color, #2c3e50);
+    border-color: var(--chip-color, #2c3e50);
+    color: #fff;
+}
+
+.infra-chip--active:hover {
+    filter: brightness(0.9);
+    background: var(--chip-color, #2c3e50);
+}
+
+.infra-chip-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.infra-chip-label {
+    line-height: 1;
+}
+
+/* ── Flat infrastructure list ── */
+.infra-flat-list {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0;
+    padding: 4px 12px 8px;
 }
 
-/* Override ng-bootstrap accordion styles for cleaner look */
-:host ::ng-deep .accordion-item {
-    border: none !important;
-    border-bottom: 1px solid #f0f0f0 !important;
-    background: transparent !important;
+.infra-flat-list .list-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-:host ::ng-deep .accordion-item:last-child {
-    border-bottom: none !important;
+/* ── Icon masks (shared by chips) ── */
+.infra-category-icon-tinted {
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
 }
 
-:host ::ng-deep .accordion-button {
-    padding: 10px 16px !important;
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-    color: #2c3e50 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
+.infra-category-barrage {
+    -webkit-mask-image: url(/icons/barrage.png);
+    mask-image: url(/icons/barrage.png);
 }
 
-:host ::ng-deep .accordion-button:not(.collapsed) {
-    color: #3498db !important;
-    background: rgba(52, 152, 219, 0.04) !important;
+.infra-category-eolienne {
+    -webkit-mask-image: url(/icons/eolienne.png);
+    mask-image: url(/icons/eolienne.png);
 }
 
-:host ::ng-deep .accordion-button::after {
-    width: 14px !important;
-    height: 14px !important;
-    background-size: 14px !important;
+.infra-category-solaire {
+    -webkit-mask-image: url(/icons/solaire.png);
+    mask-image: url(/icons/solaire.png);
 }
 
-:host ::ng-deep .accordion-body {
-    padding: 4px 12px 8px !important;
+.infra-category-thermique {
+    -webkit-mask-image: url(/icons/thermique.png);
+    mask-image: url(/icons/thermique.png);
 }
 
-:host ::ng-deep .accordion-body .list-group-item {
+.infra-category-nucleaire {
+    -webkit-mask-image: url(/icons/nucelaire.png);
+    mask-image: url(/icons/nucelaire.png);
+}
+
+/* ── Flat list item overrides ── */
+:host ::ng-deep .infra-flat-list .list-group-item {
     border: none !important;
     border-bottom: 1px solid #f5f5f5 !important;
     border-radius: 0 !important;
@@ -258,6 +298,6 @@
     margin-bottom: 0 !important;
 }
 
-:host ::ng-deep .accordion-body .list-group-item:last-child {
+:host ::ng-deep .infra-flat-list .list-group-item:last-child {
     border-bottom: none !important;
 }

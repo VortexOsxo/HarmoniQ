@@ -25,6 +25,7 @@ export class InfraDetailService {
     const data = infras.find((i: any) => String(i.id) === String(id));
     if (!data) return;
 
+    document.body.classList.add('detail-panel-open');
     this._selectedInfra.set({
       type,
       id: String(id),
@@ -34,6 +35,7 @@ export class InfraDetailService {
   }
 
   closeDetail() {
+    document.body.classList.remove('detail-panel-open');
     this._selectedInfra.set(null);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import { environment } from 'environments/environment';
 
@@ -34,28 +34,28 @@ export interface ReseauCategory {
 
 export const BUS_CATEGORIES: ReseauCategory[] = [
   { key: 'Transport', label: 'Bus - Transport', color: '#4ad97cff' },
-  { key: 'Éoliennes', label: 'Bus - Éoliennes', color: '#4A90D9' },
-  { key: 'Solaire', label: 'Bus - Solaire', color: '#F5A623' },
-  { key: 'Thermique', label: 'Bus - Thermique', color: '#E74C3C' },
-  { key: 'Hydroélectrique', label: 'Bus - Hydroélectrique', color: '#3498DB' },
+  { key: 'Éoliennes', label: 'Bus - Éoliennes', color: '#70b2c1' },
+  { key: 'Solaire', label: 'Bus - Solaire', color: '#de8c28' },
+  { key: 'Thermique', label: 'Bus - Thermique', color: '#698c77' },
+  { key: 'Hydroélectrique', label: 'Bus - Hydroélectrique', color: '#1d6799' },
   { key: 'Consommation', label: 'Bus - Consommation', color: '#8E44AD' },
 ];
 
 export const LINE_CATEGORIES: ReseauCategory[] = [
   { key: 'Transport', label: 'Lignes - Transport', color: '#4ad97cff' },
-  { key: 'Éoliennes', label: 'Lignes - Éoliennes', color: '#4A90D9' },
-  { key: 'Solaire', label: 'Lignes - Solaires', color: '#F5A623' },
-  { key: 'Thermique', label: 'Lignes - Thermiques', color: '#E74C3C' },
-  { key: 'Hydroélectrique', label: 'Lignes - Hydroélectriques', color: '#3498DB' },
+  { key: 'Éoliennes', label: 'Lignes - Éoliennes', color: '#70b2c1' },
+  { key: 'Solaire', label: 'Lignes - Solaires', color: '#de8c28' },
+  { key: 'Thermique', label: 'Lignes - Thermiques', color: '#698c77' },
+  { key: 'Hydroélectrique', label: 'Lignes - Hydroélectriques', color: '#1d6799' },
   { key: 'Consommation', label: 'Lignes - Consommation', color: '#8E44AD' },
 ];
 
 const COLOR_MAP: Record<string, string> = {
   'Transport': '#4ad97cff',
-  'Éoliennes': '#4A90D9',
-  'Solaire': '#F5A623',
-  'Thermique': '#E74C3C',
-  'Hydroélectrique': '#3498DB',
+  'Éoliennes': '#70b2c1',
+  'Solaire': '#de8c28',
+  'Thermique': '#698c77',
+  'Hydroélectrique': '#1d6799',
   'Consommation': '#8E44AD',
 };
 
@@ -65,11 +65,14 @@ const GREY = '#AAAAAA';
   providedIn: 'root',
 })
 export class ReseauService {
-  isVisible = signal(false);
   legendOpen = signal(false);
 
-  selectedBusTypes = signal<Set<string>>(new Set(BUS_CATEGORIES.map(c => c.key)));
-  selectedLineTypes = signal<Set<string>>(new Set(LINE_CATEGORIES.map(c => c.key)));
+  selectedBusTypes = signal<Set<string>>(new Set());
+  selectedLineTypes = signal<Set<string>>(new Set());
+  hasSelection = computed(() => this.selectedBusTypes().size > 0 || this.selectedLineTypes().size > 0);
+
+  private lastBusSelection: Set<string> = new Set(BUS_CATEGORIES.map(c => c.key));
+  private lastLineSelection: Set<string> = new Set(LINE_CATEGORIES.map(c => c.key));
 
   private map?: L.Map;
   private buses: ReseauBus[] = [];
@@ -111,12 +114,18 @@ export class ReseauService {
   private busLookup: Record<string, ReseauBus> = {};
 
   toggleVisibility(): void {
-    const nextState = !this.isVisible();
-    this.isVisible.set(nextState);
-    if (nextState) {
-      this.legendOpen.set(true);
-    } else {
+    if (this.hasSelection()) {
+      this.lastBusSelection = new Set(this.selectedBusTypes());
+      this.lastLineSelection = new Set(this.selectedLineTypes());
+      this.deselectAll();
       this.legendOpen.set(false);
+    } else {
+      if (this.lastBusSelection.size === 0 && this.lastLineSelection.size === 0) {
+        this.selectAll();
+      } else {
+        this.selectedBusTypes.set(new Set(this.lastBusSelection));
+        this.selectedLineTypes.set(new Set(this.lastLineSelection));
+      }
     }
     this.rebuildLayers();
   }
@@ -245,7 +254,7 @@ export class ReseauService {
   rebuildLayers(): void {
     if (!this.map || !this.dataLoaded) return;
 
-    const highlight = this.isVisible();
+    const highlight = true; // Any selection is highlighted
     const selectedBus = this.selectedBusTypes();
     const selectedLine = this.selectedLineTypes();
 
@@ -310,7 +319,6 @@ export class ReseauService {
     this.busMarkers = [];
     this.linePolylines = [];
     this.map = undefined;
-    this.isVisible.set(false);
     this.legendOpen.set(false);
   }
 }

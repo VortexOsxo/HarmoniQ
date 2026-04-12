@@ -1,0 +1,20 @@
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.chart-loading-icon {
+    font-size: 2.5rem;
+    color: #adb5bd;
+}
+
+.chart-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 1.5rem 0 0.25rem 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #e9ecef;
+}

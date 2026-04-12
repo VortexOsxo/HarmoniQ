@@ -3,6 +3,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { OpenApiService } from './services/open-api-service';
+import { InfrastruturesService } from './services/infrastrutures-service';
 
 const mockOpenApiService = {
   getOpenApiSchemas: vi.fn().mockReturnValue({}),
@@ -16,6 +17,7 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         { provide: OpenApiService, useValue: mockOpenApiService },
+        { provide: InfrastruturesService, useValue: { refreshInfraGroups: vi.fn() } },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });
