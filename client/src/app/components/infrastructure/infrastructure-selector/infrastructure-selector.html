@@ -2,7 +2,7 @@
     <!-- Group selector header -->
     <div class="group-selector-header">
         <span class="group-label">Groupe infras actif</span>
-        <div class="group-selector-row">
+        <div class="group-selector-row" *ngIf="!isRenaming">
             <select class="group-select" [(ngModel)]="selectedInfrastructureGroup" [compareWith]="compareInfraGroups">
                 <option *ngFor="let infraGroup of infrastructureGroups" [ngValue]="infraGroup">
                     {{ infraGroup.nom }}
@@ -12,6 +12,12 @@
                 (click)="openCreateModal()">
                 <i class="fa-solid fa-plus"></i>
             </button>
+            <button class="group-add-btn"
+                *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== defaultInfraGroupId"
+                title="Renommer ce groupe d'infrastructure"
+                (click)="startRenaming()">
+                <i class="fa-solid fa-pen"></i>
+            </button>
             <app-delete-confirm-button
                 *ngIf="selectedInfrastructureGroup && selectedInfrastructureGroup.id !== defaultInfraGroupId as group"
                 buttonTitle="Supprimer ce groupe d'infrastructure"
@@ -19,6 +25,19 @@
                 [confirmMessage]="'Êtes-vous sûr de vouloir supprimer ce groupe d\'infrastructures? L\'action est irréversible.'"
                 (delete)="deleteInfraGroup()">
             </app-delete-confirm-button>
+        </div>
+        <div class="group-selector-row" *ngIf="isRenaming">
+            <input #renameInput class="group-select" type="text" [(ngModel)]="renameValue"
+                (keydown.enter)="confirmRename()" (keydown.escape)="cancelRename()"
+                (blur)="cancelRename()"
+                maxlength="100" autofocus />
+            <button class="group-add-btn" title="Confirmer le renommage"
+                (mousedown)="$event.preventDefault()" (click)="confirmRename()">
+                <i class="fa-solid fa-check"></i>
+            </button>
+            <button class="group-add-btn" title="Annuler le renommage" (click)="cancelRename()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 

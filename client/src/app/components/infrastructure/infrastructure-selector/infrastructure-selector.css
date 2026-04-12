@@ -162,6 +162,10 @@
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
 }
 
+input.group-select {
+    cursor: text;
+}
+
 .group-add-btn {
     width: 36px;
     height: 36px;

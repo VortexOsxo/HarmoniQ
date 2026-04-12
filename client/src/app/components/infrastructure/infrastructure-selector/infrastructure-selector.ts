@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
@@ -27,6 +27,9 @@ export class InfrastructureSelector {
 
   filterText = '';
   sortAsc = true;
+  isRenaming = false;
+  renameValue = '';
+  @ViewChild('renameInput') renameInput?: ElementRef<HTMLInputElement>;
 
   /** Set of currently visible type filters. All enabled by default. */
   activeFilters = new Set<string>();
@@ -120,6 +123,28 @@ export class InfrastructureSelector {
     if (group && group.id !== DEFAULT_INFRA_GROUP_ID) {
       this.infrasService.deleteInfraGroup(group);
     }
+  }
+
+  startRenaming() {
+    const group = this.selectedInfrastructureGroup;
+    if (!group || group.id === DEFAULT_INFRA_GROUP_ID) return;
+    this.renameValue = group.nom;
+    this.isRenaming = true;
+    setTimeout(() => {
+      this.renameInput?.nativeElement.select();
+    });
+  }
+
+  confirmRename() {
+    const group = this.selectedInfrastructureGroup;
+    if (group && this.renameValue.trim()) {
+      this.infrasService.renameInfraGroup(group, this.renameValue);
+    }
+    this.isRenaming = false;
+  }
+
+  cancelRename() {
+    this.isRenaming = false;
   }
 
   selectAllVisible() {

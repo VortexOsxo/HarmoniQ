@@ -129,6 +129,13 @@ export class InfrastruturesService {
   private defaultInfraGroup = computed(() => this.getDefaultInfraGroup());
   infraGroups = computed(() => [this.defaultInfraGroup(), ...this.localInfraGroups()])
 
+  readonly activeGroup = computed(() => {
+    const selected = this.selectedInfraGroup();
+    if (!selected) return null;
+    if (selected.id === DEFAULT_INFRA_GROUP_ID) return this.defaultInfraGroup();
+    return selected;
+  });
+
   private injector = inject(Injector);
 
   infraToggled = new EventEmitter<{ type: string, id: string, isActive: boolean }>();
@@ -153,7 +160,7 @@ export class InfrastruturesService {
   solarInstalledMW = computed(() => this._sumInstalledMW(['solaire']));
 
   private _sumInstalledMW(types: string[]): number {
-    const group: any = this.selectedInfraGroup();
+    const group: any = this.activeGroup();
     if (!group) return 0;
     const overrides = this.hydroPuissanceOverrides();
     let total = 0;
@@ -183,15 +190,15 @@ export class InfrastruturesService {
   ) {
     this.refreshInfraGroups();
 
-    const lastId = this.storageService.loadObject(LAST_INFRA_GROUP_KEY);
-    const lastGroup = lastId != null ? this.infraGroups().find(g => g.id === lastId) : null;
-    this.selectedInfraGroup.set(lastGroup ?? this.getDefaultInfraGroup());
-
     const factories = [HydroelectricDamFactory, WindFarmFactory, SolarFarmFactory, ThermalPowerPlantFactory, NuclearPowerPlantFactory];
     factories.forEach((Factory) => {
       const factory = new Factory();
       this.infrasContainer.set(factory.getType(), new InfrasContainer<Infra<any>>(http, factory, storageService));
     });
+
+    const lastId = this.storageService.loadObject(LAST_INFRA_GROUP_KEY);
+    const lastGroup = lastId != null ? this.infraGroups().find(g => g.id === lastId) : null;
+    this.selectedInfraGroup.set(lastGroup ?? this.getDefaultInfraGroup());
 
     this.infrasContainer.forEach((container) => {
       container.loaded.subscribe(() => {
@@ -399,7 +406,7 @@ export class InfrastruturesService {
   }
 
   isInfraSelected(type: string, infraId: string) {
-    const infraGroup: any = this.selectedInfraGroup();
+    const infraGroup: any = this.activeGroup();
     if (!infraGroup) return false;
 
     const key = typeKeyMap[type];
@@ -442,6 +449,7 @@ export class InfrastruturesService {
     } else {
       this.selectedInfraGroup.set(infraGroup);
       this._persistSelectedGroup();
+      this.localInfraGroups.update(s => s.map(g => g.id === infraGroup.id ? infraGroup : g));
     }
 
     this.infraToggled.emit({ type, id: infraId, isActive });
@@ -476,6 +484,7 @@ export class InfrastruturesService {
     } else {
       this.selectedInfraGroup.set(infraGroup);
       this._persistSelectedGroup();
+      this.localInfraGroups.update(s => s.map(g => g.id === infraGroup.id ? infraGroup : g));
     }
   }
 
@@ -489,6 +498,16 @@ export class InfrastruturesService {
       if (updated) {
         this.selectedInfraGroup.set({ ...updated });
       }
+    }
+  }
+
+  renameInfraGroup(group: InfrastructureGroup, newName: string) {
+    if (!newName.trim() || group.id === DEFAULT_INFRA_GROUP_ID) return;
+    const updated = { ...group, nom: newName.trim() };
+    this.storageService.updateElement(INFRA_GROUPS_KEY, updated);
+    this.localInfraGroups.update(s => s.map(g => g.id === group.id ? updated : g));
+    if (this.selectedInfraGroup()?.id === group.id) {
+      this.selectedInfraGroup.set(updated);
     }
   }
 
@@ -508,7 +527,7 @@ export class InfrastruturesService {
   }
 
   buildSimulationPayload(): any {
-    const group: any = this.selectedInfraGroup();
+    const group: any = this.activeGroup();
     if (!group) return null;
 
     const payload: any = { nom: group.nom };
