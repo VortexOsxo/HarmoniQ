@@ -132,6 +132,15 @@ ngb-tooltip-window,
   z-index: 2000 !important;
 }
 
+/* Capacity bar "Puissance garantie" tooltip */
+.capacity-info-tooltip .tooltip-inner {
+  max-width: 340px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  text-align: left;
+  padding: 10px 14px;
+}
+
 /* ── Water-blocked toast notification ── */
 .hq-water-toast {
   position: fixed;
