@@ -1,31 +1,60 @@
 <app-navigation-bar />
 
 <div class="hero-section">
-    <h1>À propos</h1>
-    <p>HarmoniQ est une interface développée par des étudiants de quatrième année de Polytechnique Montréal, en
-        collaboration avec Hydro-Québec. Elle repose sur des modules Python open source, permettant ainsi à tous de les
-        consulter librement.</p>
-</div>
+    <div class="hero-content">
+        <h1>À propos</h1>
+        <p>HarmoniQ est une interface développée par des étudiants de quatrième année de Polytechnique Montréal, en
+            collaboration avec Hydro-Québec. Elle repose sur des modules Python open source, permettant ainsi à tous de
+            les consulter librement.</p>
+    </div>
 
-<div class="content-section">
-    <h2>Notre Mission</h2>
-    <hr style="border: 1px solid black; margin: 20px 0;">
-    <p>Permettre de vulgariser la production et la distribution d'électricité au Québec pour permettre au particulier de
-        mieux comprendre les enjeux de la transition énergétique.</p>
-    <hr style="border: 1px solid black; margin: 20px 0;">
-</div>
+    <div class="description-container">
+        <div class="description">
+            <div class="description-inner">
+                <h2>Notre Mission</h2>
+                <p>Permettre de vulgariser la production et la distribution d'électricité au Québec pour permettre au
+                    particulier de mieux comprendre les enjeux de la transition énergétique.</p>
 
-<div class="content-section">
-    <h2>Technologies</h2>
-    <hr style="border: 1px solid black; margin: 20px 0;">
-    <p>Les modèles de production et de distribution d'électricité sont basés sur des modèles open source développés en
-        Python, avec:</p>
-    <ul>
-        <li><a href="https://inlsoftware.inl.gov/product/hydrogenerate">HydroGenerate</a> pour la production
-            hydro-électrique</li>
-        <li><a href="https://pvpmc.sandia.gov/tools/pv_lib-toolbox/">PvLib</a> de Sandia National Laboratories pour la
-            production photovoltaïque (solaire)</li>
-        <li>TODO...</li>
-    </ul>
-    <hr style="border: 1px solid black; margin: 20px 0;">
+                <h2>Technologies et APIs</h2>
+                <p>Cette application et ses modèles de production/distribution d'électricité sont propulsés par de
+                    multiples technologies et projets open source :</p>
+
+                <h3>Modélisation & Backend (Python)</h3>
+                <ul>
+                    <li><a href="https://inlsoftware.inl.gov/product/hydrogenerate" target="_blank">HydroGenerate</a>
+                        pour la production hydro-électrique</li>
+                    <li><a href="https://pvpmc.sandia.gov/tools/pv_lib-toolbox/" target="_blank">PvLib</a> de Sandia
+                        National Laboratories pour la production photovoltaïque (solaire)</li>
+                    <li><a href="https://windpowerlib.readthedocs.io/" target="_blank">Windpowerlib</a> pour la
+                        modélisation physique de la production des parcs éoliens</li>
+                    <li><a href="https://pypsa.org/" target="_blank">PyPSA (Python for Power System Analysis)</a> pour
+                        l'optimisation mathématique et la simulation des flux du réseau électrique</li>
+                    <li><a href="https://geopandas.org/" target="_blank">GeoPandas & Pandas</a> pour le traitement des
+                        données géospatiales et l'analyse des séries temporelles</li>
+                    <li><a href="https://fastapi.tiangolo.com/" target="_blank">FastAPI</a> pour le développement d'une
+                        architecture backend et API extrêmement rapide et moderne</li>
+                </ul>
+
+                <h3>Sources de Données & Climatologie</h3>
+                <ul>
+                    <li><a href="https://cds.climate.copernicus.eu/" target="_blank">Copernicus Climate Data Store (CDS
+                            API)</a> pour l'acquisition des données climatiques historiques (ERA5)</li>
+                    <li><a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> utilisé comme interface
+                        d'archives et de météo</li>
+                </ul>
+
+                <h3>Interface Client (Frontend)</h3>
+                <ul>
+                    <li><a href="https://angular.io/" target="_blank">Angular</a> en tant que cadriciel (framework)
+                        d'application web Single-Page</li>
+                    <li><a href="https://leafletjs.com/" target="_blank">Leaflet</a> pour toute logique de rendu des
+                        cartes interactives et géographiques</li>
+                    <li><a href="https://plotly.com/javascript/" target="_blank">Plotly.js</a> propulsant la
+                        data-visualisation et les graphiques d'analyse d'énergie</li>
+                    <li><a href="https://getbootstrap.com/" target="_blank">Bootstrap & Bootswatch</a> pour le système
+                        conceptuel du design adaptatif</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>

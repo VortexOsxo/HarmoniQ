@@ -1,70 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 .hero-section {
     position: relative;
-    height: 100vh;
+    flex: 1;
+    overflow: hidden;
     background-image: linear-gradient(to bottom right, rgba(0, 0, 0, 0.45), rgba(141, 141, 141, 0.459)), url("https://images.pexels.com/photos/31326222/pexels-photo-31326222/free-photo-of-aerial-view-of-dam-structure-in-alma-wi.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     text-align: center;
     color: white;
+    padding-top: 3.125rem;
 }
 
+.hero-content {
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+}
 
-.hero-section h1 {
+.hero-content h1 {
     font-size: 3em;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-
-.hero-section p {
-    font-size: 1.5em;
-    max-width: 800px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-
-.content-section {
-    padding: 50px;
-    background-color: #f9f9f9;
-    text-align: center;
-}
-
-.content-section h2 {
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-
-.content-section p,
-.content-section ul {
-    font-size: 1.4em;
+.hero-content p {
+    font-size: 1.3em;
     max-width: 800px;
     margin: 0 auto;
-    color: #555;
-    line-height: 1.6;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-.content-section ul {
+.description-container {
+    width: 90vw;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 3.125rem;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.description {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin: 0 auto;
+    padding: 0;
+    border-radius: 1.25rem;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+    max-width: 53.125rem;
+    width: 100%;
     text-align: left;
-    margin-top: 20px;
+    color: #1a202c;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
 }
 
-div#nav button {
-    padding: 0.5em 1em;
-    background: none;
-    font-weight: bold;
-    font-size: 1.5em;
-    border: 2px solid black;
-    color: black;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    margin: 0 0.2em;
+.description-inner {
+    padding: 2.1875rem;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.description-inner::-webkit-scrollbar {
+    width: 0.375rem;
+}
+
+.description-inner::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.description-inner::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.1875rem;
+}
+
+.description h2 {
+    font-size: 2em;
+    color: #0A3254;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eaeaea;
+    padding-bottom: 10px;
+}
+
+.description h3 {
+    font-size: 1.4em;
+    color: #1a202c;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--hq-blue-start, #3498db);
+    padding-left: 10px;
+}
+
+.description p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.description ul {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    padding-left: 20px;
+}
+
+.description a {
+    color: var(--hq-blue-start, #3498db);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.description a:hover {
+    text-decoration: underline;
 }
