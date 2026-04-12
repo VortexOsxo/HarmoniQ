@@ -65,6 +65,10 @@ export class GraphService {
             unit = 'W';
             xval = Object.keys(data.production);
             yval = Object.values(data.production);
+        } else if (type === 'hydro') {
+            unit = 'MW';
+            xval = Object.keys(data);
+            yval = Object.values(data);
         }
 
         if (granularity !== 'original') {
@@ -80,16 +84,7 @@ export class GraphService {
             { margin: { t: 20 } }
         );
 
-        const lineColor =
-            type === 'eolienneparc'
-                ? INFRA_COLORS['eolienneparc']
-                : type === 'solaire'
-                    ? INFRA_COLORS['solaire']
-                    : type === 'thermique'
-                        ? INFRA_COLORS['thermique']
-                        : type === 'nucleaire'
-                            ? INFRA_COLORS['nucleaire']
-                            : '#3498db';
+        const lineColor = INFRA_COLORS[type] ?? '#3498db';
         const trace = this.getStandardTrace(
             'Production',
             xval,

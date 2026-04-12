@@ -222,6 +222,7 @@ export class InfraDetailModal {
         modalRef.componentInstance.id = infra.data.id;
         modalRef.componentInstance.name = infra.data.nom;
         modalRef.componentInstance.type = infra.type;
+        modalRef.componentInstance.type_barrage = infra.data.type_barrage;
     }
 
     editInfra() {

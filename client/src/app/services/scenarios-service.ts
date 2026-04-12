@@ -47,8 +47,9 @@ export class ScenariosService {
     this.storageService.deleteElement<Scenario>(SCENARIOS_KEY, scenario.id);
 
     this.scenarios.update(s => s.filter(item => item.id !== scenario.id));
-    if (this.selectedScenario()?.id === scenario.id)
-      this.selectedScenario.set(null);
+    if (this.selectedScenario()?.id === scenario.id) {
+      this.selectedScenario.set(this.getDefaultScenarios()[0]);
+    }
   }
 
   private getDefaultScenarios(): Scenario[] {

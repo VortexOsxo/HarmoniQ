@@ -38,11 +38,20 @@ export class ScenarioCreationModal {
     return null;
   }
 
+  get nameExistsError(): string | null {
+    const nom = this.scenario.nom.trim().toLowerCase();
+    if (!nom) return null;
+    const existing = this.scenariosService.scenarios().find(s => s.nom.trim().toLowerCase() === nom);
+    if (existing) return "Un scénario avec ce nom existe déjà.";
+    return null;
+  }
+
   get canSubmit(): boolean {
     return this.scenario.nom.trim().length > 0
       && this.scenario.nom.length <= this.nomMaxLength
       && this.scenario.description.length <= this.descriptionMaxLength
-      && this.dateError === null;
+      && this.dateError === null
+      && this.nameExistsError === null;
   }
 
   onSubmit() {

@@ -240,7 +240,7 @@ describe('InfrastruturesService', () => {
       expect(mockStorageService.deleteElement).toHaveBeenCalledWith('harmoniq_local_infra_groups', MOCK_INFRA_GROUP.id);
     });
 
-    it('should clear selectedInfraGroup when the selected group is deleted', () => {
+    it('should set selectedInfraGroup to default when the selected group is deleted', () => {
       flushInitialHttpRequests();
       (mockStorageService.loadElements as ReturnType<typeof vi.fn>).mockReturnValue([MOCK_INFRA_GROUP]);
       service.refreshInfraGroups();
@@ -248,7 +248,7 @@ describe('InfrastruturesService', () => {
 
       service.deleteInfraGroup(MOCK_INFRA_GROUP);
 
-      expect(service.selectedInfraGroup()).toBeNull();
+      expect(service.selectedInfraGroup()?.id).toBe(DEFAULT_INFRA_GROUP_ID);
     });
   });
 

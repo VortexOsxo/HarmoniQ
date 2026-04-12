@@ -111,11 +111,11 @@ describe('ScenariosService', () => {
       expect(service.scenarios()).toHaveLength(countAfterCreate - 1);
     });
 
-    it('should clear selectedScenario when the selected scenario is deleted', () => {
+    it('should set selectedScenario to default when the selected scenario is deleted', () => {
       service.createScenario(MOCK_SCENARIO);
       service.deleteScenario(CREATED_SCENARIO);
 
-      expect(service.selectedScenario()).toBeNull();
+      expect(service.selectedScenario()?.id).toBe(1);
     });
 
     it('should keep selectedScenario when a different scenario is deleted', () => {

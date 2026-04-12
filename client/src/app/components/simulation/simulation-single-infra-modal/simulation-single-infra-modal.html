@@ -21,6 +21,12 @@
             {{ error }}
         </div>
 
+        <!-- Info -->
+        <div class="sim-info" *ngIf="info" role="status">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ info }}
+        </div>
+
         <!-- Grouped stat cards -->
         <div class="sim-stats-grid" *ngIf="costs || emissions">
 
@@ -83,20 +89,18 @@
         </div>
 
         <!-- Production chart section -->
-        <ng-container *ngIf="type !== 'hydro'">
-            <div class="sim-chart-section" *ngIf="!isLoading && !error">
-                <div class="sim-chart-header">
-                    <i class="fa-solid fa-chart-area"></i>
-                    <span>Production simulée</span>
-                    <app-granularity-selector
-                        class="sim-granularity"
-                        [selected]="selectedGranularity"
-                        (granularityChange)="onGranularityChange($event)">
-                    </app-granularity-selector>
-                </div>
-                <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="sim-chart-canvas"></div>
+        <div class="sim-chart-section" *ngIf="!isLoading && !error && !info">
+            <div class="sim-chart-header">
+                <i class="fa-solid fa-chart-area"></i>
+                <span>Production simulée</span>
+                <app-granularity-selector
+                    class="sim-granularity"
+                    [selected]="selectedGranularity"
+                    (granularityChange)="onGranularityChange($event)">
+                </app-granularity-selector>
             </div>
-        </ng-container>
+            <div [id]="config.PRODUCTION_SINGLE_INFRA_ID" class="sim-chart-canvas"></div>
+        </div>
 
     </div>
 </div>

@@ -20,6 +20,7 @@ const mockActiveModal = { close: vi.fn(), dismiss: vi.fn() };
 const mockInfrastruturesService = {
     createInfraGroup: vi.fn().mockReturnValue(MOCK_NEW_GROUP),
     selectedInfraGroup: signal<any>(null),
+    infraGroups: signal<any[]>([]),
     getNewGroupInfraTemplate: vi.fn().mockReturnValue({
         parc_eoliens: ['9'],
         parc_solaires: [],

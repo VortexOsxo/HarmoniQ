@@ -20,8 +20,16 @@ export class CreateInfraGroupModal {
         this.currentGroup = infrastructuresService.selectedInfraGroup();
     }
 
+    get nameExistsError(): string | null {
+        const nom = this.name.trim().toLowerCase();
+        if (!nom) return null;
+        const existing = this.infrastructuresService.infraGroups().find(g => g.nom.trim().toLowerCase() === nom);
+        if (existing) return "Un groupe d'infrastructures avec ce nom existe déjà.";
+        return null;
+    }
+
     create() {
-        if (!this.name || this.name.length > this.nameMaxLength) return;
+        if (!this.name || this.name.length > this.nameMaxLength || this.nameExistsError) return;
 
         const newGroup: InfrastructureGroup = {
             id: 0,

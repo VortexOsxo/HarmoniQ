@@ -19,8 +19,10 @@ export class SimulationSingleInfraModal implements OnInit {
   @Input({ required: true }) name!: string;
   @Input({ required: true }) type!: string;
   @Input({ required: true }) id!: any;
+  @Input() type_barrage?: string;
 
   error?: string;
+  info?: string;
   isLoading = true;
 
   config = graphServiceConfig;
@@ -61,8 +63,10 @@ export class SimulationSingleInfraModal implements OnInit {
   }
 
   private initProduction() {
-    if (this.type === 'hydro') {
+    if (this.type === 'hydro' && this.type_barrage === "Fil de l'eau") {
+      this.info = "Il n'est pas possible de générer le graphique de production d'un barrage au fil de l'eau.";
       this.isLoading = false;
+      this.cdr.detectChanges();
       return;
     }
     const obs = this.simulationService.launchSimulationSingleInfra(this.type, this.id);
