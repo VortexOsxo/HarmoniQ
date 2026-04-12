@@ -143,7 +143,11 @@ export class InfrastruturesService {
  * Se recalcule automatiquement dès qu'une infrastructure est cochée/décochée
  * ou qu'un groupe différent est sélectionné.
  */
-  guaranteedPowerMW = computed(() => this._sumInstalledMW(['hydro', 'thermique', 'nucleaire']));
+  guaranteedPowerMW = computed(() =>
+    this._sumInstalledMW(['hydro', 'thermique', 'nucleaire']) +
+    Math.round(this._sumInstalledMW(['eolienneparc']) * 0.3) +
+    Math.round(this._sumInstalledMW(['solaire']) * 0.3)
+  );
   windInstalledMW = computed(() => this._sumInstalledMW(['eolienneparc']));
   solarInstalledMW = computed(() => this._sumInstalledMW(['solaire']));
 

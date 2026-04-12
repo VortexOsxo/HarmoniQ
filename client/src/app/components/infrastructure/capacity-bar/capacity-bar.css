@@ -40,3 +40,31 @@
   text-align: right;
   font-size: 0.72rem;
 }
+
+.capacity-note-toggle {
+  margin-left: 5px;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.8em;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.capacity-note-toggle:hover {
+  opacity: 1;
+}
+
+.capacity-note {
+  font-size: 0.72rem;
+  color: #6c757d;
+  line-height: 1.5;
+  background: #f8f9fa;
+  border-left: 3px solid #3498db;
+  padding: 8px 10px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 8px;
+}
+
+.capacity-note p {
+  margin: 0;
+}
