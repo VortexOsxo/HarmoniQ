@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/angular';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from './scenario-creation-modal';
 import { ScenariosService } from '@app/services/scenarios-service';
@@ -19,7 +19,10 @@ const MOCK_CREATED_SCENARIO: Scenario = {
 };
 
 const mockActiveModal = { close: vi.fn(), dismiss: vi.fn() };
-const mockScenariosService = { createScenario: vi.fn() };
+const mockScenariosService = { 
+  createScenario: vi.fn(),
+  scenarios: signal<any[]>([])
+};
 
 describe('ScenarioCreationModal', () => {
   afterEach(() => vi.clearAllMocks());

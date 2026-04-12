@@ -23,7 +23,7 @@ export class SimulationTopBar {
   goBack() {
     const modalRef = this.modalService.open(ConfirmationModal, { centered: true });
     modalRef.componentInstance.title = 'Quitter la simulation';
-    modalRef.componentInstance.message = 'Êtes-vous sûr de vouloir retourner à la carte ? Vous allez quitter la simulation en cours.';
+    modalRef.componentInstance.message = 'Êtes-vous sûr de vouloir retourner à la carte ? Vous allez quitter la simulation.';
     modalRef.componentInstance.confirmText = 'Quitter';
     modalRef.componentInstance.cancelText = 'Annuler';
     modalRef.componentInstance.confirmBtnClass = 'btn-danger';
@@ -32,6 +32,6 @@ export class SimulationTopBar {
       if (result === true) {
         this.router.navigate(['/map']);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }
 }
