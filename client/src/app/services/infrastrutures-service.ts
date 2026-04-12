@@ -253,6 +253,11 @@ export class InfrastruturesService {
       this.storageService.updateElement(`${INFRA_KEY}_${type}`, updated);
       this.infrasContainer.get(type)?.updateLocal(updated);
 
+      const group = this.selectedInfraGroup();
+      if (group) {
+        this.selectedInfraGroup.set({ ...group });
+      }
+
       const detailService = this.injector.get(InfraDetailService);
       detailService.openDetail(type, String(infraData.id));
     }).catch(() => { });
