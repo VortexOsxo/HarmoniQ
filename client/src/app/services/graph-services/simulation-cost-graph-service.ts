@@ -36,6 +36,32 @@ const API_INFRA_DEFS = [
     { apiKey: 'hydro', infraType: 'hydro' },
 ];
 
+function formatLabel(label: string, maxLen = 22): string {
+    if (!label) return '';
+    let arr = [];
+    let current = '';
+    const parts = label.split(' ');
+    
+    for (let word of parts) {
+        if (word.length > maxLen) {
+            if (current) arr.push(current);
+            let w = word;
+            while (w.length > maxLen) {
+                arr.push(w.substring(0, maxLen));
+                w = w.substring(maxLen);
+            }
+            current = w;
+        } else if (current.length + word.length + 1 <= maxLen) {
+            current = current ? current + ' ' + word : word;
+        } else {
+            if (current) arr.push(current);
+            current = word;
+        }
+    }
+    if (current) arr.push(current);
+    return arr.join('<br>');
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -320,7 +346,7 @@ export class SimulationCostGraphService implements SimulationStep {
             {
                 type: 'bar',
                 orientation: 'h',
-                y: top10.map((e) => e.name),
+                y: top10.map((e) => formatLabel(e.name)),
                 x: top10.map((e) => e.cost / 1e6),
                 text: top10.map((e) => `${(e.cost / 1e6).toFixed(1)} M$`),
                 textposition: 'outside',
