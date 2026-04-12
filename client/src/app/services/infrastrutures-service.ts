@@ -503,7 +503,7 @@ export class InfrastruturesService {
     this.storageService.deleteElement(INFRA_GROUPS_KEY, group.id);
     this.localInfraGroups.update(s => s.filter(item => item.id !== group.id));
     if (this.selectedInfraGroup()?.id === group.id) {
-      this.selectedInfraGroup.set(null);
+      this.selectedInfraGroup.set(this.getDefaultInfraGroup());
     }
   }
 
