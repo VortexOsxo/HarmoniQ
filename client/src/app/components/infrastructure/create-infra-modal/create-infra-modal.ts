@@ -76,11 +76,11 @@ export class CreateInfraModal {
 
     const lowName = this.prettyName.toLowerCase();
     if (this.isEditMode) {
-        this.improvedTitle = `Modifier ${lowName}`;
+      this.improvedTitle = `Modifier ${lowName}`;
     } else if (lowName.startsWith('centrale')) {
-        this.improvedTitle = `Nouvelle ${lowName}`;
+      this.improvedTitle = `Nouvelle ${lowName}`;
     } else {
-        this.improvedTitle = `Nouveau ${lowName}`;
+      this.improvedTitle = `Nouveau ${lowName}`;
     }
     this.improvedTitle = this.improvedTitle.charAt(0).toUpperCase() + this.improvedTitle.slice(1);
 
@@ -142,7 +142,14 @@ export class CreateInfraModal {
 
     if (this.isSolar) {
       if (!controls['panneau_type']) {
-        controls['panneau_type'] = ['biface', []];
+        controls['panneau_type'] = [this.editData?.panneau_type || 'biface', []];
+      }
+      if (!controls['materiau_panneau']) {
+        controls['materiau_panneau'] = [this.editData?.materiau_panneau || 'CS6X_300M', []];
+      }
+      if (!this.editData) {
+          if (controls['orientation_panneau']) controls['orientation_panneau'][0] = 180;
+          if (controls['angle_panneau']) controls['angle_panneau'][0] = 45;
       }
     }
     this.form = this.fb.group(controls);
