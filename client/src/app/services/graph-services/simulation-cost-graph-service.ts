@@ -50,7 +50,7 @@ export class SimulationCostGraphService implements SimulationStep {
     constructor(
         private infrastructuresService: InfrastruturesService,
         private http: HttpClient,
-    ) {}
+    ) { }
 
     getStepName(): string {
         return 'Simulation du cout du reseau';
@@ -143,10 +143,9 @@ export class SimulationCostGraphService implements SimulationStep {
             margin: { t: 20, b: 20, l: 20, r: 20 },
             paper_bgcolor: 'white',
         };
-
         const graphDiv = document.getElementById(graphServiceConfig.COST_SIMULATION_ID);
         if (graphDiv) {
-            Plotly.newPlot(graphDiv, data, layout);
+            Plotly.newPlot(graphDiv, data, layout, { responsive: true });
             attachCustomLegend(graphDiv, labels, colors);
 
             (graphDiv as any).on('plotly_relayout', () => {
@@ -285,7 +284,7 @@ export class SimulationCostGraphService implements SimulationStep {
             showlegend: false,
         };
 
-        Plotly.newPlot(graphServiceConfig.COST_RENTABILITE_ID, data, layout);
+        Plotly.newPlot(graphServiceConfig.COST_RENTABILITE_ID, data, layout, { responsive: true });
         this.rentabiliteLoading.set(false);
     }
 
@@ -347,7 +346,7 @@ export class SimulationCostGraphService implements SimulationStep {
             showlegend: false,
         };
 
-        Plotly.newPlot(graphServiceConfig.COST_TOP10_ID, data, layout);
+        Plotly.newPlot(graphServiceConfig.COST_TOP10_ID, data, layout, { responsive: true });
     }
 
     public setCostMode(mode: 'annuel' | 'construction') {

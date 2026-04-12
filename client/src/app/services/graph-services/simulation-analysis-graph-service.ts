@@ -134,6 +134,7 @@ export class SimulationAnalysisGraphService {
                 margin: { t: 20, b: 20, l: 20, r: 20 },
                 paper_bgcolor: 'white',
             },
+            { responsive: true }
         );
     }
 
@@ -178,6 +179,7 @@ export class SimulationAnalysisGraphService {
                 margin: { t: 20, b: 20, l: 20, r: 20 },
                 paper_bgcolor: 'white',
             },
+            { responsive: true }
         );
     }
 
@@ -273,6 +275,7 @@ export class SimulationAnalysisGraphService {
                 plot_bgcolor: 'white',
                 showlegend: false,
             },
+            { responsive: true }
         );
     }
 
@@ -331,6 +334,6 @@ export class SimulationAnalysisGraphService {
             margin: { t: 20, b: 80, l: 60, r: 20 },
             paper_bgcolor: 'white',
             plot_bgcolor: 'white',
-        });
+        }, { responsive: true });
     }
 }

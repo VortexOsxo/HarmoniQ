@@ -41,6 +41,7 @@ export class GraphService {
             },
         });
         (Plotly as any).setPlotConfig({ locale: 'fr' });
+
     }
 
     public generateProductionSingleInfraGraph(
@@ -83,12 +84,12 @@ export class GraphService {
             type === 'eolienneparc'
                 ? INFRA_COLORS['eolienneparc']
                 : type === 'solaire'
-                  ? INFRA_COLORS['solaire']
-                  : type === 'thermique'
-                    ? INFRA_COLORS['thermique']
-                    : type === 'nucleaire'
-                      ? INFRA_COLORS['nucleaire']
-                      : '#3498db';
+                    ? INFRA_COLORS['solaire']
+                    : type === 'thermique'
+                        ? INFRA_COLORS['thermique']
+                        : type === 'nucleaire'
+                            ? INFRA_COLORS['nucleaire']
+                            : '#3498db';
         const trace = this.getStandardTrace(
             'Production',
             xval,
@@ -107,9 +108,9 @@ export class GraphService {
             title:
                 typeof title === 'string'
                     ? {
-                          text: `<b>${title}</b>`,
-                          font: { size: 20, color: '#2c3e50' },
-                      }
+                        text: `<b>${title}</b>`,
+                        font: { size: 20, color: '#2c3e50' },
+                    }
                     : title,
             xaxis: {
                 title: null,
@@ -117,8 +118,8 @@ export class GraphService {
                     granularity === 'monthly'
                         ? '%b %Y'
                         : granularity === 'daily' || granularity === 'weekly'
-                          ? '%d %b %Y'
-                          : '%d %b %H:%M',
+                            ? '%d %b %Y'
+                            : '%d %b %H:%M',
                 gridcolor: '#eee',
                 rangeslider: { visible: false },
                 type: 'date',
