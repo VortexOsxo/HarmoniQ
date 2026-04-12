@@ -48,17 +48,14 @@
   font-weight: 600;
 }
 
-.capacity-note {
-  font-size: 0.72rem;
-  color: #6c757d;
-  line-height: 1.5;
-  background: #f8f9fa;
-  border-left: 3px solid #3498db;
-  padding: 8px 10px;
-  border-radius: 0 4px 4px 0;
-  margin-bottom: 8px;
+.info-tooltip-icon {
+  font-size: 0.8em;
+  margin-left: 3px;
+  color: #3498db;
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
-.capacity-note p {
-  margin: 0;
+.info-tooltip-icon:hover {
+  color: #217dbb;
 }

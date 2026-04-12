@@ -469,7 +469,7 @@ export class InfraDetailModal {
                     icon: 'fa-solid fa-sliders',
                     label: 'Type de régulation',
                     value: d.regulation,
-                    tooltip: 'Définit la capacité du barrage à stocker l\'eau pour réguler la production (ex: Fil de l\'eau, Annuel, Pluriannuel).',
+                    tooltip: 'Période sur laquelle un barrage stocke et libère l’eau pour contrôler la production d’électricité (Annuel, Pluriannuel).',
                 });
             }
         } else if (infra.type === 'eolienneparc') {

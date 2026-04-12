@@ -1,12 +1,13 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { InfrastruturesService } from '@app/services/infrastrutures-service';
 import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
 
 @Component({
   selector: 'app-capacity-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgbTooltipModule],
   templateUrl: './capacity-bar.html',
   styleUrl: './capacity-bar.css',
 })
@@ -15,7 +16,7 @@ export class CapacityBar {
   private infrasService = inject(InfrastruturesService);
   private simService = inject(SimulationTemporalGraphService);
 
-  showNote = false;
+
   guaranteedMW = computed(() => this.infrasService.guaranteedPowerMW());
   peakDemandMW = computed(() => this.simService.peakDemandMW());
 
