@@ -41,6 +41,15 @@ export class GraphService {
             },
         });
         (Plotly as any).setPlotConfig({ locale: 'fr' });
+
+        window.addEventListener('resize', () => {
+            Object.values(graphServiceConfig).forEach((id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    Plotly.Plots.resize(element);
+                }
+            });
+        });
     }
 
     public generateProductionSingleInfraGraph(
