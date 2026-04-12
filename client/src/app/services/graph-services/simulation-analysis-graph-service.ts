@@ -222,7 +222,7 @@ export class SimulationAnalysisGraphService {
             const totalCap = infras.reduce((s: number, i: any) => {
                 return (
                     s +
-                    (def.infraType === 'eolienneparc'
+                    Number(def.infraType === 'eolienneparc'
                         ? (i.capacite_total ?? 0)
                         : (i.puissance_nominal ?? 0))
                 );
@@ -232,10 +232,11 @@ export class SimulationAnalysisGraphService {
             const seg = PROD_SEGMENTS.find((s) => s.segKey === def.segKey);
 
             for (const infra of infras) {
-                const cap =
+                const cap = Number(
                     def.infraType === 'eolienneparc'
                         ? (infra.capacite_total ?? 0)
-                        : (infra.puissance_nominal ?? 0);
+                        : (infra.puissance_nominal ?? 0)
+                );
                 const estimatedMWh = typeTotalMWh * (cap / totalCap);
                 entries.push({ name: infra.nom, mwh: estimatedMWh, color: seg?.color ?? '#999' });
             }
@@ -268,7 +269,7 @@ export class SimulationAnalysisGraphService {
                     gridcolor: '#eee',
                     range: [0, Math.max(...top10.map((e) => e.mwh / 1e6), 0) * 1.3],
                 },
-                yaxis: { tickfont: { size: 12 }, automargin: true },
+                yaxis: { type: 'category', tickfont: { size: 12 }, automargin: true },
                 height: Math.max(250, top10.length * 40 + 80),
                 margin: { t: 20, b: 60, l: 20, r: 100 },
                 paper_bgcolor: 'white',

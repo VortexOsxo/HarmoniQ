@@ -148,8 +148,8 @@ export class CreateInfraModal {
         controls['materiau_panneau'] = [this.editData?.materiau_panneau || 'CS6X_300M', []];
       }
       if (!this.editData) {
-          if (controls['orientation_panneau']) controls['orientation_panneau'][0] = 180;
-          if (controls['angle_panneau']) controls['angle_panneau'][0] = 45;
+        if (controls['orientation_panneau']) controls['orientation_panneau'][0] = 180;
+        if (controls['angle_panneau']) controls['angle_panneau'][0] = 45;
       }
     }
     this.form = this.fb.group(controls);
@@ -219,9 +219,9 @@ export class CreateInfraModal {
     let maxLength: number | undefined;
 
     if (key === 'nom') {
-      maxLength = 50;
-      validators.push(Validators.maxLength(50));
-      errorMsgs['maxlength'] = 'Le nom ne peut pas dépasser 50 caractères.';
+      maxLength = 35;
+      validators.push(Validators.maxLength(35));
+      errorMsgs['maxlength'] = 'Le nom ne peut pas dépasser 35 caractères.';
       validators.push(this.duplicateNameValidator(typeKey));
       errorMsgs['duplicateName'] = 'Une infrastructure avec ce nom existe déjà.';
       return { validators, errorMsgs, nonNegative, warnIfZero, warningMsg, maxLength };

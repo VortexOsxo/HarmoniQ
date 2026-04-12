@@ -338,7 +338,7 @@ export class SimulationCostGraphService implements SimulationStep {
                 gridcolor: '#eee',
                 range: [0, maxCost * 1.3],
             },
-            yaxis: { tickfont: { size: 12 }, automargin: true },
+            yaxis: { type: 'category', tickfont: { size: 12 }, automargin: true },
             height: Math.max(250, top10.length * 40 + 80),
             margin: { t: 20, b: 60, l: 20, r: 90 },
             paper_bgcolor: 'white',
