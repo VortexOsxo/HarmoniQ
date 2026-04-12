@@ -6,6 +6,9 @@
       <i class="fa-solid fa-bolt"></i>
       Puissance garantie&nbsp;:
       <strong>{{ guaranteedMW() | number:'1.0-0' }} MW</strong>
+      <strong (click)="showNote = !showNote" style="cursor: pointer; color: #3498db;" title="En savoir plus">
+        <i class="fa-solid fa-circle-info" style="font-size: 0.8em; margin-left: 2px;"></i>
+      </strong>
     </span>
 
     <span class="label-demand">
@@ -21,11 +24,29 @@
   <div class="progress capacity-progress" title="{{ fillPercent() }}% de la demande couverte">
     <div class="progress-bar {{ barColorClass() }}" role="progressbar" [style.width.%]="fillPercent()"
       [attr.aria-valuenow]="fillPercent()" aria-valuemin="0" aria-valuemax="100">
-      @if (fillPercent() >= 20) {
+      @if (fillPercent() >= 15) {
       {{ fillPercent() }}%
       }
     </div>
+    @if (peakDemandMW() !== null && fillPercent() < 100) {
+    <div class="progress-bar bg-imports" role="progressbar" [style.width.%]="100 - fillPercent()"
+      aria-valuemin="0" aria-valuemax="100">
+      @if ((100 - fillPercent()) >= 10) {
+      Importations {{ 100 - fillPercent() }}%
+      }
+    </div>
+    }
   </div>
+
+  <!-- Note -->
+  @if (showNote) {
+  <div class="capacity-note">
+    <p>La puissance garantie correspond à la capacité de production disponible de manière fiable à un moment donné.
+      Elle n'inclut pas les importations d'énergie provenant d'autres réseaux ou régions. Ainsi, cette valeur reflète
+      uniquement les ressources internes du système et permet d'évaluer sa capacité réelle à répondre à la demande
+      sans dépendre de sources externes.</p>
+  </div>
+  }
 
   <!-- Coverage status badge -->
   @if (peakDemandMW() !== null) {

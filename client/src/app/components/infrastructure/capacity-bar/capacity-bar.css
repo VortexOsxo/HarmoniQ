@@ -40,3 +40,25 @@
   text-align: right;
   font-size: 0.72rem;
 }
+
+.bg-imports {
+  background-color: #f0a500 !important;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.capacity-note {
+  font-size: 0.72rem;
+  color: #6c757d;
+  line-height: 1.5;
+  background: #f8f9fa;
+  border-left: 3px solid #3498db;
+  padding: 8px 10px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 8px;
+}
+
+.capacity-note p {
+  margin: 0;
+}

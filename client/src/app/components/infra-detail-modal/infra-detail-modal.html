@@ -54,6 +54,12 @@
                 <h6 class="slider-card-title">
                     <i class="fa-solid fa-sliders"></i>
                     Ajustement de la puissance nominale
+                    <strong (click)="showHydroNote = !showHydroNote"
+                        style="cursor: pointer; color: var(--type-color);"
+                        title="En savoir plus">
+                        <i class="fa-solid fa-circle-info"
+                            style="font-size: 0.8em; margin-left: 2px;"></i>
+                    </strong>
                 </h6>
                 <div class="slider-labels">
                     <span class="slider-label-min">{{ pMin() }} MW</span>
@@ -67,6 +73,15 @@
                     (change)="onPuissanceSliderChange($event)" />
                 <p class="slider-hint" *ngIf="isNewDam()">
                     Plage : puissance nominale / nb turbines → +15 %
+                </p>
+                <p class="slider-note" *ngIf="showHydroNote">
+                    L'optimisation des infrastructures hydroélectriques, notamment des barrages et des turbines, permet
+                    d'augmenter l'efficacité de production d'énergie. En remplaçant ou en modernisant les turbines, en
+                    améliorant les systèmes de contrôle et en réduisant les pertes mécaniques et hydrauliques, il est
+                    possible d'obtenir un gain d'efficacité pouvant atteindre environ 10 %. Cela signifie qu'à débit
+                    d'eau égal, une plus grande quantité d'énergie est produite. Ces améliorations permettent ainsi
+                    d'exploiter plus efficacement les ressources hydrauliques tout en augmentant la performance globale
+                    du système énergétique.
                 </p>
             </div>
 
