@@ -15,6 +15,7 @@ export class CapacityBar {
   private infrasService = inject(InfrastruturesService);
   private simService = inject(SimulationTemporalGraphService);
 
+  showNote = false;
   guaranteedMW = computed(() => this.infrasService.guaranteedPowerMW());
   peakDemandMW = computed(() => this.simService.peakDemandMW());
 

@@ -33,6 +33,7 @@ export class InfraDetailModal {
     infra = computed(() => this.infraDetailService.selectedInfra());
 
     // Hydro power slider
+    showHydroNote: boolean = false;
     sliderValue = signal<number>(0);
     private basePuissance = signal<number>(0);
 
@@ -131,6 +132,7 @@ export class InfraDetailModal {
                     this.protectedAreaImpact = null;
                     this.loadingProtectionStatus = false;
                     this.closeExplanation();
+                    this.showHydroNote = false;
 
                     if (currentInfra.type === 'hydro' && currentInfra.data.puissance_nominal) {
                         const p = parseFloat(currentInfra.data.puissance_nominal);
