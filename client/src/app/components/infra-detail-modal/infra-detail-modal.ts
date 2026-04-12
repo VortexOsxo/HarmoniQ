@@ -423,13 +423,15 @@ export class InfraDetailModal {
                 tooltip:
                     'Mégawatt (MW) : Unité de mesure de puissance électrique équivalant à un million de watts. Elle représente la capacité maximale de production.',
             });
-            fields.push({
-                icon: 'fa-solid fa-database',
-                label: 'Volume du réservoir',
-                value: this.formatVolume(d.volume_reservoir),
-                tooltip:
-                    "Volume d'eau emmagasiné dans le réservoir. Référé en km³, Mm³ (Millions de m³), ou Gm³.",
-            });
+            if (d.type_barrage !== "Fil de l'eau") {
+                fields.push({
+                    icon: 'fa-solid fa-database',
+                    label: 'Volume du réservoir',
+                    value: this.formatVolume(d.volume_reservoir),
+                    tooltip:
+                        "Volume d'eau emmagasiné dans le réservoir. Référé en km³, Mm³ (Millions de m³), ou Gm³.",
+                });
+            }
             if (d.hauteur_chute) {
                 fields.push({
                     icon: 'fa-solid fa-arrow-down-long',
@@ -458,6 +460,14 @@ export class InfraDetailModal {
                     label: 'Fréquence de maintenance',
                     value: d.maintenance,
                     tooltip: 'Fréquence à laquelle les équipements du barrage (turbines, vannes, etc.) sont inspectés et entretenus.',
+                });
+            }
+            if (d.regulation && d.type_barrage !== "Fil de l'eau") {
+                fields.push({
+                    icon: 'fa-solid fa-sliders',
+                    label: 'Type de régulation',
+                    value: d.regulation,
+                    tooltip: 'Définit la capacité du barrage à stocker l\'eau pour réguler la production (ex: Fil de l\'eau, Annuel, Pluriannuel).',
                 });
             }
         } else if (infra.type === 'eolienneparc') {

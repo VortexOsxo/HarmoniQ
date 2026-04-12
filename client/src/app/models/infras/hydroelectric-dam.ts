@@ -19,6 +19,7 @@ export class HydroelectricDam extends Infra<HydroelectricDam> {
     annee_commission!: number | null
     materiau_conduite!: string | null
     maintenance!: string | null
+    regulation!: string | null
 }
 
 export class HydroelectricDamFactory extends InfraFactory<HydroelectricDam> {
@@ -42,7 +43,8 @@ export class HydroelectricDamFactory extends InfraFactory<HydroelectricDam> {
             id_HQ: infra.id_HQ,
             annee_commission: infra.annee_commission,
             materiau_conduite: infra.materiau_conduite,
-            maintenance: infra.maintenance
+            maintenance: infra.maintenance,
+            regulation: infra.regulation
         };
     }
 
@@ -63,7 +65,8 @@ export class HydroelectricDamFactory extends InfraFactory<HydroelectricDam> {
             id_HQ: json.id_HQ,
             annee_commission: json.annee_commission,
             materiau_conduite: json.materiau_conduite,
-            maintenance: json.maintenance
+            maintenance: json.maintenance,
+            regulation: json.regulation
         });
     }
 
@@ -84,7 +87,8 @@ export class HydroelectricDamFactory extends InfraFactory<HydroelectricDam> {
             id_HQ: 0,
             annee_commission: null,
             materiau_conduite: null,
-            maintenance: null
+            maintenance: null,
+            regulation: null
         });
     }
 }

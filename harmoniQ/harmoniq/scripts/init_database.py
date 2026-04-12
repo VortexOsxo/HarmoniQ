@@ -176,6 +176,7 @@ def fill_hydro():
             volume_reservoir=row["Volume_reservoir"],
             id_HQ=row["id_HQ"],
             maintenance=row.get("Maintenance"),
+            regulation=row.get("Regulation"),
         )
         count += 1
         CRUD.create_hydro(db, db_hydro)

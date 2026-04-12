@@ -406,6 +406,7 @@ class HydroBase(BaseModel):
     annee_commission: Optional[int] = None
     materiau_conduite: Optional[str] = None
     maintenance: Optional[str] = None
+    regulation: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -429,6 +430,7 @@ class Hydro(SQLBase):
     annee_commission = Column(Integer, nullable=True)
     materiau_conduite = Column(String, nullable=True)
     maintenance = Column(String, nullable=True)
+    regulation = Column(String, nullable=True)
 
 
 #-----#-----#-----#-----# Thermique Base #-----#-----#-----#-----#
