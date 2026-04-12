@@ -211,7 +211,17 @@ export class MapService {
     const self = this;
     map.getContainer().addEventListener("drop", function (e: any) {
       e.preventDefault();
-      const [className, type] = e.dataTransfer.getData("text/plain").split(",");
+      
+      const dragData = e.dataTransfer.getData("text/plain");
+      if (!dragData || !dragData.includes(',')) {
+        return; // Ignore non-infrastructure drags (e.g. text selection, files)
+      }
+
+      const [className, type] = dragData.split(",");
+
+      if (!type || !types.includes(type)) {
+        return; // Ensure only valid infrastructure types are accepted
+      }
 
       const mapPos = map.getContainer().getBoundingClientRect();
       const x = e.clientX - mapPos.left;

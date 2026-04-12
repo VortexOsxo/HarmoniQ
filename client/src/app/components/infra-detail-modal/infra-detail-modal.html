@@ -12,11 +12,13 @@
         </div>
         <div class="detail-header-actions">
             <!-- Edit Button (non-hydro only) -->
-            <button class="detail-edit-btn" *ngIf="infra()?.data?.isUserCreated && infra()?.type !== 'hydro'" (click)="editInfra()" title="Modifier l'infrastructure">
+            <button class="detail-edit-btn" *ngIf="infra()?.data?.isUserCreated && infra()?.type !== 'hydro'"
+                (click)="editInfra()" title="Modifier l'infrastructure">
                 <i class="fa-solid fa-pen"></i>
             </button>
             <!-- Delete Button -->
-            <button class="detail-delete-btn" *ngIf="infra()?.data?.isUserCreated" (click)="deleteInfra()" title="Supprimer l'infrastructure">
+            <button class="detail-delete-btn" *ngIf="infra()?.data?.isUserCreated" (click)="deleteInfra()"
+                title="Supprimer l'infrastructure">
                 <i class="fa-solid fa-trash"></i>
             </button>
             <button class="detail-close-btn" (click)="close()" title="Fermer">
@@ -35,8 +37,7 @@
                 <span class="info-field-text" *ngIf="!field.isVulgarisation">
                     {{ field.label }} :
                     <strong *ngIf="field.tooltip" (click)="showExplanationFromTooltip(field.tooltip)"
-                        style="cursor: pointer; color: var(--type-color);"
-                        title="Cliquez pour plus d'informations">
+                        style="cursor: pointer; color: var(--type-color);" title="Cliquez pour plus d'informations">
                         {{ field.value }} <i class="fa-solid fa-circle-info"
                             style="font-size: 0.8em; margin-left: 2px;"></i>
                     </strong>
@@ -54,11 +55,9 @@
                 <h6 class="slider-card-title">
                     <i class="fa-solid fa-sliders"></i>
                     Ajustement de la puissance nominale
-                    <strong (click)="showHydroNote = !showHydroNote"
-                        style="cursor: pointer; color: var(--type-color);"
+                    <strong (click)="showHydroNote = !showHydroNote" style="cursor: pointer; color: var(--type-color);"
                         title="En savoir plus">
-                        <i class="fa-solid fa-circle-info"
-                            style="font-size: 0.8em; margin-left: 2px;"></i>
+                        <i class="fa-solid fa-circle-info" style="font-size: 0.8em; margin-left: 2px;"></i>
                     </strong>
                 </h6>
                 <div class="slider-labels">
@@ -193,10 +192,6 @@
                     </ng-template>
                 </div>
             </div>
-        </div>
-        <div class="cv-footer">
-            <p class="disclaimer-text-global">* Les explications et données sont à titre indicatif et peuvent ne pas
-                être exactes.</p>
         </div>
     </div>
 </div>
