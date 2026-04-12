@@ -4,8 +4,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 SERVER_LIMIT = 500
-IP_LIMIT = 50
-LIMIT_WINDOW = 60
+IP_LIMIT = 60
+LIMIT_WINDOW = 30
 
 GLOBAL_HISTORY = deque()
 IP_HISTORY = defaultdict(deque)
