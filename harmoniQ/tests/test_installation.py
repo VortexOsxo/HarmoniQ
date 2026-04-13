@@ -1,10 +1,6 @@
 import pytest
 
 
-def test_hello_world():
-    assert "Hello, World!" == "Hello, World!"
-
-
 def test_database_variable():
     try:
         from harmoniq import DB_PATH

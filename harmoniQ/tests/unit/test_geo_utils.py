@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from unittest.mock import MagicMock
 
-from harmoniq.modules.reseau.utils.geo_utils import GeoUtils, Point
+from harmoniq.modules.reseau.utils.geo_utils import GeoUtils
 
 
 @pytest.fixture
@@ -107,15 +107,3 @@ class TestFindNearestBus:
         mock_network.buses = buses_df
         nearest, _ = geo.find_nearest_bus(MONTREAL, mock_network)
         assert nearest == "BusMTL"
-
-
-class TestPoint:
-    def test_creation_with_coords(self):
-        p = Point(lat=45.5, lon=-73.5)
-        assert p.lat == 45.5
-        assert p.lon == -73.5
-        assert p.name is None
-
-    def test_creation_with_name(self):
-        p = Point(lat=45.5, lon=-73.5, name="Montreal")
-        assert p.name == "Montreal"

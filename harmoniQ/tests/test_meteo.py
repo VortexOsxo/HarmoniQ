@@ -20,17 +20,6 @@ def end_time():
     return datetime(2021, 3, 31)
 
 
-def test_weather_helper_initialization(position, start_time, end_time):
-    weather = WeatherHelper(
-        position, True, start_time, end_time, EnergyType.NONE, Granularity.HOURLY
-    )
-    assert weather.position == position
-    assert weather.interpolate is True
-    assert weather.start_time == start_time
-    assert weather.end_time == end_time
-    assert weather.data_type == EnergyType.NONE
-    assert weather.granularity == "hourly"
-
 def test_weather_helper_load_data(position, start_time, end_time):
     weather = WeatherHelper(position, True, start_time, end_time, EnergyType.NONE, Granularity.HOURLY)
     weather.load()

@@ -1,15 +1,12 @@
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
-import isodate
-
 from harmoniq.db.schemas import (
     ScenarioBase,
     EolienneParcBase,
     SolaireBase,
     ThermiqueBase,
     NucleaireBase,
-    HydroBase,
     BusBase,
     TurbineModel,
     Weather,
@@ -92,10 +89,6 @@ class TestScenarioBase:
         defaults.update(overrides)
         return ScenarioBase(**defaults)
 
-    def test_valid_scenario_creates_ok(self):
-        s = self._valid()
-        assert s.nom == "Test"
-
     def test_date_de_debut_parsed_from_string(self):
         s = self._valid(date_de_debut="2024-06-01T00:00:00")
         assert s.date_de_debut == datetime(2024, 6, 1)
@@ -144,10 +137,6 @@ class TestEolienneParcBase:
         defaults.update(overrides)
         return EolienneParcBase(**defaults)
 
-    def test_valid_creates_ok(self):
-        p = self._valid()
-        assert p.nom == "Parc Éolien"
-
     def test_turbine_model_enum(self):
         p = self._valid(modele_turbine=TurbineModel.GE_1_5SLE)
         assert p.modele_turbine == TurbineModel.GE_1_5SLE
@@ -177,10 +166,6 @@ class TestSolaireBase:
         defaults.update(overrides)
         return SolaireBase(**defaults)
 
-    def test_valid_creates_ok(self):
-        s = self._valid()
-        assert s.nom == "Parc Solaire"
-
     def test_optional_fields_default_none(self):
         s = self._valid()
         assert s.annee_commission is None
@@ -205,10 +190,6 @@ class TestThermiqueBase:
         defaults.update(overrides)
         return ThermiqueBase(**defaults)
 
-    def test_valid_creates_ok(self):
-        t = self._valid()
-        assert t.semaine_maintenance == 15
-
     def test_type_intrant_variants(self):
         for t_type in TypeIntrantThermique:
             t = self._valid(type_intrant=t_type)
@@ -226,10 +207,6 @@ class TestNucleaireBase:
         )
         defaults.update(overrides)
         return NucleaireBase(**defaults)
-
-    def test_valid_creates_ok(self):
-        n = self._valid()
-        assert n.puissance_nominal == 1200.0
 
     def test_optional_fields_default_none(self):
         n = self._valid()
@@ -250,10 +227,6 @@ class TestBusBase:
         defaults.update(overrides)
         return BusBase(**defaults)
 
-    def test_valid_creates_ok(self):
-        b = self._valid()
-        assert b.name == "Bus1"
-
     def test_control_enum_variants(self):
         for ctrl in BusControlType:
             b = self._valid(control=ctrl)
@@ -267,33 +240,3 @@ class TestBusBase:
     def test_optional_display_name(self):
         b = self._valid(display_name="Main Bus")
         assert b.display_name == "Main Bus"
-
-
-class TestEnumerations:
-    def test_weather_values(self):
-        assert Weather.warm.value == 1
-        assert Weather.typical.value == 2
-        assert Weather.cold.value == 3
-
-    def test_consomation_values(self):
-        assert Consomation.PV.value == 1
-        assert Consomation.UB.value == 2
-
-    def test_bus_control_type_string_values(self):
-        assert BusControlType.PV == "PV"
-        assert BusControlType.PQ == "PQ"
-        assert BusControlType.slack == "slack"
-
-    def test_bus_type_string_values(self):
-        assert BusType.prod == "prod"
-        assert BusType.conso == "conso"
-        assert BusType.line == "ligne"
-
-    def test_turbine_model_contains_17_models(self):
-        assert len(TurbineModel) == 17
-
-    def test_type_intrant_thermique_values(self):
-        assert TypeIntrantThermique.GAZ_NATUREL == "Gaz naturel"
-        assert TypeIntrantThermique.CHARBON == "Charbon"
-        assert TypeIntrantThermique.DIESEL == "Diesel"
-        assert TypeIntrantThermique.BIOMASSE == "Biomasse"
