@@ -72,7 +72,7 @@ export class ScenariosService {
         "date_de_fin": "2050-12-31T00:00:00",
         "pas_de_temps": "PT1H",
         "weather": Weather.Typical,
-        "consomation": Consumption.Conservative,
+        "consomation": Consumption.Normal,
       },
     ]
   }
