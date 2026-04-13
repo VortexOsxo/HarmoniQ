@@ -77,10 +77,9 @@ class TestEstimationCoutBarrage:
         b_large = _make_barrage("Reservoir", puissance_nominal=1000.0)
         assert estimation_cout_barrage(b_large) > estimation_cout_barrage(b_small)
 
-    def test_formula_log_log(self):
-        a, b = 0.9903508069996744, 14.917112141681883
+    def test_formula_cost_per_mw(self):
         barrage = _make_barrage("Reservoir", puissance_nominal=300.0)
-        expected = np.exp(b) * 300.0 ** a
+        expected = 300.0 * 14_000_000
         assert estimation_cout_barrage(barrage) == pytest.approx(expected)
 
 

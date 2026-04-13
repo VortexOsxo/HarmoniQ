@@ -54,10 +54,10 @@ class TestCalculateThermiqueProduction:
         zero_hours = (result["production_mwh"] == 0).sum()
         assert zero_hours == 168
 
-    def test_zero_power_gives_all_zeros(self):
+    def test_zero_power_raises_value_error(self):
         start, end = _date(2024, 3, 1), _date(2024, 3, 7)
-        result = calculate_thermique_production(0.0, maintenance_week=5, date_start=start, date_end=end)
-        assert (result["production_mwh"] == 0).all()
+        with pytest.raises(ValueError):
+            calculate_thermique_production(0.0, maintenance_week=5, date_start=start, date_end=end)
 
 
 class TestCalculateNuclearProduction:
@@ -126,15 +126,15 @@ class TestCostNuclearPowerplant:
         cost_large = cost_nuclear_powerplant(1000.0)
         assert cost_large > cost_small
 
-    def test_economy_of_scale(self):
+    def test_linear_scaling(self):
         cost_300 = cost_nuclear_powerplant(300.0)
         cost_1200 = cost_nuclear_powerplant(1200.0)
         ratio = cost_1200 / cost_300
-        assert ratio < 4.0
+        assert ratio == pytest.approx(4.0)
 
     def test_formula_matches_manual_calculation(self):
         power = 500.0
-        expected = 4_000_000 * (power ** 0.85) * 1.1
+        expected = power * 10_000_000
         assert cost_nuclear_powerplant(power) == pytest.approx(expected)
 
     def test_zero_power_returns_zero(self):

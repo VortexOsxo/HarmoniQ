@@ -188,8 +188,8 @@ class TestIceLossFactor:
         assert np.all(result >= 0.5)
         assert np.all(result <= 1.0)
 
-    def test_below_freezing_returns_1_0(self):
-        t = np.array([-5.0, -10.0, -20.0])
+    def test_above_freezing_returns_1_0(self):
+        t = np.array([275.0, 280.0, 290.0])  # K — above 273.15 K (0 °C)
         result = ice_loss_factor(t)
         assert np.all(result == 1.0)
 

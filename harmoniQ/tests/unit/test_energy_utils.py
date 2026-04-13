@@ -47,7 +47,7 @@ class TestEstimerProductionAnnuelle:
         ("eolien", 0.35),
         ("solaire", 0.18),
         ("thermique", 0.85),
-        ("nucléaire", 0.90),
+        ("nucleaire", 0.90),
     ])
     def test_capacity_factor_applied(self, carrier, factor):
         centrale = MagicMock()
