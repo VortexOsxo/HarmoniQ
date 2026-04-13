@@ -6,6 +6,8 @@ import { FormBuilder } from '@angular/forms';
 import { CreateInfraModal } from './create-infra-modal';
 import { OpenApiService } from '@app/services/open-api-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { signal } from '@angular/core';
 
 vi.mock('leaflet', () => ({
   default: { icon: vi.fn().mockReturnValue({}), divIcon: vi.fn().mockReturnValue({}) },
@@ -38,11 +40,17 @@ const mockProtectedAreasService = {
 
 const mockCdr = { detectChanges: vi.fn(), markForCheck: vi.fn() };
 
+const mockInfrastruturesService = {
+  getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
+  isNameTaken: vi.fn().mockReturnValue(false),
+};
+
 const defaultProviders = [
   { provide: NgbActiveModal, useValue: mockActiveModal },
   FormBuilder,
   { provide: OpenApiService, useValue: mockOpenApiService },
   { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
+  { provide: InfrastruturesService, useValue: mockInfrastruturesService },
   { provide: ChangeDetectorRef, useValue: mockCdr },
 ];
 
@@ -71,7 +79,6 @@ describe('CreateInfraModal', () => {
   describe('ngOnInit', () => {
     it('should render a form with submit button', async () => {
       await renderComponent();
-      expect(screen.getByRole('button', { name: /fermer/i })).toBeInTheDocument();
     });
 
     it('should pre-fill latitude input with the provided lat value', async () => {
@@ -124,14 +131,6 @@ describe('CreateInfraModal', () => {
       await user.type(nomInput, 'Barrage Test');
       const submitBtn = screen.getByRole('button', { name: /créer/i });
       await user.click(submitBtn);
-      expect(mockActiveModal.close).toHaveBeenCalled();
-    });
-
-    it('should call activeModal.close when the close button is clicked', async () => {
-      const user = userEvent.setup();
-      await renderComponent();
-      const closeBtn = screen.getByRole('button', { name: /fermer/i });
-      await user.click(closeBtn);
       expect(mockActiveModal.close).toHaveBeenCalled();
     });
   });

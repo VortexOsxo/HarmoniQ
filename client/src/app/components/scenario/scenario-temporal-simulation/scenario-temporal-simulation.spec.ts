@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/angular';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { render } from '@testing-library/angular';
+import { NO_ERRORS_SCHEMA, signal, WritableSignal } from '@angular/core';
 import { ScenarioTemporalSimulation } from './scenario-temporal-simulation';
 import { SimulationTemporalGraphService } from '@app/services/graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
@@ -14,6 +14,15 @@ vi.mock('plotly.js-dist-min', () => ({
   newPlot: vi.fn(),
   purge: vi.fn(),
   downloadImage: vi.fn(),
+  register: vi.fn(),
+  setPlotConfig: vi.fn(),
+  default: {
+    newPlot: vi.fn(),
+    purge: vi.fn(),
+    downloadImage: vi.fn(),
+    register: vi.fn(),
+    setPlotConfig: vi.fn(),
+  },
 }));
 
 const MOCK_SIMULATION_RESULT = {
@@ -21,22 +30,22 @@ const MOCK_SIMULATION_RESULT = {
 };
 
 const MOCK_DEMANDE_RESULT = {
-  time: ['2035-01-01T00:00:00'],
-  residentiel: [300],
+  total_electricity: { '2035-01-01T00:00:00': 300000 },
 };
 
 const mockGraphService = {
   cachedSimulationResult: null as any,
-  cachedDemandeResult: null as any,
+  cachedDemandeResult: signal<any>(null) as WritableSignal<any>,
   handleData: vi.fn(),
-  getStepName: vi.fn().mockReturnValue('Simulation temporelle'),
+  renderDemandPreview: vi.fn(),
+  getStepName: vi.fn().mockReturnValue('Simulation du reseau complet'),
   getProductionNodes: vi.fn().mockReturnValue([]),
 };
 
 const mockStepService = {
   steps: signal([] as any[]),
   currentStepIndex: signal(-1),
-  currentStepName: signal('Initialisation'),
+  currentStepName: vi.fn().mockReturnValue('Initialisation'),
   runSteps: vi.fn(),
 };
 
@@ -53,7 +62,7 @@ async function renderComponent() {
 describe('ScenarioTemporalSimulation', () => {
   beforeEach(() => {
     mockGraphService.cachedSimulationResult = null;
-    mockGraphService.cachedDemandeResult = null;
+    mockGraphService.cachedDemandeResult.set(null);
     mockStepService.steps.set([]);
   });
 
@@ -69,36 +78,10 @@ describe('ScenarioTemporalSimulation', () => {
     expect(document.getElementById('temporal-simulation-id')).toBeTruthy();
   });
 
-  describe('cachedSimulationResult', () => {
-    it('should return null when no simulation has run', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.cachedSimulationResult).toBeNull();
-    });
-
-    it('should delegate to graphService.cachedSimulationResult', async () => {
-      mockGraphService.cachedSimulationResult = MOCK_SIMULATION_RESULT;
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.cachedSimulationResult).toEqual(MOCK_SIMULATION_RESULT);
-    });
-  });
-
-  describe('cachedDemandeResult', () => {
-    it('should return null when no simulation has run', async () => {
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.cachedDemandeResult).toBeNull();
-    });
-
-    it('should delegate to graphService.cachedDemandeResult', async () => {
-      mockGraphService.cachedDemandeResult = MOCK_DEMANDE_RESULT;
-      const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.cachedDemandeResult).toEqual(MOCK_DEMANDE_RESULT);
-    });
-  });
-
   describe('onGranularityChange', () => {
     it('should call graphService.handleData when both cached results are present', async () => {
       mockGraphService.cachedSimulationResult = MOCK_SIMULATION_RESULT;
-      mockGraphService.cachedDemandeResult = MOCK_DEMANDE_RESULT;
+      mockGraphService.cachedDemandeResult.set(MOCK_DEMANDE_RESULT);
       const { fixture } = await renderComponent();
       fixture.componentInstance.onGranularityChange('monthly');
       expect(mockGraphService.handleData).toHaveBeenCalledWith(
@@ -108,50 +91,61 @@ describe('ScenarioTemporalSimulation', () => {
       );
     });
 
-    it('should not call graphService.handleData when cachedSimulationResult is null', async () => {
+    it('should call renderDemandPreview when only demand data is available', async () => {
       mockGraphService.cachedSimulationResult = null;
-      mockGraphService.cachedDemandeResult = MOCK_DEMANDE_RESULT;
+      mockGraphService.cachedDemandeResult.set(MOCK_DEMANDE_RESULT);
       const { fixture } = await renderComponent();
       fixture.componentInstance.onGranularityChange('daily');
-      expect(mockGraphService.handleData).not.toHaveBeenCalled();
+      expect(mockGraphService.renderDemandPreview).toHaveBeenCalledWith(MOCK_DEMANDE_RESULT, 'daily');
     });
 
-    it('should not call graphService.handleData when cachedDemandeResult is null', async () => {
-      mockGraphService.cachedSimulationResult = MOCK_SIMULATION_RESULT;
-      mockGraphService.cachedDemandeResult = null;
+    it('should not call handleData or renderDemandPreview when no data is available', async () => {
+      mockGraphService.cachedSimulationResult = null;
+      mockGraphService.cachedDemandeResult.set(null);
       const { fixture } = await renderComponent();
       fixture.componentInstance.onGranularityChange('weekly');
       expect(mockGraphService.handleData).not.toHaveBeenCalled();
+      expect(mockGraphService.renderDemandPreview).not.toHaveBeenCalled();
+    });
+
+    it('should store the selected granularity', async () => {
+      const { fixture } = await renderComponent();
+      fixture.componentInstance.onGranularityChange('monthly');
+      expect(fixture.componentInstance.selectedGranularity).toBe('monthly');
     });
   });
 
-  describe('hasData', () => {
+  describe('hasDemandData', () => {
     it('should return false when no steps are present', async () => {
       mockStepService.steps.set([]);
       const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.hasData).toBe(false);
+      expect(fixture.componentInstance.hasDemandData).toBe(false);
     });
 
-    it('should return false when the matching step is not completed', async () => {
+    it('should return false when the simulation step is pending', async () => {
       mockStepService.steps.set([
-        { name: 'Simulation temporelle', status: 'loading', getStepName: () => 'Simulation temporelle', generate: vi.fn() },
+        { name: 'Simulation du reseau complet', status: 'pending' },
       ]);
       const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.hasData).toBe(false);
+      expect(fixture.componentInstance.hasDemandData).toBe(false);
     });
 
-    it('should return true when the matching step is completed', async () => {
+    it('should return true when the simulation step is loading (demand arrived)', async () => {
+      mockGraphService.cachedDemandeResult.set(MOCK_DEMANDE_RESULT);
       mockStepService.steps.set([
-        { name: 'Simulation temporelle', status: 'completed', getStepName: () => 'Simulation temporelle', generate: vi.fn() },
+        { name: 'Simulation du reseau complet', status: 'loading' },
       ]);
       const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.hasData).toBe(true);
+      expect(fixture.componentInstance.hasDemandData).toBe(true);
     });
 
-    it('should not render the granularity selector when hasData is false', async () => {
-      mockStepService.steps.set([]);
-      await renderComponent();
-      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    it('should return true when the simulation step is completed', async () => {
+      mockGraphService.cachedDemandeResult.set(MOCK_DEMANDE_RESULT);
+      mockStepService.steps.set([
+        { name: 'Simulation du reseau complet', status: 'completed' },
+      ]);
+      const { fixture } = await renderComponent();
+      expect(fixture.componentInstance.hasDemandData).toBe(true);
     });
   });
 });

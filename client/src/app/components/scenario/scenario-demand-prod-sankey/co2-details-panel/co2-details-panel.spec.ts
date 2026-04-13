@@ -4,7 +4,7 @@ import { Co2DetailsData, Co2SourceDetail } from '../sankey-data.types';
 
 const MOCK_SOURCE_HIGH: Co2SourceDetail = {
     name: 'Thermique',
-    color: '#e25c5c',
+    color: '#698c77',
     productionMW: 200,
     co2FactorKgMWh: 820,
     totalCo2Tph: 164,
@@ -13,7 +13,7 @@ const MOCK_SOURCE_HIGH: Co2SourceDetail = {
 
 const MOCK_SOURCE_LOW: Co2SourceDetail = {
     name: 'Éolien',
-    color: '#6abbc4',
+    color: '#70b2c1',
     productionMW: 500,
     co2FactorKgMWh: 12,
     totalCo2Tph: 6,

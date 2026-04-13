@@ -1,0 +1,6 @@
+@if (simulationCostGraphService.isLoading()) {
+    <div class="chart-loading">
+        <i class="fa-solid fa-circle-notch fa-spin chart-loading-icon"></i>
+    </div>
+}
+<div [id]="config.COST_SIMULATION_ID" class="w-100"></div>

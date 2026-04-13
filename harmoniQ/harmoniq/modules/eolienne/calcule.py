@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing import Optional
 
 from harmoniq.db.schemas import EolienneParc, weather_schema
 from harmoniq.modules.eolienne.turbine_data import turbine_models
@@ -33,7 +34,7 @@ def piecewise_power_curve(
       - P = P_nominal between rated and cut_out
     v : wind speed (array or float)
     cut_in_speed, rated_speed, cut_out_speed : key speeds (m/s)
-    rated_power : nominal power (W)
+    rated_power : nominal power (kW)
     power_shape_exponent : exponent for the rise (3.0 by default)
     Returns an array/float P(v) (W).
     """
@@ -56,6 +57,57 @@ def piecewise_power_curve(
     power[mask_rated] = rated_power
 
     return power
+
+
+def infer_rated_speed(
+    turbine_data: dict,
+    cut_in_speed: float,
+    cut_out_speed: float,
+) -> float:
+    """
+    Infer a robust rated speed (m/s) for piecewise fallback mode.
+
+    Priority:
+    1) explicit ``rated_wind_speed`` from turbine metadata
+    2) conservative default value (12 m/s) clipped inside (cut_in, cut_out)
+    """
+    explicit = turbine_data.get("rated_wind_speed")
+    if explicit is not None:
+        rated = float(explicit)
+        if cut_in_speed < rated < cut_out_speed:
+            return rated
+
+    default_rated_speed = 12.0
+    return float(np.clip(default_rated_speed, cut_in_speed + 0.5, cut_out_speed - 0.5))
+
+
+def power_from_real_curve(
+    v_ms: np.ndarray,
+    turbine_data: dict,
+    cut_in_speed: float,
+    cut_out_speed: float,
+) -> Optional[np.ndarray]:
+    """
+    Compute turbine power from manufacturer power curve if available.
+
+    Returns power in kW, or None when no valid power curve is available.
+    """
+    curve = turbine_data.get("power_curve")
+    if not isinstance(curve, pd.DataFrame):
+        return None
+    if not {"wind_speed", "power"}.issubset(curve.columns):
+        return None
+
+    curve = curve.dropna(subset=["wind_speed", "power"]).copy()
+    if curve.empty:
+        return None
+    curve = curve.sort_values("wind_speed")
+
+    ws = curve["wind_speed"].astype(float).to_numpy()
+    pw = curve["power"].astype(float).to_numpy() / 1000.0  # source curve is in W
+    power_kw = np.interp(v_ms, ws, pw, left=0.0, right=0.0)
+    power_kw[(v_ms < cut_in_speed) | (v_ms > cut_out_speed)] = 0.0
+    return power_kw
 
 
 def apply_directional_losses(direction_series):
@@ -82,14 +134,28 @@ def apply_wake_losses(direction_series):
     return np.where(condition, 0.9, 1.0)
 
 
-def ice_loss_factor(t: np.ndarray) -> np.ndarray:
+def ice_loss_factor(temperature_k: np.ndarray, stochastic: bool = True) -> np.ndarray:
     """
-    Ice loss factor if T < 273 K,
-    generate a random value [0.5, 1.0], otherwise 1.0.
+    Compute icing loss factors from temperatures in Kelvin using deterministic tiers.
+
+    Tiers (simple operational rule):
+    - T < 263.15 K  (-10 C): strong icing losses, factor = 0.60
+    - 263.15 K <= T < 273.15 K (-10 C to 0 C): moderate icing losses, factor = 0.80
+    - T >= 273.15 K (>= 0 C): no icing loss, factor = 1.00
+
+    ``stochastic`` is kept for backward compatibility but is intentionally ignored.
     """
-    # TODO @Zineb: PQ on génère un random ici ?
-    t = t + 273.15  # Convert to Kelvin
-    return np.where(t < 273, 1.0, np.random.uniform(0.5, 1.0, size=t.shape))
+    t_k = np.asarray(temperature_k, dtype=float)
+    losses = np.ones_like(t_k, dtype=float)
+    valid = np.isfinite(t_k)
+    if not np.any(valid):
+        return losses
+
+    very_cold = valid & (t_k < 263.15)
+    cold = valid & (t_k >= 263.15) & (t_k < 273.15)
+    losses[very_cold] = 0.60
+    losses[cold] = 0.80
+    return losses
 
 
 def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
@@ -101,32 +167,62 @@ def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
     # Set tempature to Kelvin
     meteo["temperature"] = meteo["temperature_C"] + 273.15
 
-    # Adjust wind speed to hub height
-    # TODO: @Zineb: PQ on utilise 10m comme référence ?
-    # TODO: @Zineb: Est-ce que c'est suppose être en m/s ?
+    # Adjust wind speed to hub height.
+    # The turbine cut-in/cut-out values are in m/s, so convert input wind speed from
+    # km/h to m/s before using the power curve.
+    vitesse_vent_ms = meteo["vitesse_vent_kmh"].values / 3.6
+    # Reference wind height for ERA5/Open-Meteo
+    v_ref_height_m = 100.0
+    
+    # Determine roughness length (z0)
+    # Onshore default is 0.03m (grass/brush).
+    # Offshore default is 0.0002m (calm sea).
+    roughness_z0 = float(getattr(parc, "surface_roughness_z0_m", 0.0))
+    if roughness_z0 <= 0:
+        # If no explicit roughness is set, choose based on offshore flag
+        is_offshore = getattr(parc, "is_offshore", False)
+        roughness_z0 = 0.0002 if is_offshore else 0.03
+
+    hub_height = float(getattr(parc, "hauteur_moyenne"))
     vitesse_vents = adjust_wind_speed(
-        meteo["vitesse_vent_kmh"].values, 10, parc.hauteur_moyenne
+        vitesse_vent_ms,
+        v_ref_height_m,
+        hub_height,
+        z0=roughness_z0,
     )
+
+
+    cut_in = float(turbine_data["cut_in_wind_speed"])
+    cut_out = float(turbine_data["cut_out_wind_speed"])
+
+    # 1) Prefer real manufacturer power curve when available.
+    # 2) Otherwise fallback to piecewise model with improved rated-speed inference.
+    power_output_direction = power_from_real_curve(
+        v_ms=vitesse_vents,
+        turbine_data=turbine_data,
+        cut_in_speed=cut_in,
+        cut_out_speed=cut_out,
+    )
+    if power_output_direction is None:
+        rated_speed = infer_rated_speed(turbine_data, cut_in_speed=cut_in, cut_out_speed=cut_out)
+        power_output_direction = piecewise_power_curve(
+            vitesse_vents,
+            cut_in,
+            rated_speed,
+            cut_out,
+            parc.puissance_nominal,
+        )
 
     # Apply directional losses
     directional_losses = apply_directional_losses(meteo["direction_vent"])
-    power_output_direction = piecewise_power_curve(
-        vitesse_vents,
-        turbine_data["cut_in_wind_speed"],
-        (turbine_data["cut_in_wind_speed"] + turbine_data["cut_out_wind_speed"])
-        / 2,  # rated speed (TODO find real rated speed)
-        turbine_data["cut_out_wind_speed"],
-        parc.puissance_nominal,
-    )
-
-    # power_with_output_direction = power_output_direction * directional_losses # On ne considère pas la direction pour le moment
+    power_with_directional_losses = power_output_direction * directional_losses
 
     # Apply wake losses
     wake_losses = apply_wake_losses(meteo["direction_vent"])
-    power_with_wake_losses = power_output_direction * wake_losses
+    power_with_wake_losses = power_with_directional_losses * wake_losses
 
     # Apply ice losses
-    ice_losses = ice_loss_factor(meteo["temperature"])
+    ice_losses = ice_loss_factor(meteo["temperature"].to_numpy(dtype=float))
     power_with_ice_losses = power_with_wake_losses * ice_losses
 
     # Apply for all turbines in the parc

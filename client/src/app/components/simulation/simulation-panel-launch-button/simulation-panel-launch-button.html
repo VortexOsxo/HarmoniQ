@@ -1,0 +1,10 @@
+<button
+    id="run"
+    type="button"
+    class="hq-btn-green"
+    [class.hq-btn-green-inactive]="!canLaunch()"
+    (click)="onLaunchClick()"
+>
+    <i class="fa-solid fa-play me-2"></i>
+    Lancer Simulation
+</button>

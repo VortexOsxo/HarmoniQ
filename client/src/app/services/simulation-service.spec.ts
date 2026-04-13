@@ -20,15 +20,16 @@ vi.mock('leaflet', () => ({
 }));
 
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SimulationService } from './simulation-service';
 import { ScenariosService } from './scenarios-service';
 import { InfrastruturesService } from './infrastrutures-service';
-import { DemandeTemporalGraphService } from './graph-services/demande-temporal-graph-service';
 import { DemandeSankeyGraphService } from './graph-services/demande-sankey-graph-service';
 import { SimulationTemporalGraphService } from './graph-services/simulation-temporal-graph-service';
 import { SimulationStepService } from './simulation-step-service';
+import { SnackbarService } from './snackbar-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
@@ -58,14 +59,17 @@ const MOCK_INFRA_GROUP: InfrastructureGroup = {
 
 describe('SimulationService', () => {
   let service: SimulationService;
+  let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let mockScenariosService: Partial<ScenariosService>;
   let mockInfrastruturesService: Partial<InfrastruturesService>;
-  let mockDemandeTemporalService: Partial<DemandeTemporalGraphService>;
   let mockDemandeSankeyService: Partial<DemandeSankeyGraphService>;
   let mockSimulationTemporalService: Partial<SimulationTemporalGraphService>;
   let mockStepService: Partial<SimulationStepService>;
+  let mockSnackbarService: Partial<SnackbarService>;
 
   beforeEach(() => {
+    mockRouter = { navigate: vi.fn() };
+
     const selectedScenarioSignal = signal<Scenario | null>(null);
     mockScenariosService = {
       selectedScenario: selectedScenarioSignal,
@@ -75,11 +79,6 @@ describe('SimulationService', () => {
       selectedInfraGroup: signal<InfrastructureGroup | null>(null),
       getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
       buildSimulationPayload: vi.fn().mockReturnValue({ nom: 'Test' }),
-    };
-
-    mockDemandeTemporalService = {
-      getStepName: vi.fn().mockReturnValue('Demande Temporelle'),
-      generate: vi.fn().mockResolvedValue(undefined),
     };
 
     mockDemandeSankeyService = {
@@ -100,15 +99,21 @@ describe('SimulationService', () => {
       currentStepName: vi.fn().mockReturnValue('Initialisation') as any,
     };
 
+    mockSnackbarService = {
+      show: vi.fn(),
+      close: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         SimulationService,
         { provide: ScenariosService, useValue: mockScenariosService },
         { provide: InfrastruturesService, useValue: mockInfrastruturesService },
-        { provide: DemandeTemporalGraphService, useValue: mockDemandeTemporalService },
         { provide: DemandeSankeyGraphService, useValue: mockDemandeSankeyService },
         { provide: SimulationTemporalGraphService, useValue: mockSimulationTemporalService },
         { provide: SimulationStepService, useValue: mockStepService },
+        { provide: SnackbarService, useValue: mockSnackbarService },
+        { provide: Router, useValue: mockRouter },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -164,7 +169,7 @@ describe('SimulationService', () => {
       await service.launchSimulation();
 
       expect(mockStepService.runSteps).toHaveBeenCalledWith(
-        expect.arrayContaining([mockDemandeSankeyService, mockDemandeTemporalService, mockSimulationTemporalService]),
+        expect.arrayContaining([mockDemandeSankeyService, mockSimulationTemporalService]),
         MOCK_SCENARIO,
       );
     });

@@ -13,12 +13,15 @@ vi.mock('leaflet', () => ({
 
 const MOCK_SANKEY_DATA: SankeyData = {
   demandNodes: [
-    { id: 'residentiel', label: 'Résidentiel', value: 300, color: '#3498db', icon: 'fa-home' },
-    { id: 'commercial', label: 'Commercial', value: 200, color: '#2ecc71', icon: 'fa-building' },
+    { id: 'residentiel', label: 'Résidentiel', value: 300, electricityValue: 300, gasValue: 0, color: '#3498db', icon: 'fa-home' },
+    { id: 'commercial', label: 'Commercial', value: 200, electricityValue: 200, gasValue: 0, color: '#2ecc71', icon: 'fa-building' },
   ],
   productionNodes: [
-    { id: 'hydro', label: 'Hydro', value: 400, color: '#1abc9c', icon: 'fa-water', co2FactorKgMWh: 4 },
-    { id: 'eolien', label: 'Éolien', value: 100, color: '#9b59b6', icon: 'fa-wind', co2FactorKgMWh: 7 },
+    { id: 'hydro', label: 'Hydro', value: 400, color: '#1abc9c', icon: 'fa-water', co2FactorKgMWh: 4, energyType: 'electricity' },
+    { id: 'eolien', label: 'Éolien', value: 100, color: '#9b59b6', icon: 'fa-wind', co2FactorKgMWh: 7, energyType: 'electricity' },
+  ],
+  energyTypeNodes: [
+    { id: 'electricity', label: 'Électricité', value: 500, color: '#3a7abf', icon: 'fa-bolt' },
   ],
 };
 
@@ -67,19 +70,19 @@ describe('SankeyDiagramComponent', () => {
     it('should round and format values >= 10', async () => {
       const { fixture } = await renderComponent();
       const result = fixture.componentInstance.formatMW(1234.5);
-      expect(result).toContain('MW/jour');
+      expect(result).toContain('MW');
     });
 
-    it('should include MW/jour suffix', async () => {
+    it('should include MW suffix', async () => {
       const { fixture } = await renderComponent();
-      expect(fixture.componentInstance.formatMW(5)).toContain('MW/jour');
-      expect(fixture.componentInstance.formatMW(100)).toContain('MW/jour');
+      expect(fixture.componentInstance.formatMW(5)).toContain('MW');
+      expect(fixture.componentInstance.formatMW(100)).toContain('MW');
     });
 
     it('should format small values with 2 decimal places', async () => {
       const { fixture } = await renderComponent();
       const result = fixture.componentInstance.formatMW(0.123);
-      expect(result).toContain('MW/jour');
+      expect(result).toContain('MW');
     });
   });
 
@@ -87,7 +90,7 @@ describe('SankeyDiagramComponent', () => {
     it('should round values >= 10', async () => {
       const { fixture } = await renderComponent();
       const result = fixture.componentInstance.formatCo2(1234.5);
-      expect(result).not.toContain('MW/jour');
+      expect(result).not.toContain('MW');
     });
 
     it('should format values between 1 and 10 with 1 decimal', async () => {

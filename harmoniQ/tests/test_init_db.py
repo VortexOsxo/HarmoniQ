@@ -1,7 +1,8 @@
 import pytest
 from sqlalchemy.orm import Session
 from harmoniq.db.engine import engine, get_db
-from harmoniq.db.schemas import SQLBase, EolienneParcBase, TurbineModel
+from harmoniq.db.schemas import SQLBase, EolienneParcBase, TurbineModel, QuebecOffshoreMeshMeta
+from datetime import datetime
 from harmoniq.db.CRUD import (
     create_eolienne_parc,
     read_eolienne_parc_by_id,
@@ -15,6 +16,17 @@ from harmoniq.db.CRUD import (
 def db():
     SQLBase.metadata.create_all(bind=engine)
     db = next(get_db())
+    meta = QuebecOffshoreMeshMeta(
+        grid_version="qc_mer_1km_v1",
+        resolution_m=1000,
+        crs="EPSG:32198",
+        origin_x=0.0,
+        origin_y=0.0,
+        source="test",
+        generated_at=datetime.utcnow().isoformat(),
+    )
+    db.add(meta)
+    db.commit()
     yield db
     SQLBase.metadata.drop_all(bind=engine)
     db.close()

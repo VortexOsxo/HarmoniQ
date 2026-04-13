@@ -97,13 +97,22 @@ describe('ScenarioSelector', () => {
     });
 
     describe('deleteScenario', () => {
-        it('should call scenariosService.deleteScenario with the selected scenario when delete button is clicked', async () => {
+        it('should call scenariosService.deleteScenario with the selected scenario when delete button is clicked and confirmed', async () => {
             const user = userEvent.setup();
             mockScenariosService.selectedScenario.set(CUSTOM_SCENARIO);
+            
+            // Mock modal to return true
+            mockModalService.open.mockReturnValueOnce({ 
+                componentInstance: {}, 
+                result: Promise.resolve(true) 
+            });
 
             await renderComponent();
 
-            await user.click(screen.getByRole('button', { name: /Supprimer/i }));
+            await user.click(screen.getByRole('button', { name: /Supprimer ce scénario/i }));
+            
+            // Wait for promise resolution in the child component
+            await Promise.resolve();
 
             expect(mockScenariosService.deleteScenario).toHaveBeenCalledWith(CUSTOM_SCENARIO);
         });
@@ -113,7 +122,7 @@ describe('ScenarioSelector', () => {
 
             await renderComponent();
 
-            expect(screen.queryByRole('button', { name: /Supprimer/i })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: /Supprimer ce scénario/i })).not.toBeInTheDocument();
         });
     });
 

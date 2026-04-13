@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
+from .limiter import rate_limit_middleware
 
 from pathlib import Path
 
@@ -24,6 +25,8 @@ app = FastAPI(
         "url": "https://opensource.org/licenses/MIT",
     },
 )
+
+app.middleware("http")(rate_limit_middleware)
 
 app.add_middleware(
     CORSMiddleware,

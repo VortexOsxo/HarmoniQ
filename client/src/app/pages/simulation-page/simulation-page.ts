@@ -1,42 +1,229 @@
-import { AfterViewInit, Component, inject } from '@angular/core';
+import { AfterViewInit, Component, HostListener, inject, ViewChild } from '@angular/core';
 import { SimulationTopBar } from '@app/components/simulation/simulation-top-bar/simulation-top-bar';
 import { CommonModule } from '@angular/common';
-import { ScenarioTemporalDemandGraph } from "@app/components/scenario/scenario-temporal-demand-graph/scenario-temporal-demand-graph";
-import { ScenarioDemandProdSankey } from "@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey";
-import { ScenarioTemporalSimulation } from "@app/components/scenario/scenario-temporal-simulation/scenario-temporal-simulation";
+import { ScenarioDemandProdSankey } from '@app/components/scenario/scenario-demand-prod-sankey/scenario-demand-prod-sankey';
+import { ScenarioTemporalSimulation } from '@app/components/scenario/scenario-temporal-simulation/scenario-temporal-simulation';
+import { ScenarioCo2Simulation } from '@app/components/scenario/scenario-co2-simulation/scenario-co2-simulation';
 import { SimulationService } from '@app/services/simulation-service';
 import { SimulationStepService } from '@app/services/simulation-step-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GameArea } from '@app/components/game/game-area/game-area';
+import { ScenarioCostSimulation } from '@app/components/scenario/scenario-cost-simulation/scenario-cost-simulation';
+import { SimulationCostGraphService } from '@app/services/graph-services/simulation-cost-graph-service';
+import { SimulationCo2GraphService } from '@app/services/graph-services/simulation-co2-graph-service';
+import { SimulationAnalysisGraphService } from '@app/services/graph-services/simulation-analysis-graph-service';
+import { GranularitySelectorComponent } from '@app/components/commons/granularity-selector/granularity-selector';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
+import { TutorialOverlay } from '@app/components/tutorial-overlay/tutorial-overlay';
+import { TutorialService } from '@app/services/tutorial-service';
+import { INFRA_COLORS } from '@app/data/infra-colors.data';
+import { graphServiceConfig } from '@app/services/graph-service';
+
+interface Section {
+    id: string;
+    title: string;
+    desc: string;
+    icon: string;
+    isReady: () => boolean;
+}
 
 @Component({
-  selector: 'app-simulation-page',
-  standalone: true,
-  imports: [SimulationTopBar, CommonModule, ScenarioTemporalDemandGraph, ScenarioDemandProdSankey, ScenarioTemporalSimulation],
-  templateUrl: './simulation-page.html',
-  styleUrl: './simulation-page.css',
+    selector: 'app-simulation-page',
+    standalone: true,
+    imports: [
+        SimulationTopBar,
+        CommonModule,
+        ScenarioCostSimulation,
+        ScenarioCo2Simulation,
+        ScenarioDemandProdSankey,
+        ScenarioTemporalSimulation,
+        GranularitySelectorComponent,
+        TutorialOverlay,
+    ],
+    templateUrl: './simulation-page.html',
+    styleUrl: './simulation-page.css',
 })
 export class SimulationPage implements AfterViewInit {
+    constructor(private bootstrap: NgbModal) {}
 
-  constructor(private bootstrap: NgbModal) { }
+    @ViewChild(ScenarioTemporalSimulation) temporalSim?: ScenarioTemporalSimulation;
+    @ViewChild(ScenarioDemandProdSankey) sankeySim?: ScenarioDemandProdSankey;
 
-  simulationService = inject(SimulationService);
-  stepService = inject(SimulationStepService);
+    simulationService = inject(SimulationService);
+    stepService = inject(SimulationStepService);
+    costService = inject(SimulationCostGraphService);
+    co2Service = inject(SimulationCo2GraphService);
+    analysisService = inject(SimulationAnalysisGraphService);
+    infrasService = inject(InfrastruturesService);
+    tutorialService = inject(TutorialService);
 
-  ngAfterViewInit(): void {
-    this.simulationService.launchSimulation();
-  }
+    readonly config = graphServiceConfig;
 
-  scrollToGraph(index: number) {
-    const element = document.getElementById(`step-${index}`);
-    if (element)
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+    private static readonly INFRA_DEFS = [
+        {
+            key: 'parc_eoliens',
+            label: 'Éolien',
+            img: '/icons/eolienne.png',
+            color: INFRA_COLORS['eolienneparc'],
+            hydroFilter: null,
+        },
+        {
+            key: 'central_hydroelectriques',
+            label: "Hydro (fil de l'eau)",
+            img: '/icons/barrage.png',
+            color: INFRA_COLORS['hydro_fil'],
+            hydroFilter: "Fil de l'eau",
+        },
+        {
+            key: 'central_hydroelectriques',
+            label: 'Hydro (réservoir)',
+            img: '/icons/barrage.png',
+            color: INFRA_COLORS['hydro_reservoir'],
+            hydroFilter: 'Réservoir',
+        },
+        {
+            key: 'parc_solaires',
+            label: 'Solaire',
+            img: '/icons/solaire.png',
+            color: INFRA_COLORS['solaire'],
+            hydroFilter: null,
+        },
+        {
+            key: 'central_nucleaire',
+            label: 'Nucléaire',
+            img: '/icons/nucelaire.png',
+            color: INFRA_COLORS['nucleaire'],
+            hydroFilter: null,
+        },
+        {
+            key: 'central_thermique',
+            label: 'Thermique',
+            img: '/icons/thermique.png',
+            color: INFRA_COLORS['thermique'],
+            hydroFilter: null,
+        },
+    ];
 
-  openQuiz() {
-    this.bootstrap.open(GameArea, {
-      centered: true,
-      windowClass: 'game-modal'
-    });
-  }
+    get infraSummary() {
+        const group: any = this.infrasService.selectedInfraGroup();
+        const hydroIds: string[] = group?.central_hydroelectriques ?? [];
+        const allHydro: any[] = this.infrasService.getInfrasSignalByType('hydro')();
+        const selectedHydro = allHydro.filter((h: any) => hydroIds.includes(String(h.id)));
+
+        const breakdown = SimulationPage.INFRA_DEFS.map((def) => {
+            if (def.hydroFilter) {
+                const isFil = def.hydroFilter === "Fil de l'eau";
+                const count = selectedHydro.filter((h: any) =>
+                    isFil ? h.type_barrage === "Fil de l'eau" : h.type_barrage !== "Fil de l'eau",
+                ).length;
+                return { ...def, count };
+            }
+            return { ...def, count: (group?.[def.key] ?? []).length };
+        });
+        return { breakdown, total: breakdown.reduce((s, d) => s + d.count, 0) };
+    }
+
+    readonly sections: Section[] = [
+        {
+            id: 'section-cost',
+            title: 'Coût du réseau',
+            desc: 'OPEX & CAPEX par source',
+            icon: 'fa-coins',
+            isReady: () => !this.costService.isLoading(),
+        },
+        {
+            id: 'section-co2',
+            title: 'Émissions CO₂',
+            desc: 'Construction & annuelles',
+            icon: 'fa-cloud',
+            isReady: () => !this.co2Service.isLoading(),
+        },
+        {
+            id: 'section-finance',
+            title: 'Analyse financière',
+            desc: 'Rentabilité & coûts des infras',
+            icon: 'fa-chart-bar',
+            isReady: () => !this.costService.rentabiliteLoading(),
+        },
+        {
+            id: 'section-sankey',
+            title: 'Flux de production',
+            desc: 'Répartition production → demande',
+            icon: 'fa-diagram-project',
+            isReady: () => !this.isSimulating && this.simulationService.productionNodes() !== null,
+        },
+        {
+            id: 'section-temporal',
+            title: 'Production & Demande',
+            desc: 'Évolution temporelle',
+            icon: 'fa-chart-line',
+            isReady: () => !this.isSimulating && this.simulationService.productionNodes() !== null,
+        },
+        {
+            id: 'section-repartition',
+            title: 'Répartition',
+            desc: 'Production & demande par secteur',
+            icon: 'fa-chart-pie',
+            isReady: () => !this.analysisService.isLoading(),
+        },
+        {
+            id: 'section-top10-prod',
+            title: 'Top 10 productives',
+            desc: 'Infrastructures les plus productrices',
+            icon: 'fa-medal',
+            isReady: () => !this.analysisService.isLoading(),
+        },
+        {
+            id: 'section-seasonal',
+            title: 'Saisonnalité',
+            desc: 'Approvisionnement par saison',
+            icon: 'fa-snowflake',
+            isReady: () => !this.analysisService.isLoading(),
+        },
+    ];
+
+    get isSimulating(): boolean {
+        const idx = this.stepService.currentStepIndex();
+        const total = this.stepService.steps().length;
+        return idx >= 0 && idx < total;
+    }
+
+    get currentStepName(): string {
+        return this.stepService.currentStepName();
+    }
+
+    getSectionIndicator(section: Section): { icon: string; color?: string; cssClass?: string } {
+        if (section.isReady()) {
+            return { icon: 'fa-circle-check', cssClass: 'hq-text-gradient-green' };
+        }
+        return this.isSimulating
+            ? { icon: 'fa-circle-notch fa-spin', cssClass: 'hq-text-gradient-blue' }
+            : { icon: 'fa-circle', color: '#ced4da' };
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    onBeforeUnload(event: BeforeUnloadEvent): void {
+        event.preventDefault();
+    }
+
+    ngAfterViewInit(): void {
+        this.simulationService.launchSimulation();
+        setTimeout(() => this.tutorialService.autoStart(), 500);
+    }
+
+    get temporalGranularity(): string {
+        return this.temporalSim?.selectedGranularity ?? 'daily';
+    }
+
+    onTemporalGranularityChange(granularity: string): void {
+        this.temporalSim?.onGranularityChange(granularity);
+    }
+
+    scrollTo(id: string) {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    openQuiz() {
+        this.bootstrap.open(GameArea, { centered: true, windowClass: 'game-modal' });
+    }
 }

@@ -1,3 +1,5 @@
+import { FIRST_NATION_DATA } from '../data/first-nation.data';
+
 export interface LayerNode {
     id: number;
     name: string;
@@ -67,8 +69,8 @@ function buildNodeMap(nodes: LayerNode[]) {
 }
 buildNodeMap(LAYER_TREE);
 
-// Par défaut on selectionne tout
-export const DEFAULT_SELECTED_LAYERS = new Set([100, 101, 102, 24, 25, 21, 52]);
+// Par défaut rien n'est sélectionné (donc caché)
+export const DEFAULT_SELECTED_LAYERS = new Set<number>([]);
 
 export const BIOME_MAP: Record<string, string> = {
     'T': 'Milieu terrestre',
@@ -97,6 +99,30 @@ export function buildIdentifyHtml(attrs: Record<string, any>): string {
     const fallbackTitle = isAuto ? 'Communauté autochtone' : 'Aire protégée';
     const title = (isAuto && toponyme) ? `Communauté autochtone de ${toponyme}` : (toponyme || fallbackTitle);
     html += `<b style="font-size:0.95rem;">${title}</b><br>`;
+
+    const hiddenForNonAuto = new Set([
+        'Numéro de désignation',
+        'Latitude',
+        'Longitude',
+        'Catégorie UICN',
+    ]);
+
+    const hiddenForAuto = new Set([
+        'Étiquette',
+        'Numéro gestionnaire',
+        'Numéro d\'identification',
+        'Mode de gestion',
+        'Numéro UG',
+        'Identifiant unique',
+        'Zone de tarification',
+        'Analyse BFEC',
+        'Numéro périmètre UA',
+        'Numéro TDA',
+        'Domanialité',
+        'Région administrative',
+        'MRC',
+        'Date de publication'
+    ]);
 
     const fields: [string, string][] = [
         ['Identifiant unique', get('Identifiant_unique', 'GEOCODE', 'MACODE', 'ADMIN_LAND_ID', 'Numéro de la réserve indienne ou de la terre indienne')],
@@ -143,8 +169,17 @@ export function buildIdentifyHtml(attrs: Record<string, any>): string {
 
 
     for (const [label, value] of fields) {
+        if (!isAuto && hiddenForNonAuto.has(label)) continue;
+        if (isAuto && hiddenForAuto.has(label)) continue;
         if (value) {
             html += `<b>${label}:</b> ${value}<br>`;
+        }
+    }
+
+    if (isAuto && toponyme) {
+        const nationData = FIRST_NATION_DATA.find(d => d.Région.toLowerCase() === toponyme.toLowerCase());
+        if (nationData && nationData.Fait) {
+            html += `<b>Fait:</b> ${nationData.Fait}<br>`;
         }
     }
 

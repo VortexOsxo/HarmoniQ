@@ -14,7 +14,6 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from typing import List
-from fastapi import HTTPException
 
 CURRENT_DIR = Path(__file__).parent
 DEBIT_DIR = CURRENT_DIR / "debits"
@@ -106,9 +105,26 @@ class InfraHydro(Infrastructure):
             self.charger_debit()
             return get_run_of_river_dam_power(self)
 
-        raise HTTPException(
-                status_code=400, detail="Production calculation is only available for run-of-river dams"
-            )
+        # Reservoir: estimated production based on capacity factor with seasonal variation
+        start = pd.Timestamp(self.scenario.date_de_debut)
+        end = pd.Timestamp(self.scenario.date_de_fin)
+        freq = 'h' if self.scenario.pas_de_temps.total_seconds() == 3600 else 'D'
+        timestamps = pd.date_range(start=start, end=end, freq=freq)
+
+        p_nom = float(self.donnees.puissance_nominal)
+        nb_turb = max(self.donnees.nb_turbines, 1)
+        nb_maint = self.donnees.nb_turbines_maintenance
+        availability = (nb_turb - nb_maint) / nb_turb
+
+        # Base capacity factor 0.55 with seasonal variation (spring peak from snowmelt)
+        base_cf = 0.55
+        day_of_year = timestamps.dayofyear.values
+        seasonal = 1.0 + 0.15 * np.sin(2 * np.pi * (day_of_year - 120) / 365)
+        production_mw = p_nom * base_cf * seasonal * availability
+
+        result = pd.Series(production_mw, index=timestamps, name='power_MW')
+        self.production = result
+        return result
   
     def calculer_energie(self, production):
         return get_energy(production)
@@ -129,46 +145,59 @@ class InfraHydro(Infrastructure):
         return calculer_emissions_et_ressources(self, energie, facteur_charge)
 
     def calculer_cout_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
-        CAPACITY_FACTOR = 0.50
-        OPEX_PER_MWH = 20
+        if self.donnees.type_barrage == "Fil de l'eau":
+            OPEX_PER_MW_PER_YEAR = 126_000   # $/MW/year (= 126 $/kW/year)
+        else:
+            OPEX_PER_MW_PER_YEAR = 350_000   # $/MW/year (= 350 $/kW/year, réservoir)
 
         HOURS_PER_YEAR = 8760
 
-        availability = 1 - (
-            self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines
-        )
-
-        annual_energy = (
-            self.donnees.puissance_nominal
-            * HOURS_PER_YEAR
-            * CAPACITY_FACTOR
-            * availability
-        )
-
-        annual_cost = annual_energy * OPEX_PER_MWH
+        annual_cost = self.donnees.puissance_nominal * OPEX_PER_MW_PER_YEAR
         hours = pas_de_temps.total_seconds() / 3600
         return annual_cost * (hours / HOURS_PER_YEAR)
 
 
     def calculer_co2_eq_construction(self) -> np.ndarray:
-        # Really rought estimate, need to be improved
-        return self.donnees.puissance_nominal * (CO2_PER_MW := 400)
+        # Source: Hydro - DD - Environnement
+        # CO2_total (tCO2) = P × 8760 × capacity_factor × 80 years × lifecycle_factor (tCO2/MWh)
+        # CO2_construction = CO2_total × construction_fraction
+        if self.donnees.type_barrage == "Fil de l'eau":
+            CAPACITY_FACTOR = 0.46
+            LIFECYCLE_FACTOR = 8 / 1000  # tCO2/MWh
+            CONSTRUCTION_FRACTION = 0.82
+        else:  # Réservoir
+            CAPACITY_FACTOR = 0.55
+            LIFECYCLE_FACTOR = 20 / 1000  # tCO2/MWh
+            CONSTRUCTION_FRACTION = 0.72
+
+        LIFETIME_YEARS = 80
+        HOURS_PER_YEAR = 8760
+
+        co2_total = (
+            self.donnees.puissance_nominal
+            * HOURS_PER_YEAR
+            * CAPACITY_FACTOR
+            * LIFETIME_YEARS
+            * LIFECYCLE_FACTOR
+        )
+        return co2_total * CONSTRUCTION_FRACTION
 
     def calculer_co2_eq_pas_de_temps(self, pas_de_temps=None) -> np.ndarray:
-        # Really rought estimate, need to be improved
         if pas_de_temps is None:
             pas_de_temps = self.scenario.pas_de_temps
 
+        # Annual fraction only (exploitation + autres), excluding construction
+        # Fil de l'eau:  8 gCO2/kWh total × 0,18 annuel = 1,44 gCO2/kWh
+        # Réservoir:    20 gCO2/kWh total × 0,28 annuel = 5,60 gCO2/kWh
         if self.donnees.type_barrage == "Fil de l'eau":
-            co2_intensity = 6 / 1000
+            co2_intensity = 8 / 1000 * 0.18
+            CAPACITY_FACTOR = 0.46
         else:
-            co2_intensity = 17 / 1000
-
-        CAPACITY_FACTOR = 0.50
+            co2_intensity = 20 / 1000 * 0.28
+            CAPACITY_FACTOR = 0.55
         HOURS_PER_YEAR = 8760
         availability = 1 - (
             self.donnees.nb_turbines_maintenance / self.donnees.nb_turbines

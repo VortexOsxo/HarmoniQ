@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/angular';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from './scenario-creation-modal';
 import { ScenariosService } from '@app/services/scenarios-service';
@@ -19,7 +19,10 @@ const MOCK_CREATED_SCENARIO: Scenario = {
 };
 
 const mockActiveModal = { close: vi.fn(), dismiss: vi.fn() };
-const mockScenariosService = { createScenario: vi.fn() };
+const mockScenariosService = { 
+  createScenario: vi.fn(),
+  scenarios: signal<any[]>([])
+};
 
 describe('ScenarioCreationModal', () => {
   afterEach(() => vi.clearAllMocks());
@@ -42,7 +45,7 @@ describe('ScenarioCreationModal', () => {
   describe('initial state', () => {
     it('should render the modal title', async () => {
       await renderComponent();
-      expect(screen.getByText('Créer nouveau scenario')).toBeInTheDocument();
+      expect(screen.getByText('Nouveau scénario')).toBeInTheDocument();
     });
 
     it('should expose Weather enum', async () => {
@@ -68,6 +71,7 @@ describe('ScenarioCreationModal', () => {
 
     it('should close the modal after submitting', async () => {
       const { fixture } = await renderComponent();
+      fixture.componentInstance.scenario = MOCK_CREATED_SCENARIO;
 
       fixture.componentInstance.onSubmit();
 

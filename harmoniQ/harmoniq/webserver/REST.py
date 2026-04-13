@@ -27,8 +27,11 @@ from harmoniq.db.demande import (
     read_demande_data_temporal,
 )
 from harmoniq.core import meteo
+from harmoniq.core.meteo_era5 import Era5WindMapService
 from harmoniq.db.engine import get_db
 from harmoniq.core.fausse_données import production_aleatoire
+from harmoniq.core.offshore import is_offshore_quebec
+
 
 from harmoniq.modules.eolienne import InfraParcEolienne
 from harmoniq.modules.reseau import InfraReseau
@@ -44,6 +47,7 @@ router = APIRouter(
     prefix="/api",
     responses={404: {"description": "Not found"}},
 )
+_wind_map_service = Era5WindMapService()
 
 # Route de test
 @router.get("/ping")
@@ -174,6 +178,45 @@ def get_meteo_data(
         headers={"Content-Disposition": "attachment; filename=weather_data.csv"},
     )
 
+
+@meteo_router.get("/offshore-check")
+def check_offshore(latitude: float, longitude: float, db: Session = Depends(get_db)):
+    try:
+        is_off = is_offshore_quebec(latitude, longitude, db)
+        return {"is_offshore": is_off}
+    except Exception as e:
+        return {"is_offshore": False, "error": str(e)}
+
+
+@meteo_router.get("/wind-map/years")
+def get_wind_map_years():
+    years = _wind_map_service.get_available_years()
+    if not years:
+        raise HTTPException(
+            status_code=404,
+            detail="No ERA5 annual cache available for wind-map.",
+        )
+    return {
+        "years": years,
+        "default_year": _wind_map_service.get_default_year(years),
+    }
+
+
+@meteo_router.get("/wind-map/annual")
+def get_wind_map_annual(year: int):
+    years = _wind_map_service.get_available_years()
+    if year not in years:
+        raise HTTPException(
+            status_code=404,
+            detail=f"ERA5 wind-map data unavailable for year={year}",
+        )
+    try:
+        return _wind_map_service.get_annual_wind_map(year=year)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
 router.include_router(meteo_router)
 
 #-----#-----#-----#-----#-----#  Infra Specific  #-----#-----#-----#-----#-----#
@@ -292,6 +335,24 @@ async def calculer_production_reseau(payload: schemas.ReseauSimulationPayload, i
     }
     
     return response
+
+@reseau_router.post("/cout")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
+    scenario = payload.scenario
+    infra_group = payload.infra_group
+    
+    infra_reseau = InfraReseau(infra_group)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_cout(infra_group)
+
+@reseau_router.post("/emission")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):    
+    scenario = payload.scenario
+    infra_group = payload.infra_group
+    
+    infra_reseau = InfraReseau(infra_group)
+    infra_reseau.charger_scenario(scenario)
+    return infra_reseau.calculer_co2(infra_group)
 
 router.include_router(reseau_router)
 

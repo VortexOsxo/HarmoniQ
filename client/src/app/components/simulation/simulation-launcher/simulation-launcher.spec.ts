@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { SimulationLauncher } from './simulation-launcher';
 import { SimulationService } from '@app/services/simulation-service';
@@ -42,9 +41,13 @@ const MOCK_GROUP: InfrastructureGroup = {
 const canLaunch = signal(false);
 const selectedScenario = signal<Scenario | null>(null);
 const selectedInfraGroup = signal<InfrastructureGroup | null>(null);
+const showLaunchConfigHints = signal(false);
 
 const mockSimulationService = {
   canLaunch,
+  showLaunchConfigHints,
+  requestLaunchFromMap: vi.fn(),
+  dismissLaunchHints: vi.fn(() => showLaunchConfigHints.set(false)),
   productionNodes: signal(null),
   openSourcesPanel$: new Subject<void>(),
   hasExportableData: signal(false),
@@ -58,13 +61,10 @@ const mockInfrastruturesService = {
   infraGroups: signal([] as InfrastructureGroup[]),
 };
 
-const mockRouter = { navigate: vi.fn() };
-
 const defaultProviders = [
   { provide: SimulationService, useValue: mockSimulationService },
   { provide: ScenariosService, useValue: mockScenariosService },
   { provide: InfrastruturesService, useValue: mockInfrastruturesService },
-  { provide: Router, useValue: mockRouter },
 ];
 
 describe('SimulationLauncher', () => {
@@ -72,6 +72,7 @@ describe('SimulationLauncher', () => {
     canLaunch.set(false);
     selectedScenario.set(null);
     selectedInfraGroup.set(null);
+    showLaunchConfigHints.set(false);
   });
 
   afterEach(() => vi.clearAllMocks());
@@ -83,48 +84,6 @@ describe('SimulationLauncher', () => {
     });
 
     expect(screen.getByText(/CONFIGURATION ACTIVE/i)).toBeInTheDocument();
-  });
-
-  describe('launchSimulation', () => {
-    it('should navigate to /simulation when the launch button is clicked', async () => {
-      const user = userEvent.setup();
-      canLaunch.set(true);
-
-      await render(SimulationLauncher, {
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      await user.click(screen.getByRole('button', { name: /Lancer Simulation/i }));
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/simulation']);
-    });
-  });
-
-  describe('canLaunch signal', () => {
-    it('should render the launch button with disabled class when canLaunch is false', async () => {
-      canLaunch.set(false);
-
-      await render(SimulationLauncher, {
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      const btn = screen.getByRole('button', { name: /Lancer Simulation/i });
-      expect(btn.classList.contains('launch-btn-disabled')).toBe(true);
-    });
-
-    it('should render the launch button without disabled class when canLaunch is true', async () => {
-      canLaunch.set(true);
-
-      await render(SimulationLauncher, {
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      const btn = screen.getByRole('button', { name: /Lancer Simulation/i });
-      expect(btn.classList.contains('launch-btn-disabled')).toBe(false);
-    });
   });
 
   describe('selectedScenario display', () => {
@@ -178,39 +137,46 @@ describe('SimulationLauncher', () => {
   });
 
   describe('config hint bubbles', () => {
-    it('should show config hints when clicking launch with incomplete config', async () => {
-      const user = userEvent.setup();
-      canLaunch.set(false);
+    it('should show scenario hint when hints are active and scenario is missing', async () => {
+      showLaunchConfigHints.set(true);
       selectedScenario.set(null);
-      selectedInfraGroup.set(null);
-
-      const { fixture } = await render(SimulationLauncher, {
-        providers: defaultProviders,
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-
-      await user.click(screen.getByRole('button', { name: /Lancer Simulation/i }));
-      fixture.detectChanges();
-
-      expect(fixture.componentInstance.showConfigHints()).toBe(true);
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should NOT show config hints when config is complete', async () => {
-      const user = userEvent.setup();
-      canLaunch.set(true);
-      selectedScenario.set(MOCK_SCENARIO);
       selectedInfraGroup.set(MOCK_GROUP);
 
-      const { fixture } = await render(SimulationLauncher, {
+      await render(SimulationLauncher, {
         providers: defaultProviders,
         schemas: [NO_ERRORS_SCHEMA],
       });
 
-      await user.click(screen.getByRole('button', { name: /Lancer Simulation/i }));
+      expect(screen.getByText(/Scénario requis/i)).toBeInTheDocument();
+    });
 
-      expect(fixture.componentInstance.showConfigHints()).toBe(false);
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/simulation']);
+    it('should show infra hint when hints are active and infra group is missing', async () => {
+      showLaunchConfigHints.set(true);
+      selectedScenario.set(MOCK_SCENARIO);
+      selectedInfraGroup.set(null);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      expect(screen.getByText(/Groupe d'infrastructures requis/i)).toBeInTheDocument();
+    });
+
+    it('should call dismissLaunchHints when dismissing a hint bubble', async () => {
+      const user = userEvent.setup();
+      showLaunchConfigHints.set(true);
+      selectedScenario.set(null);
+      selectedInfraGroup.set(MOCK_GROUP);
+
+      await render(SimulationLauncher, {
+        providers: defaultProviders,
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+
+      await user.click(screen.getByRole('button', { name: /Fermer/i }));
+
+      expect(mockSimulationService.dismissLaunchHints).toHaveBeenCalled();
     });
 
     it('should report missingScenario and missingInfra correctly', async () => {

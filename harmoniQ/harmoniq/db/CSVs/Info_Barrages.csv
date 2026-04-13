@@ -1,64 +1,85 @@
-Nom,Latitude,Longitude,Type,Puissance_Installee_MW,Hauteur_de_chute_m,Nb_turbines,Debits_nom_m3s,Type_turbine,eta_turb,Volume_reservoir,nb_turbines_maintenance,id_HQ,enfant,catch_coefficient
-Robert-Bourassa,-77.5327778,53.7819444,Reservoir,5616.0,137.16,16.0,4586.582640472693,Francis,0.91,460702900000.0,1.0,6416.0,original,1.0
-La Grande-4,-73.4652778,53.8866667,Reservoir,2779.0,116.7,9.0,2667.517584618596,Francis,0.91,19423000000.0,0.0,1033.0,original,1.0
-La Grande-3,-75.988438,53.727721,Reservoir,2417.0,79.0,12.0,3427.1977135756024,Francis,0.91,59994000000.0,0.0,1034.0,original,1.0
-La grande-2-A,-77.5491667,53.7794444,Reservoir,2106.0,138.5,6.0,1703.3276398029816,Francis,0.91,6170000000.0,0.0,1037.0,original,1.0
-Beauharnois_Francis,-73.877952,45.313216,Fil de l'eau,1241.0,24.39,26.0,5699.668292624498,Francis,0.91,0.0,1.0,1232.0,original,1.0
-Beauharnois_Kaplan,-73.877952,45.313216,Fil de l'eau,623.0,24.39,10.0,2740.8396837334967,Kaplan,0.95,0.0,0.0,1232.0,original,1.0
-Manic-5,-68.7269444,50.6397222,Reservoir,1596.0,141.8,8.0,1260.8001635058736,Francis,0.91,135000000000.0,0.0,5956.0,original,1.0
-La grande-1,-78.5738889,53.7344444,Fil de l'eau,1436.0,27.5,12.0,5603.1098039789495,Kaplan,0.95,0.0,0.0,1038.0,original,1.0
-Rene-Levesque,-68.594444,49.740833,Fil de l'eau,1326.0,94.19,6.0,1576.9877780200463,Francis,0.91,0.0,0.0,1021.0,Outardes-4,0.35
-Jean-Lesage,-68.347221,49.321666,Fil de l'eau,1229.0,70.11,8.0,1963.6383986507449,Francis,0.91,0.0,0.0,1023.0,Outardes-2,0.35
-Bersimis-1,-69.5516667,49.295,Reservoir,1178.0,266.7,8.0,494.7797024246184,Francis,0.91,13900000000.0,1.0,1019.0,original,1.0
-Manic-5-PA,-68.732893,50.639805,Reservoir,1064.0,144.5,4.0,824.8279731724703,Francis,0.91,141851000000.0,0.0,5956.0,Manic-5,0.9677
-Outardes-3,-68.722249,49.557075,Fil de l'eau,1026.0,143.57,4.0,800.5219796546215,Francis,0.91,0.0,0.0,1023.0,Outardes-2,0.35
-Sainte-Marguerite-3,-66.7797222,50.705,Reservoir,882.0,330.0,2.0,283.80131591140764,Pelton,0.96,327200000000.0,0.0,6416.0,original,1.0
-Laforge-1,-72.6152778,54.1705556,Reservoir,878.0,57.3,6.0,1716.443428341214,Francis,0.91,6884000000.0,0.0,5946.0,original,1.0
-Bersimis-2,-69.2291667,49.1752778,Fil de l'eau,845.0,115.83,5.0,817.1941573232773,Francis,0.91,0.0,0.0,1020.0,original,1.0
-Outardes-4,-68.903611,49.703333,Reservoir,785.0,120.55,4.0,729.4441443734249,Francis,0.91,21929000000.0,0.0,1021.0,original,1.0
-Bernard-Landry,-76.050483,52.181885,Reservoir,768.0,63.0,3.0,1365.558377353921,Francis,0.91,6940000000.0,0.0,5956.0,Eastmain-1,1.0
-Carillon,-74.3836111,45.5686111,Fil de l'eau,756.0,17.99,14.0,4509.184645474752,Kaplan,0.95,0.0,1.0,1064.0,original,1.0
-Romaine-2,-63.190935,50.623732,Reservoir,640.0,156.0,2.0,459.56291545564653,Francis,0.91,3720000000.0,0.0,14132.0,original,1.0
-Toulnustouc,-68.159444,49.970556,Reservoir,526.0,152.0,2.0,387.64283090695454,Francis,0.91,3973000000.0,0.0,7080.0,original,1.0
-Outardes-2,-68.389785,49.144563,Fil de l'eau,523.0,82.3,3.0,711.8548592458098,Francis,0.91,0.0,0.0,1023.0,original,1.0
-Eastmain-1,-76.051389,52.181667,Reservoir,480.0,63.0,3.0,853.4739858462007,Francis,0.91,170649000000.0,0.0,5956.0,original,1.0
-Brisay,-70.5191667,54.4544444,Reservoir,469.0,37.5,2.0,1400.9775477665387,Francis,0.91,376600000000.0,0.0,14586.0,original,1.0
-Romaine-3,-63.400227,51.114188,Reservoir,395.0,119.0,2.0,371.82598280431904,Francis,0.91,1878000000.0,0.0,14162.0,original,1.0
-Peribonka,-71.181943,49.5075,Fil de l'eau,385.0,67.6,3.0,637.9749607587402,Francis,0.91,0.0,0.0,9199.0,original,1.0
-Laforge-2,-71.2708333,54.5916667,Fil de l'eau,319.0,27.4,2.0,1249.2446769057738,Kaplan,0.95,0.0,0.0,1078.0,original,1.0
-Trenche,-72.878752,47.752433,Fil de l'eau,302.0,48.47,6.0,697.9487335254546,Francis,0.91,0.0,0.0,1078.0,Beaumont,0.35
-La tuque,-72.79881,47.444583,Fil de l'eau,294.0,34.75,6.0,947.7245303263387,Francis,0.91,0.0,0.0,1078.0,original,1.0
-Beaumont,-72.8366667,47.5555556,Fil de l'eau,270.0,37.8,6.0,800.1318617308132,Francis,0.91,0.0,1.0,1078.0,La tuque,0.5714
-Romaine-1,-63.260058,50.386552,Fil de l'eau,270.0,61.5,2.0,491.7883637955242,Francis,0.91,0.0,0.0,6414.0,original,1.0
-Romaine-4,-60.6866667,50.2155556,Reservoir,245.0,88.54,2.0,309.9675046009362,Francis,0.91,65212920000.0,0.0,14163.0,original,1.0
-McCormick,-68.3277778,49.1925,Fil de l'eau,235.0,37.8,7.0,696.4110648397818,Francis,0.91,0.0,0.0,1015.0,original,1.0
-Rocher-de-Grand-Mere,-72.674857,46.613888,Fil de l'eau,230.0,24.3,3.0,1015.6146334172098,Kaplan,0.95,0.0,0.0,1015.0,Shawinigan-3,0.9762
-Paugan,-75.933041,45.809852,Fil de l'eau,216.0,40.54,8.0,596.8423161997976,Francis,0.91,0.0,0.0,1046.0,original,1.0
-Rapide-Blanc,-72.975,47.7972222,Reservoir,204.0,32.92,6.0,694.1605702014588,Francis,0.91,466000000.0,0.0,1015.0,Rocher-de-Grand-Mere,0.811
-Shawinigan-2,-72.7652778,46.5375,Fil de l'eau,200.0,44.2,8.0,506.87086263490426,Francis,0.91,0.0,1.0,1015.0,La Gabelle,0.9932
-Shawinigan-3,-72.765263,46.533833,Fil de l'eau,194.0,44.2,3.0,491.6647367558571,Francis,0.91,0.0,0.0,1015.0,Shawinigan-2,0.9932
-Manic-1,-68.3294444,49.1905556,Fil de l'eau,184.0,36.58,3.0,563.4608189771939,Francis,0.91,0.0,0.0,1025.0,original,1.0
-Rapides-des-Iles,-79.354675,47.576852,Fil de l'eau,176.0,26.22,4.0,720.2568010146127,Kaplan,0.95,0.0,0.0,1126.0,Premiere-Chute,0.35
-Chelsea,-75.777591,45.512561,Fil de l'eau,152.0,28.35,5.0,575.3046867555872,Kaplan,0.95,0.0,0.0,1075.0,original,1.0
-Sarcelle,-76.632538,52.667721,Fil de l'eau,150.0,8.7,3.0,1850.0326530763268,Kaplan,0.95,0.0,0.0,5956.0,original,1.0
-La Gabelle,-72.739444,46.448889,Fil de l'eau,131.0,17.38,5.0,808.7772208327923,Kaplan,0.95,0.0,0.0,1015.0,original,1.0
-Premiere-Chute,-79.4525,47.6,Fil de l'eau,131.0,22.26,4.0,631.4711634354866,Kaplan,0.95,0.0,0.0,1126.0,original,1.0
-Les Cedres,-74.0283333,45.3116667,Fil de l'eau,113.0,9.14,12.0,1326.5989068120618,Kaplan,0.95,0.0,1.0,1232.0,original,1.0
-Rapides-des-Quinze,-79.294055,47.591099,Fil de l'eau,109.0,25.9,6.0,451.57939894782004,Kaplan,0.95,0.0,0.0,1050.0,original,1.0
-Rapides-Farmer,-75.763311,45.498885,Fil de l'eau,104.0,20.12,5.0,554.6419961906761,Kaplan,0.95,0.0,0.0,1050.0,original,1.0
-Chute-des-Chats,-76.238333,45.475,Fil de l'eau,92.0,16.16,4.0,610.8771186148069,Kaplan,0.95,0.0,0.0,1050.0,Rapides-Farmer,0.4536
-Rapide-des-Coeurs,-73.375177,47.786596,Fil de l'eau,76.0,22.69,6.0,359.4069605447531,Kaplan,0.95,0.0,0.0,1015.0,Rapide-Blanc,0.6831
-Chute-Allard,-73.721943,47.89111,Fil de l'eau,62.0,17.83,6.0,373.1193169075979,Kaplan,0.95,0.0,0.0,1015.0,Rapide-des-Coeurs,0.5698
-Bryson,-76.6311111,45.6611111,Fil de l'eau,61.0,18.29,3.0,357.8685361718996,Kaplan,0.95,0.0,0.0,1050.0,Chute-des-Chats,0.35
-Rapide-2,-78.576111,47.933611,Fil de l'eau,61.0,20.43,4.0,320.3825514725425,Kaplan,0.95,0.0,0.0,1126.0,Rapide-7,0.35
-Rapide-7,-78.310155,47.768449,Reservoir,61.0,20.73,4.0,315.7460456625202,Kaplan,0.95,2145000000.0,1.0,1126.0,original,1.0
-Mercier,-75.982777,46.717777,Reservoir,55.0,18.0,5.0,327.86689796186016,Kaplan,0.95,3664000000.0,0.0,1009.0,original,1.0
-Riviere-des-Prairies,-73.6572222,45.5894444,Fil de l'eau,54.0,7.93,6.0,730.6812445693639,Kaplan,0.95,0.0,0.0,1012.0,original,1.0
-Hart-Jaune,-67.9127778,51.785,Reservoir,51.0,39.6,3.0,144.26619931207085,Francis,0.91,1430000000.0,0.0,6412.0,original,1.0
-Chute-Hemmings,-72.4508333,45.8625,Fil de l'eau,29.0,14.64,6.0,221.89449170950147,Francis,0.91,0.0,0.0,1134.0,Drummondville,0.35
-Lac-Robertson,-59.063056,50.999167,Reservoir,22.0,38.5,2.0,61.31536793052969,Kaplan,0.95,605000000.0,0.0,1015.0,original,1.0
-Sept-Chutes,-70.828527,47.12276,Fil de l'eau,22.0,124.97,4.0,19.719981868695722,Francis,0.91,0.0,0.0,1134.0,original,1.0
-Drummondville,-72.483802,45.886924,Fil de l'eau,16.0,9.1,4.0,188.66267055547598,Kaplan,0.95,0.0,0.0,1134.0,original,1.0
-Chute-Bell,-74.684444,45.773889,Fil de l'eau,10.0,17.8,2.0,60.281962853048846,Kaplan,0.95,0.0,0.0,1064.0,Carillon,0.35
-Churchill-Falls,-63.9658,53.5289,Reservoir,5428.0,312.4,11.0,1946.338682351087,Francis,0.91,32640000000.0,1.0,10602.0,original,1.0
-Gull-Island,-61.37,52.96,Fil de l'eau,2250.0,79.0,12.0,3190.3991955089386,Francis,0.91,0.0,0.0,1020.0,original,1.0
+﻿Nom,Latitude,Longitude,Type,Puissance_Installee_MW,Hauteur_de_chute_m,Nb_turbines,Debits_nom_m3s,Type_turbine,eta_turb,Volume_reservoir,nb_turbines_maintenance,id_HQ,enfant,catch_coefficient,Regulation,Maintenance
+Robert-Bourassa,-77.5327778,53.7819444,Reservoir,5616.0,137.16,16.0,4586.582640472693,Francis,0.91,460702900000.0,1.0,6416.0,original,1.0,Pluriannuel,Semestrielle
+La Grande-4,-73.4652778,53.8866667,Reservoir,2779.0,116.7,9.0,2667.517584618596,Francis,0.91,19423000000.0,0.0,1033.0,original,1.0,Annuel,Annuelle
+La Grande-3,-75.988438,53.727721,Reservoir,2417.0,79.0,12.0,3427.1977135756024,Francis,0.91,59994000000.0,0.0,1034.0,original,1.0,Annuel,Annuelle
+La grande-2-A,-77.5491667,53.7794444,Reservoir,2106.0,138.5,6.0,1703.3276398029816,Francis,0.91,6170000000.0,0.0,1037.0,original,1.0,Annuel,Annuelle
+Beauharnois_Francis,-73.877952,45.313216,Fil de l'eau,1241.0,24.39,26.0,5699.668292624498,Francis,0.91,0.0,1.0,1232.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Beauharnois_Kaplan,-73.877952,45.313216,Fil de l'eau,623.0,24.39,10.0,2740.8396837334967,Kaplan,0.95,0.0,0.0,1232.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Manic-5,-68.7269444,50.6397222,Reservoir,1596.0,141.8,8.0,1260.8001635058736,Francis,0.91,135000000000.0,0.0,5956.0,original,1.0,Pluriannuel,Semestrielle
+La grande-1,-78.5738889,53.7344444,Fil de l'eau,1436.0,27.5,12.0,5603.1098039789495,Kaplan,0.95,0.0,0.0,1038.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Rene-Levesque,-68.594444,49.740833,Fil de l'eau,1326.0,94.19,6.0,1576.9877780200463,Francis,0.91,0.0,0.0,1021.0,Outardes-4,0.35,Fil eau (pas de stockage),Annuelle
+Jean-Lesage,-68.347221,49.321666,Fil de l'eau,1229.0,70.11,8.0,1963.6383986507449,Francis,0.91,0.0,0.0,1023.0,Outardes-2,0.35,Fil eau (pas de stockage),Annuelle
+Bersimis-1,-69.5516667,49.295,Reservoir,1178.0,266.7,8.0,494.7797024246184,Francis,0.91,13900000000.0,1.0,1019.0,original,1.0,Annuel,Annuelle
+Manic-5-PA,-68.732893,50.639805,Reservoir,1064.0,144.5,4.0,824.8279731724703,Francis,0.91,141851000000.0,0.0,5956.0,Manic-5,0.9677,Pluriannuel,Semestrielle
+Outardes-3,-68.722249,49.557075,Fil de l'eau,1026.0,143.57,4.0,800.5219796546215,Francis,0.91,0.0,0.0,1023.0,Outardes-2,0.35,Fil eau (pas de stockage),Annuelle
+Sainte-Marguerite-3,-66.7797222,50.705,Reservoir,882.0,330.0,2.0,283.80131591140764,Pelton,0.96,327200000000.0,0.0,6416.0,original,1.0,Pluriannuel,Semestrielle
+Laforge-1,-72.6152778,54.1705556,Reservoir,878.0,57.3,6.0,1716.443428341214,Francis,0.91,6884000000.0,0.0,5946.0,original,1.0,Annuel,Annuelle
+Bersimis-2,-69.2291667,49.1752778,Fil de l'eau,845.0,115.83,5.0,817.1941573232773,Francis,0.91,0.0,0.0,1020.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Outardes-4,-68.903611,49.703333,Reservoir,785.0,120.55,4.0,729.4441443734249,Francis,0.91,21929000000.0,0.0,1021.0,original,1.0,Annuel,Annuelle
+Bernard-Landry,-76.050483,52.181885,Reservoir,768.0,63.0,3.0,1365.558377353921,Francis,0.91,6940000000.0,0.0,5956.0,Eastmain-1,1.0,Annuel,Annuelle
+Carillon,-74.3836111,45.5686111,Fil de l'eau,756.0,17.99,14.0,4509.184645474752,Kaplan,0.95,0.0,1.0,1064.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Romaine-2,-63.190935,50.623732,Reservoir,640.0,156.0,2.0,459.56291545564653,Francis,0.91,3720000000.0,0.0,14132.0,original,1.0,Annuel,Annuelle
+Toulnustouc,-68.159444,49.970556,Reservoir,526.0,152.0,2.0,387.64283090695454,Francis,0.91,3973000000.0,0.0,7080.0,original,1.0,Annuel,Annuelle
+Outardes-2,-68.389785,49.144563,Fil de l'eau,523.0,82.3,3.0,711.8548592458098,Francis,0.91,0.0,0.0,1023.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Eastmain-1,-76.051389,52.181667,Reservoir,480.0,63.0,3.0,853.4739858462007,Francis,0.91,170649000000.0,0.0,5956.0,original,1.0,Pluriannuel,Semestrielle
+Brisay,-70.5191667,54.4544444,Reservoir,469.0,37.5,2.0,1400.9775477665387,Francis,0.91,376600000000.0,0.0,14586.0,original,1.0,Pluriannuel,Semestrielle
+Romaine-3,-63.400227,51.114188,Reservoir,395.0,119.0,2.0,371.82598280431904,Francis,0.91,1878000000.0,0.0,14162.0,original,1.0,Annuel,Annuelle
+Peribonka,-71.181943,49.5075,Fil de l'eau,385.0,67.6,3.0,637.9749607587402,Francis,0.91,0.0,0.0,9199.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Laforge-2,-71.2708333,54.5916667,Fil de l'eau,319.0,27.4,2.0,1249.2446769057738,Kaplan,0.95,0.0,0.0,1078.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Trenche,-72.878752,47.752433,Fil de l'eau,302.0,48.47,6.0,697.9487335254546,Francis,0.91,0.0,0.0,1078.0,Beaumont,0.35,Fil eau (pas de stockage),Annuelle
+La tuque,-72.79881,47.444583,Fil de l'eau,294.0,34.75,6.0,947.7245303263387,Francis,0.91,0.0,0.0,1078.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Beaumont,-72.8366667,47.5555556,Fil de l'eau,270.0,37.8,6.0,800.1318617308132,Francis,0.91,0.0,1.0,1078.0,La tuque,0.5714,Fil eau (pas de stockage),Annuelle
+Romaine-1,-63.260058,50.386552,Fil de l'eau,270.0,61.5,2.0,491.7883637955242,Francis,0.91,0.0,0.0,6414.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Romaine-4,-60.6866667,50.2155556,Reservoir,245.0,88.54,2.0,309.9675046009362,Francis,0.91,65212920000.0,0.0,14163.0,original,1.0,Pluriannuel,Semestrielle
+McCormick,-68.3277778,49.1925,Fil de l'eau,235.0,37.8,7.0,696.4110648397818,Francis,0.91,0.0,0.0,1015.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Rocher-de-Grand-Mere,-72.674857,46.613888,Fil de l'eau,230.0,24.3,3.0,1015.6146334172098,Kaplan,0.95,0.0,0.0,1015.0,Shawinigan-3,0.9762,Fil eau (pas de stockage),Annuelle
+Paugan,-75.933041,45.809852,Fil de l'eau,216.0,40.54,8.0,596.8423161997976,Francis,0.91,0.0,0.0,1046.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Rapide-Blanc,-72.975,47.7972222,Reservoir,204.0,32.92,6.0,694.1605702014588,Francis,0.91,466000000.0,0.0,1015.0,Rocher-de-Grand-Mere,0.811,Annuel,Annuelle
+Shawinigan-2,-72.7652778,46.5375,Fil de l'eau,200.0,44.2,8.0,506.87086263490426,Francis,0.91,0.0,1.0,1015.0,La Gabelle,0.9932,Fil eau (pas de stockage),Annuelle
+Shawinigan-3,-72.765263,46.533833,Fil de l'eau,194.0,44.2,3.0,491.6647367558571,Francis,0.91,0.0,0.0,1015.0,Shawinigan-2,0.9932,Fil eau (pas de stockage),Annuelle
+Manic-1,-68.3294444,49.1905556,Fil de l'eau,184.0,36.58,3.0,563.4608189771939,Francis,0.91,0.0,0.0,1025.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Rapides-des-Iles,-79.354675,47.576852,Fil de l'eau,176.0,26.22,4.0,720.2568010146127,Kaplan,0.95,0.0,0.0,1126.0,Premiere-Chute,0.35,Fil eau (pas de stockage),Annuelle
+Chelsea,-75.777591,45.512561,Fil de l'eau,152.0,28.35,5.0,575.3046867555872,Kaplan,0.95,0.0,0.0,1075.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Sarcelle,-76.632538,52.667721,Fil de l'eau,150.0,8.7,3.0,1850.0326530763268,Kaplan,0.95,0.0,0.0,5956.0,original,1.0,Fil eau (pas de stockage),Annuelle
+La Gabelle,-72.739444,46.448889,Fil de l'eau,131.0,17.38,5.0,808.7772208327923,Kaplan,0.95,0.0,0.0,1015.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Premiere-Chute,-79.4525,47.6,Fil de l'eau,131.0,22.26,4.0,631.4711634354866,Kaplan,0.95,0.0,0.0,1126.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Les Cedres,-74.0283333,45.3116667,Fil de l'eau,113.0,9.14,12.0,1326.5989068120618,Kaplan,0.95,0.0,1.0,1232.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Rapides-des-Quinze,-79.294055,47.591099,Fil de l'eau,109.0,25.9,6.0,451.57939894782004,Kaplan,0.95,0.0,0.0,1050.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Rapides-Farmer,-75.763311,45.498885,Fil de l'eau,104.0,20.12,5.0,554.6419961906761,Kaplan,0.95,0.0,0.0,1050.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Chute-des-Chats,-76.238333,45.475,Fil de l'eau,92.0,16.16,4.0,610.8771186148069,Kaplan,0.95,0.0,0.0,1050.0,Rapides-Farmer,0.4536,Fil eau (pas de stockage),Annuelle
+Rapide-des-Coeurs,-73.375177,47.786596,Fil de l'eau,76.0,22.69,6.0,359.4069605447531,Kaplan,0.95,0.0,0.0,1015.0,Rapide-Blanc,0.6831,Fil eau (pas de stockage),Annuelle
+Chute-Allard,-73.721943,47.89111,Fil de l'eau,62.0,17.83,6.0,373.1193169075979,Kaplan,0.95,0.0,0.0,1015.0,Rapide-des-Coeurs,0.5698,Fil eau (pas de stockage),Annuelle
+Bryson,-76.6311111,45.6611111,Fil de l'eau,61.0,18.29,3.0,357.8685361718996,Kaplan,0.95,0.0,0.0,1050.0,Chute-des-Chats,0.35,Fil eau (pas de stockage),Annuelle
+Rapide-2,-78.576111,47.933611,Fil de l'eau,61.0,20.43,4.0,320.3825514725425,Kaplan,0.95,0.0,0.0,1126.0,Rapide-7,0.35,Fil eau (pas de stockage),Annuelle
+Rapide-7,-78.310155,47.768449,Reservoir,61.0,20.73,4.0,315.7460456625202,Kaplan,0.95,2145000000.0,1.0,1126.0,original,1.0,Annuel,Annuelle
+Mercier,-75.982777,46.717777,Reservoir,55.0,18.0,5.0,327.86689796186016,Kaplan,0.95,3664000000.0,0.0,1009.0,original,1.0,Annuel,Annuelle
+Riviere-des-Prairies,-73.6572222,45.5894444,Fil de l'eau,54.0,7.93,6.0,730.6812445693639,Kaplan,0.95,0.0,0.0,1012.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Hart-Jaune,-67.9127778,51.785,Reservoir,51.0,39.6,3.0,144.26619931207085,Francis,0.91,1430000000.0,0.0,6412.0,original,1.0,Annuel,Annuelle
+Chute-Hemmings,-72.4508333,45.8625,Fil de l'eau,29.0,14.64,6.0,221.89449170950147,Francis,0.91,0.0,0.0,1134.0,Drummondville,0.35,Fil eau (pas de stockage),Annuelle
+Lac-Robertson,-59.063056,50.999167,Reservoir,22.0,38.5,2.0,61.31536793052969,Kaplan,0.95,605000000.0,0.0,1015.0,original,1.0,Annuel,Annuelle
+Sept-Chutes,-70.828527,47.12276,Fil de l'eau,22.0,124.97,4.0,19.719981868695722,Francis,0.91,0.0,0.0,1134.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Drummondville,-72.483802,45.886924,Fil de l'eau,16.0,9.1,4.0,188.66267055547598,Kaplan,0.95,0.0,0.0,1134.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Chute-Bell,-74.684444,45.773889,Fil de l'eau,10.0,17.8,2.0,60.281962853048846,Kaplan,0.95,0.0,0.0,1064.0,Carillon,0.35,Fil eau (pas de stockage),Annuelle
+Churchill-Falls,-63.9658,53.5289,Reservoir,5428.0,312.4,11.0,1946.338682351087,Francis,0.91,32640000000.0,1.0,10602.0,original,1.0,Annuel,Annuelle
+Gull-Island,-61.37,52.96,Fil de l'eau,2250.0,79.0,12.0,3190.3991955089386,Francis,0.91,0.0,0.0,1020.0,original,1.0,Fil eau (pas de stockage),Annuelle
+Caniapisca-1,-68.201707,55.558693,Reservoir,800.7609,65,7,197.1,Francis,0.91,6760000000.0,0,14586,Caniapisca-2,1.0,Annuel,Annuelle
+Caniapisca-2,-69.812952,54.846315,Reservoir,617.3237,48,4,345.0,Kaplan,0.95,4840000000.0,0,14586,Caniapisca-3,1.0,Annuel,Annuelle
+Caniapisca-3,-68.207048,55.552633,Fil de l'eau,553.0191,43,4,345.0,Kaplan,0.95,0.0,1,14586,Caniapisca-4,1.0,Fil de l'eau,Annuelle
+Caniapisca-4,-68.194949,55.562825,Fil de l'eau,540.1582,42,4,345.0,Kaplan,0.95,0.0,0,14586,Caniapisca-5,1.0,Fil de l'eau,Annuelle
+Caniapisca-5,-69.810522,54.841163,Fil de l'eau,437.2709,34,4,345.0,Kaplan,0.95,0.0,0,14586,Caniapisca-6,1.0,Fil de l'eau,Annuelle
+Caniapisca-6,-68.218386,55.55362,Fil de l'eau,411.5491,32,4,345.0,Kaplan,0.95,0.0,0,14586,Caniapisca-7,1.0,Fil de l'eau,Annuelle
+Caniapisca-7,-69.306058,57.471904,Fil de l'eau,282.94,22,4,345.0,Kaplan,0.95,0.0,0,14586,original,1.0,Fil de l'eau,Annuelle
+AlaBaleine-1,-66.61382,56.93458,Fil de l'eau,104.0056,20,2,279.0,Kaplan,0.95,0.0,0,99104,AlaBaleine-2,1.0,Fil de l'eau,Annuelle
+AlaBaleine-2,-66.526647,56.88624,Fil de l'eau,72.8039,14,2,279.0,Kaplan,0.95,0.0,1,99104,AlaBaleine-3,1.0,Fil de l'eau,Annuelle
+AlaBaleine-3,-66.620461,56.93897,Fil de l'eau,72.8039,14,2,279.0,Kaplan,0.95,0.0,0,99104,original,1.0,Fil de l'eau,Annuelle
+GdeBaleine-1,-77.399508,55.192107,Reservoir,236.1039,58,2,228.0,Francis,0.91,830000000.0,0,99102,GdeBaleine-2,1.0,Annuel,Annuelle
+GdeBaleine-2,-77.585144,55.286747,Reservoir,219.8209,54,2,228.0,Francis,0.91,770000000.0,0,99102,GdeBaleine-3,1.0,Annuel,Annuelle
+GdeBaleine-3,-77.390937,55.177903,Fil de l'eau,191.2361,45,2,228.0,Kaplan,0.95,0.0,0,99102,original,1.0,Fil de l'eau,Annuelle
+PteBaleine-1,-76.530455,55.915393,Reservoir,95.6092,105,1,102.0,Francis,0.91,2680000000.0,0,99103,PteBaleine-2,1.0,Annuel,Annuelle
+PteBaleine-2,-76.520969,55.913182,Reservoir,65.5606,72,1,102.0,Francis,0.91,1840000000.0,0,99103,original,1.0,Annuel,Annuelle
+Magpie-1,-64.828977,51.665654,Reservoir,141.1375,93,1,170.0,Francis,0.91,4460000000.0,0,99105,Magpie-2,1.0,Annuel,Annuelle
+Magpie-2,-64.845304,51.671901,Reservoir,121.4086,80,1,170.0,Francis,0.91,3840000000.0,1,99105,original,1.0,Annuel,Annuelle
+PtMecatina-1,-62.739674,52.624822,Reservoir,358.6016,78,3,171.7,Francis,0.91,1890000000.0,0,99106,PtMecatina-2,1.0,Annuel,Annuelle
+PtMecatina-2,-63.11169,52.678277,Reservoir,239.0677,52,3,171.7,Francis,0.91,840000000.0,1,99106,PtMecatina-3,1.0,Annuel,Annuelle
+PtMecatina-3,-62.684595,52.6289,Reservoir,220.779,46,2,257.5,Kaplan,0.95,780000000.0,1,99106,PtMecatina-4,1.0,Annuel,Annuelle
+PtMecatina-4,-62.946625,52.665279,Reservoir,220.779,46,2,257.5,Kaplan,0.95,780000000.0,0,99106,original,1.0,Annuel,Annuelle
