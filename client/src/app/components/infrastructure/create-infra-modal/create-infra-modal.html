@@ -64,6 +64,15 @@
                     <i class="fas fa-exclamation-triangle"></i> {{ warnMsg }}
                 </div>
                 }
+
+                @if (field.key === 'nom' && isWind) {
+                <div class="implementation-type-row mt-2">
+                    <span class="text-muted small">Type d'implémentation : </span>
+                    <span class="fw-bold small" [style.color]="isOffshore ? 'var(--hq-color-blue)' : 'var(--hq-color-green)'">
+                        {{ isOffshore ? 'Offshore' : 'Onshore' }}
+                    </span>
+                </div>
+                }
             </div>
             }
         </ng-container>

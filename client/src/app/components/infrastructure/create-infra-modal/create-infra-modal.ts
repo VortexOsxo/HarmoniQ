@@ -44,6 +44,10 @@ export class CreateInfraModal {
   protectedAreaName: string | null = null;
 
   isSolar = false;
+  isWind = false;
+  isOffshore = false;
+
+
 
   constructor(
     public activeModal: NgbActiveModal,
@@ -61,7 +65,16 @@ export class CreateInfraModal {
       this.protectedAreaName = name;
       this.cdr.detectChanges();
     });
+
+    if (this.isOffshore && this.isWind) {
+        if (this.form) {
+            this.form.patchValue({ is_offshore: true });
+        }
+    }
   }
+
+
+
 
   get isEditMode(): boolean {
     return !!this.editData;
@@ -93,8 +106,10 @@ export class CreateInfraModal {
     const required = this.schema.required || [];
     const typeKey = this.type.split('/').pop() || '';
     this.isSolar = typeKey.toLowerCase() === 'solaire';
+    this.isWind = typeKey.toLowerCase() === 'eolienneparc';
 
     for (const key in props) {
+
       if (!required.includes(key)) continue;
       if (key === 'id') continue;
 
@@ -152,7 +167,14 @@ export class CreateInfraModal {
         if (controls['angle_panneau']) controls['angle_panneau'][0] = 45;
       }
     }
+
+    if (this.isWind) {
+      const offshoreVal = this.editData ? (this.editData.is_offshore === true) : this.isOffshore;
+      controls['is_offshore'] = [offshoreVal, []];
+    }
+
     this.form = this.fb.group(controls);
+
   }
 
   // ── Event handlers ────────────────────────────────────────────────────────

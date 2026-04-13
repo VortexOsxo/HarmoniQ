@@ -182,7 +182,7 @@ export class InfrastruturesService {
   hydroPuissanceOverrides = signal<Map<number, number>>(new Map());
 
   constructor(
-    http: HttpClient,
+    private http: HttpClient,
     private modalService: NgbModal,
     private openApiService: OpenApiService,
     private storageService: LocalStorageService,
@@ -216,7 +216,7 @@ export class InfrastruturesService {
     });
   }
 
-  createInfra(className: string, type: string, lat: number, lon: number) {
+  createInfra(className: string, type: string, lat: number, lon: number, isOffshore: boolean = false) {
     const schemas = this.openApiService.getOpenApiSchemas();
 
     const modalRef = this.modalService.open(CreateInfraModal, { centered: true, scrollable: true });
@@ -225,6 +225,8 @@ export class InfrastruturesService {
     modalRef.componentInstance.type = type;
     modalRef.componentInstance.lat = lat;
     modalRef.componentInstance.lon = lon;
+    modalRef.componentInstance.isOffshore = isOffshore;
+
 
     modalRef.result.then(result => {
       if (!result) return;
@@ -331,6 +333,20 @@ export class InfrastruturesService {
 
   refreshService(type: string) {
     this.infrasContainer.get(type)?.refresh();
+  }
+
+  async checkOffshore(lat: number, lon: number): Promise<boolean> {
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/meteo/offshore-check`, {
+          params: { latitude: lat, longitude: lon }
+        })
+      );
+      return res.is_offshore || false;
+    } catch (e) {
+      console.error('Offshore check failed', e);
+      return false;
+    }
   }
 
   overrideHydroPuissance(id: number, puissance: number): void {

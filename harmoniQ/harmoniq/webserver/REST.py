@@ -30,6 +30,8 @@ from harmoniq.core import meteo
 from harmoniq.core.meteo_era5 import Era5WindMapService
 from harmoniq.db.engine import get_db
 from harmoniq.core.fausse_données import production_aleatoire
+from harmoniq.core.offshore import is_offshore_quebec
+
 
 from harmoniq.modules.eolienne import InfraParcEolienne
 from harmoniq.modules.reseau import InfraReseau
@@ -175,6 +177,15 @@ def get_meteo_data(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=weather_data.csv"},
     )
+
+
+@meteo_router.get("/offshore-check")
+def check_offshore(latitude: float, longitude: float, db: Session = Depends(get_db)):
+    try:
+        is_off = is_offshore_quebec(latitude, longitude, db)
+        return {"is_offshore": is_off}
+    except Exception as e:
+        return {"is_offshore": False, "error": str(e)}
 
 
 @meteo_router.get("/wind-map/years")

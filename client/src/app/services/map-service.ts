@@ -230,7 +230,6 @@ export class MapService {
       if (type === 'hydro') {
         return;
       }
-
       // Check if drop is on water and type is blocked
       const isOnWater = self.isPixelWater(map, x, y);
       const blockedLabel = WATER_BLOCKED_TYPES[type];
@@ -239,14 +238,15 @@ export class MapService {
         self.showWaterBlockedToast(`Impossible d'ajouter des ${blockedLabel} dans une zone d'eau.`);
         return;
       }
-
       const latlng = map.containerPointToLatLng([x, y]);
+
 
       const lat = parseFloat(latlng.lat.toFixed(6));
       const lng = parseFloat(latlng.lng.toFixed(6));
 
-      infrasService.createInfra(className, type, lat, lng);
+      infrasService.createInfra(className, type, lat, lng, isOnWater);
     });
+
 
     this._map = map;
 
