@@ -250,7 +250,8 @@ export class MapService {
 
     this._map = map;
 
-    this.clusterGroup = (L as any).markerClusterGroup({
+    const LeafletInstance = (window as any).L || L;
+    this.clusterGroup = LeafletInstance.markerClusterGroup({
       maxClusterRadius: 70,
       disableClusteringAtZoom: 8,
       spiderfyOnMaxZoom: true,
