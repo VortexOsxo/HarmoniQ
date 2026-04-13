@@ -147,6 +147,8 @@ export class TutorialService {
 
     /** Called on simulation page init. If the user has never completed the tutorial, show welcome. */
     autoStart(): void {
+        // Don't restart if the tutorial is already in progress
+        if (this.state$.value.active) return;
         const completed = localStorage.getItem(this.STORAGE_KEY);
         if (!completed) {
             this.updateState({ active: true, currentStep: 0, showWelcome: true });
