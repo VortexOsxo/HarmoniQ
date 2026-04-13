@@ -171,14 +171,18 @@ def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
     # The turbine cut-in/cut-out values are in m/s, so convert input wind speed from
     # km/h to m/s before using the power curve.
     vitesse_vent_ms = meteo["vitesse_vent_kmh"].values / 3.6
-    # ERA5/Open-Meteo wind input is handled as 100 m reference wind speed.
-    # Using 10 m here was over-amplifying hub-height wind and inflating production.
+    # Reference wind height for ERA5/Open-Meteo
     v_ref_height_m = 100.0
-    # Default roughness remains unchanged for existing onshore parks.
-    # Optional override is used by the 2035 site-selection backend:
-    # - onshore  -> z0 ~= 0.03
-    # - offshore -> z0 = 0.0
-    roughness_z0 = float(getattr(parc, "surface_roughness_z0_m", 0.03))
+    
+    # Determine roughness length (z0)
+    # Onshore default is 0.03m (grass/brush).
+    # Offshore default is 0.0002m (calm sea).
+    roughness_z0 = float(getattr(parc, "surface_roughness_z0_m", 0.0))
+    if roughness_z0 <= 0:
+        # If no explicit roughness is set, choose based on offshore flag
+        is_offshore = getattr(parc, "is_offshore", False)
+        roughness_z0 = 0.0002 if is_offshore else 0.03
+
     hub_height = float(getattr(parc, "hauteur_moyenne"))
     vitesse_vents = adjust_wind_speed(
         vitesse_vent_ms,
@@ -186,6 +190,7 @@ def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
         hub_height,
         z0=roughness_z0,
     )
+
 
     cut_in = float(turbine_data["cut_in_wind_speed"])
     cut_out = float(turbine_data["cut_out_wind_speed"])
