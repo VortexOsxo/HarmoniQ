@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum, UniqueConstraint
+from sqlalchemy import Column, Integer, BigInteger, String, Float, Boolean, Table, Enum, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql.schema import ForeignKey
