@@ -47,7 +47,7 @@ export const CYCLE_DE_VIE_DATA: Record<string, CycleDeVieData> = {
 };
 
 export const IMPACTS_ENVIRONNEMENTAUX_DATA: Record<string, ImpactItem[]> = {
-    hydro: [
+    hydro_reservoir: [
         {
             icon: 'fa-solid fa-cloud',
             title: 'Émissions moyennes',
@@ -58,30 +58,67 @@ export const IMPACTS_ENVIRONNEMENTAUX_DATA: Record<string, ImpactItem[]> = {
         {
             icon: 'fa-solid fa-map-location-dot',
             title: 'Impact sur le territoire',
-            value: 'Majeur',
+            value: 'Impact élevé',
             colorClass: 'impact-orange',
-            description: 'Inondation de vastes étendues de terres pour créer le réservoir, modifiant complètement et durablement le paysage local.'
+            description: 'Inondation de grandes surfaces et fragmentation du territoire.'
         },
         {
             icon: 'fa-solid fa-fish',
             title: 'Impact sur la faune',
-            value: 'Obstacles migratoires',
+            value: 'Impact très important',
             colorClass: 'impact-teal',
-            description: 'Les barrages bloquent la migration des poissons (ex: saumons) et inondent les habitats terrestres de nombreux animaux.'
+            description: 'Poissons très touchés, habitats perturbés.'
         },
         {
             icon: 'fa-solid fa-leaf',
             title: 'Impact sur la flore',
-            value: 'Immersion',
+            value: 'Impact majeur',
             colorClass: 'impact-green',
-            description: 'Destruction de la végétation terrestre locale par noyade lors de la mise en eau initiale du réservoir.'
+            description: 'Végétation inondée et milieux naturels modifiés.'
         },
         {
             icon: 'fa-solid fa-water',
             title: 'Qualité des eaux et sols',
-            value: 'Altération',
+            value: 'Impact fort et durable',
             colorClass: 'impact-blue',
-            description: 'Modification de la température et baisse de l\'oxygénation de l\'eau. La rétention des sédiments appauvrit les sols en aval.'
+            description: 'Qualité de l’eau modifiée, érosion et contamination possibles.'
+        }
+    ],
+    hydro_fil_eau: [
+        {
+            icon: 'fa-solid fa-cloud',
+            title: 'Émissions moyennes',
+            value: 'Faibles à modérées',
+            colorClass: 'impact-blue',
+            description: 'Les émissions (dont méthane et CO₂) proviennent surtout de la décomposition végétale initiale et de la machinerie de construction.'
+        },
+        {
+            icon: 'fa-solid fa-map-location-dot',
+            title: 'Impact sur le territoire',
+            value: 'Impact faible',
+            colorClass: 'impact-orange',
+            description: 'Modification locale du cours d’eau.'
+        },
+        {
+            icon: 'fa-solid fa-fish',
+            title: 'Impact sur la faune',
+            value: 'Surtout sur les poissons',
+            colorClass: 'impact-teal',
+            description: 'Effets plus limités sur les autres espèces.'
+        },
+        {
+            icon: 'fa-solid fa-leaf',
+            title: 'Impact sur la flore',
+            value: 'Impact local',
+            colorClass: 'impact-green',
+            description: 'Coupe d’arbres et baisse possible de la végétation aquatique.'
+        },
+        {
+            icon: 'fa-solid fa-water',
+            title: 'Qualité des eaux et sols',
+            value: 'Impact modéré et localisé',
+            colorClass: 'impact-blue',
+            description: 'Sédiments, transparence et stabilité des rives affectés.'
         }
     ],
     eolienneparc: [
