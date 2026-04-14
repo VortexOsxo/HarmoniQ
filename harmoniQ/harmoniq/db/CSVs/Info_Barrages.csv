@@ -62,24 +62,24 @@ Drummondville,-72.483802,45.886924,Fil de l'eau,16.0,9.1,4.0,188.66267055547598,
 Chute-Bell,-74.684444,45.773889,Fil de l'eau,10.0,17.8,2.0,60.281962853048846,Kaplan,0.95,0.0,0.0,1064.0,Carillon,0.35,Fil eau (pas de stockage),Annuelle
 Churchill-Falls,-63.9658,53.5289,Reservoir,5428.0,312.4,11.0,1946.338682351087,Francis,0.91,32640000000.0,1.0,10602.0,original,1.0,Annuel,Annuelle
 Gull-Island,-61.37,52.96,Fil de l'eau,2250.0,79.0,12.0,3190.3991955089386,Francis,0.91,0.0,0.0,1020.0,original,1.0,Fil eau (pas de stockage),Annuelle
-Caniapisca-1,-68.201707,55.558693,Reservoir,800.7609,65,7,197.1,Francis,0.91,6760000000.0,0,14586,Caniapisca-2,1.0,Annuel,Annuelle
-Caniapisca-2,-69.812952,54.846315,Reservoir,617.3237,48,4,345.0,Kaplan,0.95,4840000000.0,0,14586,Caniapisca-3,1.0,Annuel,Annuelle
-Caniapisca-3,-68.207048,55.552633,Fil de l'eau,553.0191,43,4,345.0,Kaplan,0.95,0.0,1,14586,Caniapisca-4,1.0,Fil de l'eau,Annuelle
-Caniapisca-4,-68.194949,55.562825,Fil de l'eau,540.1582,42,4,345.0,Kaplan,0.95,0.0,0,14586,Caniapisca-5,1.0,Fil de l'eau,Annuelle
-Caniapisca-5,-69.810522,54.841163,Fil de l'eau,437.2709,34,4,345.0,Kaplan,0.95,0.0,0,14586,Caniapisca-6,1.0,Fil de l'eau,Annuelle
-Caniapisca-6,-68.218386,55.55362,Fil de l'eau,411.5491,32,4,345.0,Kaplan,0.95,0.0,0,14586,Caniapisca-7,1.0,Fil de l'eau,Annuelle
-Caniapisca-7,-69.306058,57.471904,Fil de l'eau,282.94,22,4,345.0,Kaplan,0.95,0.0,0,14586,original,1.0,Fil de l'eau,Annuelle
+Caniapisca-1,-68.201707,55.558693,Reservoir,800.7609,65,7,197.1,Francis,0.91,6760000000.0,0,99116,Caniapisca-2,1.0,Annuel,Annuelle
+Caniapisca-2,-69.812952,54.846315,Reservoir,617.3237,48,4,345.0,Kaplan,0.95,4840000000.0,0,99117,Caniapisca-3,1.0,Annuel,Annuelle
+Caniapisca-3,-68.207048,55.552633,Fil de l'eau,553.0191,43,4,345.0,Kaplan,0.95,0.0,1,99118,Caniapisca-4,1.0,Fil de l'eau,Annuelle
+Caniapisca-4,-68.194949,55.562825,Fil de l'eau,540.1582,42,4,345.0,Kaplan,0.95,0.0,0,99119,Caniapisca-5,1.0,Fil de l'eau,Annuelle
+Caniapisca-5,-69.810522,54.841163,Fil de l'eau,437.2709,34,4,345.0,Kaplan,0.95,0.0,0,99120,Caniapisca-6,1.0,Fil de l'eau,Annuelle
+Caniapisca-6,-68.218386,55.55362,Fil de l'eau,411.5491,32,4,345.0,Kaplan,0.95,0.0,0,99121,Caniapisca-7,1.0,Fil de l'eau,Annuelle
+Caniapisca-7,-69.306058,57.471904,Fil de l'eau,282.94,22,4,345.0,Kaplan,0.95,0.0,0,99122,original,1.0,Fil de l'eau,Annuelle
 AlaBaleine-1,-66.61382,56.93458,Fil de l'eau,104.0056,20,2,279.0,Kaplan,0.95,0.0,0,99104,AlaBaleine-2,1.0,Fil de l'eau,Annuelle
-AlaBaleine-2,-66.526647,56.88624,Fil de l'eau,72.8039,14,2,279.0,Kaplan,0.95,0.0,1,99104,AlaBaleine-3,1.0,Fil de l'eau,Annuelle
-AlaBaleine-3,-66.620461,56.93897,Fil de l'eau,72.8039,14,2,279.0,Kaplan,0.95,0.0,0,99104,original,1.0,Fil de l'eau,Annuelle
+AlaBaleine-2,-66.526647,56.88624,Fil de l'eau,72.8039,14,2,279.0,Kaplan,0.95,0.0,1,99110,AlaBaleine-3,1.0,Fil de l'eau,Annuelle
+AlaBaleine-3,-66.620461,56.93897,Fil de l'eau,72.8039,14,2,279.0,Kaplan,0.95,0.0,0,99111,original,1.0,Fil de l'eau,Annuelle
 GdeBaleine-1,-77.399508,55.192107,Reservoir,236.1039,58,2,228.0,Francis,0.91,830000000.0,0,99102,GdeBaleine-2,1.0,Annuel,Annuelle
-GdeBaleine-2,-77.585144,55.286747,Reservoir,219.8209,54,2,228.0,Francis,0.91,770000000.0,0,99102,GdeBaleine-3,1.0,Annuel,Annuelle
-GdeBaleine-3,-77.390937,55.177903,Fil de l'eau,191.2361,45,2,228.0,Kaplan,0.95,0.0,0,99102,original,1.0,Fil de l'eau,Annuelle
+GdeBaleine-2,-77.585144,55.286747,Reservoir,219.8209,54,2,228.0,Francis,0.91,770000000.0,0,99107,GdeBaleine-3,1.0,Annuel,Annuelle
+GdeBaleine-3,-77.390937,55.177903,Fil de l'eau,191.2361,45,2,228.0,Kaplan,0.95,0.0,0,99108,original,1.0,Fil de l'eau,Annuelle
 PteBaleine-1,-76.530455,55.915393,Reservoir,95.6092,105,1,102.0,Francis,0.91,2680000000.0,0,99103,PteBaleine-2,1.0,Annuel,Annuelle
-PteBaleine-2,-76.520969,55.913182,Reservoir,65.5606,72,1,102.0,Francis,0.91,1840000000.0,0,99103,original,1.0,Annuel,Annuelle
+PteBaleine-2,-76.520969,55.913182,Reservoir,65.5606,72,1,102.0,Francis,0.91,1840000000.0,0,99109,original,1.0,Annuel,Annuelle
 Magpie-1,-64.828977,51.665654,Reservoir,141.1375,93,1,170.0,Francis,0.91,4460000000.0,0,99105,Magpie-2,1.0,Annuel,Annuelle
-Magpie-2,-64.845304,51.671901,Reservoir,121.4086,80,1,170.0,Francis,0.91,3840000000.0,1,99105,original,1.0,Annuel,Annuelle
+Magpie-2,-64.845304,51.671901,Reservoir,121.4086,80,1,170.0,Francis,0.91,3840000000.0,1,99112,original,1.0,Annuel,Annuelle
 PtMecatina-1,-62.739674,52.624822,Reservoir,358.6016,78,3,171.7,Francis,0.91,1890000000.0,0,99106,PtMecatina-2,1.0,Annuel,Annuelle
-PtMecatina-2,-63.11169,52.678277,Reservoir,239.0677,52,3,171.7,Francis,0.91,840000000.0,1,99106,PtMecatina-3,1.0,Annuel,Annuelle
-PtMecatina-3,-62.684595,52.6289,Reservoir,220.779,46,2,257.5,Kaplan,0.95,780000000.0,1,99106,PtMecatina-4,1.0,Annuel,Annuelle
-PtMecatina-4,-62.946625,52.665279,Reservoir,220.779,46,2,257.5,Kaplan,0.95,780000000.0,0,99106,original,1.0,Annuel,Annuelle
+PtMecatina-2,-63.11169,52.678277,Reservoir,239.0677,52,3,171.7,Francis,0.91,840000000.0,1,99113,PtMecatina-3,1.0,Annuel,Annuelle
+PtMecatina-3,-62.684595,52.6289,Reservoir,220.779,46,2,257.5,Kaplan,0.95,780000000.0,1,99114,PtMecatina-4,1.0,Annuel,Annuelle
+PtMecatina-4,-62.946625,52.665279,Reservoir,220.779,46,2,257.5,Kaplan,0.95,780000000.0,0,99115,original,1.0,Annuel,Annuelle
