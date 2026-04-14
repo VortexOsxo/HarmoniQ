@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { MapPage } from './map-page';
 import { TutorialService, TutorialState } from '@app/services/tutorial-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 vi.mock('leaflet.markercluster', () => ({}));
 
@@ -29,6 +30,10 @@ const mockInfraDetailService = {
     closeDetail: vi.fn(),
 };
 
+const mockInfrasService = {
+    selectedInfraGroup: signal<unknown>(null),
+};
+
 const STUB_TEMPLATE = `
   <button class="sources-toggle-btn" (click)="toggleSourcesPanel()">Sources d'Énergie</button>
   <div *ngIf="showSourcesPanel" class="sources-panel open" data-testid="sources-panel">Panel ouvert</div>
@@ -43,6 +48,7 @@ async function renderComponent() {
         providers: [
             { provide: TutorialService, useValue: mockTutorialService },
             { provide: InfraDetailService, useValue: mockInfraDetailService },
+            { provide: InfrastruturesService, useValue: mockInfrasService },
         ],
         schemas: [NO_ERRORS_SCHEMA],
     });

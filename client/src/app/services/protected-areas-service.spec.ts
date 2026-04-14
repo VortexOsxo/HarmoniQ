@@ -42,8 +42,8 @@ describe('ProtectedAreasService', () => {
   });
 
   describe('initial state', () => {
-    it('should start with isVisible as false', () => {
-      expect(service.isVisible()).toBe(false);
+    it('should start with hasSelection as false', () => {
+      expect(service.hasSelection()).toBe(false);
     });
 
     it('should start with legendOpen as false', () => {
@@ -64,15 +64,15 @@ describe('ProtectedAreasService', () => {
     });
 
     it('should cache the result for the same coordinates', () => {
-      const first = service.checkProtectedArea(MOCK_LAT, MOCK_LNG);
-      const second = service.checkProtectedArea(MOCK_LAT, MOCK_LNG);
+      const first = service.checkProtectedAreaWithDetails(MOCK_LAT, MOCK_LNG);
+      const second = service.checkProtectedAreaWithDetails(MOCK_LAT, MOCK_LNG);
 
       expect(first).toBe(second);
     });
 
     it('should make separate requests for different coordinates', () => {
-      const first = service.checkProtectedArea(45.0, -73.0);
-      const second = service.checkProtectedArea(46.0, -74.0);
+      const first = service.checkProtectedAreaWithDetails(45.0, -73.0);
+      const second = service.checkProtectedAreaWithDetails(46.0, -74.0);
 
       expect(first).not.toBe(second);
     });
@@ -85,16 +85,12 @@ describe('ProtectedAreasService', () => {
   });
 
   describe('isLayerSelected', () => {
-    it('should return true for layers selected by default', () => {
-      const selectedLayers = service.selectedLayers();
-      const firstSelectedId = [...selectedLayers][0];
-
-      expect(service.isLayerSelected(firstSelectedId)).toBe(true);
+    it('should return false for a layer id that is not selected by default', () => {
+      const allIds = [...service.selectedLayers()];
+      expect(allIds.length).toBe(0);
     });
 
-    it('should return false for a layer id that is not selected', () => {
-      service.deselectAll();
-
+    it('should return false for a specific layer id that is not selected', () => {
       expect(service.isLayerSelected(999)).toBe(false);
     });
   });

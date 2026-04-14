@@ -1,12 +1,16 @@
 vi.mock('plotly.js-dist-min', () => ({
+    newPlot: vi.fn(),
+    purge: vi.fn(),
+    downloadImage: vi.fn(),
+    register: vi.fn(),
+    setPlotConfig: vi.fn(),
     default: {
         newPlot: vi.fn(),
         purge: vi.fn(),
         downloadImage: vi.fn(),
+        register: vi.fn(),
+        setPlotConfig: vi.fn(),
     },
-    newPlot: vi.fn(),
-    purge: vi.fn(),
-    downloadImage: vi.fn(),
 }));
 
 vi.mock('leaflet', () => ({
@@ -50,7 +54,6 @@ import { GraphService } from '@app/services/graph-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
-import { signal } from '@angular/core';
 
 const MOCK_SCENARIO: Scenario = {
     id: 1,
@@ -157,18 +160,18 @@ describe('SimulationTemporalGraphService', () => {
         it('should POST to both the réseau production and demande temporal endpoints', async () => {
             const generatePromise = service.generate(MOCK_SCENARIO);
 
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
 
             await generatePromise;
         });
 
         it('should store the simulation result in cachedSimulationResult', async () => {
             const generatePromise = service.generate(MOCK_SCENARIO);
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
             await generatePromise;
 
             expect(service.getCachedSimulationResult()).toEqual(MOCK_SIMULATION_RESPONSE);
@@ -176,9 +179,9 @@ describe('SimulationTemporalGraphService', () => {
 
         it('should store the demande result in cachedDemandeResult', async () => {
             const generatePromise = service.generate(MOCK_SCENARIO);
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
             await generatePromise;
 
             expect(service.getCachedDemandeResult()).toEqual(MOCK_DEMANDE_RESPONSE);
@@ -186,27 +189,27 @@ describe('SimulationTemporalGraphService', () => {
 
         it('should use cached data for the same scenario on repeated calls', async () => {
             const first = service.generate(MOCK_SCENARIO);
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
             await first;
 
             const second = service.generate(MOCK_SCENARIO);
-            httpMock.expectNone(RESEAU_ENDPOINT);
+            httpMock.expectNone(DEMANDE_ENDPOINT);
             await second;
         });
 
         it('should make new HTTP requests when scenario id changes', async () => {
             const first = service.generate(MOCK_SCENARIO);
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
             await first;
 
             const second = service.generate(MOCK_SCENARIO_2);
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
             await second;
         });
     });
@@ -218,14 +221,14 @@ describe('SimulationTemporalGraphService', () => {
 
         it('should return production nodes with averaged values from cached data', async () => {
             const generatePromise = service.generate(MOCK_SCENARIO);
-            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
-            await tick();
             httpMock.expectOne(DEMANDE_ENDPOINT).flush(MOCK_DEMANDE_RESPONSE);
+            await tick();
+            httpMock.expectOne(RESEAU_ENDPOINT).flush(MOCK_SIMULATION_RESPONSE);
             await generatePromise;
 
             const nodes = service.getProductionNodes();
             expect(nodes.length).toBeGreaterThan(0);
-            expect(nodes.find((n) => n.id === 'hydraulique')).toBeDefined();
+            expect(nodes.find((n) => n.id === 'hydro_fil' || n.id === 'hydro_res')).toBeDefined();
         });
     });
 });

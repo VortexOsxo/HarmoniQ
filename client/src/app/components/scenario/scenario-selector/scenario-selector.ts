@@ -7,11 +7,12 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ScenarioCreationModal } from '@app/components/scenario/scenario-creation-modal/scenario-creation-modal';
 import { WeatherLabels } from '@app/models/weather';
 import { ConsumptionLabels } from '@app/models/consumption';
+import { DeleteConfirmButtonComponent } from '@app/components/commons/delete-confirm-button/delete-confirm-button';
 import { TutorialService } from '@app/services/tutorial-service';
 
 @Component({
   selector: 'app-scenario-selector',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DeleteConfirmButtonComponent],
   templateUrl: './scenario-selector.html',
   styleUrl: './scenario-selector.css',
 })
@@ -49,8 +50,11 @@ export class ScenarioSelector {
     this.modalService.open(ScenarioCreationModal, options);
   }
 
-  deleteScenario(scenario: Scenario) {
-    this.scenariosService.deleteScenario(scenario);
+  deleteScenario() {
+    const scenario = this.selectedScenario;
+    if (scenario) {
+      this.scenariosService.deleteScenario(scenario);
+    }
   }
 
   compareScenarios(s1: Scenario, s2: Scenario): boolean {

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, Table, Enum, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql.schema import ForeignKey
@@ -196,6 +196,7 @@ class TurbineModel(str, PyEnum):
 
 
 class EolienneParcBase(BaseModel):
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom du parc éolien")
     latitude: float = Field(..., description="Latitude moyenne des éoliennes (degrés)")
     longitude: float = Field(
@@ -206,11 +207,53 @@ class EolienneParcBase(BaseModel):
     hauteur_moyenne: float = Field(
         ..., description="Hauteur moyenne des éoliennes du parc (m)", json_schema_extra={"suggestion": 80},)
     modele_turbine: TurbineModel = Field(
-        ..., description="Modèle de turbine utilisé dans le parc", json_schema_extra={"suggestion": TurbineModel.MM92}
+        ..., description="Modele de turbine utilise dans le parc", json_schema_extra={"suggestion": TurbineModel.MM92}
     )
+    is_offshore: bool = Field(False, description="Indique si le parc est situe en mer (offshore)")
+
     puissance_nominal: float = Field(
         ..., description="Puissance nominale des turbines dans le parc (kW)", json_schema_extra={"suggestion": 2000}
     )
+    weibull_k: Optional[float] = Field(
+        None, description="Coefficient de forme Weibull k (optionnel)"
+    )
+    weibull_c: Optional[float] = Field(
+        None, description="Coefficient d'echelle Weibull c en m/s (optionnel)"
+    )
+    weibull_ref_year: Optional[int] = Field(
+        None, description="Annee de reference utilisee pour le fit Weibull"
+    )
+    weibull_sample_count: Optional[int] = Field(
+        None, description="Nombre d'echantillons utilises pour estimer Weibull"
+    )
+    weibull_updated_at: Optional[str] = Field(
+        None, description="Horodatage ISO de la derniere mise a jour des coefficients"
+    )
+    weibull_ref_year_start: Optional[int] = Field(
+        None, description="Annee de debut utilisee pour le fit Weibull multi-annees"
+    )
+    weibull_ref_year_end: Optional[int] = Field(
+        None, description="Annee de fin utilisee pour le fit Weibull multi-annees"
+    )
+    weibull_granularity: Optional[str] = Field(
+        None, description="Granularite du fit Weibull (ex: annual_v1, seasonal_v1)"
+    )
+    weibull_weighting: Optional[str] = Field(
+        None, description="Strategie de ponderation temporelle du fit Weibull"
+    )
+    weibull_fit_details: Optional[str] = Field(
+        None, description="Details JSON du fit Weibull (annual + seasonal)"
+    )
+    surface_roughness_z0_m: Optional[float] = Field(
+        0.03, description="Longueur de rugosite de surface (m) - Onshore: 0.03, Offshore: 0.0001"
+    )
+    is_user_created: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EolienneParcCreate(EolienneParcBase):
+    pass
 
 
 class EolienneParcResponse(EolienneParcBase):
@@ -231,6 +274,85 @@ class EolienneParc(SQLBase):
     hauteur_moyenne = Column(Float)
     modele_turbine = Column(String)
     puissance_nominal = Column(Float)
+    weibull_k = Column(Float, nullable=True)
+    weibull_c = Column(Float, nullable=True)
+    weibull_ref_year = Column(Integer, nullable=True)
+    weibull_sample_count = Column(Integer, nullable=True)
+    weibull_updated_at = Column(String, nullable=True)
+    weibull_ref_year_start = Column(Integer, nullable=True)
+    weibull_ref_year_end = Column(Integer, nullable=True)
+    weibull_granularity = Column(String, nullable=True)
+    weibull_weighting = Column(String, nullable=True)
+    weibull_fit_details = Column(String, nullable=True)
+    is_offshore = Column(Boolean, default=False)
+
+
+
+class QuebecOffshoreMeshMetaBase(BaseModel):
+    grid_version: str
+    resolution_m: int
+    crs: str
+    origin_x: float
+    origin_y: float
+    source: str
+    generated_at: str
+
+
+class QuebecOffshoreMeshMetaCreate(QuebecOffshoreMeshMetaBase):
+    pass
+
+
+class QuebecOffshoreMeshMetaResponse(QuebecOffshoreMeshMetaBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QuebecOffshoreMeshMeta(SQLBase):
+    __tablename__ = "quebec_offshore_mesh_meta"
+
+    id = Column(Integer, primary_key=True, index=True)
+    grid_version = Column(String, unique=True, nullable=False, index=True)
+    resolution_m = Column(Integer, nullable=False)
+    crs = Column(String, nullable=False)
+    origin_x = Column(Float, nullable=False)
+    origin_y = Column(Float, nullable=False)
+    source = Column(String, nullable=False)
+    generated_at = Column(String, nullable=False)
+
+
+class QuebecOffshoreMeshPointBase(BaseModel):
+    grid_version: str
+    ix: int
+    iy: int
+    latitude: float
+    longitude: float
+    resolution_m: int
+
+
+class QuebecOffshoreMeshPointCreate(QuebecOffshoreMeshPointBase):
+    pass
+
+
+class QuebecOffshoreMeshPointResponse(QuebecOffshoreMeshPointBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QuebecOffshoreMeshPoint(SQLBase):
+    __tablename__ = "quebec_offshore_mesh_points"
+    __table_args__ = (
+        UniqueConstraint("grid_version", "ix", "iy", name="uq_qc_offshore_grid_ix_iy"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    grid_version = Column(String, nullable=False, index=True)
+    ix = Column(Integer, nullable=False, index=True)
+    iy = Column(Integer, nullable=False, index=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    resolution_m = Column(Integer, nullable=False)
 
 #-----#-----#-----#-----# Solaire Base #-----#-----#-----#-----#
 
@@ -251,6 +373,7 @@ class Solaire(SQLBase):
 
 
 class SolaireBase(BaseModel):
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom du parc solaire")
     latitude: float = Field(..., description="Latitude du parc solaire (degrés)")
     longitude: float = Field(..., description="Longitude du parc solaire (degrés)")
@@ -270,18 +393,15 @@ class SolaireBase(BaseModel):
     annee_commission: Optional[int] = None
     panneau_type: Optional[str] = None
     materiau_panneau: Optional[str] = None
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
-
-class SolaireResponse(SolaireBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 #-----#-----#-----#-----# Hydro Base #-----#-----#-----#-----#
 
 class HydroBase(BaseModel):
+    id: Optional[int] = None
     nom: str
     longitude: float
     latitude: float
@@ -296,11 +416,9 @@ class HydroBase(BaseModel):
     id_HQ: int
     annee_commission: Optional[int] = None
     materiau_conduite: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-class HydroResponse(HydroBase):
-    id: int
+    maintenance: Optional[str] = None
+    regulation: Optional[str] = None
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -323,6 +441,8 @@ class Hydro(SQLBase):
     id_HQ = Column(Integer)
     annee_commission = Column(Integer, nullable=True)
     materiau_conduite = Column(String, nullable=True)
+    maintenance = Column(String, nullable=True)
+    regulation = Column(String, nullable=True)
 
 
 #-----#-----#-----#-----# Thermique Base #-----#-----#-----#-----#
@@ -335,6 +455,7 @@ class TypeIntrantThermique(str, PyEnum):
 
 
 class ThermiqueBase(BaseModel):
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom de la centrale thermique")
     latitude: float = Field(
         ..., description="Latitude de la centrale thermique (degrés)"
@@ -355,12 +476,7 @@ class ThermiqueBase(BaseModel):
     )
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ThermiqueResponse(ThermiqueBase):
-    id: int
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -382,6 +498,7 @@ class Thermique(SQLBase):
 #-----#-----#-----#-----# Nucleaire Base #-----#-----#-----#-----#
 
 class NucleaireBase(BaseModel):
+    id: Optional[int] = None
     nom: str = Field(..., description="Nom de la centrale nucléaire")
     latitude: float = Field(
         ..., description="Latitude de la centrale nucléaire (degrés)"
@@ -398,12 +515,7 @@ class NucleaireBase(BaseModel):
     annee_commission: Optional[int] = None
     type_generateur: Optional[str] = None
     type_intrant: Optional[int] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class NucleaireResponse(NucleaireBase):
-    id: int
+    is_user_created: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -417,7 +529,6 @@ class Nucleaire(SQLBase):
     latitude = Column(Float)
     longitude = Column(Float)
     puissance_nominal = Column(Float)
-    type_intrant = Column(String)
     semaine_maintenance = Column(Integer)
     annee_commission = Column(Integer, nullable=True)
     type_generateur = Column(Integer, nullable=True)
@@ -525,6 +636,7 @@ class Line(SQLBase):
     capital_cost = Column(Float)
     length = Column(Float)
     s_nom = Column(Float)
+    nb_ligne = Column(Integer, nullable=True)
     reseau_type = Column(String, nullable=True)
 
     bus_from = relationship("Bus", back_populates="lines_from", foreign_keys=[bus0])
@@ -540,6 +652,7 @@ class LineBase(BaseModel):
     capital_cost: float
     length: float
     s_nom: float
+    nb_ligne: Optional[int] = None
     reseau_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -584,5 +697,5 @@ weather_schema = pa.DataFrameSchema(
     strict=True,
 )
 
-InfraPayload.update_forward_refs()
-SimulationInfraGroup.update_forward_refs()
+InfraPayload.model_rebuild()
+SimulationInfraGroup.model_rebuild()

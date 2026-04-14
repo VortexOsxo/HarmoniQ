@@ -1,13 +1,12 @@
+<button type="button" class="btn-close quiz-close-btn" aria-label="Close" (click)="close()"></button>
+
 <app-start-area *ngIf="!quizStarted" (started)="start()"></app-start-area>
-<app-result-area *ngIf="quizTerminated" (restartQuiz)="startNewQuiz()"(closeModal)="close()">
-</app-result-area>
+<app-result-area *ngIf="quizTerminated" (restartQuiz)="startNewQuiz()" (closeModal)="close()"></app-result-area>
 
 <div id="quizHeader" [hidden]="!quizStarted || quizTerminated">
-  <div id="headerLeft">
+  <div id="headerLeft" style="display: flex; align-items: center; gap: 0.75rem;">
     <span class="badge badge-category">{{questionAspect}}</span>
-  </div>
-  <div id="headerRight">
-    <span class="question-counter-text">{{currentQuestionIndex + 1}} / {{totalQuestions}}</span>
+    <span class="question-counter-text" style="color: #888; font-size: 0.9em; font-weight: 500;">Question {{currentQuestionIndex + 1}} / {{totalQuestions}}</span>
   </div>
 </div>
 
@@ -24,14 +23,14 @@
   <div id="optionBox" [hidden]="quizTerminated"></div>
 
   <div id="questonInformation" [hidden]="quizTerminated">
-  <h1>{{questionInformation}}</h1>
-</div>
-
-</div>
-
-<div id="quizButtons" [hidden]="!quizStarted || quizTerminated">
-  <div class="primary-actions">
-    <button class="quizButton" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
-    <button class="quizButton" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
+    <h1>{{questionInformation}}</h1>
   </div>
+
+  <div id="quizButtons" [hidden]="quizTerminated">
+    <div class="primary-actions">
+      <button class="hq-btn-blue hq-btn-lg" *ngIf="isOrderQuestion && !questionAnswered" (click)="validateOrder()">Valider</button>
+      <button class="hq-btn-blue hq-btn-lg" *ngIf="questionAnswered" (click)="changeQuestion()">{{nextQuestionButtonText}}</button>
+    </div>
+  </div>
+
 </div>

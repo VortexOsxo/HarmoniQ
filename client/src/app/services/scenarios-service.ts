@@ -1,10 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { effect, Injectable, signal } from '@angular/core';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
 import { LocalStorageService } from './local-storage-service';
 
 const SCENARIOS_KEY = 'harmoniq_local_scenarios';
+const LAST_SCENARIO_KEY = 'harmoniq_last_selected_scenario_id';
 
 @Injectable({
   providedIn: 'root',
@@ -15,11 +16,24 @@ export class ScenariosService {
 
   constructor(private storageService: LocalStorageService) {
     this.refreshScenarios();
+
+    effect(() => {
+      const selected = this.selectedScenario();
+      if (selected) {
+        this.storageService.saveObject(LAST_SCENARIO_KEY, selected.id);
+      }
+    });
   }
 
   refreshScenarios() {
     const loaded = this.storageService.loadElements<Scenario>(SCENARIOS_KEY);
-    this.scenarios.set([...this.getDefaultScenarios(), ...loaded]);
+    const scenarios = [...this.getDefaultScenarios(), ...loaded];
+    this.scenarios.set(scenarios);
+    if (scenarios.length > 0 && !this.selectedScenario()) {
+      const lastId = this.storageService.loadObject(LAST_SCENARIO_KEY);
+      const last = lastId != null ? scenarios.find(s => s.id === lastId) : null;
+      this.selectedScenario.set(last ?? scenarios[0]);
+    }
   }
 
   createScenario(scenario: Scenario) {
@@ -33,8 +47,9 @@ export class ScenariosService {
     this.storageService.deleteElement<Scenario>(SCENARIOS_KEY, scenario.id);
 
     this.scenarios.update(s => s.filter(item => item.id !== scenario.id));
-    if (this.selectedScenario()?.id === scenario.id)
-      this.selectedScenario.set(null);
+    if (this.selectedScenario()?.id === scenario.id) {
+      this.selectedScenario.set(this.getDefaultScenarios()[0]);
+    }
   }
 
   private getDefaultScenarios(): Scenario[] {
@@ -57,7 +72,7 @@ export class ScenariosService {
         "date_de_fin": "2050-12-31T00:00:00",
         "pas_de_temps": "PT1H",
         "weather": Weather.Typical,
-        "consomation": Consumption.Conservative,
+        "consomation": Consumption.Normal,
       },
     ]
   }

@@ -5,6 +5,8 @@ import { MapService } from '@app/services/map-service';
 import { ProtectedAreasService } from '@app/services/protected-areas-service';
 import { ReseauService } from '@app/services/reseau-service';
 import { InfraDetailService } from '@app/services/infra-detail-service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { InfrastruturesService } from '@app/services/infrastrutures-service';
 
 vi.mock('leaflet.markercluster', () => ({}));
 
@@ -65,12 +67,34 @@ const mockReseauService = {
   toggleBusGroup: vi.fn(),
   selectAll: vi.fn(),
   deselectAll: vi.fn(),
+  summaryOpen: signal(false),
+  newConnections: signal([] as any[]),
+  hasPendingInfras: signal(false),
+  pendingInfras: signal([] as any[]),
+  clearNewConnections: vi.fn(),
+  closeSummary: vi.fn(),
+  flyToInfra: vi.fn(),
+  connectNewInfras: vi.fn(),
+  isBusTypeSelected: vi.fn().mockReturnValue(true),
+  isLineGroupSelected: vi.fn().mockReturnValue(true),
+  toggleLineGroup: vi.fn(),
+  isLineTypeSelected: vi.fn().mockReturnValue(true),
 };
 
 const mockInfraDetailService = {
   isOpen: signal(false),
   selectedInfra: signal(null),
 };
+
+const mockModalService = {
+  open: vi.fn(),
+};
+
+const mockInfrastruturesService = {
+  selectedInfraGroup: signal(null),
+  getInfrasSignalByType: vi.fn().mockReturnValue(signal([])),
+};
+
 
 async function renderComponent() {
   return render(QuebecMap, {
@@ -79,6 +103,8 @@ async function renderComponent() {
       { provide: ProtectedAreasService, useValue: mockProtectedAreasService },
       { provide: ReseauService, useValue: mockReseauService },
       { provide: InfraDetailService, useValue: mockInfraDetailService },
+      { provide: NgbModal, useValue: mockModalService },
+      { provide: InfrastruturesService, useValue: mockInfrastruturesService },
     ],
     schemas: [NO_ERRORS_SCHEMA],
   });

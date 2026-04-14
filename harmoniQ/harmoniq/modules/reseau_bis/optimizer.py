@@ -1,30 +1,40 @@
-"""Optimisation LP-DC + écoulement de puissance AC.
+"""Optimisation LP-OPF (DC) et écoulement de puissance AC.
 
-Séquence normale :
-    1. network.optimize(solver_name)  → LP-OPF DC : dispatch optimal (minimise coûts)
-    2. network.pf()                   → AC power flow : tensions, Q, chargement MVA réel
+Séquence d'exécution normale :
 
-Règle de robustesse :
-    Si l'OPF est infaisable (ex. nouvelle centrale dépasse la capacité des lignes),
-    on relâche toutes les contraintes thermiques (s_nom → 99999), on relance,
-    puis on flague les lignes surchargées dans constraint_warnings.
-    La simulation retourne toujours un résultat.
+1. ``network.optimize(solver_name)`` — LP-OPF DC : dispatch optimal minimisant les coûts.
+2. ``network.pf()`` — AC power flow : tensions, Q, chargement MVA réel.
+
+Si l'OPF est infaisable (ex. nouvelle centrale dépassant la capacité des lignes),
+les contraintes thermiques sont relâchées (``s_nom → 99999``), l'optimisation est
+relancée, et les lignes surchargées sont signalées dans ``constraint_warnings``.
+La simulation retourne toujours un résultat.
 """
 
 import gc
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pypsa
+
+from .utils.reservoir_tracker import ReservoirDamFeed, water_value_cost
 
 logger = logging.getLogger(__name__)
 
 _RELAX_SNOM = 99_999.0   # MVA non-contraignant
 
+# Prime hivernale sur la valeur de l'eau ($/MWh), Jan à Déc.
+# Dupliquée depuis data_loader pour éviter un import circulaire.
+# En hiver (jan/fév/déc), la prime élève le coût de l'eau au-dessus du prix
+# import Ontario (~15 $/MWh), incitant le LP à importer plutôt qu'à dépléter
+# les réservoirs stratégiques.
+_WINTER_PREMIUM = [12.0, 12.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 5.0, 12.0]
+
 
 def get_optimizer_todo_list() -> List[str]:
-    """Liste actionnable des éléments à implémenter dans l'optimiseur."""
+    """Retourne la liste des tâches à implémenter dans l'optimiseur."""
     return [
         "Ajouter la logique de pilotage import/export via Links (limites horaires).",
         "Ajouter un mode journalier cohérent (agrégation des snapshots).",
@@ -36,28 +46,34 @@ def run_dispatch_and_flow(
     network: pypsa.Network,
     mode: str = "dc+ac",
     solver_name: str = "highs",
+    reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Dict[str, Any]:
-    """Exécute le dispatch LP-DC puis l'écoulement de puissance.
+    """Exécute le dispatch LP-OPF puis l'écoulement de puissance.
 
-    Modes disponibles :
-        "dc"    — LOPF seul (dispatch optimal, pas de pertes calculées)
-        "ac"    — LOPF puis Newton-Raphson PF (pertes + tensions + chargement MVA)
-        "dc+ac" — alias de "ac" (par défaut)
+    Args:
+        network: Réseau PyPSA construit par ``build_pypsa_network()``.
+        mode: Mode d'écoulement : ``"dc"`` (LOPF seul), ``"ac"`` ou ``"dc+ac"``
+            (LOPF puis Newton-Raphson PF, avec pertes et tensions AC).
+        solver_name: Nom du solveur LP (défaut : ``"highs"``).
+        reservoir_feed: Données de feed-forward hydraulique pré-chargées par
+            ``build_reservoir_feed_data()``. Optionnel.
 
-    Retourne un dict avec :
-        status              : "ok" | "ok_with_relaxation"
-        was_relaxed         : bool — True si les contraintes thermiques ont été relâchées
-        constraint_warnings : liste des lignes surchargées (après relâchement si applicable)
-        optimization_status : statut brut du solveur HiGHS
-        flow_mode           : mode d'écoulement effectivement utilisé
-        flow_status         : résultat du PF ("pf_done" | "lpf_done" | "lpf_fallback")
+    Returns:
+        Dict avec les clés suivantes :
+
+        - ``status`` — ``"ok"`` ou ``"ok_with_relaxation"``.
+        - ``was_relaxed`` — ``True`` si les contraintes thermiques ont été relâchées.
+        - ``constraint_warnings`` — liste des lignes surchargées.
+        - ``optimization_status`` — statut brut du solveur HiGHS.
+        - ``flow_mode`` — mode d'écoulement effectivement utilisé.
+        - ``flow_status`` — résultat du PF (``"pf_done"``, ``"lpf_done"``, etc.).
     """
     # Normaliser le mode
     effective_mode = "ac" if mode in ("ac", "dc+ac") else "dc"
 
     # --- Dispatch LP-OPF avec fallback ---
     opt_status, opt_detail, was_relaxed, original_snoms = _run_dispatch_with_fallback(
-        network, solver_name=solver_name
+        network, solver_name=solver_name, reservoir_feed=reservoir_feed
     )
 
     # --- Écoulement de puissance ---
@@ -89,125 +105,326 @@ def run_dispatch_and_flow(
 def _run_dispatch_with_fallback(
     network: pypsa.Network,
     solver_name: str = "highs",
+    reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Tuple[str, str, bool, Optional[pd.Series]]:
     """LP-OPF avec fallback automatique si infaisable.
 
     Séquence de relâchement :
-      1. OPF normal (vrais s_nom + vraies capacités d'interconnexion)
-      2. Si infaisable → relâcher contraintes thermiques des lignes (s_nom → 99999)
-         ET relâcher les capacités d'export des interconnexions (Link p_max_pu → 1.0)
-         afin qu'un surplus de production puisse toujours être évacué.
-      3. Si toujours infaisable → restaurer et retourner l'erreur.
 
-    Retourne (status, detail, was_relaxed, original_snoms).
-    original_snoms est la Series des s_nom AVANT relâchement (None si pas relâché).
+    1. OPF normal (vrais ``s_nom`` + vraies capacités d'interconnexion).
+    2. Si infaisable : relâche les contraintes thermiques (``s_nom → 99999``) et
+       les capacités d'export pour permettre l'évacuation d'un surplus.
+    3. Si toujours infaisable : restaure l'état original et retourne l'erreur.
+
+    Args:
+        network: Réseau PyPSA.
+        solver_name: Nom du solveur (défaut : ``"highs"``).
+        reservoir_feed: Données de feed-forward hydraulique (optionnel).
+
+    Returns:
+        Tuple ``(status, detail, was_relaxed, original_snoms)``.
+        ``original_snoms`` est la Series des ``s_nom`` avant relâchement, ou ``None``.
     """
-    # Premier essai avec les vrais s_nom
-    status, condition = _run_dispatch(network, solver_name)
+    # Premier essai avec les vrais s_nom.
+    status, condition = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
 
     if status == "ok":
         return status, condition, False, None
 
-    # Infaisable ou erreur → relâcher contraintes thermiques ET capacités d'export
+    # Infaisable ou erreur : relâcher contraintes thermiques + fallback interco ciblé.
     logger.warning(
-        "OPF infaisable (status=%s, %s) — relâchement des contraintes thermiques et d'export…",
+        "OPF infaisable (status=%s, %s) → relâchement des contraintes thermiques et fallback interco.",
         status, condition,
     )
     original_snoms = network.lines["s_nom"].copy() if len(network.lines) > 0 else None
-    original_link_pmax, original_gen_pmax, original_gen_pmin = _save_interco_limits(network)
+    original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin = _save_interco_limits(network)
 
     if original_snoms is not None:
         network.lines["s_nom"] = _RELAX_SNOM
-    _relax_interco_export(network)
 
-    status2, condition2 = _run_dispatch(network, solver_name)
+    fallback_modes = _build_interco_fallback_plan(network)
 
-    if status2 == "ok":
-        logger.info(
-            "OPF convergé après relâchement des contraintes thermiques + export interco. "
-            "Vérifier constraint_warnings pour les lignes/liens surchargés."
-        )
-        return status2, condition2, True, original_snoms
+    for mode in fallback_modes:
+        _restore_interco_limits(network, original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin)
 
-    # Si même sans contraintes ça ne converge pas → restaurer et retourner l'erreur
+        if mode == "export":
+            logger.warning("Fallback interco: relaxation EXPORT uniquement (surplus → évacuer).")
+            _relax_interco_for_surplus(network)
+        elif mode == "import":
+            logger.warning("Fallback interco: relaxation IMPORT uniquement (déficit → couvrir).")
+            _relax_interco_for_deficit(network)
+        else:
+            logger.warning("Fallback interco: relaxation IMPORT + EXPORT (secours ultime).")
+            _relax_interco_for_surplus(network)
+            _relax_interco_for_deficit(network)
+
+        status2, condition2 = _run_dispatch(network, solver_name, reservoir_feed=reservoir_feed)
+
+        if status2 == "ok":
+            logger.info(
+                "OPF convergé après relâchement des contraintes thermiques + fallback interco (%s). "
+                "Vérifier constraint_warnings pour les lignes/liens surchargés.",
+                mode,
+            )
+            return status2, condition2, True, original_snoms
+
+    # Si même sans contraintes ça ne converge pas → restaurer et retourner l’erreur
     logger.error("OPF toujours infaisable après relâchement : %s / %s", status2, condition2)
     if original_snoms is not None:
         network.lines["s_nom"] = original_snoms
-    _restore_interco_limits(network, original_link_pmax, original_gen_pmax, original_gen_pmin)
+    _restore_interco_limits(network, original_link_pmax, original_link_pmin, original_gen_pmax, original_gen_pmin)
     return status2, condition2, False, None
 
 
 def _save_interco_limits(
     network: pypsa.Network,
-) -> Tuple[Optional[pd.Series], Optional[pd.Series], Optional[pd.Series]]:
-    """Sauvegarde p_max_pu des Links et des market generators Étranger."""
+) -> Tuple[Optional[pd.Series], Optional[pd.Series], Optional[pd.Series], Optional[pd.Series]]:
+    """Sauvegarde les limites p_min_pu/p_max_pu des Links et des générateurs market_*."""
     link_pmax = network.links["p_max_pu"].copy() if len(network.links) > 0 else None
+    link_pmin = network.links["p_min_pu"].copy() if len(network.links) > 0 else None
     market_mask = (
         network.generators.index.str.startswith("market_")
         if len(network.generators) > 0 else pd.Series(dtype=bool)
     )
     gen_pmax = network.generators.loc[market_mask, "p_max_pu"].copy() if market_mask.any() else None
     gen_pmin = network.generators.loc[market_mask, "p_min_pu"].copy() if market_mask.any() else None
-    return link_pmax, gen_pmax, gen_pmin
+    return link_pmax, link_pmin, gen_pmax, gen_pmin
 
 
-def _relax_interco_export(network: pypsa.Network) -> None:
-    """Relâche les capacités d'interconnexion pour évacuer un surplus de production.
 
-    - Links : p_max_pu → 1.0 (export), p_min_pu → -1.0 (import)
-    - Générateurs market_*_import (p_max_pu > 0) : relâche uniquement p_max_pu → 1.0
-    - Générateurs market_*_export (p_max_pu = 0) : relâche uniquement p_min_pu → -1.0
-    Ne jamais croiser les champs : le générateur d'export ne doit jamais produire (p>0).
+
+def _relax_interco_for_surplus(network: pypsa.Network) -> None:
+    """Relâche uniquement les capacités d’export pour évacuer un surplus.
+
+    - Links : p_max_pu → 1.0 (export). p_min_pu inchangé (import limité).
+    - market_*_export : p_min_pu → -1.0 (puits d’export élargi).
+    - market_*_import : inchangé.
     """
     if len(network.links) > 0:
-        network.links["p_max_pu"] = 1.0   # export illimité (direction positive)
-        network.links["p_min_pu"] = -1.0  # import illimité (direction négative)
+        network.links["p_max_pu"] = 1.0
+    if len(network.generators) == 0:
+        return
+    market_indices = [idx for idx in network.generators.index if idx.startswith("market_")]
+    for idx in market_indices:
+        if network.generators.at[idx, "p_max_pu"] <= 0:
+            network.generators.at[idx, "p_min_pu"] = -1.0
+
+
+def _relax_interco_for_deficit(network: pypsa.Network) -> None:
+    """Relâche uniquement les capacités d’import pour couvrir un déficit.
+
+    - Links : p_min_pu → -1.0 (import). p_max_pu inchangé (export limité).
+    - market_*_import : p_max_pu → 1.0 (import élargi).
+    - market_*_export : inchangé.
+    """
+    if len(network.links) > 0:
+        network.links["p_min_pu"] = -1.0
     if len(network.generators) == 0:
         return
     market_indices = [idx for idx in network.generators.index if idx.startswith("market_")]
     for idx in market_indices:
         if network.generators.at[idx, "p_max_pu"] > 0:
-            # Générateur d'import : relâcher la capacité maximale d'import
             network.generators.at[idx, "p_max_pu"] = 1.0
-        else:
-            # Puits d'export : relâcher la capacité maximale d'export (direction négative)
-            network.generators.at[idx, "p_min_pu"] = -1.0
 
 
 def _restore_interco_limits(
     network: pypsa.Network,
     link_pmax: Optional[pd.Series],
+    link_pmin: Optional[pd.Series],
     gen_pmax: Optional[pd.Series],
     gen_pmin: Optional[pd.Series],
 ) -> None:
     """Restaure les capacités d'interconnexion originales."""
     if link_pmax is not None:
         network.links["p_max_pu"] = link_pmax
+    if link_pmin is not None:
+        network.links["p_min_pu"] = link_pmin
     if gen_pmax is not None:
         network.generators.loc[gen_pmax.index, "p_max_pu"] = gen_pmax
     if gen_pmin is not None:
         network.generators.loc[gen_pmin.index, "p_min_pu"] = gen_pmin
 
 
+
+
+def _build_interco_fallback_plan(network: pypsa.Network) -> List[str]:
+    """Détermine l’ordre de fallback interco selon le risque déficit/surplus."""
+    min_gap, max_gap = _estimate_supply_demand_gap(network)
+    tol = 1.0  # MW
+    modes: List[str] = []
+
+    has_deficit = min_gap < -tol
+    has_surplus = max_gap > tol
+
+    if has_deficit and has_surplus:
+        modes = ["export", "import", "both"]
+    elif has_deficit:
+        modes = ["import", "both"]
+    elif has_surplus:
+        modes = ["export", "both"]
+    else:
+        modes = ["export", "import", "both"]
+
+    logger.info(
+        "Fallback interco planifié : min_gap=%.1f MW, max_gap=%.1f MW → %s",
+        min_gap, max_gap, " → ".join(modes),
+    )
+    return modes
+
+
+def _estimate_supply_demand_gap(network: pypsa.Network) -> Tuple[float, float]:
+    """Estime l’écart offre-demande potentiel (MW) en ignorant import/export."""
+    if len(network.snapshots) == 0:
+        return 0.0, 0.0
+
+    # Demande
+    if hasattr(network, "loads_t") and hasattr(network.loads_t, "p_set") and not network.loads_t.p_set.empty:
+        demand = network.loads_t.p_set.sum(axis=1)
+    else:
+        demand = pd.Series(0.0, index=network.snapshots)
+
+    # Offre interne max (hors import/export)
+    if len(network.generators) == 0:
+        supply = pd.Series(0.0, index=network.snapshots)
+    else:
+        prod_mask = ~network.generators.carrier.isin(["import", "export"])
+        gens = network.generators.index[prod_mask]
+        if hasattr(network, "generators_t") and hasattr(network.generators_t, "p_max_pu") and not network.generators_t.p_max_pu.empty:
+            p_max_pu = network.generators_t.p_max_pu.reindex(index=network.snapshots, columns=gens).fillna(0.0)
+        else:
+            p_max_pu = pd.DataFrame(1.0, index=network.snapshots, columns=gens)
+        p_nom = network.generators.loc[gens, "p_nom"].fillna(0.0)
+        supply = p_max_pu.multiply(p_nom, axis=1).sum(axis=1)
+
+    gap = supply.reindex(demand.index, fill_value=0.0) - demand
+    if gap.empty:
+        return 0.0, 0.0
+    return float(gap.min()), float(gap.max())
+
+def _patch_zero_reactance_lines(network: pypsa.Network) -> None:
+    """Force x = max(x, 1e-4) sur les lignes avec réactance nulle.
+
+    x=0 donne B=1/x=∞ → matrice Kirchhoff singulière → crash linopy.
+    Typique pour les jeux de barres coupleurs (même emplacement géographique,
+    length=0). Une réactance de 1e-4 pu n'affecte pas le dispatch.
+    """
+    if len(network.lines) == 0:
+        return
+    zero_x = network.lines["x"] <= 0
+    if not zero_x.any():
+        return
+    logger.warning(
+        "Patch réactance nulle : %d ligne(s) avec x≤0 → x=1e-4. Lignes : %s",
+        zero_x.sum(), list(network.lines.index[zero_x]),
+    )
+    network.lines.loc[zero_x, "x"] = 1e-4
+    zero_r = zero_x & (network.lines["r"] <= 0)
+    if zero_r.any():
+        network.lines.loc[zero_r, "r"] = 1e-4
+
+
+def _update_reservoir_costs_and_pmax(
+    network: pypsa.Network,
+    chunk_start_idx: int,
+    chunk_end_idx: int,
+    reservoir_feed: List[ReservoirDamFeed],
+) -> None:
+    """Bilan hydraulique du chunk terminé → mise à jour coût + p_max_pu pour le prochain chunk.
+
+    Pour chaque barrage réservoir :
+        1. Applique le bilan V[t+1] = V[t] + apport×Δt − dispatch×Δt sur le chunk
+        2. Calcule le nouveau niveau [0-1] en fin de chunk
+        3. Écrit water_value_cost(niveau) dans generators_t.marginal_cost[gname][next_chunk_sns]
+        4. Écrit la contrainte de réserve dans generators_t.p_max_pu[gname][next_chunk_sns]
+
+    Ne fait rien si reservoir_feed est vide ou si le chunk est le dernier.
+    """
+    snapshots   = network.snapshots
+    n_total     = len(snapshots)
+    next_start  = chunk_end_idx
+    next_end    = min(next_start + (chunk_end_idx - chunk_start_idx), n_total)
+
+    if next_start >= n_total:
+        return  # dernier chunk : pas de prochain chunk à mettre à jour
+
+    chunk_sns = snapshots[chunk_start_idx:chunk_end_idx]
+    next_sns  = snapshots[next_start:next_end]
+
+    gen_p = network.generators_t.get("p", pd.DataFrame())
+    if gen_p.empty:
+        return
+
+    dt_seconds = (network.snapshot_weightings.generators.loc[chunk_sns] * 3600.0).values
+    mc_df   = network.generators_t.get("marginal_cost", pd.DataFrame())
+    pmax_df = network.generators_t.get("p_max_pu",      pd.DataFrame())
+
+    for dam in reservoir_feed:
+        if dam.nom not in gen_p.columns:
+            continue
+
+        dispatch_mw = gen_p[dam.nom].reindex(chunk_sns, fill_value=0.0).values
+        volume_current = dam.current_level * dam.volume_max_m3
+
+        for i in range(len(chunk_sns)):
+            apport_idx   = chunk_start_idx + i
+            inflow_m3    = dam.apport_m3s[apport_idx] * dt_seconds[i]
+            fraction     = float(np.clip(
+                (dispatch_mw[i] / dam.p_max_mw) if dam.p_max_mw > 0 else 0.0,
+                0.0, 1.0,
+            ))
+            discharge_m3 = dam.debit_max_m3s * fraction * dt_seconds[i]
+            volume_current = float(np.clip(
+                volume_current + inflow_m3 - discharge_m3, 0.0, dam.volume_max_m3
+            ))
+
+        dam.current_level = volume_current / dam.volume_max_m3  # persisté pour le chunk suivant
+
+        # Coût marginal pour le prochain chunk (avec prime hivernale)
+        new_cost = float(water_value_cost(np.array([dam.current_level]))[0])
+        if not mc_df.empty and dam.nom in mc_df.columns:
+            premium = np.array([_WINTER_PREMIUM[ts.month - 1] for ts in next_sns])
+            mc_df.loc[next_sns, dam.nom] = new_cost + premium
+
+        # Contrainte de réserve stratégique (p_max_pu) pour le prochain chunk.
+        # Multiplié par ratio_dispo pour être cohérent avec le bilan hydraulique :
+        # si 1 turbine sur 10 est en maintenance, le plafond max est 0.95 × 0.9 = 0.855.
+        new_pmax = float(np.clip(
+            np.interp(dam.current_level, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]) * dam.ratio_dispo,
+            0.0, dam.ratio_dispo,
+        ))
+        if not pmax_df.empty and dam.nom in pmax_df.columns:
+            pmax_df.loc[next_sns, dam.nom] = new_pmax
+
+        logger.debug(
+            "Feed-forward %s : chunk [%d:%d] → niveau=%.1f%% → coût=%.1f $/MWh, p_max_pu=%.2f",
+            dam.nom, chunk_start_idx, chunk_end_idx,
+            dam.current_level * 100, new_cost, new_pmax,
+        )
+
+
 def _run_dispatch(
     network: pypsa.Network,
     solver_name: str = "highs",
+    reservoir_feed: Optional[List[ReservoirDamFeed]] = None,
 ) -> Tuple[str, str]:
-    """LP-OPF DC via rolling horizon avec gc.collect() inter-chunks (PyPSA 1.x).
+    """LP-OPF DC via rolling horizon avec ``gc.collect()`` entre les chunks.
 
-    PyPSA 1.x n'a qu'une formulation : "kirchhoff" qui construit un tableau dense
-    (snapshots × lignes × cycles).  Le rolling horizon découpe l'année en blocs de
-    240h (~10 jours) :
-        240 × 302 × 63 × 8 bytes = 37 MB par chunk → faisable en RAM.
+    PyPSA 1.x utilise la formulation ``"kirchhoff"`` qui construit un tableau dense
+    (snapshots × lignes × cycles). Le rolling horizon découpe l'année en blocs de
+    240 h (~10 jours), soit ~37 MB par chunk, faisable en RAM.
 
-    Pourquoi ne pas utiliser optimize_with_rolling_horizon ?
-    La fragmentation du heap Python s'accumule chunk par chunk sans gc.collect().
-    Avec 25 chunks de 360h, HiGHS crashe avec "bad allocation" au chunk 19 et le
-    fallback (qui relance toute l'année) échoue immédiatement : le heap est saturé.
-    Ce loop custom appelle gc.collect() après chaque chunk et pré-alloue les
-    DataFrames résultats pour éviter la réallocation.
+    ``optimize_with_rolling_horizon`` n'est pas utilisé directement car la fragmentation
+    du heap Python s'accumule chunk par chunk. Sans ``gc.collect()``, HiGHS peut lever
+    ``"bad allocation"`` vers le chunk 19 sur une machine 16 Go. Ce loop custom appelle
+    ``gc.collect()`` après chaque chunk et pré-alloue les DataFrames résultats.
 
-    Avec horizon=240 et 8737 snapshots → ~37 itérations (≈ 10 jours/chunk).
+    Args:
+        network: Réseau PyPSA.
+        solver_name: Nom du solveur (défaut : ``"highs"``).
+        reservoir_feed: Données de feed-forward hydraulique (optionnel).
+
+    Returns:
+        Tuple ``(status, condition)`` — ``"ok"`` si tous les chunks ont convergé.
     """
     snapshots = network.snapshots
     horizon   = min(240, len(snapshots))
@@ -241,6 +458,7 @@ def _run_dispatch(
         )
 
         try:
+            _patch_zero_reactance_lines(network)
             status, condition = network.optimize(chunk_sns, solver_name=solver_name)
             ok = (status == "ok") or (str(condition).lower() in ("optimal", "ok"))
 
@@ -258,6 +476,11 @@ def _run_dispatch(
                     gen_chunks.append(
                         pd.DataFrame(0.0, index=chunk_sns, columns=gen_cols)
                     )
+                # Feed-forward hydraulique : mettre à jour le coût et le p_max_pu
+                # des barrages réservoirs pour le prochain chunk, basé sur le
+                # dispatch réel de ce chunk.
+                if reservoir_feed:
+                    _update_reservoir_costs_and_pmax(network, start, end, reservoir_feed)
                 if len(link_cols) > 0:
                     if "p0" in network.links_t and not network.links_t.p0.empty:
                         link_chunks.append(
@@ -295,14 +518,33 @@ def _run_dispatch(
     # Consolider et stocker dans le réseau
     gen_p   = pd.concat(gen_chunks,  axis=0) if gen_chunks  else pd.DataFrame(0.0, index=snapshots, columns=gen_cols)
     link_p0 = pd.concat(link_chunks, axis=0) if link_chunks else None
+    gen_p = gen_p.fillna(0.0)
     network.generators_t["p"] = gen_p
     if link_p0 is not None:
         network.links_t["p0"] = link_p0
 
-    # Évaluer la couverture : > 5% des heures sans dispatch → fallback
-    total_gen = gen_p.sum(axis=1)
-    n_total   = len(total_gen)
-    n_zero    = int((total_gen < 1.0).sum())
+    # Évaluer la couverture : > 5% des heures sans activité de dispatch → fallback.
+    # La somme absolue évite une annulation artificielle quand les exportations
+    # lorsque des exportations (p<0) compensent la production interne (p>0).
+    total_activity = gen_p.abs().sum(axis=1)
+    total_net = gen_p.sum(axis=1)
+    total_supply = gen_p.clip(lower=0).sum(axis=1)
+    n_total = len(total_activity)
+    n_zero = int((total_activity < 1.0).sum())
+
+    if n_total > 0:
+        logger.info(
+            "Dispatch stats: activity[min=%.2f, max=%.2f] MW | net[min=%.2f, max=%.2f] MW | supply[min=%.2f, max=%.2f] MW",
+            float(total_activity.min()), float(total_activity.max()),
+            float(total_net.min()), float(total_net.max()),
+            float(total_supply.min()), float(total_supply.max()),
+        )
+        if hasattr(network, "loads_t") and hasattr(network.loads_t, "p_set") and not network.loads_t.p_set.empty:
+            demand = network.loads_t.p_set.sum(axis=1).reindex(gen_p.index, fill_value=0.0)
+            logger.info(
+                "Demand stats: min=%.2f MW, max=%.2f MW",
+                float(demand.min()), float(demand.max()),
+            )
 
     if n_zero > int(0.05 * n_total):
         logger.warning(

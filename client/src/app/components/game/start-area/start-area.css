@@ -44,33 +44,4 @@
 .energyImage.fade-out {
   opacity: 0;
 }
-
-#start-area .quizButton {
-  width: 100%;
-  max-width: 250px;
-  height: auto;
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #4361ee, #3a56d4);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
-
-#start-area .quizButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
-  color: white;
-}
-
-#start-area .quizButton:active {
-  transform: translateY(0);
-}
+

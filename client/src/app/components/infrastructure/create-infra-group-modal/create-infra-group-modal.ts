@@ -12,14 +12,24 @@ import { InfrastruturesService } from '@app/services/infrastrutures-service';
 })
 export class CreateInfraGroupModal {
     name: string = '';
+    readonly nameMaxLength = 100;
+
     currentGroup: InfrastructureGroup | null = null;
 
     constructor(public activeModal: NgbActiveModal, private infrastructuresService: InfrastruturesService) {
         this.currentGroup = infrastructuresService.selectedInfraGroup();
     }
 
+    get nameExistsError(): string | null {
+        const nom = this.name.trim().toLowerCase();
+        if (!nom) return null;
+        const existing = this.infrastructuresService.infraGroups().find(g => g.nom.trim().toLowerCase() === nom);
+        if (existing) return "Un groupe d'infrastructures avec ce nom existe déjà.";
+        return null;
+    }
+
     create() {
-        if (!this.name) return;
+        if (!this.name || this.name.length > this.nameMaxLength || this.nameExistsError) return;
 
         const newGroup: InfrastructureGroup = {
             id: 0,
@@ -31,7 +41,7 @@ export class CreateInfraGroupModal {
             central_nucleaire: this.currentGroup?.central_nucleaire || []
         };
 
-        const created = this.infrastructuresService.createInfraGroup(newGroup);
+        this.infrastructuresService.createInfraGroup(newGroup);
         this.activeModal.close('created');
     }
 }

@@ -12,6 +12,7 @@ export class WindFarm extends Infra<WindFarm> {
     hauteur_moyenne!: number;
     modele_turbine!: string;
     puissance_nominal!: number;
+    is_offshore!: boolean;
 }
 
 
@@ -29,7 +30,8 @@ export class WindFarmFactory extends InfraFactory<WindFarm> {
             capacite_total: infra.capacite_total,
             hauteur_moyenne: infra.hauteur_moyenne,
             modele_turbine: infra.modele_turbine,
-            puissance_nominal: infra.puissance_nominal
+            puissance_nominal: infra.puissance_nominal,
+            is_offshore: infra.is_offshore
         };
     }
 
@@ -43,7 +45,8 @@ export class WindFarmFactory extends InfraFactory<WindFarm> {
             capacite_total: json.capacite_total,
             hauteur_moyenne: json.hauteur_moyenne,
             modele_turbine: json.modele_turbine,
-            puissance_nominal: json.puissance_nominal
+            puissance_nominal: json.puissance_nominal,
+            is_offshore: json.is_offshore
         });
     }
 
@@ -57,7 +60,9 @@ export class WindFarmFactory extends InfraFactory<WindFarm> {
             capacite_total: 0,
             hauteur_moyenne: 0,
             modele_turbine: '',
-            puissance_nominal: 0
+            puissance_nominal: 0,
+            is_offshore: false
         });
     }
 }
+

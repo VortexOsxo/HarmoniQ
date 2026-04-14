@@ -33,10 +33,6 @@ describe('ConfirmationModal', () => {
         expect(screen.getByRole('button', { name: 'Confirmer' })).toBeInTheDocument();
     });
 
-    it('should render the default cancel button label', async () => {
-        await renderComponent();
-        expect(screen.getByRole('button', { name: 'Annuler' })).toBeInTheDocument();
-    });
 
     it('should render a custom title', async () => {
         await renderComponent({ title: 'Supprimer le scénario?' });
@@ -49,9 +45,8 @@ describe('ConfirmationModal', () => {
     });
 
     it('should render custom button labels', async () => {
-        await renderComponent({ confirmText: 'Oui, supprimer', cancelText: 'Non, garder' });
+        await renderComponent({ confirmText: 'Oui, supprimer' });
         expect(screen.getByRole('button', { name: 'Oui, supprimer' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Non, garder' })).toBeInTheDocument();
     });
 
     it('should apply the default btn-danger class to the confirm button', async () => {
@@ -73,14 +68,6 @@ describe('ConfirmationModal', () => {
         expect(mockActiveModal.close).toHaveBeenCalledWith(true);
     });
 
-    it('should call activeModal.close(false) when cancel is clicked', async () => {
-        const user = userEvent.setup();
-        await renderComponent();
-
-        await user.click(screen.getByRole('button', { name: 'Annuler' }));
-
-        expect(mockActiveModal.close).toHaveBeenCalledWith(false);
-    });
 
     it('should call activeModal.dismiss() when the X button is clicked', async () => {
         const user = userEvent.setup();

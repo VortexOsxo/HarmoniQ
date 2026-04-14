@@ -3,6 +3,7 @@
 import pandas as pd
 from pathlib import Path
 from pathlib import Path
+import itertools
 
 from harmoniq.db.engine import engine, get_db
 from harmoniq.db.schemas import SQLBase
@@ -16,6 +17,9 @@ import argparse
 CURRENT_DIR = Path(__file__).parent
 CSV_DIR = CURRENT_DIR / ".." / "db" / "CSVs"
 
+
+
+id_gen = itertools.count(1)
 
 def init_db(reset=False):
     if reset:
@@ -41,6 +45,7 @@ def fill_thermique():
         CRUD.create_thermique(
             db,
             schemas.ThermiqueBase(
+                id=next(id_gen),
                 nom=row["nom"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
@@ -68,6 +73,7 @@ def fill_solaire():
         CRUD.create_solaire(
             db,
             schemas.SolaireBase(
+                id=next(id_gen),
                 nom=row["nom"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
@@ -119,6 +125,7 @@ def fill_parc_eoliennes():
                     )
 
             eolienne_parc = schemas.EolienneParcBase(
+                id=next(id_gen),
                 nom=project_name,
                 latitude=average_lat,
                 longitude=average_lon,
@@ -155,6 +162,7 @@ def fill_hydro():
             continue
 
         db_hydro = schemas.HydroBase(
+            id=next(id_gen),
             nom=row["Nom"],
             puissance_nominal=row["Puissance_Installee_MW"],
             type_barrage=row["Type"],
@@ -167,6 +175,8 @@ def fill_hydro():
             nb_turbines_maintenance=row["nb_turbines_maintenance"],
             volume_reservoir=row["Volume_reservoir"],
             id_HQ=row["id_HQ"],
+            maintenance=row.get("Maintenance"),
+            regulation=row.get("Regulation"),
         )
         count += 1
         CRUD.create_hydro(db, db_hydro)
@@ -237,11 +247,11 @@ BUS_TYPE_CSV_MAP = {
 
 
 def fill_buses():
-    """Remplit la table bus à partir du fichier CSV bus_new_2026.csv"""
+    """Remplit la table bus à partir du fichier CSV bus_db_03_26.csv"""
     db = next(get_db())
 
-    file_path = CSV_DIR / "bus_new_2026.csv"
-    buses_df = pd.read_csv(file_path)
+    file_path = CSV_DIR / "bus_db_03_26.csv"
+    buses_df = pd.read_csv(file_path, sep=";", decimal=",")
 
     count = 0
     for _, row in buses_df.iterrows():
@@ -280,11 +290,11 @@ def fill_buses():
 
 
 def fill_lines():
-    """Remplit la table line à partir du fichier lines_new_2026.csv"""
+    """Remplit la table line à partir du fichier lines_db_03_26.csv"""
     db = next(get_db())
 
-    file_path = CSV_DIR / "lines_new_2026.csv"
-    lines_df = pd.read_csv(file_path)
+    file_path = CSV_DIR / "lines_db_03_26.csv"
+    lines_df = pd.read_csv(file_path, sep=";", decimal=",")
 
     count = 0
     for _, row in lines_df.iterrows():
@@ -330,6 +340,8 @@ def fill_lines():
             csv_category = row['type']  # 'Bus', 'Eolienne', 'Solaire', etc.
             reseau_type = LINE_RESEAU_TYPE_MAP.get(csv_category, 'Transport')
 
+            nb_ligne = int(row["nb_ligne"])
+
             db_line = schemas.LineCreate(
                 name=line_name,
                 bus0=row["bus0"],
@@ -338,6 +350,7 @@ def fill_lines():
                 length=float(row["length"]),
                 capital_cost=float(row["capital_cost"]),
                 s_nom=float(row["s_nom"]),
+                nb_ligne=nb_ligne,
                 reseau_type=reseau_type,
             )
             count += 1

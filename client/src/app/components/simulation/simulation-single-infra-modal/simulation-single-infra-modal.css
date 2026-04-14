@@ -1,0 +1,305 @@
+/* ── Host Element ── */
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+/* ── Wrapper ── */
+.sim-modal-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    /* --type-color is bound from the component */
+}
+
+/* ── Header ── */
+.sim-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    background: #fff;
+    border-bottom: 2px solid var(--type-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.sim-header-bg {
+    position: absolute;
+    inset: 0;
+    background-color: var(--type-color);
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.sim-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.sim-modal-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #000;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 500px;
+}
+
+.sim-modal-subtitle {
+    font-size: 0.78rem;
+    color: #555;
+    font-weight: 500;
+}
+
+.sim-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-size: 1.1rem;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.sim-close-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #000;
+}
+
+/* ── Body ── */
+.sim-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+    min-height: 0;
+}
+
+/* ── Loading ── */
+.sim-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 0;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.sim-spinner {
+    font-size: 2rem;
+    color: var(--type-color);
+}
+
+/* ── Error ── */
+.sim-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #e74c3c;
+    color: #c0392b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.sim-error i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* ── Info ── */
+.sim-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #eef7ff;
+    border: 1px solid #c9e1f5;
+    border-left: 4px solid #3498db;
+    color: #1a517a;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.sim-info i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* ── Grouped stat cards ── */
+.sim-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+    animation: simFadeIn 0.2s ease;
+}
+
+.sim-group-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.sim-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background-color: var(--type-color);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.sim-group-header i {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.sim-group-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.sim-group-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    gap: 8px;
+}
+
+.sim-group-row + .sim-group-row {
+    border-top: 1px solid #f1f3f5;
+}
+
+.sim-group-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    color: #777;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.sim-group-label i {
+    color: var(--type-color);
+    font-size: 0.8rem;
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sim-group-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+/* ── Chart section ── */
+.sim-chart-section {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    animation: simFadeIn 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sim-chart-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background-color: var(--type-color);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.sim-chart-header i {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.sim-granularity {
+    margin-left: auto;
+}
+
+/* ── Override generic GranularitySelector styles for this header ── */
+.sim-chart-header ::ng-deep app-granularity-selector label.text-muted {
+    color: #fff !important;
+}
+
+.sim-chart-header ::ng-deep app-granularity-selector div.mb-2 {
+    margin-bottom: 0 !important;
+}
+
+.sim-chart-canvas {
+    width: 100%;
+    min-height: 200px;
+    flex: 1;
+    padding: 10px 16px 16px 16px;
+}
+
+/* ── Animation ── */
+@keyframes simFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .sim-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sim-modal-title {
+        max-width: 240px;
+    }
+}

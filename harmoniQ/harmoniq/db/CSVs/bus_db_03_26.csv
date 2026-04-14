@@ -1,0 +1,252 @@
+id;name;v_nom;type;x;y;control;type
+Bus1;Radisson;735;line;53,72727131;-77,73567098;PQ;Bus
+Bus2;La Grande-3;735;line;53,73496905;-76,00990978;PQ;Bus
+Bus3;EDU de Francisco;735;line;53,87262661;-73,46735113;PQ;Bus
+Bus4;Le Moyne;735;line;53,48424072;-75,03447529;PQ;Bus
+Bus5;Churchill Falls;735;line;53,52823505;-63,9723632;PQ;Bus
+Bus6;Muskeg;735;line;52,20781044;-76,58279662;PQ;Bus
+Bus7;Nemiscau;735;line;51,70999653;-76,05437543;PQ;Bus
+Bus8;Albanel;735;line;51,67009326;-75,60440183;PQ;Bus
+Bus9;Montagnais;735;line;51,89281898;-65,72843937;PQ;Bus
+Bus10;Romaine-4;735;line;51,34954239;-63,49518587;PQ;Bus
+Bus11;Romaine-3;735;line;51,11346818;-63,40261722;PQ;Bus
+Bus12;Romaine-2;735;line;50,65816721;-63,2083785;PQ;Bus
+Bus13;Romaine-1;735;line;50,44876015;-63,2688033;PQ;Bus
+Bus14;Arnaud;735;line;50,23670554;-66,60331322;PQ;Bus
+Bus15;Abitibi;735;line;49,82685471;-75,46806651;PQ;Bus
+Bus16;Chibougamau;735;line;49,78592534;-74,65395975;PQ;Bus
+Bus17;Micoua;735;line;49,76753336;-68,73957697;PQ;Bus
+Bus18;Outarde;735;line;49,72617424;-68,6954295;PQ;Bus
+Bus19;Chamouchouane;735;line;48,66646166;-72,71156121;PQ;Bus
+Bus20;Perigny;735;line;48,22217885;-70,31409053;PQ;Bus
+Bus21;Manicouagan;735;line;49,29208393;-68,39107913;PQ;Bus
+Bus22;La Verendrye;735;line;47,4964222;-74,93348363;PQ;Bus
+Bus23;Saguenay;735;line;48,37372043;-71,2872817;PQ;Bus
+Bus24;Bergeronnes;735;line;48,3415901;-69,46898902;PQ;Bus
+Bus25;Jacques-Cartier;735;line;46,79275426;-71,72296948;PQ;Bus
+Bus26;Laurentides;735;line;46,85501872;-71,31509997;PQ;Bus
+Bus27;Grand-Brule;735;line;46,06057743;-74,56629509;PQ;Bus
+Bus28;Bout-de-l'ile;735;line;45,66502073;-73,52551622;PQ;Bus
+Bus29;Chenier;735;line;45,58777809;-74,06020405;PQ;Bus
+Bus30;Duvernay;735;line;45,66247734;-73,67171026;PQ;Bus
+Bus31;Judith-Jasmin;735;line;45,7153728;-73,7245911;PQ;Bus
+Bus32;Carignan;735;line;45,97245888;-73,15708015;PQ;Bus
+Bus33;Nicolet;735;line;46,08108058;-72,25420817;PQ;Bus
+Bus34;Appalaches;735;line;46,1342528;-71,396854;PQ;Bus
+Bus35;Levis;735;line;46,7098964;-71,19219123;PQ;Bus
+Bus36;Boucherville;735;line;45,60060191;-73,3647318;PQ;Bus
+Bus37;Cantons;735;line;45,56594725;-71,95160989;PQ;Bus
+Bus38;Monteregie;735;line;45,50972209;-72,71600385;PQ;Bus
+Bus39;Chateauguay;735;line;45,25325276;-73,86963782;PQ;Bus
+Bus40;Hertel;735;line;45,41009444;-73,42777939;PQ;Bus
+Eolienne41;Baie-des-Sables;735;prod;48,70250872;-67,87630973;PQ;Eolienne
+Eolienne42;Carleton;735;prod;48,19519094;-66,13116115;PQ;Eolienne
+Eolienne43;Cote-de-Beaupre;735;prod;47,29520572;-70,87928212;PQ;Eolienne
+Eolienne44;De l'Erable;735;prod;46,0958034;-71,65495405;PQ;Eolienne
+Eolienne45;Des Cultures (Parc Eolien);735;prod;45,2188069;-73,61496244;PQ;Eolienne
+Eolienne46;Des Moulins I;735;prod;46,17404862;-71,34928657;PQ;Eolienne
+Eolienne47;Des Moulins II;735;prod;48,0399533;-67,53435188;PQ;Eolienne
+Eolienne48;Frampton;735;prod;46,44076424;-70,73697159;PQ;Eolienne
+Eolienne49;Gros-Morne;735;prod;49,20603742;-65,45831434;PQ;Eolienne
+Eolienne50;Jardin d'Eole (Saint-Ulric Saint-Leandre);735;prod;48,73162671;-67,64798272;PQ;Eolienne
+Eolienne51;La Dune-du-Nord aux Iles-de-la-Madeleine;735;prod;47,56860171;-61,63650236;PQ;Eolienne
+Eolienne52;La Mitis;735;prod;48,36488267;-67,83969508;PQ;Eolienne
+Eolienne53;Lac Alfred;735;prod;48,39158756;-67,75237757;PQ;Eolienne
+Eolienne54;L'Anse-a-Valleau;735;prod;49,09338943;-64,65407089;PQ;Eolienne
+Eolienne55;Le Granit;735;prod;45,69762025;-70,58115239;PQ;Eolienne
+Eolienne56;Le Nordais (Cap-Chat);735;prod;49,06309965;-66,75644579;PQ;Eolienne
+Eolienne57;Le Nordais (Matane);735;prod;48,77906347;-67,58343378;PQ;Eolienne
+Eolienne58;Le Plateau I;735;prod;48,05183714;-67,44680326;PQ;Eolienne
+Eolienne59;Le Plateau II;735;prod;48,04661487;-67,49354652;PQ;Eolienne
+Eolienne60;Le Projet Eoliennes Belle-Riviere (Val-eo);735;prod;48,46219976;-71,72820408;PQ;Eolienne
+Eolienne61;Massif du Sud;735;prod;46,57650626;-70,45873705;PQ;Eolienne
+Eolienne62;Mesgi'g Ugju's'n;735;prod;48,30983309;-66,72563879;PQ;Eolienne
+Eolienne63;Mont Copper;735;prod;48,95328685;-65,55081265;PQ;Eolienne
+Eolienne64;Mont Louis;735;prod;49,19140616;-65,64075004;PQ;Eolienne
+Eolienne65;Mont Miller;735;prod;48,98081189;-65,48556708;PQ;Eolienne
+Eolienne66;Mont Sainte-Marguerite;735;prod;46,32439253;-71,13985879;PQ;Eolienne
+Eolienne67;Montagne-Seche;735;prod;49,18043868;-64,94718725;PQ;Eolienne
+Eolienne68;Monteregie;735;prod;45,29086987;-73,63498163;PQ;Eolienne
+Eolienne69;Mont-Rothery;735;prod;48,98041524;-65,38545127;PQ;Eolienne
+Eolienne70;New Richmond;735;prod;48,20783551;-65,70049189;PQ;Eolienne
+Eolienne71;Nicolas-Riou;735;prod;48,13370232;-68,8811174;PQ;Eolienne
+Eolienne72;Pierre-De Saurel;735;prod;45,97247214;-72,92943438;PQ;Eolienne
+Eolienne73;Raglan Mine;735;prod;61,680372;-73,717759;PQ;Eolienne
+Eolienne74;Riviere-du-Moulin;735;prod;47,96124969;-71,0758263;PQ;Eolienne
+Eolienne75;Roncevaux;735;prod;48,12888992;-67,4107155;PQ;Eolienne
+Eolienne76;Saint-Damase;735;prod;48,63006172;-67,86603533;PQ;Eolienne
+Eolienne77;Saint-Philemon;735;prod;46,66574648;-70,36603565;PQ;Eolienne
+Eolienne78;Saint-Robert-Bellarmin;735;prod;45,68432761;-70,54092598;PQ;Eolienne
+Eolienne79;Seigneurie de Beaupre;735;prod;47,3319793;-70,88162137;PQ;Eolienne
+Eolienne80;SNEEC;735;prod;48,9879154;-64,45282805;PQ;Eolienne
+Eolienne81;Temiscouata;735;prod;47,6334653;-69,11578403;PQ;Eolienne
+Eolienne82;Vents du Kempt;735;prod;48,31584216;-67,11386415;PQ;Eolienne
+Eolienne83;Viger-Denonville;735;prod;47,91918116;-69,22116755;PQ;Eolienne
+Solaire1;Varennes;735;prod;45,6833;-73,4333;PQ;Solaire
+Solaire2;La Prairie;735;prod;45,4167;-73,4999;PQ;Solaire
+Thermique1;Becancour;735;prod;46,3365;-72,084;PQ;Thermique
+Thermique2;Autres;735;prod;45,3002;-73,3451;PQ;Thermique
+Hydro1;Robert-Bourassa;735;prod;53,7819444;-77,5327778;PQ;Reservoir
+Hydro2;La Grande-4;735;prod;53,8866667;-73,4652778;PQ;Reservoir
+Hydro3;La Grande-3;735;prod;53,727721;-75,988438;PQ;Reservoir
+Hydro4;La grande-2-A;735;prod;53,7794444;-77,5491667;PQ;Reservoir
+Hydro5;Beauharnois_Francis;735;prod;45,313216;-73,877952;PQ;Fil de l'eau
+Hydro7;Manic-5;735;prod;50,6397222;-68,7269444;PQ;Reservoir
+Hydro8;La grande-1;735;prod;53,7344444;-78,5738889;PQ;Fil de l'eau
+Hydro9;Rene-Levesque;735;prod;49,740833;-68,594444;PQ;Fil de l'eau
+Hydro10;Jean-Lesage;735;prod;49,321666;-68,347221;PQ;Fil de l'eau
+Hydro11;Bersimis-1;735;prod;49,295;-69,5516667;PQ;Reservoir
+Hydro12;Manic-5-PA;735;prod;50,639805;-68,732893;PQ;Reservoir
+Hydro13;Outardes-3;735;prod;49,557075;-68,722249;PQ;Fil de l'eau
+Hydro14;Sainte-Marguerite-3;735;prod;50,705;-66,7797222;PQ;Reservoir
+Hydro15;Laforge-1;735;prod;54,1705556;-72,6152778;PQ;Reservoir
+Hydro16;Bersimis-2;735;prod;49,1752778;-69,2291667;PQ;Fil de l'eau
+Hydro17;Outardes-4;735;prod;49,703333;-68,903611;PQ;Reservoir
+Hydro18;Bernard-Landry;735;prod;52,181885;-76,050483;PQ;Reservoir
+Hydro19;Carillon;735;prod;45,5686111;-74,3836111;PQ;Fil de l'eau
+Hydro20;Romaine-2;735;prod;50,623732;-63,190935;PQ;Reservoir
+Hydro21;Toulnustouc;735;prod;49,970556;-68,159444;PQ;Reservoir
+Hydro22;Outardes-2;735;prod;49,144563;-68,389785;PQ;Fil de l'eau
+Hydro23;Eastmain-1;735;prod;52,181667;-76,051389;PQ;Reservoir
+Hydro24;Brisay;735;prod;54,4544444;-70,5191667;PQ;Reservoir
+Hydro25;Romaine-3;735;prod;51,114188;-63,400227;PQ;Reservoir
+Hydro26;Peribonka;735;prod;49,5075;-71,181943;PQ;Fil de l'eau
+Hydro27;Laforge-2;735;prod;54,5916667;-71,2708333;PQ;Fil de l'eau
+Hydro28;Trenche;735;prod;47,752433;-72,878752;PQ;Fil de l'eau
+Hydro29;La tuque;735;prod;47,444583;-72,79881;PQ;Fil de l'eau
+Hydro30;Beaumont;735;prod;47,5555556;-72,8366667;PQ;Fil de l'eau
+Hydro31;Romaine-1;735;prod;50,386552;-63,260058;PQ;Fil de l'eau
+Hydro32;Romaine-4;735;prod;50,2155556;-60,6866667;PQ;Reservoir
+Hydro33;McCormick;735;prod;49,1925;-68,3277778;PQ;Fil de l'eau
+Hydro34;Rocher-de-Grand-Mere;735;prod;46,613888;-72,674857;PQ;Fil de l'eau
+Hydro35;Paugan;735;prod;45,809852;-75,933041;PQ;Fil de l'eau
+Hydro36;Rapide-Blanc;735;prod;47,7972222;-72,975;PQ;Reservoir
+Hydro37;Shawinigan-2;735;prod;46,5375;-72,7652778;PQ;Fil de l'eau
+Hydro38;Shawinigan-3;735;prod;46,533833;-72,765263;PQ;Fil de l'eau
+Hydro39;Manic-1;735;prod;49,1905556;-68,3294444;PQ;Fil de l'eau
+Hydro40;Rapides-des-Iles;735;prod;47,576852;-79,354675;PQ;Fil de l'eau
+Hydro41;Chelsea;735;prod;45,512561;-75,777591;PQ;Fil de l'eau
+Hydro42;Sarcelle;735;prod;52,667721;-76,632538;PQ;Fil de l'eau
+Hydro43;La Gabelle;735;prod;46,448889;-72,739444;PQ;Fil de l'eau
+Hydro44;Premiere-Chute;735;prod;47,6;-79,4525;PQ;Fil de l'eau
+Hydro45;Les Cedres;735;prod;45,3116667;-74,0283333;PQ;Fil de l'eau
+Hydro46;Rapides-des-Quinze;735;prod;47,591099;-79,294055;PQ;Fil de l'eau
+Hydro47;Rapides-Farmer;735;prod;45,498885;-75,763311;PQ;Fil de l'eau
+Hydro48;Chute-des-Chats;735;prod;45,475;-76,238333;PQ;Fil de l'eau
+Hydro49;Rapide-des-Coeurs;735;prod;47,786596;-73,375177;PQ;Fil de l'eau
+Hydro50;Chute-Allard;735;prod;47,89111;-73,721943;PQ;Fil de l'eau
+Hydro51;Bryson;735;prod;45,6611111;-76,6311111;PQ;Fil de l'eau
+Hydro52;Rapide-2;735;prod;47,933611;-78,576111;PQ;Fil de l'eau
+Hydro53;Rapide-7;735;prod;47,768449;-78,310155;PQ;Reservoir
+Hydro54;Mercier;735;prod;46,717777;-75,982777;PQ;Reservoir
+Hydro55;Riviere-des-Prairies;735;prod;45,5894444;-73,6572222;PQ;Fil de l'eau
+Hydro56;Hart-Jaune;735;prod;51,785;-67,9127778;PQ;Reservoir
+Hydro57;Chute-Hemmings;735;prod;45,8625;-72,4508333;PQ;Fil de l'eau
+Hydro58;Lac-Robertson;735;prod;50,999167;-59,063056;PQ;Reservoir
+Hydro59;Sept-Chutes;735;prod;47,12276;-70,828527;PQ;Fil de l'eau
+Hydro60;Drummondville;735;prod;45,886924;-72,483802;PQ;Fil de l'eau
+Hydro61;Chute-Bell;735;prod;45,773889;-74,684444;PQ;Fil de l'eau
+Hydro62;Churchill-Falls;735;prod;53,5288763;-63,96589109;PQ;Reservoir
+Hydro63;Gull-Island;735;prod;52,96;-61,37;PQ;Fil de l'eau
+Conso1;Templeton;735;conso;45,4983669;-75,6082192;PQ;Conso
+Conso2;Gatineau;735;conso;45,4277659;-75,710976;PQ;Conso
+Conso3;Bowater Gatineau;735;conso;52,2067646;-71,29033655;PQ;Conso
+Conso4;Dorion;735;conso;45,3863926;-74,0084813;PQ;Conso
+Conso5;Doc-Grignon;735;conso;46,10798563;-71,95703197;PQ;Conso
+Conso6;Saint-Polycarpe;735;conso;45,3021238;-74,3041891;PQ;Conso
+Conso7;Landry;735;conso;45,2750278;-74,0968456;PQ;Conso
+Conso8;Sainte-Rose;735;conso;45,625284;-73,7644249;PQ;Conso
+Conso9;Chute-Hemmings;735;conso;45,86243381;-72,44943252;PQ;Conso
+Conso10;Asbestos;735;conso;45,776623;-71,932297;PQ;Conso
+Conso11;Sorel-Sud;735;conso;46,0428486;-73,1148817;PQ;Conso
+Conso12;Argonal Inc;735;conso;52,70491623;-72,78179375;PQ;Conso
+Conso13;Sherbrooke;735;conso;45,403271;-71,889038;PQ;Conso
+Conso14;Granby;735;conso;45,3990409;-72,721834;PQ;Conso
+Conso15;Central-2;735;conso;45,35573845;-72,00206235;PQ;Conso
+Conso16;Maissonneuve;735;conso;49,2225424;-71,3125697;PQ;Conso
+Conso17;Huntingdon;735;conso;45,087339;-74,173851;PQ;Conso
+Conso18;De Lorimier;735;conso;45,53751455;-73,58010121;PQ;Conso
+Conso19;Mont-Royal;735;conso;45,5085881;-73,5897111;PQ;Conso
+Conso20;Dorchester;735;conso;46,81331905;-71,22569952;PQ;Conso
+Conso21;Saint-Louis;735;conso;45,854152;-72,977715;PQ;Conso
+Conso22;Plouffe;735;conso;46,4461678;-75,5575827;PQ;Conso
+Conso23;Quebec Lithium;735;conso;45,5723514;-74,21239828;PQ;Conso
+Conso24;Notre-Dame-du-Nord;735;conso;47,593199;-79,487457;PQ;Conso
+Conso25;Rouyn;735;conso;48,2382498;-79,0201438;PQ;Conso
+Conso26;Pandora;735;conso;45,5032872;-73,5706814;PQ;Conso
+Conso27;Saint-Blaise;735;conso;45,2113406;-73,28738;PQ;Conso
+Conso28;Poirier;735;conso;45,9495241;-74,18413935;PQ;Conso
+Conso29;Joutel;735;conso;49,4623075;-78,3084915;PQ;Conso
+Conso30;Acton;735;conso;45,6018427;-72,5232917;PQ;Conso
+Conso31;Ouimet;735;conso;46,1699852;-74,58924318;PQ;Conso
+Conso32;Saint-Donat;735;conso;46,318718;-74,221916;PQ;Conso
+Conso33;LAnnonciation;735;conso;47,14257567;-71,80092178;PQ;Conso
+Conso34;Cournoyer;735;conso;46,8817357;-72,85742669;PQ;Conso
+Conso35;Hydrogenal Inc;735;conso;45,35410195;-73,77648615;PQ;Conso
+Conso36;Daveluyville;735;conso;46,20431;-72,137604;PQ;Conso
+Conso37;Papiers-Scott Inc;735;conso;45,5899518;-74,65777685;PQ;Conso
+Conso38;Lanaudiere;735;conso;45,55676775;-72,59395725;PQ;Conso
+Conso39;Groulx;735;conso;45,4827728;-73,5798271;PQ;Conso
+Conso40;Sainte-Anne-des-Plaines;735;conso;45,76417;-73,818855;PQ;Conso
+Conso41;Saint-Joseph;735;conso;46,8494476;-71,2929097;PQ;Conso
+Conso42;Saint-Lazare;735;conso;45,3995886;-74,1359632;PQ;Conso
+Conso43;Usine Beauharnois Alcan;735;conso;46,92042788;-72,91135355;PQ;Conso
+Conso44;F.F. Soucy S.E.C.;735;conso;45,39152272;-73,05748584;PQ;Conso
+Conso45;Beauceville-Est;735;conso;46,2024008;-70,7717706;PQ;Conso
+Conso46;Sainte-Germaine;735;conso;48,601133;-79,116669;PQ;Conso
+Conso47;Mine Gonzague-Langlois;735;conso;47,01905908;-75,25137617;PQ;Conso
+Conso48;La Grande-1;735;conso;53,72729415;-78,59025934;PQ;Conso
+Conso49;Repentigny;735;conso;46,95525925;-76,14484355;PQ;Conso
+Conso50;Perce;735;conso;45,84209856;-75,32825253;PQ;Conso
+Conso51;Companie-Miniere-Quebec-Cartier;735;conso;45,88966559;-72,77249092;PQ;Conso
+Conso52;Waconichi;735;conso;50,21710732;-73,8082767;PQ;Conso
+Conso53;Dubuc;735;conso;45,5174264;-73,56670894;PQ;Conso
+Conso54;Du Portage;735;conso;47,7672259;-69,6105212;PQ;Conso
+Conso55;Normand;735;conso;46,6973109;-71,30426825;PQ;Conso
+Conso56;Trois-Pistoles;735;conso;48,122101;-69,169922;PQ;Conso
+Conso57;Sidbec-Dosco;735;conso;47,67632675;-71,2918417;PQ;Conso
+Conso58;Rouville;735;conso;45,4234799;-73,0378779;PQ;Conso
+Conso59;Spruce Falls Inc;735;conso;46,8162625;-70,2461726;PQ;Conso
+Conso60;Aluminerie-de-Becancour;735;conso;49,36599783;-72,27819746;PQ;Conso
+Conso61;Jules-A.-Brillant;735;conso;48,45042587;-68,52407646;PQ;Conso
+Conso62;Frontenac-1;735;conso;45,428991;-75,72145898;PQ;Conso
+Conso63;Anne-Hebert;735;conso;46,0972334;-72,28033045;PQ;Conso
+Conso64;Saint-Bruno-de-Montarville;735;conso;45,5256161;-73,3391798;PQ;Conso
+Conso65;Anjou;735;conso;45,6048982;-73,5466723;PQ;Conso
+Conso66;Outardes-3;735;conso;45,9078756;-73,2606304;PQ;Conso
+Conso67;Kamouraska;735;conso;47,4680992;-69,7909498;PQ;Conso
+Conso68;Laforge-2;735;conso;47,5962712;-79,4853307;PQ;Conso
+Conso69;Eastmain-1;735;conso;52,222154;-78,2561096;PQ;Conso
+Conso70;Grondines;735;conso;46,592662;-72,0406309;PQ;Conso
+Conso71;Outardes;735;conso;50,7771784;-69,3811298;PQ;Conso
+Conso72;Albanel;735;conso;48,883683;-72,442474;PQ;Conso
+Conso74;Chute-du-diable;735;conso;46,3886298;-74,5111379;PQ;Conso
+Conso75;Aluminiere Grande-Baie Alcan;735;conso;48,96892486;-75,19714153;PQ;Conso
+Interco2;Interco Eel River (QC);230;line;48,044;-66,4418;PQ;Interco
+Etranger2;Etranger - Eel River Converter Stn;230;conso;48,0181;-66,4442;PQ;Etranger
+Interco3;Interco Madawaska (QC);345;line;47,5336;-68,5222;PQ;Interco
+Etranger3;Etranger - Riviere-Verte/Edmundston TS;345;conso;47,3258;-68,1396;PQ;Etranger
+Interco4;Interco Appalaches-Maine (QC);320;line;46,1344;-71,397;PQ;Interco
+Etranger4;Etranger - Merrill Road Converter;320;conso;44,108;-70,175;PQ;Etranger
+Interco5;Interco Stanstead-Derby (QC);120;line;45,0577;-72,1148;PQ;Interco
+Etranger5;Etranger - Derby Line;120;conso;44,994;-72,097;PQ;Etranger
+Interco6;Interco Bedford-Highgate (QC);120;line;45,2217;-72,9683;PQ;Interco
+Etranger6;Etranger - Highgate Springs;120;conso;44,959;-73,015;PQ;Etranger
+Interco7;Interco Nicolet-Nouvelle-Angleterre (QC);450;line;46,0814;-72,2547;PQ;Interco
+Etranger7;Etranger - Sandy Pond HVDC Terminal;450;conso;42,569;-71,526;PQ;Etranger
+Interco8;Interco Hertel-New York (QC);450;line;45,41;-73,4278;PQ;Interco
+Etranger8;Etranger - Astoria Converter Stn;450;conso;40,784;-73,921;PQ;Etranger
+Interco9;Interco Beauharnois-Massena (QC);765;line;45,2535;-73,8697;PQ;Interco
+Etranger9;Etranger - Massena Substation;765;conso;44,928;-74,889;PQ;Etranger
+Interco10;Interco Beauharnois-Ontario (QC);230;line;45,3424;-74,0225;PQ;Interco
+Etranger10;Etranger - Cornwall/South Lancaster area;230;conso;45,02;-74,73;PQ;Etranger
+Interco11;Interco Outaouais (QC);230;line;45,6664;-75,4619;PQ;Interco
+Etranger11;Etranger - Rockland/Cumberland area;230;conso;45,55;-75,3;PQ;Etranger
+Interco12;Interco Paugan-Chat Falls (QC);230;line;45,807;-75,9361;PQ;Interco
+Etranger12;Etranger - Chats Falls GS;230;conso;45,474;-76,24;PQ;Etranger
+Interco13;Interco Chenaux-Bryson (QC);120;line;45,5841;-76,674;PQ;Interco
+Etranger13;Etranger - Chenaux TS;120;conso;45,58;-76,67;PQ;Etranger
+Interco14;Interco Kipawa-Holden (QC);120;line;46,715;-79,0926;PQ;Interco
+Etranger14;Etranger - Temiskaming Shores (New Liskeard) ON;120;conso;47,5;-79,67;PQ;Etranger
+Interco15;Interco Rapide des Iles-Dymond (QC);120;line;48,0199;-79,3437;PQ;Interco
+Etranger15;Etranger - Temiskaming Shores (Dymond twp) ON;120;conso;47,52;-79,68;PQ;Etranger

@@ -1,3 +1,19 @@
 .modal-dialog {
     margin: 0 auto;
+    max-width: 600px;
+}
+
+.required-star {
+    color: #dc3545;
+}
+
+.date-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+#tutorial-submit-scenario:disabled {
+    cursor: not-allowed;
+    pointer-events: auto;
 }

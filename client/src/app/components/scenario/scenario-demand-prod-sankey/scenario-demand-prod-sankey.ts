@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, effect } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { ChangeDetectorRef, Component, ElementRef, ViewChild, effect } from '@angular/core';
 import { SankeyDiagramComponent } from './sankey-diagram/sankey-diagram';
 import { Co2DetailsPanelComponent } from './co2-details-panel/co2-details-panel';
 import { Co2DetailsData, SankeyData } from './sankey-data.types';
+import html2canvas from 'html2canvas';
 import { buildCo2Details, PLACEHOLDER_SANKEY_DATA } from './sankey-placeholder.data';
 import { DemandeSankeyGraphService } from '@app/services/graph-services/demande-sankey-graph-service';
 import { ScenariosService } from '@app/services/scenarios-service';
@@ -16,6 +16,8 @@ import { SimulationService } from '@app/services/simulation-service';
     styleUrl: './scenario-demand-prod-sankey.css',
 })
 export class ScenarioDemandProdSankey {
+    @ViewChild('sankeyView') sankeyView!: ElementRef<HTMLElement>;
+
     sankeyData: SankeyData = PLACEHOLDER_SANKEY_DATA;
     co2Data: Co2DetailsData = buildCo2Details(PLACEHOLDER_SANKEY_DATA);
     simulationRan = false;
@@ -48,6 +50,15 @@ export class ScenarioDemandProdSankey {
         return Math.max(0, this.totalProductionMW - this.totalDemandMW);
     }
 
+    async downloadImage() {
+        const el = this.sankeyView.nativeElement;
+        const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2 });
+        const link = document.createElement('a');
+        link.download = 'sankey.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
     constructor(
         private graphService: DemandeSankeyGraphService,
         private scenariosService: ScenariosService,
@@ -55,9 +66,10 @@ export class ScenarioDemandProdSankey {
         private cdr: ChangeDetectorRef,
     ) {
         effect(() => {
-            const nodes = this.graphService.demandNodes();
-            if (nodes) {
-                this.sankeyData = { ...this.sankeyData, demandNodes: nodes };
+            const demandNodes = this.graphService.demandNodes();
+            const energyTypeNodes = this.graphService.energyTypeNodes();
+            if (demandNodes && energyTypeNodes) {
+                this.sankeyData = { ...this.sankeyData, demandNodes, energyTypeNodes };
                 this.cdr.markForCheck();
             }
         });

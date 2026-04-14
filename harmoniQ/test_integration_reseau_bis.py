@@ -4,7 +4,7 @@ Test d'intégration RÉEL — reseau_bis avec tous les modules connectés.
 
 Utilise :
   - Scénario 2035 complet (8760h, année entière) depuis la DB
-  - ListeInfrastructures #1 (toutes les infras)
+  - SimulationInfraGroup (toutes les infras DB)
   - Vrais profils : InfraParcEolienne, InfraSolaire, InfraHydro, InfraThermique
   - Vraie demande depuis demande.db (99 MRC)
   - LOPF HiGHS + AC PF Newton-Raphson interne
@@ -63,19 +63,39 @@ log = logging.getLogger("test_integration")
 # ---------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Test intégration reseau_bis")
 parser.add_argument("--scenario_id", type=int, default=1, help="ID du scénario (1=2035, 2=2050)")
-parser.add_argument("--liste_infra_id", type=int, default=1, help="ID de la liste d'infras")
+parser.add_argument(
+    "--liste_infra_id",
+    type=int,
+    default=1,
+    help="(Legacy) ID de la liste d'infras — ignoré, le test charge toutes les infras DB.",
+)
 parser.add_argument("--flow_mode", type=str, default="ac", choices=["ac", "dc", "dc+ac"],
                     help="Mode de flux de puissance")
-args = parser.parse_args()
+parser.add_argument("--resolution", type=str, default="hebdomadaire", choices=["horaire", "hebdomadaire"],
+                    help="Résolution temporelle : hebdomadaire (52 snapshots, défaut) ou horaire (8760)")
+parser.add_argument("--plot", action="store_true",
+                    help="Ouvrir le dashboard interactif après l'optimisation")
+parser.add_argument("--save_plot", type=str, default=None, metavar="FICHIER.html",
+                    help="Sauvegarder le dashboard HTML (ex: resultats_2035.html)")
+# Pytest passes extra CLI args (e.g., -q); ignore unknowns to avoid SystemExit.
+args, _unknown = parser.parse_known_args()
 
 # ---------------------------------------------------------------------------
 # Chargement depuis la vraie DB
 # ---------------------------------------------------------------------------
 log.info("=" * 70)
-log.info("TEST INTÉGRATION reseau_bis — Scénario #%d, flow_mode=%s", args.scenario_id, args.flow_mode)
+log.info("TEST INTÉGRATION reseau_bis — Scénario #%d, flow_mode=%s, resolution=%s", args.scenario_id, args.flow_mode, args.resolution)
 log.info("=" * 70)
 
-from harmoniq.db.schemas import Scenario, ListeInfrastructures
+from harmoniq.db.schemas import (
+    Scenario,
+    SimulationInfraGroup,
+    EolienneParc,
+    Solaire,
+    Hydro,
+    Thermique,
+    Nucleaire,
+)
 from harmoniq.db.engine import get_db
 
 db = next(get_db())
@@ -85,23 +105,31 @@ if scenario is None:
     log.error("Scénario #%d introuvable dans la DB", args.scenario_id)
     sys.exit(1)
 
-liste_infra = db.query(ListeInfrastructures).filter(
-    ListeInfrastructures.id == args.liste_infra_id
-).first()
-if liste_infra is None:
-    log.error("ListeInfrastructures #%d introuvable dans la DB", args.liste_infra_id)
-    sys.exit(1)
+parcs_eoliens = db.query(EolienneParc).all()
+parcs_solaires = db.query(Solaire).all()
+centrales_hydro = db.query(Hydro).all()
+centrales_thermique = db.query(Thermique).all()
+centrales_nucleaire = db.query(Nucleaire).all()
+
+liste_infra = SimulationInfraGroup(
+    nom="InfraGroup (DB all)",
+    parc_eoliens=parcs_eoliens,
+    parc_solaires=parcs_solaires,
+    central_hydroelectriques=centrales_hydro,
+    central_thermique=centrales_thermique,
+    central_nucleaire=centrales_nucleaire,
+)
 
 log.info("  Scénario    : %s (%s → %s)", scenario.nom, scenario.date_de_debut, scenario.date_de_fin)
 log.info("  Pas de temps: %s", scenario.pas_de_temps)
 log.info("  Météo       : %s | Conso : %s", scenario.weather, scenario.consomation)
-log.info("  Liste infra : %s (id=%d)", liste_infra.nom, liste_infra.id)
+log.info("  Infra group : %s (DB all)", liste_infra.nom)
 
-n_eol = len((liste_infra.parc_eoliens or "").split(",")) if liste_infra.parc_eoliens else 0
-n_hyd = len((liste_infra.central_hydroelectriques or "").split(",")) if liste_infra.central_hydroelectriques else 0
-n_sol = len((liste_infra.parc_solaires or "").split(",")) if liste_infra.parc_solaires else 0
-n_thm = len((liste_infra.central_thermique or "").split(",")) if liste_infra.central_thermique else 0
-n_nuc = len((liste_infra.central_nucleaire or "").split(",")) if liste_infra.central_nucleaire else 0
+n_eol = len(liste_infra.parc_eoliens or [])
+n_hyd = len(liste_infra.central_hydroelectriques or [])
+n_sol = len(liste_infra.parc_solaires or [])
+n_thm = len(liste_infra.central_thermique or [])
+n_nuc = len(liste_infra.central_nucleaire or [])
 log.info("  Infras      : %d éolien | %d hydro | %d solaire | %d thermique | %d nucléaire",
          n_eol, n_hyd, n_sol, n_thm, n_nuc)
 
@@ -121,7 +149,7 @@ infra = InfraReseauBis(liste_infra)
 infra.charger_scenario(scenario)
 
 t0 = time.time()
-network = infra.creer_reseau(db)
+network = infra.creer_reseau(db, resolution=args.resolution)
 t_build = time.time() - t0
 
 log.info("  Réseau créé en %.1fs", t_build)
@@ -175,7 +203,9 @@ if not demand.empty:
     total_demand = demand.sum(axis=1)
     log.info("  Demande: %d bus Conso | min=%.0f MW | max=%.0f MW | moy=%.0f MW",
              len(demand.columns), total_demand.min(), total_demand.max(), total_demand.mean())
-    log.info("  Demande annuelle totale: %.0f GWh", total_demand.sum() / 1000)
+    snap_w = network.snapshot_weightings.generators if hasattr(network, "snapshot_weightings") else None
+    demand_gwh = float((total_demand * snap_w).sum()) / 1000 if snap_w is not None else float(total_demand.sum()) / 1000
+    log.info("  Demande annuelle totale: %.0f GWh (%.0f TWh)", demand_gwh, demand_gwh / 1000)
 
 # ---------------------------------------------------------------------------
 # 2. Dispatch + Power Flow
@@ -186,7 +216,7 @@ log.info("2. Dispatch LOPF + AC PF (mode=%s)", args.flow_mode)
 log.info("=" * 70)
 
 t1 = time.time()
-result = infra.calculer_production(db=db, is_journalier=False, flow_mode=args.flow_mode)
+result = infra.calculer_production(db=db, is_journalier=False, flow_mode=args.flow_mode, resolution=args.resolution)
 t_calc = time.time() - t1
 
 log.info("  Calcul terminé en %.1fs", t_calc)
@@ -194,13 +224,21 @@ log.info("  Calcul terminé en %.1fs", t_calc)
 # === DIAGNOSTIC DISPATCH POST-SOLVE ===
 if "p" in infra.network.generators_t and not infra.network.generators_t.p.empty:
     p_solved = infra.network.generators_t.p
+    snap_w = infra.network.snapshot_weightings.generators if hasattr(infra.network, "snapshot_weightings") else None
+    def _gwh(series_or_df):
+        if snap_w is not None:
+            return float(series_or_df.multiply(snap_w, axis=0).sum().sum()) / 1000 if hasattr(series_or_df, "columns") else float((series_or_df * snap_w).sum()) / 1000
+        return float(series_or_df.sum().sum()) / 1000 if hasattr(series_or_df, "columns") else float(series_or_df.sum()) / 1000
     log.info("  --- Dispatch par carrier (GWh) ---")
     for carrier in infra.network.generators.carrier.unique():
         gens_c = infra.network.generators.index[infra.network.generators.carrier == carrier]
-        dispatch_c = p_solved.reindex(columns=gens_c, fill_value=0.0).sum().sum() / 1000
+        dispatch_c = _gwh(p_solved.reindex(columns=gens_c, fill_value=0.0))
         log.info("    %-20s : %8.0f GWh", carrier, dispatch_c)
     log.info("  --- Top 15 générateurs dispatché (GWh) ---")
-    dispatch_total = p_solved.sum().sort_values(ascending=False)
+    if snap_w is not None:
+        dispatch_total = p_solved.multiply(snap_w, axis=0).sum().sort_values(ascending=False)
+    else:
+        dispatch_total = p_solved.sum().sort_values(ascending=False)
     for gen_name, mwh in dispatch_total.head(15).items():
         carrier = infra.network.generators.at[gen_name, "carrier"] if gen_name in infra.network.generators.index else "?"
         log.info("    %-40s [%-18s]: %8.0f GWh", gen_name, carrier, mwh / 1000)
@@ -263,6 +301,25 @@ if link_flows:
             log.info("  %-45s : export=%7.1f GWh  import=%7.1f GWh",
                      lf.get("link", "?"), exp, imp)
 
+# Rapport d'infrastructure
+infra_report = result.get("infra_report", [])
+if infra_report:
+    log.info("")
+    log.info("--- Rapport infrastructure (lignes insuffisantes — réseau 2026 vs demande 2035) ---")
+    log.info("  %-45s %-8s %-10s %-10s %-10s %-8s", "Ligne", "Tension", "Actuel", "Requis", "À ajouter", "Surcharge")
+    for r in infra_report:
+        log.info(
+            "  %-45s %4d kV  %2d circuit%s → %2d circuit%s  (+%d)   %.0f%%",
+            r["line"], r.get("voltage_kv") or 0,
+            r["nb_circuits_current"], "s" if r["nb_circuits_current"] > 1 else " ",
+            r["nb_circuits_needed"],  "s" if r["nb_circuits_needed"]  > 1 else " ",
+            r["nb_circuits_to_add"],
+            r["overload_pct"],
+        )
+    log.info("  TOTAL : %d lignes nécessitent des circuits supplémentaires", len(infra_report))
+else:
+    log.info("--- Rapport infrastructure : aucun renforcement nécessaire ---")
+
 # Timers
 log.info("")
 log.info("--- Timers ---")
@@ -275,7 +332,8 @@ log.info("  %-30s : %.1fs", "TOTAL (incluant ce script)", total_time)
 # Validation
 log.info("")
 log.info("=" * 70)
-if summary.get("total_energy_mwh", 0) > 0 and len(production) > 100:
+min_snapshots = 10 if args.resolution == "hebdomadaire" else 100
+if summary.get("total_energy_mwh", 0) > 0 and len(production) >= min_snapshots:
     log.info("✅ TEST INTÉGRATION RÉUSSI — %d snapshots, %.0f GWh, pertes %.2f%%",
              len(production), summary.get("total_energy_mwh", 0) / 1000,
              summary.get("losses_percent", 0))
@@ -283,5 +341,22 @@ else:
     log.error("❌ TEST INTÉGRATION ÉCHOUÉ — production vide ou insuffisante")
     sys.exit(1)
 log.info("=" * 70)
+
+# ---------------------------------------------------------------------------
+# Dashboard interactif (--plot / --save_plot)
+# ---------------------------------------------------------------------------
+if args.plot or args.save_plot:
+    try:
+        from harmoniq.modules.reseau_bis.viz import ReseauBisViz
+        period_label = f"Scénario #{args.scenario_id} — {scenario.nom} ({scenario.date_de_debut.year})"
+        viz = ReseauBisViz(infra.network, result, label=period_label)
+        if args.save_plot:
+            saved = viz.save(args.save_plot)
+            log.info("Dashboard sauvegardé : %s", saved)
+        if args.plot:
+            log.info("Ouverture du dashboard dans le navigateur ...")
+            viz.show()
+    except Exception as exc:
+        log.warning("Dashboard ignoré : %s", exc)
 
 db.close()

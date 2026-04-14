@@ -1,6 +1,23 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import * as L from 'leaflet';
 import { environment } from 'environments/environment';
+import { InfrastruturesService, PendingInfra } from './infrastrutures-service';
+
+export interface NewConnection {
+  fromName: string;
+  toDisplayName: string;
+  distKm: number;
+  lat: number;
+  lng: number;
+}
+
+interface NetworkNode {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+const NEW_CONNECTION_COLOR = '#27ae60';
 
 export interface ReseauBus {
   id: number;
@@ -34,28 +51,28 @@ export interface ReseauCategory {
 
 export const BUS_CATEGORIES: ReseauCategory[] = [
   { key: 'Transport', label: 'Bus - Transport', color: '#4ad97cff' },
-  { key: 'Éoliennes', label: 'Bus - Éoliennes', color: '#4A90D9' },
-  { key: 'Solaire', label: 'Bus - Solaire', color: '#F5A623' },
-  { key: 'Thermique', label: 'Bus - Thermique', color: '#E74C3C' },
-  { key: 'Hydroélectrique', label: 'Bus - Hydroélectrique', color: '#3498DB' },
+  { key: 'Éoliennes', label: 'Bus - Éoliennes', color: '#70b2c1' },
+  { key: 'Solaire', label: 'Bus - Solaire', color: '#de8c28' },
+  { key: 'Thermique', label: 'Bus - Thermique', color: '#698c77' },
+  { key: 'Hydroélectrique', label: 'Bus - Hydroélectrique', color: '#1d6799' },
   { key: 'Consommation', label: 'Bus - Consommation', color: '#8E44AD' },
 ];
 
 export const LINE_CATEGORIES: ReseauCategory[] = [
   { key: 'Transport', label: 'Lignes - Transport', color: '#4ad97cff' },
-  { key: 'Éoliennes', label: 'Lignes - Éoliennes', color: '#4A90D9' },
-  { key: 'Solaire', label: 'Lignes - Solaires', color: '#F5A623' },
-  { key: 'Thermique', label: 'Lignes - Thermiques', color: '#E74C3C' },
-  { key: 'Hydroélectrique', label: 'Lignes - Hydroélectriques', color: '#3498DB' },
+  { key: 'Éoliennes', label: 'Lignes - Éoliennes', color: '#70b2c1' },
+  { key: 'Solaire', label: 'Lignes - Solaires', color: '#de8c28' },
+  { key: 'Thermique', label: 'Lignes - Thermiques', color: '#698c77' },
+  { key: 'Hydroélectrique', label: 'Lignes - Hydroélectriques', color: '#1d6799' },
   { key: 'Consommation', label: 'Lignes - Consommation', color: '#8E44AD' },
 ];
 
 const COLOR_MAP: Record<string, string> = {
   'Transport': '#4ad97cff',
-  'Éoliennes': '#4A90D9',
-  'Solaire': '#F5A623',
-  'Thermique': '#E74C3C',
-  'Hydroélectrique': '#3498DB',
+  'Éoliennes': '#70b2c1',
+  'Solaire': '#de8c28',
+  'Thermique': '#698c77',
+  'Hydroélectrique': '#1d6799',
   'Consommation': '#8E44AD',
 };
 
@@ -65,19 +82,39 @@ const GREY = '#AAAAAA';
   providedIn: 'root',
 })
 export class ReseauService {
-  isVisible = signal(false);
   legendOpen = signal(false);
 
-  selectedBusTypes = signal<Set<string>>(new Set(BUS_CATEGORIES.map(c => c.key)));
-  selectedLineTypes = signal<Set<string>>(new Set(LINE_CATEGORIES.map(c => c.key)));
+  selectedBusTypes = signal<Set<string>>(new Set());
+  selectedLineTypes = signal<Set<string>>(new Set());
+  hasSelection = computed(() => this.selectedBusTypes().size > 0 || this.selectedLineTypes().size > 0);
+
+  private lastBusSelection: Set<string> = new Set(BUS_CATEGORIES.map(c => c.key));
+  private lastLineSelection: Set<string> = new Set(LINE_CATEGORIES.map(c => c.key));
+
+  pendingInfras = signal<PendingInfra[]>([]);
+  newConnections = signal<NewConnection[]>([]);
+  summaryOpen = signal(false);
+  hasPendingInfras = computed(() => this.pendingInfras().length > 0);
 
   private map?: L.Map;
   private buses: ReseauBus[] = [];
   private lines: ReseauLine[] = [];
   private busMarkers: L.CircleMarker[] = [];
   private linePolylines: L.Polyline[] = [];
+  private newBusMarkers: L.CircleMarker[] = [];
+  private newLinePolylines: L.Polyline[] = [];
   private dataLoaded = false;
   private loadPromise?: Promise<void>;
+
+  constructor(private infrasService: InfrastruturesService) {
+    this.infrasService.newUserInfra$.subscribe(infra => {
+      this.pendingInfras.update(list => [...list, infra]);
+    });
+    this.infrasService.deletedUserInfraId$.subscribe(id => {
+      this.pendingInfras.update(list => list.filter(i => i.id !== id));
+      if (!this.hasPendingInfras()) this.clearNewConnections();
+    });
+  }
 
   initLayer(map: L.Map): void {
     this.map = map;
@@ -85,7 +122,103 @@ export class ReseauService {
     this.loadPromise.then(() => {
       this.createStaticLayers();
       this.rebuildLayers();
+      this._loadExistingUserInfras();
     });
+  }
+
+  private _loadExistingUserInfras(): void {
+    const types = ['hydro', 'eolienneparc', 'solaire', 'thermique', 'nucleaire'];
+    const existing: PendingInfra[] = [];
+    for (const type of types) {
+      const infras = this.infrasService.getInfrasSignalByType(type)();
+      for (const infra of infras) {
+        if ((infra as any).isUserCreated) {
+          existing.push({ id: infra.id, lat: infra.latitude, lng: infra.longitude, name: infra.nom, type });
+        }
+      }
+    }
+    if (existing.length > 0) this.pendingInfras.set(existing);
+  }
+
+  connectNewInfras(): void {
+    if (!this.map || !this.dataLoaded || !this.hasPendingInfras()) return;
+    this._clearGreenLayers();
+
+    const connectedNodes: NetworkNode[] = this.buses.map(b => ({
+      name: b.display_name || b.name,
+      lat: b.y,
+      lng: b.x,
+    }));
+
+    const unconnected = [...this.pendingInfras()];
+    const connections: NewConnection[] = [];
+
+    while (unconnected.length > 0) {
+      let bestDist = Infinity;
+      let bestIdx = -1;
+      let bestNode: NetworkNode | null = null;
+
+      for (let i = 0; i < unconnected.length; i++) {
+        const infra = unconnected[i];
+        for (const node of connectedNodes) {
+          const dist = this.haversineKm(infra.lat, infra.lng, node.lat, node.lng);
+          if (dist < bestDist) { bestDist = dist; bestIdx = i; bestNode = node; }
+        }
+      }
+
+      if (bestIdx === -1 || !bestNode) break;
+      const [infra] = unconnected.splice(bestIdx, 1);
+      const nearest = bestNode;
+      const minDist = bestDist;
+
+      const busMarker = L.circleMarker([infra.lat, infra.lng], {
+        radius: 7, color: NEW_CONNECTION_COLOR, fillColor: NEW_CONNECTION_COLOR, fillOpacity: 0.9, weight: 2, interactive: true,
+      }).addTo(this.map!);
+      busMarker.bindPopup(`<div style="min-width:160px"><b>${infra.name}</b><br><span style="color:${NEW_CONNECTION_COLOR}">● Nouvelle infrastructure</span><br><b>Type :</b> ${infra.type}</div>`);
+      this.newBusMarkers.push(busMarker);
+
+      const line = L.polyline([[infra.lat, infra.lng], [nearest.lat, nearest.lng]],
+        { color: NEW_CONNECTION_COLOR, weight: 3, opacity: 0.9, dashArray: '10, 6', interactive: true },
+      ).addTo(this.map!);
+      line.bindPopup(`<div style="min-width:180px"><b style="color:${NEW_CONNECTION_COLOR}">Nouvelle connexion</b><br><b>De :</b> ${infra.name}<br><b>À :</b> ${nearest.name}<br><b>Distance :</b> ${minDist.toFixed(1)} km</div>`);
+      this.newLinePolylines.push(line);
+
+      connections.push({ fromName: infra.name, toDisplayName: nearest.name, distKm: minDist, lat: infra.lat, lng: infra.lng });
+      connectedNodes.push({ name: infra.name, lat: infra.lat, lng: infra.lng });
+    }
+
+    this.newConnections.set(connections);
+    this.summaryOpen.set(true);
+  }
+
+  flyToInfra(c: NewConnection): void {
+    this.map?.setView([c.lat, c.lng], 9, { animate: true, duration: 0.5 });
+  }
+
+  closeSummary(): void { this.summaryOpen.set(false); }
+
+  clearNewConnections(): void {
+    this._clearGreenLayers();
+    this.newConnections.set([]);
+    this.summaryOpen.set(false);
+  }
+
+  private _clearGreenLayers(): void {
+    if (this.map) {
+      for (const m of this.newBusMarkers) this.map.removeLayer(m);
+      for (const p of this.newLinePolylines) this.map.removeLayer(p);
+    }
+    this.newBusMarkers = [];
+    this.newLinePolylines = [];
+  }
+
+  private haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371;
+    const toRad = (v: number) => v * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   private async loadData(): Promise<void> {
@@ -111,12 +244,18 @@ export class ReseauService {
   private busLookup: Record<string, ReseauBus> = {};
 
   toggleVisibility(): void {
-    const nextState = !this.isVisible();
-    this.isVisible.set(nextState);
-    if (nextState) {
-      this.legendOpen.set(true);
-    } else {
+    if (this.hasSelection()) {
+      this.lastBusSelection = new Set(this.selectedBusTypes());
+      this.lastLineSelection = new Set(this.selectedLineTypes());
+      this.deselectAll();
       this.legendOpen.set(false);
+    } else {
+      if (this.lastBusSelection.size === 0 && this.lastLineSelection.size === 0) {
+        this.selectAll();
+      } else {
+        this.selectedBusTypes.set(new Set(this.lastBusSelection));
+        this.selectedLineTypes.set(new Set(this.lastLineSelection));
+      }
     }
     this.rebuildLayers();
   }
@@ -245,7 +384,7 @@ export class ReseauService {
   rebuildLayers(): void {
     if (!this.map || !this.dataLoaded) return;
 
-    const highlight = this.isVisible();
+    const highlight = true; // Any selection is highlighted
     const selectedBus = this.selectedBusTypes();
     const selectedLine = this.selectedLineTypes();
 
@@ -306,11 +445,14 @@ export class ReseauService {
     if (this.map) {
       for (const m of this.busMarkers) this.map.removeLayer(m);
       for (const p of this.linePolylines) this.map.removeLayer(p);
+      for (const m of this.newBusMarkers) this.map.removeLayer(m);
+      for (const p of this.newLinePolylines) this.map.removeLayer(p);
     }
     this.busMarkers = [];
     this.linePolylines = [];
+    this.newBusMarkers = [];
+    this.newLinePolylines = [];
     this.map = undefined;
-    this.isVisible.set(false);
     this.legendOpen.set(false);
   }
 }

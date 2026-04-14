@@ -1,4 +1,5 @@
 import asyncio
+import time
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -27,8 +28,11 @@ from harmoniq.db.demande import (
     read_demande_data_temporal,
 )
 from harmoniq.core import meteo
+from harmoniq.core.meteo_era5 import Era5WindMapService
 from harmoniq.db.engine import get_db
 from harmoniq.core.fausse_données import production_aleatoire
+from harmoniq.core.offshore import is_offshore_quebec
+
 
 from harmoniq.modules.eolienne import InfraParcEolienne
 from harmoniq.modules.reseau import InfraReseau
@@ -58,11 +62,46 @@ router = APIRouter(
     prefix="/api",
     responses={404: {"description": "Not found"}},
 )
+_wind_map_service = Era5WindMapService()
 
 # Route de test
 @router.get("/ping")
 async def ping():
     return {"ping": "pong"}
+
+
+@router.delete(
+    "/scenario/{scenario_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a scenario and purge its on-disk caches"
+)
+async def delete_scenario_and_purge_cache(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+):
+    # 1) Load the scenario
+    scenario = await read_data_by_id(db, schemas.Scenario, scenario_id)
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+
+    # Invalider le cache mémoire reseau_bis pour ce scénario
+    keys_to_remove = [k for k in _reseau_cache if k.startswith(f"{scenario_id}|")]
+    for k in keys_to_remove:
+        _reseau_cache.pop(k, None)
+
+    # Delete the scenario record from the database
+    result = await delete_data(db, schemas.Scenario, scenario_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+
+    # Returns 204 No Content
+    return
+
+
+
+
+
+
 
 
 #-----#-----#-----#-----#-----#  Creation des méthodes CRUD  #-----#-----#-----#-----#-----#
@@ -187,6 +226,45 @@ def get_meteo_data(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=weather_data.csv"},
     )
+
+
+@meteo_router.get("/offshore-check")
+def check_offshore(latitude: float, longitude: float, db: Session = Depends(get_db)):
+    try:
+        is_off = is_offshore_quebec(latitude, longitude, db)
+        return {"is_offshore": is_off}
+    except Exception as e:
+        return {"is_offshore": False, "error": str(e)}
+
+
+@meteo_router.get("/wind-map/years")
+def get_wind_map_years():
+    years = _wind_map_service.get_available_years()
+    if not years:
+        raise HTTPException(
+            status_code=404,
+            detail="No ERA5 annual cache available for wind-map.",
+        )
+    return {
+        "years": years,
+        "default_year": _wind_map_service.get_default_year(years),
+    }
+
+
+@meteo_router.get("/wind-map/annual")
+def get_wind_map_annual(year: int):
+    years = _wind_map_service.get_available_years()
+    if year not in years:
+        raise HTTPException(
+            status_code=404,
+            detail=f"ERA5 wind-map data unavailable for year={year}",
+        )
+    try:
+        return _wind_map_service.get_annual_wind_map(year=year)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 router.include_router(meteo_router)
 
@@ -330,6 +408,20 @@ async def calculer_production_reseau(
 
     _reseau_cache_set(cache_key, result)
     return result
+
+@reseau_router.post("/cout")
+async def calculer_cout_reseau(payload: schemas.ReseauSimulationPayload):
+    infra_group = payload.infra_group
+    infra_reseau = InfraReseauBis(infra_group)
+    infra_reseau.charger_scenario(payload.scenario)
+    return infra_reseau.calculer_cout(infra_group)
+
+@reseau_router.post("/emission")
+async def calculer_emission_reseau(payload: schemas.ReseauSimulationPayload):
+    infra_group = payload.infra_group
+    infra_reseau = InfraReseauBis(infra_group)
+    infra_reseau.charger_scenario(payload.scenario)
+    return infra_reseau.calculer_co2(infra_group)
 
 router.include_router(reseau_router)
 

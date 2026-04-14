@@ -26,6 +26,12 @@ const mockScenariosService = {
   selectedScenario: signal<{ nom: string } | null>(null),
 };
 
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+const mockNgbModal = {
+  open: vi.fn(),
+};
+
 describe('SimulationTopBar', () => {
   afterEach(() => vi.clearAllMocks());
 
@@ -35,6 +41,7 @@ describe('SimulationTopBar', () => {
         provideRouter([]),
         { provide: SimulationService, useValue: mockSimulationService },
         { provide: ScenariosService, useValue: scenariosService },
+        { provide: NgbModal, useValue: mockNgbModal },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });
@@ -46,8 +53,13 @@ describe('SimulationTopBar', () => {
   });
 
   describe('goBack', () => {
-    it('should navigate to /map when the back button is clicked', async () => {
+    it('should open confirmation modal and navigate to /map when confirmed', async () => {
       const user = userEvent.setup();
+      mockNgbModal.open.mockReturnValue({
+        componentInstance: {},
+        result: Promise.resolve(true),
+      });
+
       const { fixture } = await renderComponent();
       const router = fixture.debugElement.injector.get(Router);
       const navigateSpy = vi.spyOn(router, 'navigate');
@@ -55,6 +67,10 @@ describe('SimulationTopBar', () => {
       const backButton = screen.getByTitle('Retour au planificateur');
       await user.click(backButton);
 
+      // wait for promise
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockNgbModal.open).toHaveBeenCalled();
       expect(navigateSpy).toHaveBeenCalledWith(['/map']);
     });
   });
