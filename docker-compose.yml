@@ -43,5 +43,6 @@ networks:
     internal: true
   frontend-net:
 
+
 volumes:
   postgres_data:
