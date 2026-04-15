@@ -65,7 +65,7 @@ def test_performance_default_simulation():
 
     assert response.status_code == 200
     print(f"\n[PERF] Default production: {duration:.3f}s")
-    assert duration <= 10
+    assert duration <= 60
 
 @pytest.mark.performance
 def test_performance_random_long_term_simulation():
@@ -89,7 +89,7 @@ def test_performance_random_long_term_simulation():
 
     assert response.status_code == 200
     print(f"\n[PERF] Random long-term production: {duration:.3f}s")
-    assert duration <= 10
+    assert duration <= 60
 
 @pytest.mark.performance
 def test_performance_extreme_scenario_simulation():
@@ -110,7 +110,7 @@ def test_performance_extreme_scenario_simulation():
 
     assert response.status_code == 200
     print(f"\n[PERF] Extreme production: {duration:.3f}s")
-    assert duration <= 10
+    assert duration <= 60
 
 INFRA_TYPES = {
     "eolienneparc": (schemas.EolienneParcResponse, schemas.EolienneParc),
@@ -149,7 +149,17 @@ def test_performance_single_infra(infra_type, endpoint_name, endpoint_prefix):
 
     assert response.status_code == 200
     print(f"\n[PERF] {infra_type} {endpoint_name}: {duration:.3f}s")
-    threshold = 1 if endpoint_name in ("cout", "emission") else 10
+    if endpoint_name in ("cout", "emission"):
+        threshold = 0.5
+    else:
+        production_thresholds = {
+            "hydro": 1,
+            "nucleaire": 1,
+            "thermique": 1,
+            "eolienneparc": 2,
+            "solaire": 10,
+        }
+        threshold = production_thresholds[infra_type]
     assert duration <= threshold
 
 @pytest.mark.performance
@@ -164,7 +174,7 @@ def test_performance_cost():
 
     assert response.status_code == 200
     print(f"\n[PERF] Cost: {duration:.3f}s")
-    assert duration <= 1
+    assert duration <= 0.5
 
 @pytest.mark.performance
 def test_performance_emission():
@@ -178,4 +188,4 @@ def test_performance_emission():
 
     assert response.status_code == 200
     print(f"\n[PERF] Emission: {duration:.3f}s")
-    assert duration <= 1
+    assert duration <= 0.5

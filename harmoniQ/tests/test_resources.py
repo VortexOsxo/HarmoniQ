@@ -77,7 +77,7 @@ def test_server_disk_under_512mo():
 
     total_mb = _dir_size_mb(db_dir)
 
-    print(f"\n[RESOURCE] Server disk usage: {total_mb:.1f} Mo")
+    print(f"\n[RESOURCE] Server disk usage: {total_mb:.1f} Mo (limit: {MAX_SERVER_DISK_MB} Mo) — {'PASS' if total_mb <= MAX_SERVER_DISK_MB else 'FAIL'}")
     assert total_mb <= MAX_SERVER_DISK_MB
 
 
@@ -94,5 +94,5 @@ def test_server_ram_under_8go():
     tracemalloc.stop()
 
     peak_mb = peak / (1024 * 1024)
-    print(f"\n[RESOURCE] Server peak RAM: {peak_mb:.1f} Mo")
+    print(f"\n[RESOURCE] Server peak RAM: {peak_mb:.1f} Mo (limit: {MAX_SERVER_RAM_MB} Mo) — {'PASS' if peak_mb <= MAX_SERVER_RAM_MB else 'FAIL'}")
     assert peak_mb <= MAX_SERVER_RAM_MB
