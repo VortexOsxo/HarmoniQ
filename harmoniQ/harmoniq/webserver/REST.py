@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import time
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
@@ -48,8 +49,16 @@ import time
 _reseau_cache: dict = {}
 _RESEAU_CACHE_MAX = 20
 
-def _reseau_cache_key(scenario_id: int, resolution: str, flow_mode: str) -> str:
-    return f"{scenario_id}|{resolution}|{flow_mode}"
+def _reseau_cache_key(scenario_id: int, infra_group, resolution: str, flow_mode: str) -> str:
+    ids = sorted([
+        *[str(e.id) for e in (infra_group.parc_eoliens or [])],
+        *[str(s.id) for s in (infra_group.parc_solaires or [])],
+        *[str(h.id) for h in (infra_group.central_hydroelectriques or [])],
+        *[str(t.id) for t in (infra_group.central_thermique or [])],
+        *[str(n.id) for n in (infra_group.central_nucleaire or [])],
+    ])
+    infra_hash = hashlib.md5("|".join(ids).encode()).hexdigest()[:8]
+    return f"{scenario_id}|{infra_hash}|{resolution}|{flow_mode}"
 
 def _reseau_cache_set(key: str, value: dict) -> None:
     if key not in _reseau_cache and len(_reseau_cache) >= _RESEAU_CACHE_MAX:
@@ -378,7 +387,7 @@ async def calculer_production_reseau(
     infra_group = payload.infra_group
 
     # Cache mémoire : évite de refaire le calcul si rien n'a changé
-    cache_key = _reseau_cache_key(scenario.id, resolution, flow_mode)
+    cache_key = _reseau_cache_key(scenario.id, infra_group, resolution, flow_mode)
     if cache_key in _reseau_cache:
         cached = _reseau_cache[cache_key]
         if isinstance(cached.get("metadata"), dict):
