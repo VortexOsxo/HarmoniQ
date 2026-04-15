@@ -384,6 +384,10 @@ export class InfraDetailModal {
     getImpactsData(): ImpactItem[] {
         const infra = this.infra();
         if (!infra) return [];
+        if (infra.type === 'hydro') {
+            const isFilEau = infra.data?.type_barrage === "Fil de l'eau";
+            return isFilEau ? (IMPACTS_ENVIRONNEMENTAUX_DATA['hydro_fil_eau'] || []) : (IMPACTS_ENVIRONNEMENTAUX_DATA['hydro_reservoir'] || []);
+        }
         return IMPACTS_ENVIRONNEMENTAUX_DATA[infra.type] || [];
     }
 

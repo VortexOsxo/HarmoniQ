@@ -153,6 +153,18 @@ export class InfrastruturesService {
   /** Émis quand l'utilisateur supprime une infrastructure locale (par id). */
   deletedUserInfraId$ = new Subject<number>();
 
+  /**
+ * Puissance garantie (MW) du groupe d'infrastructures actif.
+ *
+ * Seuls les types à production pilotable sont comptabilisés :
+ *   - Hydro (fil de l'eau + réservoir)
+ *   - Thermique
+ *   - Nucléaire
+ * L'éolien et le solaire sont exclus (production intermittente, non garantie).
+ *
+ * Se recalcule automatiquement dès qu'une infrastructure est cochée/décochée
+ * ou qu'un groupe différent est sélectionné.
+ */
   guaranteedPowerMW = computed(() =>
     this._sumInstalledMW(['hydro', 'thermique', 'nucleaire']) +
     Math.round(this._sumInstalledMW(['eolienneparc']) * 0.3) +
@@ -572,7 +584,7 @@ export class InfrastruturesService {
           if (type === 'hydro' && overrides.has(raw.id)) {
             raw.puissance_nominal = overrides.get(raw.id);
           }
-          return { ...raw, is_user_created: false };
+          return raw;
         });
 
       // Infras user-created : toujours incluses avec is_user_created=true
