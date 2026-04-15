@@ -387,14 +387,14 @@ def _update_reservoir_costs_and_pmax(
             mc_df.loc[next_sns, dam.nom] = new_cost + premium
 
         # Contrainte de réserve stratégique (p_max_pu) pour le prochain chunk.
-        # Seuils différenciés selon la régulation :
-        #   Pluriannuel : seuil agressif à 50% → [0.50, 0.65, 0.80] → [0.15, 0.50, 0.95]
-        #   Annuel      : seuil permissif à 5%  → [0.05, 0.15, 0.40] → [0.15, 0.50, 0.95]
+        # Seuils resserrés pour montrer la nécessité de renforcer le réseau (HQ 2035-2050) :
+        #   Annuel      : plancher 40% → [0.40, 0.55, 0.70] → [0.15, 0.50, 0.95]
+        #   Pluriannuel : plancher 80% → [0.80, 0.87, 0.93] → [0.15, 0.50, 0.95]
         # Multiplié par ratio_dispo pour être cohérent avec le bilan hydraulique.
         if dam.regulation.strip().lower() == "annuel":
-            _pmax_interp_x = [0.05, 0.15, 0.40]
+            _pmax_interp_x = [0.40, 0.55, 0.70]
         else:
-            _pmax_interp_x = [0.50, 0.65, 0.80]
+            _pmax_interp_x = [0.80, 0.87, 0.93]
         new_pmax = float(np.clip(
             np.interp(dam.current_level, _pmax_interp_x, [0.15, 0.50, 0.95]) * dam.ratio_dispo,
             0.0, dam.ratio_dispo,

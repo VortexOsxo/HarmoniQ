@@ -12,6 +12,7 @@ import pypsa
 
 from .bus_connector import BusConnector
 from .data_loader import NetworkDataLoaderBis, get_loader_todo_list
+from .disaggregator import disaggregate_to_hourly
 from .network_builder import build_pypsa_network, get_builder_todo_list
 from .optimizer import run_dispatch_and_flow, get_optimizer_todo_list
 from .results import extract_kpis, format_api_response, get_results_todo_list
@@ -115,15 +116,19 @@ class InfraReseauBis:
         db: Any,
         is_journalier: bool = False,
         flow_mode: str = "ac",
-        resolution: str = "hebdomadaire",
+        resolution: str = "horaire",
     ) -> Dict[str, Any]:
         """Exécute l'optimisation LP-OPF, le flux de puissance et retourne une réponse API.
+
+        L'OPF tourne TOUJOURS sur 53 snapshots hebdomadaires (rapide).
+        Si ``resolution="horaire"``, une désagrégation post-OPF projette le dispatch
+        sur 8760 heures : les réservoirs absorbent les écarts ±MW intra-hebdomadaires.
 
         Args:
             db: Session SQLAlchemy.
             is_journalier: Conservé pour compatibilité API — non utilisé en interne.
             flow_mode: Mode d'écoulement de puissance (``"ac"`` ou ``"dc"``).
-            resolution: ``"horaire"`` ou ``"hebdomadaire"`` (défaut).
+            resolution: ``"horaire"`` (défaut, 8760 lignes) ou ``"hebdomadaire"`` (52 lignes).
 
         Returns:
             Dict de réponse API formaté par ``format_api_response``.
@@ -132,12 +137,20 @@ class InfraReseauBis:
 
         total_start = time.time()
 
+        # L'OPF tourne toujours en hebdomadaire, quelle que soit la résolution demandée.
         if self.network is None:
-            self.creer_reseau(db, resolution=resolution)
+            self.creer_reseau(db, resolution="hebdomadaire")
+
+        # Initialisation réservoirs à 95% (suggestion prof : headroom symétrique ± pour désagrégation)
+        reservoir_gen_names = [
+            g for g in self.network.generators.index
+            if self.network.generators.loc[g, "carrier"] == "hydro_reservoir"
+        ]
+        initial_fills_95 = {g: 0.95 for g in reservoir_gen_names}
 
         # Pré-charger les données des barrages réservoirs (snapshots requis, avant l'optimiseur).
         t_feed = time.time()
-        reservoir_feed = build_reservoir_feed_data(self.network, db)
+        reservoir_feed = build_reservoir_feed_data(self.network, db, initial_levels=initial_fills_95)
         self.timers["reservoir_feed_build"] = time.time() - t_feed
 
         t_opt = time.time()
@@ -147,6 +160,54 @@ class InfraReseauBis:
             reservoir_feed=reservoir_feed,
         )
         self.timers["dispatch_and_flow"] = time.time() - t_opt
+
+        # Désagrégation horaire post-OPF
+        if resolution == "horaire":
+            t_disagg = time.time()
+            hourly_demand = self.data_loader.load_demand_profile(
+                self.scenario, db, resolution="horaire"
+            )
+            hourly_result = disaggregate_to_hourly(
+                self.network, hourly_demand, reservoir_gen_names
+            )
+            dispatch_horaire = hourly_result["dispatch_horaire"]
+            if not dispatch_horaire.empty:
+                hourly_index = dispatch_horaire.index
+
+                # Sauvegarder les time-series hebdo AVANT set_snapshots() qui les réindexe
+                weekly_links_p0 = {}
+                for attr in ("p0", "p1"):
+                    ts = self.network.links_t.get(attr)
+                    if ts is not None and not ts.empty:
+                        weekly_links_p0[attr] = ts.copy()
+                weekly_lines_p0 = {}
+                for attr in ("p0", "p1"):
+                    ts = self.network.lines_t.get(attr)
+                    if ts is not None and not ts.empty:
+                        weekly_lines_p0[attr] = ts.copy()
+
+                # Remplacer snapshots + dispatch dans le network pour extract_kpis()
+                self.network.set_snapshots(hourly_index)
+                self.network.generators_t["p"] = dispatch_horaire
+
+                # Étendre les flux de liens (import/export) à l'horaire par forward-fill hebdo.
+                # L'import décidé par l'OPF reste constant sur toute la semaine —
+                # seuls les réservoirs absorbent les écarts ±MW intra-hebdomadaires.
+                for attr, weekly_ts in weekly_links_p0.items():
+                    self.network.links_t[attr] = weekly_ts.reindex(
+                        hourly_index, method="ffill"
+                    ).fillna(0.0)
+                for attr, weekly_ts in weekly_lines_p0.items():
+                    self.network.lines_t[attr] = weekly_ts.reindex(
+                        hourly_index, method="ffill"
+                    ).fillna(0.0)
+
+                # Aligner la demande horaire aussi (pour le bilan de puissance)
+                demand_hourly_aligned = hourly_demand.reindex(
+                    hourly_index, method="nearest"
+                ) * 1.07
+                self.network.loads_t["p_set"] = demand_hourly_aligned
+            self.timers["disaggregation"] = time.time() - t_disagg
 
         t_res = time.time()
         reservoir_levels = compute_reservoir_levels(self.network, db)

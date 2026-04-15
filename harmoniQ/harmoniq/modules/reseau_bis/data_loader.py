@@ -88,6 +88,7 @@ logger = logging.getLogger("ReseauBisDataLoader")
 # Invalidation manuelle : supprimer le dossier _PROFILES_CACHE_DIR
 
 _PROFILES_CACHE_DIR = Path.home() / ".cache" / "harmoniq" / "gen_profiles"
+_EOLIEN_CACHE_DIR   = _PROFILES_CACHE_DIR / "eolien"
 
 
 def _aggregate_to_resolution(
@@ -189,6 +190,42 @@ def _save_pmax_to_cache(cache_key: str, p_max_pu_df: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Cache éolien par parc (indépendant du cache global)
+# ---------------------------------------------------------------------------
+# Clé par parc : SHA-256(dates + weather + parc.id) → ne dépend PAS des autres
+# générateurs. Ajouter un barrage fictif n'invalide plus les 43 profils ERA5.
+
+def _compute_eolien_cache_key(scenario: Any, parc_id: int) -> str:
+    key = "|".join([
+        str(getattr(scenario, "date_de_debut", "")),
+        str(getattr(scenario, "date_de_fin",   "")),
+        str(getattr(scenario, "pas_de_temps",  "")),
+        str(getattr(scenario, "weather",       "")),
+        str(parc_id),
+    ])
+    return hashlib.sha256(key.encode()).hexdigest()[:16]
+
+
+def _load_eolien_from_cache(key: str) -> Optional[pd.Series]:
+    f = _EOLIEN_CACHE_DIR / f"eol_{key}.parquet"
+    if not f.exists():
+        return None
+    try:
+        return pd.read_parquet(f).iloc[:, 0]
+    except Exception:
+        f.unlink(missing_ok=True)
+        return None
+
+
+def _save_eolien_to_cache(key: str, series: pd.Series) -> None:
+    try:
+        _EOLIEN_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        series.to_frame("p_max_pu").to_parquet(_EOLIEN_CACHE_DIR / f"eol_{key}.parquet")
+    except Exception as exc:
+        logger.warning("Cache éolien: échec sauvegarde %s: %s", key, exc)
+
+
+# ---------------------------------------------------------------------------
 # Profil saisonnier fil de l'eau (pas d'appel API — calcul instantané)
 # ---------------------------------------------------------------------------
 # Calqué sur les débits réels (apport_naturel CSV) :
@@ -245,14 +282,21 @@ def _compute_initial_reservoir_pmax(
     reservoir_gen_names: List[str],
     snapshots: pd.DatetimeIndex,
     ratio_dispo_map: Dict[str, float] | None = None,
+    regulation_map: Dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Calcule la contrainte p_max_pu initiale des réservoirs (statique pour le premier chunk).
 
-    Interpolation fill → p_max_pu avant maintenance :
+    Interpolation fill → p_max_pu avant maintenance, différenciée par type de régulation :
 
+    **Annuel** (seuil critique 40%) :
     - fill ≥ 70 % → 0.95 (libre)
-    - fill = 45 % → 0.50 (prudence)
-    - fill ≤ 30 % → 0.15 (réserve stratégique — force l'import)
+    - fill = 55 % → 0.50 (prudence)
+    - fill ≤ 40 % → 0.15 (réserve stratégique — force l'import)
+
+    **Pluriannuel** (seuil critique 80%) :
+    - fill ≥ 93 % → 0.95 (libre)
+    - fill = 87 % → 0.50 (prudence)
+    - fill ≤ 80 % → 0.15 (réserve stratégique — force l'import)
 
     Le résultat est multiplié par ``ratio_dispo`` (turbines disponibles / total).
     L'optimiseur met à jour cette contrainte chunk par chunk via le feed-forward hydraulique.
@@ -262,23 +306,28 @@ def _compute_initial_reservoir_pmax(
         reservoir_gen_names: Noms des générateurs réservoir dans le réseau PyPSA.
         snapshots: Index temporel.
         ratio_dispo_map: Dict ``{nom_barrage: ratio}`` de disponibilité des turbines.
+        regulation_map: Dict ``{nom_barrage: "Annuel"|"Pluriannuel"}``.
 
     Returns:
         DataFrame ``p_max_pu`` (index = snapshots, colonnes = noms de générateurs).
     """
     if ratio_dispo_map is None:
         ratio_dispo_map = {}
+    if regulation_map is None:
+        regulation_map = {}
     reservoir_pmax = pd.DataFrame(index=snapshots)
     for gname in reservoir_gen_names:
         fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
-        pmax_val = float(np.interp(fill, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]))
-        pmax_val = float(np.clip(pmax_val, 0.15, 0.95))
+        reg = regulation_map.get(gname, "Pluriannuel").strip().lower()
+        xp = [0.40, 0.55, 0.70] if reg == "annuel" else [0.80, 0.87, 0.93]
+        pmax_val = float(np.interp(fill, xp, [0.15, 0.50, 0.95]))
+        pmax_val = float(np.clip(pmax_val, 0.0, 0.95))
         ratio = float(ratio_dispo_map.get(gname, 1.0))
         pmax_val = float(np.clip(pmax_val * ratio, 0.0, ratio))
         reservoir_pmax[gname] = pmax_val
         logger.debug(
-            "Réserve stratégique %s : fill=%.0f%% ratio_dispo=%.2f → p_max_pu=%.2f",
-            gname, fill * 100, ratio, pmax_val,
+            "Réserve stratégique %s (%s) : fill=%.0f%% ratio_dispo=%.2f → p_max_pu=%.2f",
+            gname, reg, fill * 100, ratio, pmax_val,
         )
     return reservoir_pmax
 
@@ -341,6 +390,15 @@ def _fetch_one_eolien_profile(
     parc, scenario, snapshots = args
     if InfraParcEolienne is None:
         return parc.nom, None
+
+    # Cache par parc : évite l'appel ERA5 si le profil est déjà calculé.
+    # Indépendant du cache global → un nouveau barrage fictif ne l'invalide pas.
+    eol_key = _compute_eolien_cache_key(scenario, parc.id)
+    cached = _load_eolien_from_cache(eol_key)
+    if cached is not None:
+        logger.debug("Cache éolien: HIT %s (parc=%s)", eol_key[:8], parc.nom)
+        return parc.nom, cached.reindex(snapshots).fillna(0.25).clip(0.0, 1.0)
+
     try:
         infra = InfraParcEolienne(parc)
         infra.charger_scenario(scenario)
@@ -353,7 +411,9 @@ def _fetch_one_eolien_profile(
                     index=pd.to_datetime(prod["tempsdate"]),
                 )
                 aligned = series.reindex(snapshots).fillna(0.0)
-                return parc.nom, (aligned / p_nom).clip(0.0, 1.0).fillna(0.25)
+                profile = (aligned / p_nom).clip(0.0, 1.0).fillna(0.25)
+                _save_eolien_to_cache(eol_key, profile)
+                return parc.nom, profile
     except Exception as exc:
         logger.warning("Echec p_max_pu eolien %s: %s", parc.nom, exc)
     return parc.nom, None
@@ -581,6 +641,17 @@ class NetworkDataLoaderBis:
             gen_rows.extend(_fetch_generators_from_db(db, Nucleaire, self.nucleaire_ids, "nucleaire", buses_df))
             gen_rows.extend(_generators_from_user_infras(liste_infra, buses_df))
 
+            # Dédupliquer : barrages fictifs avec ID DB apparaissent dans les deux sources.
+            # Garder la première occurrence (DB) qui possède le champ `regulation`.
+            _seen: set[str] = set()
+            _deduped: list[dict] = []
+            for _r in gen_rows:
+                _n = _r.get("name")
+                if _n not in _seen:
+                    _seen.add(_n)
+                    _deduped.append(_r)
+            gen_rows = _deduped
+
             if gen_rows:
                 generators = pd.DataFrame(gen_rows)
 
@@ -683,7 +754,7 @@ class NetworkDataLoaderBis:
             reservoir_pmax_df = None
             if reservoir_gen_names:
                 initial_fills = _get_initial_reservoir_fill(scenario)
-                reservoir_pmax_df = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map)
+                reservoir_pmax_df = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map, _regulation_map)
                 for gname in reservoir_gen_names:
                     fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
                     regulation = _regulation_map.get(gname, "Pluriannuel")
@@ -741,7 +812,7 @@ class NetworkDataLoaderBis:
         _reservoir_pmax_for_later = None
         if reservoir_gen_names:
             initial_fills = _get_initial_reservoir_fill(scenario)
-            _reservoir_pmax_for_later = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map)
+            _reservoir_pmax_for_later = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map, _regulation_map)
             for gname in reservoir_gen_names:
                 fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
                 regulation = _regulation_map.get(gname, "Pluriannuel")
@@ -1113,8 +1184,11 @@ def _load_demand_from_demande_db(
     scenario_str = _CONSOMATION_MAP.get(conso_int, "UB")
 
     # Cache disque + mémoire : la requête SQL sur 83M lignes prend 2+ min.
-    # On cache le résultat en parquet pour les runs suivants.
-    _dcache_key = f"{weather_str}|{scenario_str}|{snapshots[0]}|{snapshots[-1]}|{len(conso_df)}"
+    # Clé basée sur les dates du scénario (pas sur la résolution des snapshots) :
+    # la même requête sert pour "horaire" et "hebdomadaire" — évite la double exécution SQL.
+    _date_debut = str(getattr(scenario, "date_de_debut", snapshots[0]))
+    _date_fin   = str(getattr(scenario, "date_de_fin",   snapshots[-1]))
+    _dcache_key = f"{weather_str}|{scenario_str}|{_date_debut}|{_date_fin}|{len(conso_df)}"
     if _dcache_key in _DEMAND_CACHE:
         cached = _DEMAND_CACHE[_dcache_key]
         logger.info("Cache demande: HIT mémoire (%d snapshots, %d bus)", cached.shape[0], cached.shape[1])
@@ -1394,6 +1468,7 @@ def _generators_from_user_infras(
             "p_min_pu": 0.0,
             "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.0,
             "ratio_dispo": ratio_dispo,
+            "regulation": str(getattr(infra, "regulation", None) or "Pluriannuel"),
         })
 
     # Thermique

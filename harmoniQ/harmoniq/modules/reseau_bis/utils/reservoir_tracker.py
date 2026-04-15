@@ -189,13 +189,14 @@ def water_value_cost(niveaux: np.ndarray, regulation: str = "Pluriannuel") -> np
     couts   = np.zeros_like(niveaux)
 
     if regulation.strip().lower() == "annuel":
-        # Réservoir annuel : rechargement printanier garanti.
-        # Courbe linéaire douce — pas besoin d'exponentielle agressive.
-        # niveau=1.0 → 1 $/MWh | niveau=0.05 → 8 $/MWh | niveau=0.0 → 12 $/MWh
+        # Réservoir annuel : seuil critique 40% — plancher pédagogique pour montrer
+        # la nécessité de renforcer le réseau (objectifs HQ 2035-2050).
+        # L'import devient compétitif à 40% de fill, rendant la déplétion visible.
+        # niveau=1.0 → 1 $/MWh | niveau=0.40 → 15 $/MWh | niveau=0.0 → 25 $/MWh
         COUT_MIN       = 1.0
-        COUT_CRITIQUE  = 8.0   # coût au seuil critique 5%
-        COUT_MAX       = 12.0
-        SEUIL_CRITIQUE = 0.05
+        COUT_CRITIQUE  = 15.0  # = prix import Ontario → LP importe dès 40% fill
+        COUT_MAX       = 25.0
+        SEUIL_CRITIQUE = 0.40
 
         below = niveaux < SEUIL_CRITIQUE
         above = ~below
@@ -208,11 +209,13 @@ def water_value_cost(niveaux: np.ndarray, regulation: str = "Pluriannuel") -> np
         facteur_below = (SEUIL_CRITIQUE - niveaux[below]) / SEUIL_CRITIQUE
         couts[below]  = COUT_CRITIQUE + (COUT_MAX - COUT_CRITIQUE) * facteur_below
 
-    else:  # Pluriannuel (défaut) : protection agressive ≥ 50%
-        # niveau=1.0 →  5 $/MWh | niveau=0.50 → ~14 $/MWh | niveau=0.0 → 35 $/MWh
+    else:  # Pluriannuel (défaut) : protection agressive ≥ 80%
+        # Seuil critique remonté à 80% pour montrer la contrainte structurelle HQ 2035-2050.
+        # En dessous de 80% : falaise exponentielle (import/thermique toujours préférés).
+        # niveau=1.0 →  5 $/MWh | niveau=0.80 → ~8.75 $/MWh | niveau<0.80 → exponentielle
         COUT_MIN       = 5.0
         COUT_MAX       = 35.0
-        SEUIL_CRITIQUE = 0.50
+        SEUIL_CRITIQUE = 0.80
 
         below = niveaux < SEUIL_CRITIQUE
         facteur_below = (SEUIL_CRITIQUE - niveaux[below]) / SEUIL_CRITIQUE

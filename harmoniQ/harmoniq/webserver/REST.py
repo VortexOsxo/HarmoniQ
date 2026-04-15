@@ -371,7 +371,7 @@ async def calculer_production_reseau(
     payload: schemas.ReseauSimulationPayload,
     is_journalier: bool = False,
     flow_mode: str = "ac",
-    resolution: str = "hebdomadaire",
+    resolution: str = "horaire",
     db: Session = Depends(get_db),
 ):
     """Dispatch LOPF + flux AC via reseau_bis (HiGHS solver).

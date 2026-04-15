@@ -18,7 +18,16 @@ export class InfraDetailService {
   selectedInfra = this._selectedInfra.asReadonly();
   isOpen = computed(() => this._selectedInfra() !== null);
 
-  constructor(private infrasService: InfrastruturesService) {}
+  constructor(private infrasService: InfrastruturesService) {
+    // Fermer automatiquement le panneau si l'infra affichée est supprimée,
+    // quelle que soit la source de suppression (panneau, carte, autre composant).
+    this.infrasService.deletedUserInfraId$.subscribe((deletedId) => {
+      const current = this._selectedInfra();
+      if (current && String(current.id) === String(deletedId)) {
+        this.closeDetail();
+      }
+    });
+  }
 
   openDetail(type: string, id: string) {
     const infras = this.infrasService.getInfrasSignalByType(type)();

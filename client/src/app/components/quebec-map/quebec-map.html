@@ -26,6 +26,7 @@
 
 <!-- Bouton mise à jour réseau -->
 <button class="network-update-btn"
+    *ngIf="reseauService.hasSelection()"
     [class.has-pending]="reseauService.hasPendingInfras()"
     [class.detail-open]="infraDetailService.isOpen()"
     [disabled]="!reseauService.hasPendingInfras()"
@@ -38,7 +39,7 @@
 </button>
 
 <!-- Panneau résumé des connexions -->
-<div class="network-summary-panel" *ngIf="reseauService.summaryOpen()"
+<div class="network-summary-panel" *ngIf="reseauService.summaryOpen() && reseauService.hasSelection()"
     [class.detail-open]="infraDetailService.isOpen()">
     <div class="network-summary-header">
         <i class="fa-solid fa-diagram-project" style="color: #27ae60;"></i>
