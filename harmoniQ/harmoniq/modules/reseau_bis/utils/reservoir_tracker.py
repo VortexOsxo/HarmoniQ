@@ -161,40 +161,68 @@ def compute_reservoir_levels(
 # Water value : niveau → coût marginal
 # ---------------------------------------------------------------------------
 
-def water_value_cost(niveaux: np.ndarray) -> np.ndarray:
+def water_value_cost(niveaux: np.ndarray, regulation: str = "Pluriannuel") -> np.ndarray:
     """Calcule le coût marginal de l'eau ($/MWh) en fonction du niveau de réservoir.
 
-    Calibration :
+    Deux courbes selon le type de régulation :
 
-    - niveau = 1.0 →  5 $/MWh (réservoir plein)
-    - niveau = 0.25 → ~14 $/MWh (seuil critique)
-    - niveau = 0.0 → 35 $/MWh (réservoir vide)
+    **Pluriannuel** (réservoirs multi-années — ex. Robert-Bourassa) :
+    - Seuil critique : 50% → comportement agressif, on refuse de descendre sous la moitié
+    - niveau = 1.0  →  5 $/MWh  (réservoir plein)
+    - niveau = 0.50 → 25 $/MWh  (seuil critique, croissance exponentielle en dessous)
+    - niveau = 0.0  → 35 $/MWh  (réservoir vide)
 
-    En dessous du seuil critique (0.25), la croissance est exponentielle afin
-    d'inciter le LP à éviter le vidage complet des réservoirs.
+    **Annuel** (réservoirs à recharge annuelle — ex. La Grande-4) :
+    - Seuil critique : 5% → peut être davantage exploité (fonte printanière garantit le rechargement)
+    - niveau = 1.0  →  1 $/MWh  (réservoir plein, eau peu précieuse)
+    - niveau = 0.05 →  8 $/MWh  (seuil critique)
+    - niveau = 0.0  → 12 $/MWh  (réservoir vide)
 
     Args:
         niveaux: Tableau de niveaux de réservoir [0-1].
+        regulation: "Annuel" ou "Pluriannuel" (insensible à la casse). Défaut : "Pluriannuel".
 
     Returns:
         Tableau de coûts marginaux en $/MWh.
     """
-    COUT_MIN      = 5.0
-    COUT_MAX      = 35.0
-    SEUIL_CRITIQUE = 0.25
-
     niveaux = np.clip(np.asarray(niveaux, dtype=float), 0.0, 1.0)
     couts   = np.zeros_like(niveaux)
 
-    below = niveaux < SEUIL_CRITIQUE
-    facteur_below = (SEUIL_CRITIQUE - niveaux[below]) / SEUIL_CRITIQUE
-    couts[below]  = COUT_MIN + (COUT_MAX - COUT_MIN) * np.exp(2 * facteur_below)
+    if regulation.strip().lower() == "annuel":
+        # Réservoir annuel : rechargement printanier garanti.
+        # Courbe linéaire douce — pas besoin d'exponentielle agressive.
+        # niveau=1.0 → 1 $/MWh | niveau=0.05 → 8 $/MWh | niveau=0.0 → 12 $/MWh
+        COUT_MIN       = 1.0
+        COUT_CRITIQUE  = 8.0   # coût au seuil critique 5%
+        COUT_MAX       = 12.0
+        SEUIL_CRITIQUE = 0.05
 
-    above = ~below
-    facteur_above = (1 - niveaux[above]) / (1 - SEUIL_CRITIQUE)
-    couts[above]  = COUT_MIN + (COUT_MAX / 4 - COUT_MIN) * facteur_above
+        below = niveaux < SEUIL_CRITIQUE
+        above = ~below
 
-    return np.round(couts, 2)
+        # Linéaire au-dessus du seuil critique
+        facteur_above = (1.0 - niveaux[above]) / (1.0 - SEUIL_CRITIQUE)
+        couts[above] = COUT_MIN + (COUT_CRITIQUE - COUT_MIN) * facteur_above
+
+        # Linéaire en dessous du seuil critique (descente rapide vers COUT_MAX)
+        facteur_below = (SEUIL_CRITIQUE - niveaux[below]) / SEUIL_CRITIQUE
+        couts[below]  = COUT_CRITIQUE + (COUT_MAX - COUT_CRITIQUE) * facteur_below
+
+    else:  # Pluriannuel (défaut) : protection agressive ≥ 50%
+        # niveau=1.0 →  5 $/MWh | niveau=0.50 → ~14 $/MWh | niveau=0.0 → 35 $/MWh
+        COUT_MIN       = 5.0
+        COUT_MAX       = 35.0
+        SEUIL_CRITIQUE = 0.50
+
+        below = niveaux < SEUIL_CRITIQUE
+        facteur_below = (SEUIL_CRITIQUE - niveaux[below]) / SEUIL_CRITIQUE
+        couts[below]  = COUT_MIN + (COUT_MAX - COUT_MIN) * np.exp(2 * facteur_below)
+
+        above = ~below
+        facteur_above = (1.0 - niveaux[above]) / (1.0 - SEUIL_CRITIQUE)
+        couts[above]  = COUT_MIN + (COUT_MAX / 4 - COUT_MIN) * facteur_above
+
+    return np.round(np.clip(couts, 0.0, 105.0), 2)
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +243,7 @@ class ReservoirDamFeed:
     apport_m3s: np.ndarray      # un m³/s par snapshot (toute l'année, aligné positionellement)
     current_level: float = 0.70  # niveau courant [0-1], mis à jour chunk par chunk
     ratio_dispo: float = 1.0     # (nb_turbines - nb_maintenance) / nb_turbines
+    regulation: str = "Pluriannuel"  # "Annuel" ou "Pluriannuel" — détermine la courbe water value
 
 
 def build_reservoir_feed_data(
@@ -281,6 +310,7 @@ def build_reservoir_feed_data(
             apport_m3s=apport,
             current_level=initial_level,
             ratio_dispo=ratio_dispo,
+            regulation=str(getattr(dam, "regulation", None) or "Pluriannuel").strip(),
         ))
 
     logger.info(

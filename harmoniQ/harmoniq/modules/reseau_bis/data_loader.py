@@ -631,7 +631,7 @@ class NetworkDataLoaderBis:
             # Curtailment seulement si exports saturés ET réseau congestionné.
             "eolien":          0.0,
             "solaire":         0.0,
-            "hydro_fil":       2.0,   # O&M variable turbines fil de l'eau
+            "hydro_fil":       0.0,   # must-run, eau non stockable — coût marginal nul
             # Sources pilotables : coût croissant → mérite order naturel.
             # hydro_reservoir : coût dynamique (valeur de l'eau) remplace ce fallback ci-dessous.
             "hydro_reservoir": 5.0,
@@ -675,18 +675,24 @@ class NetworkDataLoaderBis:
                 for _, gen in generators_df.iterrows()
                 if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
             }
+            _regulation_map = {
+                gen.get("name"): str(gen.get("regulation", "Pluriannuel"))
+                for _, gen in generators_df.iterrows()
+                if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
+            }
             reservoir_pmax_df = None
             if reservoir_gen_names:
                 initial_fills = _get_initial_reservoir_fill(scenario)
                 reservoir_pmax_df = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map)
                 for gname in reservoir_gen_names:
                     fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
-                    base_cost = float(_reservoir_water_value_cost(np.array([fill]))[0])
+                    regulation = _regulation_map.get(gname, "Pluriannuel")
+                    base_cost = float(_reservoir_water_value_cost(np.array([fill]), regulation)[0])
                     costs = _apply_winter_premium(np.full(len(snapshots), base_cost), snapshots)
                     marginal_cost_cols[gname] = pd.Series(costs, index=snapshots)
                     logger.info(
-                        "Barrage %s : fill initial=%.0f%% → coût de base %.1f $/MWh (incl. prime hiver)",
-                        gname, fill * 100, base_cost,
+                        "Barrage %s (%s) : fill initial=%.0f%% → coût de base %.1f $/MWh (incl. prime hiver)",
+                        gname, regulation, fill * 100, base_cost,
                     )
             mc_df = pd.DataFrame(
                 {n: [v] * len(snapshots) if not isinstance(v, pd.Series) else v
@@ -727,18 +733,24 @@ class NetworkDataLoaderBis:
             for _, gen in generators_df.iterrows()
             if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
         }
+        _regulation_map = {
+            gen.get("name"): str(gen.get("regulation", "Pluriannuel"))
+            for _, gen in generators_df.iterrows()
+            if str(gen.get("carrier", "")) == "hydro_reservoir" and gen.get("name")
+        }
         _reservoir_pmax_for_later = None
         if reservoir_gen_names:
             initial_fills = _get_initial_reservoir_fill(scenario)
             _reservoir_pmax_for_later = _compute_initial_reservoir_pmax(initial_fills, reservoir_gen_names, snapshots, _ratio_dispo_map)
             for gname in reservoir_gen_names:
                 fill = initial_fills.get(gname, initial_fills.get("_global", 0.70))
-                base_cost = float(_reservoir_water_value_cost(np.array([fill]))[0])
+                regulation = _regulation_map.get(gname, "Pluriannuel")
+                base_cost = float(_reservoir_water_value_cost(np.array([fill]), regulation)[0])
                 costs = _apply_winter_premium(np.full(len(snapshots), base_cost), snapshots)
                 marginal_cost_cols[gname] = pd.Series(costs, index=snapshots)
                 logger.info(
-                    "Barrage %s : fill initial=%.0f%% → coût de base %.1f $/MWh (incl. prime hiver)",
-                    gname, fill * 100, base_cost,
+                    "Barrage %s (%s) : fill initial=%.0f%% → coût de base %.1f $/MWh (incl. prime hiver)",
+                    gname, regulation, fill * 100, base_cost,
                 )
 
         # --- Eolien (parallèle via ThreadPoolExecutor) ---
@@ -1380,7 +1392,7 @@ def _generators_from_user_infras(
             "p_nom_min": 0.0,
             "p_nom_max": None,
             "p_min_pu": 0.0,
-            "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.1,
+            "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.0,
             "ratio_dispo": ratio_dispo,
         })
 
@@ -1578,10 +1590,12 @@ def _fetch_generators_from_db(db: Any, model: Any, ids: list[int] | None, source
                     "p_nom_min": 0.0,
                     "p_nom_max": None,
                     "p_min_pu": p_min_pu,
-                    "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.1,
+                    "marginal_cost": 7.0 if carrier == "hydro_reservoir" else 0.0,
                     # ratio_dispo : fraction de turbines disponibles (hors maintenance).
                     # Utilisé par _compute_initial_reservoir_pmax pour borner p_max_pu.
                     "ratio_dispo": ratio_dispo,
+                    # regulation : "Annuel" ou "Pluriannuel" — détermine la courbe water value.
+                    "regulation": str(row.get("regulation", "Pluriannuel")).strip(),
                 }
             )
     elif source_type == "thermique":

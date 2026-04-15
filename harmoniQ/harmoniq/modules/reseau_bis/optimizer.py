@@ -380,16 +380,23 @@ def _update_reservoir_costs_and_pmax(
         dam.current_level = volume_current / dam.volume_max_m3  # persisté pour le chunk suivant
 
         # Coût marginal pour le prochain chunk (avec prime hivernale)
-        new_cost = float(water_value_cost(np.array([dam.current_level]))[0])
+        # La courbe dépend du type de régulation : annuel vs pluriannuel.
+        new_cost = float(water_value_cost(np.array([dam.current_level]), dam.regulation)[0])
         if not mc_df.empty and dam.nom in mc_df.columns:
             premium = np.array([_WINTER_PREMIUM[ts.month - 1] for ts in next_sns])
             mc_df.loc[next_sns, dam.nom] = new_cost + premium
 
         # Contrainte de réserve stratégique (p_max_pu) pour le prochain chunk.
-        # Multiplié par ratio_dispo pour être cohérent avec le bilan hydraulique :
-        # si 1 turbine sur 10 est en maintenance, le plafond max est 0.95 × 0.9 = 0.855.
+        # Seuils différenciés selon la régulation :
+        #   Pluriannuel : seuil agressif à 50% → [0.50, 0.65, 0.80] → [0.15, 0.50, 0.95]
+        #   Annuel      : seuil permissif à 5%  → [0.05, 0.15, 0.40] → [0.15, 0.50, 0.95]
+        # Multiplié par ratio_dispo pour être cohérent avec le bilan hydraulique.
+        if dam.regulation.strip().lower() == "annuel":
+            _pmax_interp_x = [0.05, 0.15, 0.40]
+        else:
+            _pmax_interp_x = [0.50, 0.65, 0.80]
         new_pmax = float(np.clip(
-            np.interp(dam.current_level, [0.30, 0.45, 0.70], [0.15, 0.50, 0.95]) * dam.ratio_dispo,
+            np.interp(dam.current_level, _pmax_interp_x, [0.15, 0.50, 0.95]) * dam.ratio_dispo,
             0.0, dam.ratio_dispo,
         ))
         if not pmax_df.empty and dam.nom in pmax_df.columns:
