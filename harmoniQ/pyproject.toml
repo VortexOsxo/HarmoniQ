@@ -82,4 +82,5 @@ packages = ["harmoniq"]
 markers = [
     "integration: tests appelant des APIs externes (PVGIS, etc.) — nécessite internet",
     "performance: tests de performance longs — sautés par défaut sauf si --perf est passé",
+    "resources: tests de limites de ressources (RAM, disque)",
 ]
