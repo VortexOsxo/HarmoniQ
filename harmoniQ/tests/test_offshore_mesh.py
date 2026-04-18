@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from harmoniq.core.offshore import is_offshore_quebec
 from harmoniq.db import CRUD, schemas
-from harmoniq.scripts.build_quebec_offshore_mesh import (
+from harmoniq.scripts.eolien.build_quebec_offshore_mesh import (
     _build_offshore_mesh,
     _select_maritime_polygons,
 )

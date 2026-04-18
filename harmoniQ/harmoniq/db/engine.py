@@ -20,8 +20,7 @@ from harmoniq.db import schemas
 
 if os.environ.get("HARMONIQ_TESTING") == "True":
     test_db_url = os.environ.get("TEST_DATABASE_URL")
-    if test_db_url:
-        DATABASE__URL = test_db_url
+    DATABASE__URL = test_db_url if test_db_url else "sqlite:///:memory:"
 else:
     DATABASE__URL = os.getenv("DATABASE_URL", "postgresql://harmoniq:harmoniq@localhost:5432/harmoniq")  # fallback if .env missing
 
