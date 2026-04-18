@@ -21,6 +21,8 @@ from harmoniq.db import schemas
 if os.environ.get("HARMONIQ_TESTING") == "True":
     test_db_url = os.environ.get("TEST_DATABASE_URL")
     DATABASE__URL = test_db_url if test_db_url else "sqlite:///:memory:"
+elif os.environ.get("HARMONIQ_DB") == "sqlite":
+    DATABASE__URL = f"sqlite:///{DB_PATH}"
 else:
     DATABASE__URL = os.getenv("DATABASE_URL", "postgresql://harmoniq:harmoniq@localhost:5432/harmoniq")  # fallback if .env missing
 
@@ -29,6 +31,9 @@ if DATABASE__URL.startswith("postgresql"):
     connect_args = {'options': '-csearch_path=reseau,public'}
 
 engine = create_engine(DATABASE__URL, connect_args=connect_args)
+if DATABASE__URL.startswith("sqlite"):
+    engine = engine.execution_options(schema_translate_map={"reseau": None})
+    
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 non_table_class = {'Scenario'}

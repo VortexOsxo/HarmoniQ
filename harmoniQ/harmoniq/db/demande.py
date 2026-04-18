@@ -133,6 +133,13 @@ async def read_demande_data_temporal(
     df.set_index("date", inplace=True)
     return df
 
+if os.environ.get("HARMONIQ_DB") == "sqlite":
+    from harmoniq.db.demande_sqlite import (
+        get_all_sectors,
+        read_demande_data,
+        read_demande_data_sankey,
+        read_demande_data_temporal,
+    )
 
 if __name__ == "__main__":
     # Test the function

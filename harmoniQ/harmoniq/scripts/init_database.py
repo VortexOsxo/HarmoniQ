@@ -15,8 +15,12 @@ from tqdm import tqdm
 # Load .env from the project root (harmoniQ/)
 _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(_ENV_FILE)
+import sys
 
-from harmoniq.scripts.install_postgres import check_postgres, get_psql_cmd, is_windows, can_connect_as_app_user, get_superuser_password, start_spinner
+if "--sqlite" in sys.argv:
+    os.environ["HARMONIQ_DB"] = "sqlite"
+
+from harmoniq.scripts.install_postgres import check_postgres, get_psql_cmd, is_windows, can_connect_as_app_user, get_superuser_password, start_spinner, run_command
 
 from harmoniq.db.engine import engine, get_db
 from harmoniq.db.schemas import SQLBase
@@ -73,8 +77,24 @@ def setup_database_and_user():
 
 
 
-def init_db(reset=False):
+def init_db(reset=False, is_sqlite=False):
     """Initialise la base de données avec le fichier.sql"""
+    if is_sqlite:
+        from harmoniq import DB_PATH
+        print(f"Initialisation de la base SQLite à {DB_PATH}")
+        if reset:
+            print("Réinitialisation de la base de données SQLite (suppression du fichier)...")
+            try:
+                os.remove(DB_PATH)
+                print("Ancien fichier DB supprimé.")
+            except FileNotFoundError:
+                pass
+        
+        print("Création du schéma dans SQLite...")
+        SQLBase.metadata.create_all(engine)
+        print("Schéma SQLite créé avec succès.")
+        return True
+
     global PG_SUPERPASSWORD
     if not check_postgres(PG_SUPERPASSWORD):
         print("Erreur critique: PostgreSQL n'a pas pu être installé ou configuré.")
@@ -589,11 +609,15 @@ def main():
         action="store_true",
         help="Remplit la base de données avec des données de référence",
     )
+    
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--postgre", action="store_true", default=True, help="Utilise PostgreSQL (par défaut)")
+    group.add_argument("--sqlite", action="store_true", help="Utilise SQLite")
 
     args = parser.parse_args()
 
     print("Initialisation de la base de données")
-    init_db(args.reset)
+    init_db(args.reset, is_sqlite=args.sqlite)
 
     if args.fill:
         if check_if_empty():
