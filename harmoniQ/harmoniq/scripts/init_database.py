@@ -8,7 +8,6 @@ import sys
 import platform
 import os
 import getpass
-import gdown
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -106,27 +105,34 @@ def init_db(reset=False, is_sqlite=False):
     sql_file = DB_DIR / "harmoniq.sql"
 
     if not sql_file.exists():
-        _GDRIVE_FILE_ID = "166moUTKfaNmOlz6YJ-kKvx0w4GS2oxIA"
-        print("harmoniq.sql introuvable. Téléchargement depuis Google Drive...")
+        print("harmoniq.sql introuvable. Téléchargement depuis Hugging Face...")
         sql_file.parent.mkdir(parents=True, exist_ok=True)
-        url = f"https://drive.google.com/uc?id={_GDRIVE_FILE_ID}"
 
-        # Download to system temp dir first — keeps the growing file OUT of the
-        # project workspace so the language server never indexes it (avoids the
-        # 20 GB RAM spike that happens when LSP reads the file while it downloads).
-        import tempfile, shutil
+        url = "https://huggingface.co/datasets/byacine121/harmoniq/resolve/main/harmoniq.sql"
+        
+        import requests, tempfile, shutil
         tmp_file = Path(tempfile.gettempdir()) / "harmoniq_download.sql"
-        tmp_file.unlink(missing_ok=True)  # clean any leftover from a previous attempt
+        tmp_file.unlink(missing_ok=True)
 
-        result = gdown.download(url, str(tmp_file), quiet=False, fuzzy=True)
-        if not result or not tmp_file.exists() or tmp_file.stat().st_size == 0:
-            print("Erreur : le téléchargement a échoué. Vérifiez votre connexion ou le lien Google Drive.")
+        print(f"Connexion à {url}...")
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            total_size = int(response.headers.get("content-length", 0))
+
+            with open(tmp_file, "wb") as f:
+                with tqdm(total=total_size, unit="B", unit_scale=True, unit_divisor=1024, desc="Téléchargement") as pbar:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        pbar.update(len(chunk))
+                        
+            print("Déplacement du fichier vers le projet...")
+            shutil.move(str(tmp_file), str(sql_file))
+            print("Téléchargement terminé.")
+        except Exception as e:
+            print(f"Erreur : le téléchargement a échoué. {e}", file=sys.stderr)
             tmp_file.unlink(missing_ok=True)
             return False
-
-        print("Déplacement du fichier vers le projet...")
-        shutil.move(str(tmp_file), str(sql_file))
-        print("Téléchargement terminé.")
 
     # Build the superuser env once (needed for reset + load + grants)
     PG_SUPERPASSWORD = get_superuser_password(PG_SUPERPASSWORD, PG_SUPERUSER, DB_HOST, DB_PORT, "pour importer les données")
