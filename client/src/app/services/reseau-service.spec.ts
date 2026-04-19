@@ -1,14 +1,17 @@
-vi.mock('leaflet', () => ({
+﻿vi.mock('leaflet', () => ({
   default: {
     icon: vi.fn().mockReturnValue({}),
     map: vi.fn().mockReturnValue({}),
     circleMarker: vi.fn().mockReturnValue({ bindPopup: vi.fn().mockReturnThis(), addTo: vi.fn().mockReturnThis(), setStyle: vi.fn().mockReturnThis() }),
     polyline: vi.fn().mockReturnValue({ bindPopup: vi.fn().mockReturnThis(), addTo: vi.fn().mockReturnThis(), setStyle: vi.fn().mockReturnThis() }),
+    divIcon: vi.fn().mockReturnValue({ options: {} }),
+    point: vi.fn((x: number, y: number) => ({ x, y })),
   },
   icon: vi.fn().mockReturnValue({}),
   map: vi.fn().mockReturnValue({}),
   circleMarker: vi.fn().mockReturnValue({ bindPopup: vi.fn().mockReturnThis(), addTo: vi.fn().mockReturnThis(), setStyle: vi.fn().mockReturnThis() }),
   polyline: vi.fn().mockReturnValue({ bindPopup: vi.fn().mockReturnThis(), addTo: vi.fn().mockReturnThis(), setStyle: vi.fn().mockReturnThis() }),
+  divIcon: vi.fn().mockReturnValue({ options: {} }),
 }));
 
 import { TestBed } from '@angular/core/testing';
@@ -171,6 +174,47 @@ describe('ReseauService', () => {
       service.toggleBusGroup();
 
       expect(service.isBusGroupSelected()).toBe(true);
+    });
+  });
+
+  describe('isLineGroupSelected / toggleLineGroup', () => {
+    it('should return false when no line categories selected', () => {
+      expect(service.isLineGroupSelected()).toBe(false);
+    });
+
+    it('should return true when all line categories selected', () => {
+      service.selectAll();
+      expect(service.isLineGroupSelected()).toBe(true);
+    });
+
+    it('toggleLineGroup should select all lines when none selected', () => {
+      service.toggleLineGroup();
+      expect(service.isLineGroupSelected()).toBe(true);
+    });
+
+    it('toggleLineGroup should deselect all lines when all selected', () => {
+      service.selectAll();
+      service.toggleLineGroup();
+      expect(service.isLineGroupSelected()).toBe(false);
+    });
+  });
+
+  describe('destroy', () => {
+    it('should set legendOpen to false', () => {
+      service.legendOpen.set(true);
+      service.destroy();
+      expect(service.legendOpen()).toBe(false);
+    });
+
+    it('should clear map reference', () => {
+      service.destroy();
+      expect((service as any).map).toBeUndefined();
+    });
+
+    it('should clear busMarkers array', () => {
+      (service as any).busMarkers = [{}];
+      service.destroy();
+      expect((service as any).busMarkers).toHaveLength(0);
     });
   });
 });

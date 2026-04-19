@@ -18,30 +18,18 @@ vi.mock('leaflet', () => ({
         icon: vi.fn().mockReturnValue({}),
         map: vi.fn().mockReturnValue({}),
         marker: vi.fn().mockReturnValue({ addTo: vi.fn(), setIcon: vi.fn(), on: vi.fn() }),
-        circleMarker: vi.fn().mockReturnValue({
-            addTo: vi.fn(),
-            setStyle: vi.fn(),
-            bindPopup: vi.fn().mockReturnThis(),
-        }),
-        polyline: vi.fn().mockReturnValue({
-            addTo: vi.fn(),
-            setStyle: vi.fn(),
-            bindPopup: vi.fn().mockReturnThis(),
-        }),
+        circleMarker: vi.fn().mockReturnValue({ addTo: vi.fn(), setStyle: vi.fn(), bindPopup: vi.fn().mockReturnThis() }),
+        polyline: vi.fn().mockReturnValue({ addTo: vi.fn(), setStyle: vi.fn(), bindPopup: vi.fn().mockReturnThis() }),
+        divIcon: vi.fn().mockReturnValue({ options: {} }),
+        point: vi.fn((x: number, y: number) => ({ x, y })),
     },
     icon: vi.fn().mockReturnValue({}),
     map: vi.fn().mockReturnValue({}),
     marker: vi.fn().mockReturnValue({ addTo: vi.fn(), setIcon: vi.fn(), on: vi.fn() }),
-    circleMarker: vi.fn().mockReturnValue({
-        addTo: vi.fn(),
-        setStyle: vi.fn(),
-        bindPopup: vi.fn().mockReturnThis(),
-    }),
-    polyline: vi.fn().mockReturnValue({
-        addTo: vi.fn(),
-        setStyle: vi.fn(),
-        bindPopup: vi.fn().mockReturnThis(),
-    }),
+    circleMarker: vi.fn().mockReturnValue({ addTo: vi.fn(), setStyle: vi.fn(), bindPopup: vi.fn().mockReturnThis() }),
+    polyline: vi.fn().mockReturnValue({ addTo: vi.fn(), setStyle: vi.fn(), bindPopup: vi.fn().mockReturnThis() }),
+    divIcon: vi.fn().mockReturnValue({ options: {} }),
+    point: vi.fn((x: number, y: number) => ({ x, y })),
 }));
 
 import { TestBed } from '@angular/core/testing';
@@ -54,6 +42,7 @@ import { GraphService } from '@app/services/graph-service';
 import { Scenario } from '@app/models/scenario';
 import { Weather } from '@app/models/weather';
 import { Consumption } from '@app/models/consumption';
+import * as Plotly from 'plotly.js-dist-min';
 
 const MOCK_SCENARIO: Scenario = {
     id: 1,
@@ -107,6 +96,7 @@ describe('SimulationTemporalGraphService', () => {
 
         mockGraphService = {
             aggregateData: vi.fn().mockReturnValue({ x: [], y: [] }),
+            hexToRgba: vi.fn().mockReturnValue('rgba(0,0,0,0.7)'),
             getStandardTrace: vi.fn().mockReturnValue({
                 x: [],
                 y: [],
@@ -229,6 +219,73 @@ describe('SimulationTemporalGraphService', () => {
             const nodes = service.getProductionNodes();
             expect(nodes.length).toBeGreaterThan(0);
             expect(nodes.find((n) => n.id === 'hydro_fil' || n.id === 'hydro_res')).toBeDefined();
+        });
+    });
+
+    describe('handleData', () => {
+        it('should return early when DOM element does not exist', () => {
+            document.getElementById('temporal-simulation-id')?.remove();
+            expect(() => service.handleData(MOCK_SIMULATION_RESPONSE, MOCK_DEMANDE_RESPONSE)).not.toThrow();
+            expect(Plotly.newPlot).not.toHaveBeenCalled();
+        });
+
+        it('should call Plotly.newPlot when DOM element exists', () => {
+            service.handleData(MOCK_SIMULATION_RESPONSE, MOCK_DEMANDE_RESPONSE);
+            expect(Plotly.newPlot).toHaveBeenCalledWith('temporal-simulation-id', expect.any(Array), expect.anything(), expect.anything());
+        });
+
+        it('should set totalDemandEnergyTWh signal after calling handleData', () => {
+            service.handleData(MOCK_SIMULATION_RESPONSE, MOCK_DEMANDE_RESPONSE);
+            expect(service.totalDemandEnergyTWh()).not.toBeNull();
+        });
+
+        it('should set energySummaryTWh signal after calling handleData', () => {
+            service.handleData(MOCK_SIMULATION_RESPONSE, MOCK_DEMANDE_RESPONSE);
+            const summary = service.energySummaryTWh();
+            expect(summary).not.toBeNull();
+            expect(summary).toHaveProperty('demand');
+            expect(summary).toHaveProperty('hydro');
+            expect(summary).toHaveProperty('wind');
+        });
+
+        it('should pass aggregated data for non-original granularity', () => {
+            service.handleData(MOCK_SIMULATION_RESPONSE, MOCK_DEMANDE_RESPONSE, 'weekly');
+            expect(mockGraphService.aggregateData).toHaveBeenCalled();
+        });
+
+        it('should not aggregate data for original granularity', () => {
+            service.handleData(MOCK_SIMULATION_RESPONSE, MOCK_DEMANDE_RESPONSE, 'original');
+            expect(mockGraphService.aggregateData).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('renderDemandPreview', () => {
+        it('should return early when DOM element does not exist', () => {
+            document.getElementById('temporal-simulation-id')?.remove();
+            expect(() => service.renderDemandPreview(MOCK_DEMANDE_RESPONSE)).not.toThrow();
+            expect(Plotly.newPlot).not.toHaveBeenCalled();
+        });
+
+        it('should call Plotly.newPlot when DOM element exists', () => {
+            service.renderDemandPreview(MOCK_DEMANDE_RESPONSE);
+            expect(Plotly.newPlot).toHaveBeenCalled();
+        });
+
+        it('should aggregate data for non-original granularity', () => {
+            service.renderDemandPreview(MOCK_DEMANDE_RESPONSE, 'weekly');
+            expect(mockGraphService.aggregateData).toHaveBeenCalled();
+        });
+
+        it('should not aggregate for original granularity', () => {
+            service.renderDemandPreview(MOCK_DEMANDE_RESPONSE, 'original');
+            expect(mockGraphService.aggregateData).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('clear', () => {
+        it('should call Plotly.purge', () => {
+            service.clear();
+            expect(Plotly.purge).toHaveBeenCalledWith('temporal-simulation-id');
         });
     });
 });
