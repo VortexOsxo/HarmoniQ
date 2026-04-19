@@ -229,12 +229,17 @@ describe('SimulationCo2GraphService', () => {
             await promise;
 
             vi.clearAllMocks();
+            vi.spyOn(document, 'getElementById').mockReturnValue(graphDiv as any);
             service.setCostMode('annuel');
             expect(Plotly.newPlot).toHaveBeenCalled();
         });
     });
 
     describe('handleData unit selection', () => {
+        beforeEach(() => {
+            vi.spyOn(document, 'getElementById').mockReturnValue(graphDiv as any);
+        });
+
         it('should use kt CO₂ for values in the thousands range', () => {
             const largeData = {
                 eolienneparc: [{ co2_construction: 5000, co2_annuel: 500 }],

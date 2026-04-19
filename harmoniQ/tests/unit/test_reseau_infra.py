@@ -63,7 +63,8 @@ class TestNormaliserTypesReseau:
         n = self._make_network()
         n.buses["type"] = 1  # integer type
         infra._normaliser_types_reseau(n)
-        assert n.buses["type"].dtype == object  # str columns have object dtype
+        # Accept both legacy object dtype and pandas StringDtype
+        assert n.buses["type"].dtype == object or hasattr(n.buses["type"].dtype, "na_value")
 
 
 class TestNecessiteScenario:
