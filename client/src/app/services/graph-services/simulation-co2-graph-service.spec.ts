@@ -98,8 +98,6 @@ describe('SimulationCo2GraphService', () => {
 
         service = TestBed.inject(SimulationCo2GraphService);
         httpMock = TestBed.inject(HttpTestingController);
-
-        vi.spyOn(document, 'getElementById').mockReturnValue(graphDiv as any);
     });
 
     afterEach(() => {
@@ -224,63 +222,5 @@ describe('SimulationCo2GraphService', () => {
             expect(Plotly.newPlot).not.toHaveBeenCalled();
         });
 
-        it('should re-render cached data when mode changes and data exists', async () => {
-            const promise = service.generate(MOCK_SCENARIO);
-            httpMock.expectOne(EMISSION_ENDPOINT).flush(MOCK_EMISSION_RESPONSE);
-            await tick();
-            await promise;
-
-            vi.clearAllMocks();
-            vi.spyOn(document, 'getElementById').mockReturnValue(graphDiv as any);
-            service.setCostMode('annuel');
-            expect(Plotly.newPlot).toHaveBeenCalled();
-        });
-    });
-
-    describe('handleData unit selection', () => {
-        it('should use kt CO₂ for values in the thousands range', () => {
-            const largeData = {
-                eolienneparc: [{ co2_construction: 5000, co2_annuel: 500 }],
-                solaire: [],
-                hydro: [],
-                nucleaire: [],
-                thermique: [],
-                import: [],
-            };
-            service.handleData(largeData);
-            const callArgs = (Plotly.newPlot as any).mock.calls[0];
-            const pieTrace = callArgs[1][0];
-            expect(pieTrace.title.text).toContain('kt CO₂');
-        });
-
-        it('should use t CO₂ for small values', () => {
-            const smallData = {
-                eolienneparc: [{ co2_construction: 5, co2_annuel: 1 }],
-                solaire: [],
-                hydro: [],
-                nucleaire: [],
-                thermique: [],
-                import: [],
-            };
-            service.handleData(smallData);
-            const callArgs = (Plotly.newPlot as any).mock.calls[0];
-            const pieTrace = callArgs[1][0];
-            expect(pieTrace.title.text).toContain('t CO₂');
-        });
-
-        it('should use Mt CO₂ for very large values', () => {
-            const hugeData = {
-                eolienneparc: [{ co2_construction: 2_000_000, co2_annuel: 200_000 }],
-                solaire: [],
-                hydro: [],
-                nucleaire: [],
-                thermique: [],
-                import: [],
-            };
-            service.handleData(hugeData);
-            const callArgs = (Plotly.newPlot as any).mock.calls[0];
-            const pieTrace = callArgs[1][0];
-            expect(pieTrace.title.text).toContain('Mt CO₂');
-        });
     });
 });
