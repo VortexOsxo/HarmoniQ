@@ -1,4 +1,4 @@
-vi.mock('leaflet', () => ({
+﻿vi.mock('leaflet', () => ({
   default: {
     icon: vi.fn().mockReturnValue({}),
     map: vi.fn().mockReturnValue({}),
@@ -107,6 +107,154 @@ describe('ProtectedAreasService', () => {
       service.deselectAll();
 
       expect(service.selectedLayers().size).toBe(0);
+    });
+  });
+
+  describe('isLayerSelected', () => {
+    it('should return true when a layer is selected', () => {
+      service.selectAll();
+      expect(service.isLayerSelected(100)).toBe(true);
+    });
+
+    it('should return false when a layer is not selected', () => {
+      service.deselectAll();
+      expect(service.isLayerSelected(100)).toBe(false);
+    });
+  });
+
+  describe('toggleNode', () => {
+    it('should select a leaf node when it is not selected', () => {
+      service.deselectAll();
+      const leafNode = { id: 100, name: 'Test' };
+      service.toggleNode(leafNode);
+      expect(service.isLayerSelected(100)).toBe(true);
+    });
+
+    it('should deselect a leaf node when it is selected', () => {
+      service.deselectAll();
+      const leafNode = { id: 100, name: 'Test' };
+      service.toggleNode(leafNode);
+      service.toggleNode(leafNode);
+      expect(service.isLayerSelected(100)).toBe(false);
+    });
+
+    it('should select children when toggling a parent node', () => {
+      service.deselectAll();
+      const parentNode = { id: 200, name: 'Parent', children: [
+        { id: 201, name: 'Child 1' },
+        { id: 202, name: 'Child 2' },
+      ]};
+      service.toggleNode(parentNode);
+      expect(service.isLayerSelected(200)).toBe(true);
+      expect(service.isLayerSelected(201)).toBe(true);
+      expect(service.isLayerSelected(202)).toBe(true);
+    });
+  });
+
+  describe('isGroupFullySelected', () => {
+    it('should return false when no layers are selected', () => {
+      service.deselectAll();
+      const node = { id: 100, name: 'Test' };
+      expect(service.isGroupFullySelected(node)).toBe(false);
+    });
+
+    it('should return true when a leaf node is selected', () => {
+      service.deselectAll();
+      const node = { id: 100, name: 'Test' };
+      service.toggleNode(node);
+      expect(service.isGroupFullySelected(node)).toBe(true);
+    });
+
+    it('should return false when only some children are selected', () => {
+      service.deselectAll();
+      const parent = { id: 200, name: 'Parent', children: [
+        { id: 201, name: 'Child 1' },
+        { id: 202, name: 'Child 2' },
+      ]};
+      service.toggleNode({ id: 201, name: 'Child 1' });
+      expect(service.isGroupFullySelected(parent)).toBe(false);
+    });
+  });
+
+  describe('isGroupPartiallySelected', () => {
+    it('should return false for a leaf node', () => {
+      service.deselectAll();
+      const node = { id: 100, name: 'Test' };
+      expect(service.isGroupPartiallySelected(node)).toBe(false);
+    });
+
+    it('should return true when some but not all children are selected', () => {
+      service.deselectAll();
+      const parent = { id: 200, name: 'Parent', children: [
+        { id: 201, name: 'Child 1' },
+        { id: 202, name: 'Child 2' },
+      ]};
+      service.toggleNode({ id: 201, name: 'Child 1' });
+      expect(service.isGroupPartiallySelected(parent)).toBe(true);
+    });
+
+    it('should return false when no children are selected', () => {
+      service.deselectAll();
+      const parent = { id: 200, name: 'Parent', children: [
+        { id: 201, name: 'Child 1' },
+        { id: 202, name: 'Child 2' },
+      ]};
+      expect(service.isGroupPartiallySelected(parent)).toBe(false);
+    });
+  });
+
+  describe('toggleVisibility', () => {
+    it('should deselect all when layers are selected', () => {
+      service.selectAll();
+      service.toggleVisibility();
+      expect(service.hasSelection()).toBe(false);
+    });
+
+    it('should restore previous selection when toggling back on', () => {
+      service.selectAll();
+      service.toggleVisibility(); // deselect all
+      service.toggleVisibility(); // restore
+      expect(service.hasSelection()).toBe(true);
+    });
+
+    it('should call selectAll when no previous selection and toggling on', () => {
+      service.deselectAll();
+      service.toggleVisibility();
+      expect(service.hasSelection()).toBe(true);
+    });
+  });
+
+  describe('show / hide', () => {
+    it('show should call selectAll when no layers are selected', () => {
+      service.deselectAll();
+      service.show();
+      expect(service.hasSelection()).toBe(true);
+    });
+
+    it('show should not change selection when layers are already selected', () => {
+      service.selectAll();
+      const sizeBefore = service.selectedLayers().size;
+      service.show();
+      expect(service.selectedLayers().size).toBe(sizeBefore);
+    });
+
+    it('hide should deselect all layers', () => {
+      service.selectAll();
+      service.hide();
+      expect(service.hasSelection()).toBe(false);
+    });
+  });
+
+  describe('hasSelection computed', () => {
+    it('should be true when any layer is selected', () => {
+      service.deselectAll();
+      service.toggleNode({ id: 1, name: 'Test' });
+      expect(service.hasSelection()).toBe(true);
+    });
+
+    it('should be false when no layers are selected', () => {
+      service.deselectAll();
+      expect(service.hasSelection()).toBe(false);
     });
   });
 });
