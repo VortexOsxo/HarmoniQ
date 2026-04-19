@@ -98,6 +98,8 @@ describe('SimulationCo2GraphService', () => {
 
         service = TestBed.inject(SimulationCo2GraphService);
         httpMock = TestBed.inject(HttpTestingController);
+
+        vi.spyOn(document, 'getElementById').mockReturnValue(graphDiv as any);
     });
 
     afterEach(() => {
@@ -236,10 +238,6 @@ describe('SimulationCo2GraphService', () => {
     });
 
     describe('handleData unit selection', () => {
-        beforeEach(() => {
-            vi.spyOn(document, 'getElementById').mockReturnValue(graphDiv as any);
-        });
-
         it('should use kt CO₂ for values in the thousands range', () => {
             const largeData = {
                 eolienneparc: [{ co2_construction: 5000, co2_annuel: 500 }],
