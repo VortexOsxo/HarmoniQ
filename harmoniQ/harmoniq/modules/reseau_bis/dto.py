@@ -10,6 +10,7 @@ REQUIRED_PRODUCTION_COLUMNS = [
     "total_hydro_fil",
     "total_hydro_reservoir",
     "total_import",
+    "total_export",
     "total_nucleaire",
     "total_thermique",
 ]

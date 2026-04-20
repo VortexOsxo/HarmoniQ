@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
             <option value="daily">Journalier</option>
             <option value="weekly">Hebdomadaire (Défaut)</option>
             <option value="monthly">Mensuel</option>
+            <option value="import_export">Visualisation import/export</option>
         </select>
     </div>
   `,

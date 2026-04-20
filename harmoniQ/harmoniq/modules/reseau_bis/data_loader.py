@@ -393,7 +393,9 @@ def _fetch_one_eolien_profile(
 
     # Cache par parc : évite l'appel ERA5 si le profil est déjà calculé.
     # Indépendant du cache global → un nouveau barrage fictif ne l'invalide pas.
-    eol_key = _compute_eolien_cache_key(scenario, parc.id)
+    # Les parcs créés par l'utilisateur n'ont pas de .id DB → fallback sur .nom.
+    parc_key = getattr(parc, "id", None) or parc.nom
+    eol_key = _compute_eolien_cache_key(scenario, parc_key)
     cached = _load_eolien_from_cache(eol_key)
     if cached is not None:
         logger.debug("Cache éolien: HIT %s (parc=%s)", eol_key[:8], parc.nom)
@@ -837,7 +839,15 @@ class NetworkDataLoaderBis:
                     if self.eolienne_ids
                     else _run_async(read_all_data(db, EolienneParc))
                 )
+                # Inclure aussi les parcs éoliens créés par l'utilisateur (Pydantic)
+                # afin qu'ils obtiennent un profil ERA5 réaliste (p_max_pu variable),
+                # et non le fallback constant 1.0 qui surcomptait leur production.
+                user_eoliens = [
+                    infra for infra in (getattr(liste_infra, "parc_eoliens", None) or [])
+                    if getattr(infra, "is_user_created", False)
+                ]
                 valid_parcs = [p for p in (eoliennes or []) if p.nom in gen_names]
+                valid_parcs += [p for p in user_eoliens if p.nom in gen_names]
                 if valid_parcs:
                     args_list = [(parc, scenario, snapshots) for parc in valid_parcs]
                     n_workers = min(8, len(valid_parcs))
@@ -865,7 +875,14 @@ class NetworkDataLoaderBis:
                     if self.solaire_ids
                     else _run_async(read_all_data(db, Solaire))
                 )
-                for parc in (solaires or []):
+                # Inclure aussi les parcs solaires créés par l'utilisateur (Pydantic)
+                # afin qu'ils obtiennent un profil PVGIS réaliste (p_max_pu variable),
+                # et non le fallback constant 1.0 qui surcomptait leur production.
+                user_solaires = [
+                    infra for infra in (getattr(liste_infra, "parc_solaires", None) or [])
+                    if getattr(infra, "is_user_created", False)
+                ]
+                for parc in list(solaires or []) + user_solaires:
                     nom = parc.nom
                     if nom not in gen_names:
                         continue

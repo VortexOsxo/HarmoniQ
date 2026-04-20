@@ -203,9 +203,11 @@ class InfraReseauBis:
                     ).fillna(0.0)
 
                 # Aligner la demande horaire aussi (pour le bilan de puissance)
+                # Note: hourly_demand est déjà uplifté (+7% T&D) par load_demand_profile,
+                # ne pas réappliquer le facteur ici (double uplift bug corrigé).
                 demand_hourly_aligned = hourly_demand.reindex(
                     hourly_index, method="nearest"
-                ) * 1.07
+                )
                 self.network.loads_t["p_set"] = demand_hourly_aligned
             self.timers["disaggregation"] = time.time() - t_disagg
 

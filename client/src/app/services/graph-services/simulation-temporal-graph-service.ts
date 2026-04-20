@@ -135,7 +135,15 @@ export class SimulationTemporalGraphService implements SimulationStep {
         const productionData = simulationResult.production;
         let x = productionData.map((instance: any) => instance['snapshot']);
 
+        // Mode "viz import/export" : granularité figée à hebdomadaire, sources mises à l'échelle
+        // pour que le haut du stack = production livrée au Québec (= totale - total_export),
+        // export affiché en miroir orange sous la ligne zéro, Importation en bas du stack.
+        const isImportExportMode = granularity === 'import_export';
+        const effectiveGranularity = isImportExportMode ? 'weekly' : granularity;
+
+        // Importation toujours placée en bas du stack (socle, source primaire)
         const components = [
+            { key: 'total_import', name: INFRA_LABELS['import'], color: INFRA_COLORS['import'] },
             { key: 'total_eolien', name: INFRA_LABELS['eolien'], color: INFRA_COLORS['eolien'] },
             { key: 'total_solaire', name: INFRA_LABELS['solaire'], color: INFRA_COLORS['solaire'] },
             { key: 'total_hydro_fil', name: 'Hydro (fil de l\'eau)', color: INFRA_COLORS['hydro_fil'] },
@@ -150,22 +158,38 @@ export class SimulationTemporalGraphService implements SimulationStep {
                 name: INFRA_LABELS['thermique'],
                 color: INFRA_COLORS['thermique'],
             },
-            { key: 'total_import', name: INFRA_LABELS['import'], color: INFRA_COLORS['import'] },
         ];
 
         let traces: any[] = [];
 
+        // Pré-calcul du facteur d'échelle par pas de temps pour le mode viz import/export :
+        // chaque source est multipliée par (totale - export) / totale → le stack colle à la ligne
+        // "Production Totale livrée au QC". Le hover affiche la valeur brute via customdata.
+        const scaleFactor: number[] = productionData.map((instance: any) => {
+            const totale = instance['totale'] || 0;
+            const exp = instance['total_export'] || 0;
+            if (!isImportExportMode || totale <= 0) return 1.0;
+            return Math.max(0, (totale - exp) / totale);
+        });
+
         components.forEach((comp) => {
-            let y = productionData.map((instance: any) => instance[comp.key] || 0);
+            const rawY: number[] = productionData.map((instance: any) => instance[comp.key] || 0);
+            let y: number[] = isImportExportMode
+                ? rawY.map((v, i) => v * scaleFactor[i])
+                : rawY;
+            let rawYAgg: number[] = rawY;
             let xLocal = x;
 
-            if (granularity !== 'original') {
-                const aggregated = this.graphService.aggregateData(x, y, granularity);
+            if (effectiveGranularity !== 'original') {
+                const aggregated = this.graphService.aggregateData(x, y, effectiveGranularity);
                 xLocal = aggregated.x;
                 y = aggregated.y;
+                if (isImportExportMode) {
+                    rawYAgg = this.graphService.aggregateData(x, rawY, effectiveGranularity).y;
+                }
             }
 
-            traces.push({
+            const trace: any = {
                 x: xLocal,
                 y: y,
                 type: 'scatter',
@@ -174,14 +198,46 @@ export class SimulationTemporalGraphService implements SimulationStep {
                 stackgroup: 'one',
                 fillcolor: this.graphService.hexToRgba(comp.color, 0.7),
                 hovertemplate: `<b>%{y:.2f} MW</b>`,
-            });
+            };
+            if (isImportExportMode) {
+                trace.customdata = rawYAgg;
+                trace.hovertemplate = `<b>%{customdata:.2f} MW</b> (brut)<extra></extra>`;
+            }
+            traces.push(trace);
         });
 
-        // Total production line on top of the stack
-        let totalY = productionData.map((instance: any) => instance['totale'] || 0);
+        // Exportation en miroir (uniquement en mode viz import/export)
+        if (isImportExportMode) {
+            let exportRaw: number[] = productionData.map((i: any) => i['total_export'] || 0);
+            let exportX = x;
+            if (effectiveGranularity !== 'original') {
+                const aggregated = this.graphService.aggregateData(x, exportRaw, effectiveGranularity);
+                exportX = aggregated.x;
+                exportRaw = aggregated.y;
+            }
+            const exportY = exportRaw.map((v: number) => -v);
+            traces.push({
+                x: exportX,
+                y: exportY,
+                type: 'scatter',
+                mode: 'none',
+                name: 'Exportation',
+                fill: 'tozeroy',
+                fillcolor: this.graphService.hexToRgba('#f5a9a4', 0.5),
+                customdata: exportRaw,
+                hovertemplate: `<b>%{customdata:.2f} MW exportés</b><extra></extra>`,
+            });
+        }
+
+        // Production Totale : brute par défaut, nette d'export en mode viz import/export
+        let totalY = productionData.map((instance: any) =>
+            isImportExportMode
+                ? (instance['totale'] || 0) - (instance['total_export'] || 0)
+                : instance['totale'] || 0,
+        );
         let totalX = x;
-        if (granularity !== 'original') {
-            const aggregated = this.graphService.aggregateData(x, totalY, granularity);
+        if (effectiveGranularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(x, totalY, effectiveGranularity);
             totalX = aggregated.x;
             totalY = aggregated.y;
         }
@@ -190,7 +246,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
             y: totalY,
             type: 'scatter',
             mode: 'lines',
-            name: 'Production Totale',
+            name: isImportExportMode ? 'Production livrée au QC' : 'Production Totale',
             line: { color: '#27ae60', width: 2, dash: 'solid' },
             fill: 'none',
             hovertemplate: `<b>%{y:.2f} MW</b>`,
@@ -201,8 +257,8 @@ export class SimulationTemporalGraphService implements SimulationStep {
             (value: any) => (value as number) / 1000,
         );
 
-        if (granularity !== 'original') {
-            const aggregated = this.graphService.aggregateData(demandeX, demandeY, granularity);
+        if (effectiveGranularity !== 'original') {
+            const aggregated = this.graphService.aggregateData(demandeX, demandeY, effectiveGranularity);
             demandeX = aggregated.x;
             demandeY = aggregated.y;
         }
@@ -212,7 +268,7 @@ export class SimulationTemporalGraphService implements SimulationStep {
             y: demandeY,
             type: 'scatter',
             mode: 'lines',
-            name: 'Demande',
+            name: 'Besoin Québécois',
             line: { color: '#000000', width: 2, dash: 'dot' },
             fill: 'none',
             hovertemplate: `<b>%{y:.2f} MW</b>`,
@@ -240,9 +296,14 @@ export class SimulationTemporalGraphService implements SimulationStep {
 
         const layout = this.graphService.getStandardLayout(
             `Production et Demande (${this.scenariosService.selectedScenario()?.nom})`,
-            'Puissance (MW)',
-            granularity,
-            { height: Math.floor(window.innerHeight * 0.7) },
+            isImportExportMode ? 'Puissance (MW) — exportation en négatif' : 'Puissance (MW)',
+            effectiveGranularity,
+            {
+                height: Math.floor(window.innerHeight * 0.7),
+                ...(isImportExportMode
+                    ? { yaxis: { zeroline: true, zerolinecolor: '#888', zerolinewidth: 1 } }
+                    : {}),
+            },
         );
 
         Plotly.newPlot(graphServiceConfig.TEMPORAL_SIMULATION_ID, traces, layout as any, {
