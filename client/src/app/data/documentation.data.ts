@@ -338,3 +338,102 @@ export const docsThermal: Documentation[] = [
     }
 ];
 
+export const docsReseau: Documentation[] = [
+    {
+        functionName: 'InfraReseauBis',
+        functionResume: "Service principal de simulation du réseau électrique québécois via PyPSA. Orchestre le pipeline complet : chargement des données, construction du réseau, optimisation LP-OPF et extraction des résultats.",
+        params: [
+            'liste_infra: Groupe d\'infrastructures sélectionnées par l\'utilisateur.',
+            'scenario: Scénario de simulation (dates, météo, consommation).',
+        ],
+        returns: "Réponse API avec production par source, flux de lignes, import/export et KPI de synthèse."
+    },
+    {
+        functionName: 'creer_reseau',
+        functionResume: "Construit le réseau PyPSA à partir de la topologie (bus, lignes, types de lignes), des profils de génération (éolien, solaire, hydro, nucléaire, thermique) et de la demande par MRC. Raccorde automatiquement les nouvelles infrastructures au bus le plus proche.",
+        params: [
+            'db: Session SQLAlchemy pour accéder aux données.',
+            'resolution: "hebdomadaire" (53 snapshots, défaut pour l\'OPF) ou "horaire" (8760 snapshots).',
+        ],
+        returns: 'Réseau PyPSA prêt pour l\'optimisation.'
+    },
+    {
+        functionName: 'run_dispatch_and_flow',
+        functionResume: "Exécute le dispatch optimal LP-OPF (DC) minimisant le coût total de production, puis un écoulement de puissance AC (Newton-Raphson) pour calculer tensions, puissances réactives et chargements réels des lignes. Si l'OPF est infaisable, les contraintes thermiques sont automatiquement relâchées et les lignes surchargées sont signalées.",
+        params: [
+            'network: Réseau PyPSA construit par creer_reseau().',
+            'mode: Mode d\'écoulement de puissance ("ac", "dc" ou "dc+ac").',
+            'solver_name: Solveur LP (défaut "highs").',
+            'reservoir_feed: Données de feed-forward hydraulique pré-chargées.',
+        ],
+        returns: "Dict avec statut, contraintes relâchées, lignes surchargées et mode d'écoulement utilisé."
+    },
+    {
+        functionName: 'water_value_cost',
+        functionResume: "Calcule le coût marginal dynamique de l'eau ($/MWh) en fonction du niveau de remplissage des réservoirs. Deux courbes différenciées : annuel (seuil 40%, linéaire 1→25 $/MWh) et pluriannuel (seuil 80%, exponentielle jusqu'à 35 $/MWh). Incite l'optimiseur à préserver les réserves stratégiques.",
+        params: [
+            'niveaux: Array de niveaux de remplissage [0-1].',
+            'regulation: Type de régulation du barrage ("Annuel" ou "Pluriannuel").',
+        ],
+        returns: 'Array de coûts marginaux en $/MWh.'
+    },
+    {
+        functionName: 'disaggregate_to_hourly',
+        functionResume: "Désagrège le dispatch hebdomadaire OPF (53 snapshots) vers 8760 heures. Les générateurs non-réservoirs gardent leur valeur hebdomadaire constante. Les réservoirs hydroélectriques absorbent les variations intra-hebdomadaires de demande (delta = demande_horaire - demande_hebdo), proportionnellement à leur capacité nominale.",
+        params: [
+            'network: Réseau PyPSA post-OPF avec generators_t.p peuplé.',
+            'hourly_demand: DataFrame 8760 x buses (MW, sans uplift T&D).',
+            'reservoir_gen_names: Noms des générateurs hydro_reservoir.',
+        ],
+        returns: 'Dict avec dispatch_horaire (DataFrame 8760 x générateurs) et import_residuel (Series 8760 MW).'
+    },
+    {
+        functionName: 'compute_reservoir_levels',
+        functionResume: "Calcule les niveaux de remplissage des réservoirs à chaque snapshot après le dispatch OPF. Applique le bilan hydraulique : V[t+1] = clamp(V[t] + apport(t)*dt - décharge(t)*dt, 0, V_max). L'apport naturel provient des CSV hydro (climatologie mensuelle).",
+        params: [
+            'network: Réseau PyPSA après optimisation.',
+            'db: Session SQLAlchemy pour lire les barrages.',
+            'initial_levels: Dict {nom_barrage: fraction [0-1]} (défaut 0.80).',
+        ],
+        returns: 'DataFrame index=snapshots, colonnes=barrages, valeurs=fraction [0-1] du volume utile.'
+    },
+    {
+        functionName: 'build_reservoir_feed_data',
+        functionResume: "Pré-charge les métadonnées de tous les barrages réservoirs pour le feed-forward chunk-par-chunk. Appelé une seule fois avant l'optimisation. L'optimiseur met à jour le niveau courant après chaque chunk de 4 semaines, permettant une gestion inter-temporelle des réservoirs sans rendre le LP non-linéaire.",
+        params: [
+            'network: Réseau PyPSA construit (snapshots requis).',
+            'db: Session SQLAlchemy.',
+            'initial_levels: Dict {nom_barrage: fraction [0-1]} (défaut 0.95).',
+        ],
+        returns: 'Liste de ReservoirDamFeed (un par barrage réservoir dans le réseau).'
+    },
+    {
+        functionName: 'BusConnector.connect_new_infras',
+        functionResume: "Raccorde automatiquement les nouvelles infrastructures ajoutées par l'utilisateur au réseau existant. Crée un bus à la position géographique de l'infrastructure et le connecte au bus le plus proche par distance Haversine. La tension nominale et le type de ligne sont hérités du bus voisin (120 kV à 735 kV).",
+        params: [
+            'liste_infra: Groupe d\'infrastructures contenant les éléments is_user_created=True.',
+        ],
+        returns: 'Topologie mise à jour avec les nouveaux bus et lignes de raccordement.'
+    },
+    {
+        functionName: 'auto_scale_line_capacities',
+        functionResume: "Ajuste automatiquement la capacité thermique (s_nom) des lignes pour garantir la faisabilité de l'OPF. Pour chaque bus, calcule la capacité requise (max entre génération et demande) et augmente le nombre de circuits parallèles si nécessaire, avec une marge de sécurité de 5%.",
+        params: [
+            'network: Réseau PyPSA (modifié en place).',
+            'p_max_pu_by_carrier: Facteurs de disponibilité par type de source.',
+            'margin: Marge de sécurité (défaut 1.05 = 5%).',
+        ],
+        returns: 'Liste des modifications appliquées (bus, ligne, ancien s_nom, nouveau s_nom).'
+    },
+    {
+        functionName: 'extract_kpis',
+        functionResume: "Extrait les indicateurs clés de performance après simulation : production par source (MW par heure), flux maximaux et chargement des lignes (%), violations de capacité, import/export par interconnexion, et KPI globaux (énergie totale, pointe, facteur de charge). Inclut les niveaux de réservoir si disponibles.",
+        params: [
+            'network: Réseau PyPSA après optimisation et écoulement de puissance.',
+            'optimizer_result: Dict retourné par run_dispatch_and_flow().',
+            'reservoir_levels: DataFrame des niveaux de réservoir (optionnel).',
+        ],
+        returns: 'Dict avec production_df, line_flows, violations, link_flows, summary, reservoir_levels.'
+    },
+];
+

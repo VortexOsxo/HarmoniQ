@@ -636,22 +636,31 @@ class NetworkDataLoaderBis:
                 buses_df = topology.get("buses", pd.DataFrame())
 
             gen_rows: list[dict[str, Any]] = []
+            # User infras insérées en premier : leurs valeurs priment sur la DB
+            # lors du dedup (utile quand l'utilisateur modifie la capacité d'un
+            # barrage fictif déjà présent en base).
+            gen_rows.extend(_generators_from_user_infras(liste_infra, buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, EolienneParc, self.eolienne_ids, "eolien", buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, Solaire, self.solaire_ids, "solaire", buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, Hydro, self.hydro_ids, "hydro", buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, Thermique, self.thermique_ids, "thermique", buses_df))
             gen_rows.extend(_fetch_generators_from_db(db, Nucleaire, self.nucleaire_ids, "nucleaire", buses_df))
-            gen_rows.extend(_generators_from_user_infras(liste_infra, buses_df))
 
-            # Dédupliquer : barrages fictifs avec ID DB apparaissent dans les deux sources.
-            # Garder la première occurrence (DB) qui possède le champ `regulation`.
+            # Dédupliquer par nom : garde la première occurrence (user prime sur DB).
             _seen: set[str] = set()
             _deduped: list[dict] = []
+            _dropped: list[str] = []
             for _r in gen_rows:
                 _n = _r.get("name")
                 if _n not in _seen:
                     _seen.add(_n)
                     _deduped.append(_r)
+                else:
+                    _dropped.append(_n)
+            if _dropped:
+                logger.debug(
+                    "Generators dédupliqués (user prime sur DB): %s", _dropped
+                )
             gen_rows = _deduped
 
             if gen_rows:
@@ -663,6 +672,7 @@ class NetworkDataLoaderBis:
             snapshots=snapshots,
             generators_df=generators,
             resolution=resolution,
+            liste_infra=liste_infra,
         )
 
         return {
@@ -678,6 +688,7 @@ class NetworkDataLoaderBis:
         snapshots: pd.DatetimeIndex,
         generators_df: pd.DataFrame,
         resolution: str = "horaire",
+        liste_infra: Any = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Génère p_max_pu et marginal_cost pour tous les générateurs.
 

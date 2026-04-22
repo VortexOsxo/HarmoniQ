@@ -407,6 +407,19 @@ export class InfrastruturesService {
 
     // Ajouter au groupe sélectionné (utilise toggleInfra pour gérer le branching)
     this.toggleInfra('hydro', id.toString());
+
+    // Émettre sur newUserInfra$ pour activer le bouton « Mettre à jour le réseau ».
+    // Les barrages fictifs doivent être connectés au réseau comme toute nouvelle infra.
+    const added: any = container.infras().find((i: any) => i.id === id);
+    if (added) {
+      this.newUserInfra$.next({
+        id: added.id,
+        lat: added.latitude,
+        lng: added.longitude,
+        name: added.nom,
+        type: 'hydro',
+      });
+    }
   }
 
   /** Retire un barrage fictif de la carte et du groupe d'infras. */

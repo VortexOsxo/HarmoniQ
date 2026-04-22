@@ -1,7 +1,7 @@
 import { Component, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationBar } from '@app/components/navigation-bar/navigation-bar';
-import { docsWind, docsHydro, docsNuclear, docsSolar, docsThermal } from '@app/data/documentation.data';
+import { docsWind, docsHydro, docsNuclear, docsSolar, docsThermal, docsReseau } from '@app/data/documentation.data';
 
 @Component({
   selector: 'app-docs-page',
@@ -19,7 +19,8 @@ export class DocsPage {
     { id: 'hydro', title: 'Hydro-Électrique', data: docsHydro, img: "https://images.pexels.com/photos/31326222/pexels-photo-31326222/free-photo-of-aerial-view-of-dam-structure-in-alma-wi.jpeg" },
     { id: 'nucleaire', title: 'Nucléaire', data: docsNuclear, img: "https://images.pexels.com/photos/257700/pexels-photo-257700.jpeg" },
     { id: 'solaire', title: 'Solaire', data: docsSolar, img: "https://images.pexels.com/photos/356036/pexels-photo-356036.jpeg" },
-    { id: 'thermique', title: 'Thermique', data: docsThermal, img: "https://images.pexels.com/photos/3044472/pexels-photo-3044472.jpeg" }
+    { id: 'thermique', title: 'Thermique', data: docsThermal, img: "https://images.pexels.com/photos/3044472/pexels-photo-3044472.jpeg" },
+    { id: 'reseau', title: 'Réseau électrique', data: docsReseau, img: "https://images.pexels.com/photos/2254065/pexels-photo-2254065.jpeg" }
   ];
 
   onSelectionChange(event: Event) {
