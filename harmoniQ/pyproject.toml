@@ -68,6 +68,7 @@ dev = [
     "black",
     "flake8",
     "pytest",
+    "pytest-cov",
     "httpx",
     "gdown"
 ]
@@ -75,8 +76,17 @@ dev = [
 [tool.setuptools]
 packages = ["harmoniq"]
 
+[tool.coverage.run]
+source = ["harmoniq"]
+omit = ["harmoniq/scripts/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
 [tool.pytest.ini_options]
 markers = [
     "integration: tests appelant des APIs externes (PVGIS, etc.) — nécessite internet",
     "performance: tests de performance longs — sautés par défaut sauf si --perf est passé",
+    "resources: tests de limites de ressources (RAM, disque)",
 ]
