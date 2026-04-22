@@ -19,7 +19,7 @@ def reservoir_infill(
 ):
     db = next(get_db())
     barrages = read_all_hydro(db)
-    Units = "IS"
+    Units = "SI"
     hp_type = "Diversion"
     results = {}
 
@@ -167,7 +167,7 @@ def get_run_of_river_dam_power(barrage):
     type_turb = barrage.donnees.modele_turbine
     type_barrage = barrage.donnees.type_barrage
     debit = barrage.debit
-    Units = "IS"
+    Units = "SI"
     hp_type = "Diversion"
     # print(debit)
 
@@ -242,7 +242,7 @@ def energy_loss(
     # Variable en sortie :
     #   - energy_loss : Énergie perdue par l'utilisation de l'évacuateur de crue
 
-    Units = "IS"
+    Units = "SI"
     hp_type = "Diversion"
     Debit = Volume_evacue / (
         3600 * nb_turbines
