@@ -103,19 +103,28 @@ _DEFAULT_P_MAX_PU: Dict[str, float] = {
     "nucleaire":        0.90,
 }
 
-# Capacité thermique d'UN SEUL circuit par type de ligne (MVA).
-# Basée sur SIL + limites thermiques typiques HQ/IEEE.
-# Utilisée par auto_scale_line_capacities() pour calculer num_parallel.
+# Capacité nominale d'UN SEUL circuit par type de ligne (MVA).
+# Méthode : s_nom_base = min(SIL × f_StClair, S_thermique)
+#   - SIL = V² / Zc  (Zc tiré du PDF HQ ELE8452, Polytechnique Montréal)
+#   - f_StClair ≈ 1,0 pour lignes longues (735 kV corridors Baie-James→Mtl)
+#     et jusqu'à 3,0 pour tensions plus basses (lignes courtes, limite thermique).
+#   - S_therm = √3 · V · I_therm (I_été du PDF).
+# Les niveaux 345 et 450 kV sont extrapolés (non couverts par la source HQ) ;
+# 450 kV est un proxy AC du HVDC ±450 kV Radisson-Nicolet-Sandy Pond.
+# Note : SIL n'est PAS utilisé à l'exécution — il sert uniquement à la
+# calibration hors-ligne des valeurs ci-dessous. À l'exécution, c'est
+# auto_scale_line_capacities() qui fixe num_parallel à partir de la
+# demande/génération locale ÷ s_nom_base.
 _SNOM_BASE_PER_TYPE: Dict[str, float] = {
-    "735kV_line": 2000.0,
-    "765kV_line": 2400.0,
-    "450kV_line":  900.0,
-    "345kV_line":  700.0,
-    "320kV_line":  650.0,
-    "315kV_line":  600.0,
-    "230kV_line":  400.0,
-    "120kV_line":  200.0,
-    "69kV_line":   100.0,
+    "735kV_line": 2000.0,  # SIL=2078 (Zc=260), f=1.0, long corridors
+    "450kV_line":  900.0,  # extrapolation (proxy HVDC ±450 kV)
+    "345kV_line":  700.0,  # extrapolation (non PDF)
+    "320kV_line":  650.0,  # extrapolation HVDC
+    "315kV_line":  600.0,  # SIL=342 (Zc=290), f=1.8, biterne
+    "230kV_line":  500.0,  # SIL=139 (Zc=380), f=3.0, thermique ~540
+    "161kV_line":  300.0,  # SIL=68 (Zc=380), f=3.0, thermique ~320
+    "120kV_line":  200.0,  # SIL=41 (Zc=350), f=3.0, thermique ~240
+    "69kV_line":   100.0,  # SIL=14 (Zc=350), f=3.0, thermique ~130
 }
 
 

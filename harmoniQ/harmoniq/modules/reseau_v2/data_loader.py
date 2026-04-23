@@ -1,4 +1,4 @@
-"""Chargement des données de topologie, génération et demande pour ``reseau_bis``.
+"""Chargement des données de topologie, génération et demande pour ``reseau_v2``.
 
 Sources :
 
@@ -507,7 +507,7 @@ def get_loader_todo_list() -> List[str]:
 
 
 class NetworkDataLoaderBis:
-    """Façade de chargement des données réseau pour ``reseau_bis``."""
+    """Façade de chargement des données réseau pour ``reseau_v2``."""
 
     def __init__(self) -> None:
         self.eolienne_ids = None
@@ -1120,28 +1120,34 @@ class NetworkDataLoaderBis:
 def _make_line_types_df() -> pd.DataFrame:
     """Paramètres AC standard pour les types de lignes du Nouveau Réseau.
 
-    b_per_length (µS/km) = susceptance shunt, dérivée de b = x / Zc²
-    où Zc est l'impédance caractéristique typique par classe de voltage.
-    Formule SIL : Zc = √(x/b),  SIL = V²/Zc  [MW]
-    Sources : IEEE, Glover/Sarma ch.5, Electrical4U, ECE Utah notes.
+    Source principale : Hydro-Québec, *Caractéristiques des lignes*,
+    document du cours ELE8452 Réseaux électriques, Polytechnique Montréal
+    (r, x, b, Zc, capacité thermique pour 69, 120, 161, 230, 315, 735 kV).
 
-    Valeurs Zc utilisées :
-        735 kV → Zc ≈ 254 Ω,  SIL ≈ 2128 MW  (4×ACSR bundle HQ)
-        315 kV → Zc ≈ 301 Ω,  SIL ≈  330 MW
-        230 kV → Zc ≈ 376 Ω,  SIL ≈  141 MW
-        120 kV → Zc ≈ 402 Ω,  SIL ≈   36 MW
+    Les niveaux 345, 450 et 320 kV ne sont pas couverts par la source :
+    valeurs extrapolées, conservées pour rétrocompatibilité.
+        - 450 kV : proxy AC du HVDC ±450 kV Radisson-Nicolet-Sandy Pond.
+        - 320 kV : approximation HVDC.
+        - 345 kV : interconnexion Madawaska (NB).
+
+    Note : le SIL (puissance naturelle V²/Zc) n'est pas utilisé à
+    l'exécution. Il a servi à calibrer hors-ligne les valeurs de
+    `_SNOM_BASE_PER_TYPE` (cf. network_builder.py) via la méthode
+    SIL × facteur St. Clair, plafonnée par la capacité thermique PDF.
     """
     types = [
         # name,         f_nom, r_per_length, x_per_length, b_per_length (µS/km)
-        ("735kV_line",   60,   0.0186,       0.2580,       4.0),
-        ("765kV_line",   60,   0.0150,       0.2400,       4.1),
-        ("450kV_line",   60,   0.0250,       0.2750,       3.8),
-        ("345kV_line",   60,   0.0400,       0.3200,       3.5),
-        ("320kV_line",   60,   0.0420,       0.3300,       3.4),  # HVDC approx DC
-        ("315kV_line",   60,   0.0390,       0.3170,       3.5),
-        ("230kV_line",   60,   0.0540,       0.3960,       2.8),
-        ("120kV_line",   60,   0.1150,       0.4200,       2.6),
-        ("69kV_line",    60,   0.1700,       0.4400,       2.5),
+        # --- Valeurs PDF HQ ELE8452 ---
+        ("735kV_line",   60,   0.0100,       0.3300,       4.9),
+        ("315kV_line",   60,   0.0280,       0.3600,       4.3),
+        ("230kV_line",   60,   0.0550,       0.4900,       3.4),
+        ("161kV_line",   60,   0.0750,       0.4900,       3.4),
+        ("120kV_line",   60,   0.0750,       0.4500,       3.7),
+        ("69kV_line",    60,   0.0750,       0.4500,       3.7),
+        # --- Extrapolations (non couverts par PDF) ---
+        ("450kV_line",   60,   0.0250,       0.2750,       3.8),  # proxy HVDC ±450
+        ("345kV_line",   60,   0.0390,       0.3170,       3.5),  # interco NB
+        ("320kV_line",   60,   0.0420,       0.3300,       3.4),  # HVDC approx
     ]
     return pd.DataFrame(
         types,
