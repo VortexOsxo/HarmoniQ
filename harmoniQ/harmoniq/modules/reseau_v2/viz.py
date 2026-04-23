@@ -1,10 +1,10 @@
-"""Visualisation interactive des résultats reseau_bis.
+"""Visualisation interactive des résultats reseau_v2.
 
 Produit un dashboard HTML autonome (plotly, zéro serveur) depuis les objets
 PyPSA network + result dict issus de `InfraReseauBis.calculer_production()`.
 
 Usage minimal (depuis n'importe quel fichier de test) :
-    from harmoniq.modules.reseau_bis.viz import ReseauBisViz
+    from harmoniq.modules.reseau_v2.viz import ReseauBisViz
     viz = ReseauBisViz(infra.network, result, label="Hiver 2035")
     viz.show()                          # ouvre dans le navigateur
     viz.save("resultats_hiver.html")    # fichier HTML autonome
@@ -73,7 +73,7 @@ PLOTLY_TEMPLATE = "plotly_white"
 # ---------------------------------------------------------------------------
 
 class ReseauBisViz:
-    """Dashboard plotly pour un résultat reseau_bis.
+    """Dashboard plotly pour un résultat reseau_v2.
 
     Parameters
     ----------
@@ -130,7 +130,7 @@ class ReseauBisViz:
         from datetime import datetime as _dt
 
         # Dossier de sortie : racine du projet / outputs / viz /
-        # viz.py est dans harmoniq/modules/reseau_bis/ → remonter 4 niveaux
+        # viz.py est dans harmoniq/modules/reseau_v2/ → remonter 4 niveaux
         _project_root = Path(__file__).parent.parent.parent.parent
         _out_dir = _project_root / "outputs" / "viz"
         _out_dir.mkdir(parents=True, exist_ok=True)
@@ -153,7 +153,7 @@ class ReseauBisViz:
         webbrowser.open(f"file:///{out_path.as_posix()}")
         return out_path
 
-    def save(self, path: str | Path = "reseau_bis_results.html") -> Path:
+    def save(self, path: str | Path = "reseau_v2_results.html") -> Path:
         """Sauvegarde le dashboard en fichier HTML autonome.
 
         Le fichier inclut plotly.js (CDN) — peut être ouvert sans Python.
@@ -254,7 +254,7 @@ class ReseauBisViz:
 
         fig.update_layout(
             title={
-                "text": f"<b>HarmoniQ — reseau_bis</b><br>"
+                "text": f"<b>HarmoniQ — reseau_v2</b><br>"
                         f"<span style='font-size:14px'>{period_label}</span><br>"
                         f"<span style='font-size:11px;color:#666'>{subtitle}</span>",
                 "x": 0.5,
@@ -785,7 +785,7 @@ def plot_dispatch_results(
 
     Example
     -------
-    >>> from harmoniq.modules.reseau_bis.viz import plot_dispatch_results
+    >>> from harmoniq.modules.reseau_v2.viz import plot_dispatch_results
     >>> plot_dispatch_results(infra.network, result, label="Hiver 2035")
 
     Parameters

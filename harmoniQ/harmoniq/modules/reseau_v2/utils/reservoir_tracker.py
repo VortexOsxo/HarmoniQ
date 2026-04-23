@@ -10,7 +10,7 @@ Pipeline d'exécution :
    l'OPF via ``water_value_cost()`` pour un dispatch sensible au niveau d'eau.
 
 Example:
-    from harmoniq.modules.reseau_bis.utils.reservoir_tracker import (
+    from harmoniq.modules.reseau_v2.utils.reservoir_tracker import (
         compute_reservoir_levels,
         water_value_cost,
     )

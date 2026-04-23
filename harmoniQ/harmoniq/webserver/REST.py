@@ -37,7 +37,7 @@ from harmoniq.core.offshore import is_offshore_quebec
 
 from harmoniq.modules.eolienne import InfraParcEolienne
 from harmoniq.modules.reseau import InfraReseau
-from harmoniq.modules.reseau_bis.service import InfraReseauBis
+from harmoniq.modules.reseau_v2.service import InfraReseauBis
 from harmoniq.modules.solaire import InfraSolaire
 from harmoniq.modules.thermique import InfraThermique
 from harmoniq.modules.nucleaire import InfraNucleaire
@@ -45,7 +45,7 @@ from harmoniq.modules.hydro import InfraHydro
 import json
 import time
 
-# Cache mémoire des résultats reseau_bis (max 20 entrées, FIFO).
+# Cache mémoire des résultats reseau_v2 (max 20 entrées, FIFO).
 _reseau_cache: dict = {}
 _RESEAU_CACHE_MAX = 20
 
@@ -93,7 +93,7 @@ async def delete_scenario_and_purge_cache(
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
 
-    # Invalider le cache mémoire reseau_bis pour ce scénario
+    # Invalider le cache mémoire reseau_v2 pour ce scénario
     keys_to_remove = [k for k in _reseau_cache if k.startswith(f"{scenario_id}|")]
     for k in keys_to_remove:
         _reseau_cache.pop(k, None)
@@ -374,7 +374,7 @@ async def calculer_production_reseau(
     resolution: str = "horaire",
     db: Session = Depends(get_db),
 ):
-    """Dispatch LOPF + flux AC via reseau_bis (HiGHS solver).
+    """Dispatch LOPF + flux AC via reseau_v2 (HiGHS solver).
 
     Retourne un dict avec :
       - production     : liste de snapshots avec total_xxx par carrier

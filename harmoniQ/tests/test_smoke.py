@@ -12,7 +12,7 @@ def test_harmoniq_importable():
 def test_water_value_cost():
     """water_value_cost : calibration de base."""
     import numpy as np
-    from harmoniq.modules.reseau_bis.utils.reservoir_tracker import water_value_cost
+    from harmoniq.modules.reseau_v2.utils.reservoir_tracker import water_value_cost
 
     costs = water_value_cost(np.array([0.0, 0.25, 1.0]))
     # Réservoir vide → coût élevé (exponentiel) ; réservoir plein → coût minimal

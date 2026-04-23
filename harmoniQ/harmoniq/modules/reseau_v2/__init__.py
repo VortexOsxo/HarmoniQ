@@ -1,4 +1,4 @@
-﻿"""Structure du template `reseau_bis`."""
+﻿"""Structure du template `reseau_v2`."""
 
 from .dto import (
     SimulationRequest,
@@ -6,7 +6,7 @@ from .dto import (
     REQUIRED_PRODUCTION_COLUMNS,
     validate_production_records,
 )
-from .service import InfraReseauBis, simulate_network, get_reseau_bis_todo_list
+from .service import InfraReseauBis, simulate_network, get_reseau_v2_todo_list
 
 __all__ = [
     "SimulationRequest",
@@ -15,5 +15,5 @@ __all__ = [
     "validate_production_records",
     "InfraReseauBis",
     "simulate_network",
-    "get_reseau_bis_todo_list",
+    "get_reseau_v2_todo_list",
 ]

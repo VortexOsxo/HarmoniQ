@@ -1,7 +1,7 @@
 import pandas as pd
 import pypsa
 
-from harmoniq.modules.reseau_bis.results import extract_kpis
+from harmoniq.modules.reseau_v2.results import extract_kpis
 
 
 def _make_network(snapshots):

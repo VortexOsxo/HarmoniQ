@@ -1,4 +1,4 @@
-﻿"""Orchestration du service ``reseau_bis``.
+﻿"""Orchestration du service ``reseau_v2``.
 
 Expose ``InfraReseauBis`` et la façade fonctionnelle ``simulate_network``
 pour l'intégration avec les routes REST.
@@ -19,7 +19,7 @@ from .results import extract_kpis, format_api_response, get_results_todo_list
 from .utils.reservoir_tracker import compute_reservoir_levels, build_reservoir_feed_data
 
 
-def get_reseau_bis_todo_list():
+def get_reseau_v2_todo_list():
     """Agrège les listes de tâches de tous les sous-modules."""
     return (
         get_loader_todo_list()

@@ -1,4 +1,4 @@
-﻿# reseau_bis - Gabarit complet de refonte (HarmoniQ)
+﻿# reseau_v2 - Gabarit complet de refonte (HarmoniQ)
 
 Ce dossier est un **gabarit complet** pour reconstruire le module reseau,
 avec des TODOs explicites et des contrats I/O stables.
@@ -54,7 +54,7 @@ avec des TODOs explicites et des contrats I/O stables.
 
 Voir:
 - `IMPLEMENTATION_TODO.md`
-- `service.get_reseau_bis_todo_list()`
+- `service.get_reseau_v2_todo_list()`
 
 ## Prérequis
 

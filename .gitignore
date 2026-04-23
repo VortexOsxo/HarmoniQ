@@ -33,3 +33,11 @@ n_cache/
 
 # Profiler Logs
 profile_logs
+
+# Rapport design (artefacts locaux, hors repo)
+generate_rapport.js
+node_modules/
+package.json
+package-lock.json
+*.docx
+~$*

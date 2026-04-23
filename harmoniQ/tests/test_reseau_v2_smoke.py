@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import pypsa
 
-from harmoniq.modules.reseau_bis.network_builder import build_pypsa_network
+from harmoniq.modules.reseau_v2.network_builder import build_pypsa_network
 
 
 def _minimal_topology():

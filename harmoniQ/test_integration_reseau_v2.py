@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Test d'intégration RÉEL — reseau_bis avec tous les modules connectés.
+Test d'intégration RÉEL — reseau_v2 avec tous les modules connectés.
 
 Utilise :
   - Scénario 2035 complet (8760h, année entière) depuis la DB
@@ -10,7 +10,7 @@ Utilise :
   - LOPF HiGHS + AC PF Newton-Raphson interne
 
 Usage:
-    python test_integration_reseau_bis.py [--scenario_id 1] [--flow_mode ac]
+    python test_integration_reseau_v2.py [--scenario_id 1] [--flow_mode ac]
 """
 
 import argparse
@@ -61,7 +61,7 @@ log = logging.getLogger("test_integration")
 # ---------------------------------------------------------------------------
 # Arguments
 # ---------------------------------------------------------------------------
-parser = argparse.ArgumentParser(description="Test intégration reseau_bis")
+parser = argparse.ArgumentParser(description="Test intégration reseau_v2")
 parser.add_argument("--scenario_id", type=int, default=1, help="ID du scénario (1=2035, 2=2050)")
 parser.add_argument(
     "--liste_infra_id",
@@ -84,7 +84,7 @@ args, _unknown = parser.parse_known_args()
 # Chargement depuis la vraie DB
 # ---------------------------------------------------------------------------
 log.info("=" * 70)
-log.info("TEST INTÉGRATION reseau_bis — Scénario #%d, flow_mode=%s, resolution=%s", args.scenario_id, args.flow_mode, args.resolution)
+log.info("TEST INTÉGRATION reseau_v2 — Scénario #%d, flow_mode=%s, resolution=%s", args.scenario_id, args.flow_mode, args.resolution)
 log.info("=" * 70)
 
 from harmoniq.db.schemas import (
@@ -136,7 +136,7 @@ log.info("  Infras      : %d éolien | %d hydro | %d solaire | %d thermique | %d
 # ---------------------------------------------------------------------------
 # Exécution via InfraReseauBis (exactement comme REST.py le ferait)
 # ---------------------------------------------------------------------------
-from harmoniq.modules.reseau_bis.service import InfraReseauBis
+from harmoniq.modules.reseau_v2.service import InfraReseauBis
 
 log.info("")
 log.info("=" * 70)
@@ -347,7 +347,7 @@ log.info("=" * 70)
 # ---------------------------------------------------------------------------
 if args.plot or args.save_plot:
     try:
-        from harmoniq.modules.reseau_bis.viz import ReseauBisViz
+        from harmoniq.modules.reseau_v2.viz import ReseauBisViz
         period_label = f"Scénario #{args.scenario_id} — {scenario.nom} ({scenario.date_de_debut.year})"
         viz = ReseauBisViz(infra.network, result, label=period_label)
         if args.save_plot:

@@ -1,6 +1,6 @@
-"""Tests d'audit reseau_bis — vérifie le vrai flow du module.
+"""Tests d'audit reseau_v2 — vérifie le vrai flow du module.
 
-Chaque test appelle les fonctions réelles de reseau_bis (data_loader,
+Chaque test appelle les fonctions réelles de reseau_v2 (data_loader,
 network_builder, optimizer) avec la vraie DB (db.sqlite / demande.db).
 """
 import re
@@ -14,12 +14,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from harmoniq.modules.reseau_bis.data_loader import (
+from harmoniq.modules.reseau_v2.data_loader import (
     NetworkDataLoaderBis,
     _aggregate_to_resolution,
 )
-from harmoniq.modules.reseau_bis.network_builder import build_pypsa_network
-from harmoniq.modules.reseau_bis.optimizer import run_dispatch_and_flow
+from harmoniq.modules.reseau_v2.network_builder import build_pypsa_network
+from harmoniq.modules.reseau_v2.optimizer import run_dispatch_and_flow
 
 # Chemin vers la vraie DB (pas test_db.sqlite créé par conftest)
 _REAL_DB = Path(__file__).resolve().parents[1] / "harmoniq" / "db" / "db.sqlite"
@@ -161,7 +161,7 @@ class TestAggregationModulaire:
         """Le resample W-MON ne doit apparaître que dans _aggregate_to_resolution
         (+ la ligne solaire locale). Si > 2 occurrences, duplication réintroduite."""
         src = (Path(__file__).resolve().parents[1]
-               / "harmoniq" / "modules" / "reseau_bis" / "data_loader.py")
+               / "harmoniq" / "modules" / "reseau_v2" / "data_loader.py")
         code = src.read_text(encoding="utf-8")
         pattern = re.compile(r'\.resample\(["\']W-MON["\']')
         matches = [(i + 1, line.strip())

@@ -112,7 +112,15 @@ export class ReseauService {
     });
     this.infrasService.deletedUserInfraId$.subscribe(id => {
       this.pendingInfras.update(list => list.filter(i => i.id !== id));
-      if (!this.hasPendingInfras()) this.clearNewConnections();
+      // Toujours effacer les lignes vertes et redessiner les connexions restantes.
+      // Sans ça, la ligne de l'infra supprimée reste affichée sur la carte.
+      this._clearGreenLayers();
+      this.newConnections.set([]);
+      if (this.hasPendingInfras()) {
+        this.connectNewInfras();
+      } else {
+        this.summaryOpen.set(false);
+      }
     });
   }
 
