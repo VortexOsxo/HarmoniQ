@@ -228,25 +228,18 @@ _FIL_MONTHLY_CF = [0.4, 0.32, 0.37, 0.68, 0.75, 0.7, 0.6, 0.6, 0.6, 0.5, 0.5, 0.
 # ---------------------------------------------------------------------------
 # Prime hivernale sur la valeur de l'eau des réservoirs ($/MWh)
 # ---------------------------------------------------------------------------
-# En hiver, HQ valorise ses réservoirs au-dessus du coût marginal pur :
-#   1. Risque de vague de froid → réserve stratégique (Régie D-2023-109)
-#   2. Apports naturels au minimum (rivières gelées, ratio 4.8× vs avril)
-#   3. Demande au pic annuel (chauffage + éclairage, 36 000+ MW)
-# La prime rend l'import compétitif en décembre ET janvier en relevant le coût
-# effectif du réservoir au-dessus du prix d'import hivernal (~16 $/MWh).
+# En hiver, on valorise les réservoirs au-dessus du coût marginal pur pour
+# refléter trois effets combinés :
+#   1. Risque de vague de froid → réserve stratégique
+#   2. Apports naturels au minimum (rivières gelées)
+#   3. Demande au pic annuel (chauffage + éclairage)
+# La prime saisonnière relève le coût effectif du réservoir au-dessus du prix
+# d'import hivernal de sorte que le LP préfère importer en pointe plutôt que
+# dépléter les réservoirs.
 #
-# Calibration — tendance 10 ans IESO (2016-2022, hors anomalie 2023-2025) :
-#   - QC importe ~2,200 GWh/an d'Ontario seul (surplus nucléaire off-peak)
-#   - Total QC toutes interties : ~3-4 TWh imports, concentrés hiver
-#   - QC reste exportateur net global (~33-40 TWh export)
-#   - Données horaires HQ (export_data CSV 2024-2026) confirment que col3
-#     (Ontario) est 86% négatif (import) même en mois d'été.
-# Sources : IESO Annual Imports/Exports by Jurisdiction, HQ Rapport Annuel,
-#           IESO Ontario-Quebec Interconnection Capability Report (2017).
+# Calibration : à fill=70 %, base ≈ 6,5 $/MWh ; avec prime jan de +12, coût
+# effectif ≈ 18,5 $/MWh, > prix import Ontario (~15 $/MWh).
 #                                Jan  Fév  Mar  Avr  Mai  Jun  Jul  Aoû  Sep  Oct  Nov  Déc
-# Prime relevée pour que le water value hivernal dépasse le prix import Ontario (15 $/MWh).
-# À fill=70% : base=6.5 $/MWh + prime → 18.5 $/MWh (jan) > Ontario 15 $/MWh.
-# → LP préfère importer en pointe hivernale plutôt que dépléter les réservoirs.
 _WINTER_RESERVOIR_PREMIUM = [12.0, 12.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 5.0, 12.0]
 
 

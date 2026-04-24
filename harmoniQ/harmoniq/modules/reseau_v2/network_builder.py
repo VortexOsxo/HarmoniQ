@@ -12,14 +12,12 @@ _logger = logging.getLogger(__name__)
 
 # Prix de marché des échanges transfrontaliers.
 #
-# IMPORT — prix DIFFÉRENCIÉ par région (CAD/MWh) :
-#   Données réelles (Chaire en énergie HEC, export_data CSV oct-déc 2025) :
-#     - Ontario (col3) : 86% négatif = QC importe massivement (nucléaire cheap)
-#     - NY (col1)      : mixte, QC importe surtout en hiver
-#     - NE (col2)      : 100% positif = QC exporte toujours (jamais d'import)
-#     - NB (col4)      : ~100% positif = QC exporte toujours
-#   Données IESO 10 ans (2016-2022) : QC importe ~2,200 GWh/an d'Ontario.
-#   En décembre 2025 : Ontario=-726 GWh, NY=-134, NE=+621, NB=+1036 → net +796 GWh.
+# IMPORT — prix différencié par région (CAD/MWh) :
+#   Les quatre interties (Ontario, NY, NE, NB) ont des régimes d'échange
+#   distincts : Ontario = import structurel (surplus nucléaire), NE/NB =
+#   quasi-toujours export (prix élevé), NY = mixte (import hivernal, export
+#   estival). On applique un profil mensuel propre à chaque région pour
+#   reproduire ce pattern de flux simultanés.
 #
 #   Régions par ID d'intertie :
 #     Ontario : Etranger10-15 (Beauharnois-ON, Outaouais, Paugan, Chenaux, Kipawa, Rapide)
@@ -29,8 +27,7 @@ _logger = logging.getLogger(__name__)
 #     NB      : Etranger2 (Eel River), Etranger3 (Madawaska)
 #
 # EXPORT — prix fixe (revenu net, CAD/MWh) :
-#   12 $/MWh net après wheeling (5-8 $/MWh), pertes (3-5%), rabais off-peak.
-#   Revenu moyen HQ à l'export ≈ 5.5 ¢/kWh (Rapport Annuel 2023) → ~12 $/MWh net.
+#   12 $/MWh net après wheeling (5-8 $/MWh), pertes (3-5 %), rabais off-peak.
 
 # --- Prix import par RÉGION × MOIS (CAD/MWh) ---
 #                                    Jan   Fév   Mar   Avr   Mai   Jun   Jul   Aoû   Sep   Oct   Nov   Déc
@@ -409,13 +406,10 @@ def build_pypsa_network(
             columns=[c for c in marginal_cost.columns if c in network.generators.index],
         ).fillna(0.0)
 
-    # --- Prix d'import saisonnier DIFFÉRENCIÉ PAR RÉGION ---
-    # Données réelles (Chaire HEC, IESO 2016-2025) montrent que :
-    #   - Ontario : QC importe massivement (surplus nucléaire, 86% du temps)
-    #   - NE/NB  : QC exporte toujours (prix élevé → import jamais compétitif)
-    #   - NY     : mixte (import hivernal, export estival)
-    # On applique des prix d'import spécifiques à chaque région pour reproduire
-    # ce pattern de flux simultanés (import Ontario + export NE/NB en décembre).
+    # --- Prix d'import saisonnier différencié par région ---
+    # Ontario : import structurel (surplus nucléaire), NE/NB : export quasi
+    # permanent, NY : mixte (import hivernal, export estival). Le profil
+    # mensuel par région reproduit ces flux simultanés.
     import_gens = [
         g for g in network.generators.index
         if network.generators.at[g, "carrier"] == "import"
