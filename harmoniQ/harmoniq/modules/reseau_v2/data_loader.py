@@ -104,15 +104,12 @@ def _aggregate_to_resolution(
     et évite la divergence observée quand le resample était dupliqué à
     travers le module (cf. c77c2ed).
 
-    Args:
-        df: DataFrame indexé en horaire.
-        resolution: "horaire" (no-op) ou "hebdomadaire" (moyenne W-MON).
-        fill: Valeur de remplissage pour ``fillna`` après resample.
-            ``None`` désactive le fillna (utile pour marginal_cost où
-            un NaN doit rester un NaN).
-
-    Returns:
-        DataFrame rééchantillonné. Retourne ``df`` inchangé si la
+    :param df: DataFrame indexé en horaire.
+    :param resolution: "horaire" (no-op) ou "hebdomadaire" (moyenne W-MON).
+    :param fill: Valeur de remplissage pour ``fillna`` après resample.
+        ``None`` désactive le fillna (utile pour marginal_cost où
+        un NaN doit rester un NaN).
+    :returns: DataFrame rééchantillonné. Retourne ``df`` inchangé si la
         résolution est horaire ou si le DataFrame est vide.
     """
     if df.empty or resolution == "horaire":
@@ -126,12 +123,9 @@ def _aggregate_to_resolution(
 def _compute_profiles_cache_key(scenario: Any, generator_names: List[str]) -> str:
     """Calcule une clé de cache courte (SHA-256 tronqué) identifiant le scénario et les générateurs.
 
-    Args:
-        scenario: Objet scénario (dates, weather, consomation, pas_de_temps).
-        generator_names: Liste des noms de générateurs.
-
-    Returns:
-        Chaîne hexadécimale de 16 caractères.
+    :param scenario: Objet scénario (dates, weather, consomation, pas_de_temps).
+    :param generator_names: Liste des noms de générateurs.
+    :returns: Chaîne hexadécimale de 16 caractères.
     """
     key_parts = "|".join([
         str(getattr(scenario, "date_de_debut", "")),
@@ -147,11 +141,8 @@ def _compute_profiles_cache_key(scenario: Any, generator_names: List[str]) -> st
 def _load_pmax_from_cache(cache_key: str) -> Optional[pd.DataFrame]:
     """Charge le DataFrame p_max_pu depuis le cache parquet.
 
-    Args:
-        cache_key: Clé de cache calculée par ``_compute_profiles_cache_key``.
-
-    Returns:
-        DataFrame p_max_pu, ou ``None`` si le fichier est absent ou corrompu.
+    :param cache_key: Clé de cache calculée par ``_compute_profiles_cache_key``.
+    :returns: DataFrame p_max_pu, ou ``None`` si le fichier est absent ou corrompu.
     """
     cache_file = _PROFILES_CACHE_DIR / f"profiles_{cache_key}.parquet"
     if not cache_file.exists():
@@ -172,9 +163,8 @@ def _load_pmax_from_cache(cache_key: str) -> Optional[pd.DataFrame]:
 def _save_pmax_to_cache(cache_key: str, p_max_pu_df: pd.DataFrame) -> None:
     """Persiste le DataFrame p_max_pu en parquet.
 
-    Args:
-        cache_key: Clé de cache calculée par ``_compute_profiles_cache_key``.
-        p_max_pu_df: DataFrame à persister (index = snapshots, colonnes = générateurs).
+    :param cache_key: Clé de cache calculée par ``_compute_profiles_cache_key``.
+    :param p_max_pu_df: DataFrame à persister (index = snapshots, colonnes = générateurs).
     """
     try:
         _PROFILES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -266,12 +256,9 @@ def _apply_winter_premium(costs: np.ndarray, snapshots: pd.DatetimeIndex) -> np.
     En hiver (déc-jan-fév), la prime élève le coût de l'eau pour refléter
     la valeur stratégique du stockage, rendant l'import compétitif aux pointes.
 
-    Args:
-        costs: Tableau de coûts de base ($/MWh), un par snapshot.
-        snapshots: Index temporel aligné sur ``costs``.
-
-    Returns:
-        Tableau de coûts ajustés ($/MWh).
+    :param costs: Tableau de coûts de base ($/MWh), un par snapshot.
+    :param snapshots: Index temporel aligné sur ``costs``.
+    :returns: Tableau de coûts ajustés ($/MWh).
     """
     premium = np.array([_WINTER_RESERVOIR_PREMIUM[ts.month - 1] for ts in snapshots])
     return costs + premium
@@ -301,15 +288,12 @@ def _compute_initial_reservoir_pmax(
     Le résultat est multiplié par ``ratio_dispo`` (turbines disponibles / total).
     L'optimiseur met à jour cette contrainte chunk par chunk via le feed-forward hydraulique.
 
-    Args:
-        initial_fills: Dict ``{nom_barrage: fraction [0-1]}``.
-        reservoir_gen_names: Noms des générateurs réservoir dans le réseau PyPSA.
-        snapshots: Index temporel.
-        ratio_dispo_map: Dict ``{nom_barrage: ratio}`` de disponibilité des turbines.
-        regulation_map: Dict ``{nom_barrage: "Annuel"|"Pluriannuel"}``.
-
-    Returns:
-        DataFrame ``p_max_pu`` (index = snapshots, colonnes = noms de générateurs).
+    :param initial_fills: Dict ``{nom_barrage: fraction [0-1]}``.
+    :param reservoir_gen_names: Noms des générateurs réservoir dans le réseau PyPSA.
+    :param snapshots: Index temporel.
+    :param ratio_dispo_map: Dict ``{nom_barrage: ratio}`` de disponibilité des turbines.
+    :param regulation_map: Dict ``{nom_barrage: "Annuel"|"Pluriannuel"}``.
+    :returns: DataFrame ``p_max_pu`` (index = snapshots, colonnes = noms de générateurs).
     """
     if ratio_dispo_map is None:
         ratio_dispo_map = {}
@@ -341,13 +325,10 @@ def _apply_hydro_fil_seasonal_profile(
 
     Le profil est recalculé à chaque run car il dépend des snapshots (non caché).
 
-    Args:
-        p_max_pu: DataFrame de disponibilité à mettre à jour.
-        generators_df: Table statique des générateurs.
-        snapshots: Index temporel.
-
-    Returns:
-        DataFrame ``p_max_pu`` mis à jour.
+    :param p_max_pu: DataFrame de disponibilité à mettre à jour.
+    :param generators_df: Table statique des générateurs.
+    :param snapshots: Index temporel.
+    :returns: DataFrame ``p_max_pu`` mis à jour.
     """
     fil_names = [
         gen.get("name") for _, gen in generators_df.iterrows()
@@ -380,11 +361,8 @@ def _fetch_one_eolien_profile(
     Appelé via ``ThreadPoolExecutor`` ; chaque parc est traité en parallèle.
     Chaque thread crée sa propre instance ``InfraParcEolienne`` (pas d'état partagé).
 
-    Args:
-        args: Tuple ``(parc, scenario, snapshots)``.
-
-    Returns:
-        Tuple ``(nom_parc, Series p_max_pu alignée sur snapshots)``, ou
+    :param args: Tuple ``(parc, scenario, snapshots)``.
+    :returns: Tuple ``(nom_parc, Series p_max_pu alignée sur snapshots)``, ou
         ``(nom, None)`` en cas d'échec.
     """
     parc, scenario, snapshots = args
@@ -519,9 +497,8 @@ class NetworkDataLoaderBis:
     def set_infrastructure_ids(self, liste_infra: Any) -> None:
         """Extrait et stocke les IDs d'infrastructure depuis un groupe d'infras.
 
-        Args:
-            liste_infra: Objet avec les champs ``parc_eoliens``, ``parc_solaires``,
-                ``central_hydroelectriques``, ``central_thermique``, ``central_nucleaire``.
+        :param liste_infra: Objet avec les champs ``parc_eoliens``, ``parc_solaires``,
+            ``central_hydroelectriques``, ``central_thermique``, ``central_nucleaire``.
         """
         self.eolienne_ids = _parse_ids(getattr(liste_infra, "parc_eoliens", None))
         self.solaire_ids = _parse_ids(getattr(liste_infra, "parc_solaires", None))
@@ -600,15 +577,12 @@ class NetworkDataLoaderBis:
     ) -> Dict[str, pd.DataFrame]:
         """Charge les métadonnées et séries temporelles de génération.
 
-        Args:
-            scenario: Objet scénario (dates, weather, pas_de_temps).
-            liste_infra: Groupe d'infrastructures.
-            db: Session SQLAlchemy.
-            resolution: ``"horaire"`` (8 760 snapshots) ou ``"hebdomadaire"`` (52 moyennes).
-            buses_df: DataFrame de topologie déjà chargé (évite un double aller-retour DB).
-
-        Returns:
-            Dict avec les clés ``generators`` (DataFrame statique), ``p_max_pu``
+        :param scenario: Objet scénario (dates, weather, pas_de_temps).
+        :param liste_infra: Groupe d'infrastructures.
+        :param db: Session SQLAlchemy.
+        :param resolution: ``"horaire"`` (8 760 snapshots) ou ``"hebdomadaire"`` (52 moyennes).
+        :param buses_df: DataFrame de topologie déjà chargé (évite un double aller-retour DB).
+        :returns: Dict avec les clés ``generators`` (DataFrame statique), ``p_max_pu``
             et ``marginal_cost`` (DataFrames index = snapshots).
         """
         self.set_infrastructure_ids(liste_infra)
@@ -698,15 +672,12 @@ class NetworkDataLoaderBis:
         2. Profils saisonniers ou constants pour hydro/thermique.
         3. Fallback p_max_pu = 1.0 pour tout générateur non couvert.
 
-        Args:
-            db: Session SQLAlchemy.
-            scenario: Objet scénario.
-            snapshots: Index temporel horaire.
-            generators_df: Table statique des générateurs.
-            resolution: ``"horaire"`` ou ``"hebdomadaire"``.
-
-        Returns:
-            Tuple ``(p_max_pu, marginal_cost)`` — deux DataFrames index = snapshots.
+        :param db: Session SQLAlchemy.
+        :param scenario: Objet scénario.
+        :param snapshots: Index temporel horaire.
+        :param generators_df: Table statique des générateurs.
+        :param resolution: ``"horaire"`` ou ``"hebdomadaire"``.
+        :returns: Tuple ``(p_max_pu, marginal_cost)`` — deux DataFrames index = snapshots.
         """
         MARGINAL_COSTS = {
             # Sources non pilotables : coût 0 $/MWh → dispatché en priorité absolue.

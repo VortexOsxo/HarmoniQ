@@ -63,14 +63,11 @@ def compute_reservoir_levels(
     ``discharge(t) = debit_max × (P_dispatch[t] / P_max)`` (m³/s),
     ``Δt = snapshot_weightings × 3 600 s``, et ``V_max`` est le volume de la DB.
 
-    Args:
-        network: Réseau PyPSA après ``run_dispatch_and_flow()``. ``generators_t.p``
-            doit être renseigné.
-        db: Session SQLAlchemy pour lire les barrages (type_barrage, volume, etc.).
-        initial_levels: Dict ``{nom_barrage: fraction [0-1]}``. Défaut : 0.70.
-
-    Returns:
-        DataFrame index = snapshots, colonnes = noms des barrages-réservoirs,
+    :param network: Réseau PyPSA après ``run_dispatch_and_flow()``. ``generators_t.p``
+        doit être renseigné.
+    :param db: Session SQLAlchemy pour lire les barrages (type_barrage, volume, etc.).
+    :param initial_levels: Dict ``{nom_barrage: fraction [0-1]}``. Défaut : 0.70.
+    :returns: DataFrame index = snapshots, colonnes = noms des barrages-réservoirs,
         valeurs = fraction [0-1] du volume utile.
     """
     from harmoniq.db.CRUD import read_all_hydro
@@ -178,12 +175,9 @@ def water_value_cost(niveaux: np.ndarray, regulation: str = "Pluriannuel") -> np
     - niveau = 0.05 →  8 $/MWh  (seuil critique)
     - niveau = 0.0  → 12 $/MWh  (réservoir vide)
 
-    Args:
-        niveaux: Tableau de niveaux de réservoir [0-1].
-        regulation: "Annuel" ou "Pluriannuel" (insensible à la casse). Défaut : "Pluriannuel".
-
-    Returns:
-        Tableau de coûts marginaux en $/MWh.
+    :param niveaux: Tableau de niveaux de réservoir [0-1].
+    :param regulation: "Annuel" ou "Pluriannuel" (insensible à la casse). Défaut : "Pluriannuel".
+    :returns: Tableau de coûts marginaux en $/MWh.
     """
     niveaux = np.clip(np.asarray(niveaux, dtype=float), 0.0, 1.0)
     couts   = np.zeros_like(niveaux)
@@ -259,13 +253,10 @@ def build_reservoir_feed_data(
     À appeler une seule fois après ``creer_reseau()``, avant ``run_dispatch_and_flow()``.
     Le résultat est passé à l'optimiseur qui met à jour ``current_level`` après chaque chunk.
 
-    Args:
-        network: Réseau PyPSA construit (snapshots requis).
-        db: Session SQLAlchemy pour lire les barrages depuis la DB.
-        initial_levels: Dict ``{nom_barrage: fraction [0-1]}``. Défaut : 0.70.
-
-    Returns:
-        Liste de :class:`ReservoirDamFeed`, un élément par barrage réservoir
+    :param network: Réseau PyPSA construit (snapshots requis).
+    :param db: Session SQLAlchemy pour lire les barrages depuis la DB.
+    :param initial_levels: Dict ``{nom_barrage: fraction [0-1]}``. Défaut : 0.70.
+    :returns: Liste de :class:`ReservoirDamFeed`, un élément par barrage réservoir
         présent dans ``network.generators``.
     """
     from harmoniq.db.CRUD import read_all_hydro
@@ -337,12 +328,9 @@ def _load_inflow(dam: Any, snapshots: pd.DatetimeIndex) -> np.ndarray:
 
     Si le fichier est absent, retourne ``_DEFAULT_INFLOW_M3S`` pour tous les snapshots.
 
-    Args:
-        dam: Objet barrage avec les attributs ``id_HQ`` et ``nom``.
-        snapshots: Index temporel du réseau.
-
-    Returns:
-        Tableau NumPy de débits (m³/s), un par snapshot.
+    :param dam: Objet barrage avec les attributs ``id_HQ`` et ``nom``.
+    :param snapshots: Index temporel du réseau.
+    :returns: Tableau NumPy de débits (m³/s), un par snapshot.
     """
     apport_path = _APPORT_DIR / f"{dam.id_HQ}.csv"
 

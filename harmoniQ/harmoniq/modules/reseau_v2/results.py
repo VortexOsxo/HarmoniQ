@@ -34,14 +34,11 @@ def extract_kpis(
 ) -> Dict[str, Any]:
     """Extrait la production, les métriques lignes et les KPI de synthèse.
 
-    Args:
-        network: Réseau PyPSA après ``optimize()`` puis ``pf()`` ou ``lpf()``.
-        optimizer_result: Dict retourné par ``run_dispatch_and_flow()``. Si fourni,
-            ``constraint_warnings`` et ``was_relaxed`` sont inclus dans la réponse.
-        reservoir_levels: DataFrame des niveaux de réservoir par snapshot (optionnel).
-
-    Returns:
-        Dict avec les clés suivantes :
+    :param network: Réseau PyPSA après ``optimize()`` puis ``pf()`` ou ``lpf()``.
+    :param optimizer_result: Dict retourné par ``run_dispatch_and_flow()``. Si fourni,
+        ``constraint_warnings`` et ``was_relaxed`` sont inclus dans la réponse.
+    :param reservoir_levels: DataFrame des niveaux de réservoir par snapshot (optionnel).
+    :returns: Dict avec les clés suivantes :
 
         - ``production_df`` — DataFrame index=snapshots, colonnes par carrier.
         - ``line_flows`` — liste de dicts par ligne (flux max, chargement %).
@@ -299,15 +296,12 @@ def format_api_response(
 ) -> Dict[str, Any]:
     """Formate la réponse API à partir des KPI extraits.
 
-    Args:
-        scenario_id: Identifiant du scénario simulé.
-        liste_infra_id: Identifiant du groupe d'infrastructures.
-        is_journalier: Indicateur de granularité journalière (conservé pour compatibilité).
-        kpis: Dict retourné par ``extract_kpis()``.
-        execution_time_seconds: Durée totale d'exécution en secondes.
-
-    Returns:
-        Dict structuré prêt à être sérialisé par FastAPI/JSON.
+    :param scenario_id: Identifiant du scénario simulé.
+    :param liste_infra_id: Identifiant du groupe d'infrastructures.
+    :param is_journalier: Indicateur de granularité journalière (conservé pour compatibilité).
+    :param kpis: Dict retourné par ``extract_kpis()``.
+    :param execution_time_seconds: Durée totale d'exécution en secondes.
+    :returns: Dict structuré prêt à être sérialisé par FastAPI/JSON.
     """
     production_df = kpis["production_df"].copy()
 

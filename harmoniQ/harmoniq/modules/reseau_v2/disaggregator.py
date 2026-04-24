@@ -40,15 +40,12 @@ def disaggregate_to_hourly(
     fixe. Les réservoirs absorbent les écarts ±MW entre demande horaire et
     demande hebdo, dans la limite de leur capacité (p_nom × 0.95).
 
-    Args:
-        network: Réseau PyPSA post-OPF. ``generators_t.p`` doit être peuplé
-            (dispatch hebdomadaire, 53 snapshots).
-        hourly_demand: DataFrame 8760 × buses (MW, sans uplift T&D).
-            Obtenu via ``load_demand_profile(resolution="horaire")``.
-        reservoir_gen_names: Noms des générateurs ``hydro_reservoir``.
-
-    Returns:
-        Dict avec :
+    :param network: Réseau PyPSA post-OPF. ``generators_t.p`` doit être peuplé
+        (dispatch hebdomadaire, 53 snapshots).
+    :param hourly_demand: DataFrame 8760 × buses (MW, sans uplift T&D).
+        Obtenu via ``load_demand_profile(resolution="horaire")``.
+    :param reservoir_gen_names: Noms des générateurs ``hydro_reservoir``.
+    :returns: Dict avec :
             ``dispatch_horaire``  — DataFrame 8760 × générateurs (MW)
             ``import_residuel``   — Series 8760 (MW d'import additionnel)
     """

@@ -50,16 +50,13 @@ def run_dispatch_and_flow(
 ) -> Dict[str, Any]:
     """Exécute le dispatch LP-OPF puis l'écoulement de puissance.
 
-    Args:
-        network: Réseau PyPSA construit par ``build_pypsa_network()``.
-        mode: Mode d'écoulement : ``"dc"`` (LOPF seul), ``"ac"`` ou ``"dc+ac"``
-            (LOPF puis Newton-Raphson PF, avec pertes et tensions AC).
-        solver_name: Nom du solveur LP (défaut : ``"highs"``).
-        reservoir_feed: Données de feed-forward hydraulique pré-chargées par
-            ``build_reservoir_feed_data()``. Optionnel.
-
-    Returns:
-        Dict avec les clés suivantes :
+    :param network: Réseau PyPSA construit par ``build_pypsa_network()``.
+    :param mode: Mode d'écoulement : ``"dc"`` (LOPF seul), ``"ac"`` ou ``"dc+ac"``
+        (LOPF puis Newton-Raphson PF, avec pertes et tensions AC).
+    :param solver_name: Nom du solveur LP (défaut : ``"highs"``).
+    :param reservoir_feed: Données de feed-forward hydraulique pré-chargées par
+        ``build_reservoir_feed_data()``. Optionnel.
+    :returns: Dict avec les clés suivantes :
 
         - ``status`` — ``"ok"`` ou ``"ok_with_relaxation"``.
         - ``was_relaxed`` — ``True`` si les contraintes thermiques ont été relâchées.
@@ -116,13 +113,10 @@ def _run_dispatch_with_fallback(
        les capacités d'export pour permettre l'évacuation d'un surplus.
     3. Si toujours infaisable : restaure l'état original et retourne l'erreur.
 
-    Args:
-        network: Réseau PyPSA.
-        solver_name: Nom du solveur (défaut : ``"highs"``).
-        reservoir_feed: Données de feed-forward hydraulique (optionnel).
-
-    Returns:
-        Tuple ``(status, detail, was_relaxed, original_snoms)``.
+    :param network: Réseau PyPSA.
+    :param solver_name: Nom du solveur (défaut : ``"highs"``).
+    :param reservoir_feed: Données de feed-forward hydraulique (optionnel).
+    :returns: Tuple ``(status, detail, was_relaxed, original_snoms)``.
         ``original_snoms`` est la Series des ``s_nom`` avant relâchement, ou ``None``.
     """
     # Premier essai avec les vrais s_nom.
@@ -425,13 +419,10 @@ def _run_dispatch(
     ``"bad allocation"`` vers le chunk 19 sur une machine 16 Go. Ce loop custom appelle
     ``gc.collect()`` après chaque chunk et pré-alloue les DataFrames résultats.
 
-    Args:
-        network: Réseau PyPSA.
-        solver_name: Nom du solveur (défaut : ``"highs"``).
-        reservoir_feed: Données de feed-forward hydraulique (optionnel).
-
-    Returns:
-        Tuple ``(status, condition)`` — ``"ok"`` si tous les chunks ont convergé.
+    :param network: Réseau PyPSA.
+    :param solver_name: Nom du solveur (défaut : ``"highs"``).
+    :param reservoir_feed: Données de feed-forward hydraulique (optionnel).
+    :returns: Tuple ``(status, condition)`` — ``"ok"`` si tous les chunks ont convergé.
     """
     snapshots = network.snapshots
     horizon   = min(240, len(snapshots))

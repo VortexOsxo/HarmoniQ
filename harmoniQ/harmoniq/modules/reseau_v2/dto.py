@@ -38,11 +38,8 @@ class SimulationResponse:
 def validate_production_records(records: List[Dict[str, Any]]) -> List[str]:
     """Valide la présence des colonnes minimales dans les enregistrements de production.
 
-    Args:
-        records: Liste de dicts de production retournée par format_api_response.
-
-    Returns:
-        Liste de messages d'erreur. Vide si tous les champs requis sont présents.
+    :param records: Liste de dicts de production retournée par format_api_response.
+    :returns: Liste de messages d'erreur. Vide si tous les champs requis sont présents.
     """
     if not records:
         return ["La liste `production` est vide."]

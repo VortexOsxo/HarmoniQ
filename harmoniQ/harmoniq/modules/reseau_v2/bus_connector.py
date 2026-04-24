@@ -40,11 +40,8 @@ _DEFAULT_V_NOM = 735
 def _line_type_for_vnom(v_nom: float) -> str:
     """Retourne le type de ligne PyPSA correspondant à une tension nominale.
 
-    Args:
-        v_nom: Tension nominale en kV.
-
-    Returns:
-        Clé de type de ligne (e.g. ``"735kV_line"``).
+    :param v_nom: Tension nominale en kV.
+    :returns: Clé de type de ligne (e.g. ``"735kV_line"``).
     """
     key = min(_VNOM_TO_LINE_TYPE.keys(), key=lambda k: abs(k - v_nom))
     return _VNOM_TO_LINE_TYPE[key]
@@ -53,14 +50,11 @@ def _line_type_for_vnom(v_nom: float) -> str:
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calcule la distance Haversine entre deux points géographiques.
 
-    Args:
-        lat1: Latitude du premier point (degrés décimaux).
-        lon1: Longitude du premier point (degrés décimaux).
-        lat2: Latitude du second point (degrés décimaux).
-        lon2: Longitude du second point (degrés décimaux).
-
-    Returns:
-        Distance en kilomètres.
+    :param lat1: Latitude du premier point (degrés décimaux).
+    :param lon1: Longitude du premier point (degrés décimaux).
+    :param lat2: Latitude du second point (degrés décimaux).
+    :param lon2: Longitude du second point (degrés décimaux).
+    :returns: Distance en kilomètres.
     """
     R = 6371.0
     lat1, lon1, lat2, lon2 = map(radians, (lat1, lon1, lat2, lon2))
@@ -72,11 +66,8 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 def _collect_user_created_infras(liste_infra: Any) -> List[Any]:
     """Collecte toutes les infrastructures marquées ``is_user_created=True``.
 
-    Args:
-        liste_infra: Groupe d'infrastructures (``SimulationInfraGroup``).
-
-    Returns:
-        Liste des instances d'infrastructure ajoutées par l'utilisateur.
+    :param liste_infra: Groupe d'infrastructures (``SimulationInfraGroup``).
+    :returns: Liste des instances d'infrastructure ajoutées par l'utilisateur.
     """
     result = []
     for infra_list in (
@@ -101,13 +92,10 @@ def _find_nearest_bus(
 
     La convention interne du chargeur de données est x = latitude, y = longitude.
 
-    Args:
-        lat: Latitude de la position cible (degrés décimaux).
-        lon: Longitude de la position cible (degrés décimaux).
-        buses_df: DataFrame des bus existants (colonnes : name, x, y, v_nom).
-
-    Returns:
-        Tuple (nom_du_bus, distance_km, v_nom). Retourne (None, inf, 735) si
+    :param lat: Latitude de la position cible (degrés décimaux).
+    :param lon: Longitude de la position cible (degrés décimaux).
+    :param buses_df: DataFrame des bus existants (colonnes : name, x, y, v_nom).
+    :returns: Tuple (nom_du_bus, distance_km, v_nom). Retourne (None, inf, 735) si
         ``buses_df`` est vide.
     """
     if buses_df.empty:
@@ -146,9 +134,8 @@ class BusConnector:
     def __init__(self, topology: dict) -> None:
         """Initialise le connecteur à partir d'une topologie existante.
 
-        Args:
-            topology: Dict ``{"buses": DataFrame, "lines": DataFrame, "line_types": DataFrame}``
-                tel que retourné par ``load_topology_from_db()``.
+        :param topology: Dict ``{"buses": DataFrame, "lines": DataFrame, "line_types": DataFrame}``
+            tel que retourné par ``load_topology_from_db()``.
         """
         self._topology = topology
         self._buses_df: pd.DataFrame = topology["buses"].copy()
@@ -157,11 +144,8 @@ class BusConnector:
     def connect_new_infras(self, liste_infra: Any) -> dict:
         """Connecte toutes les infrastructures utilisateur au réseau.
 
-        Args:
-            liste_infra: Groupe d'infrastructures (parc_eoliens, parc_solaires, etc.).
-
-        Returns:
-            Topologie enrichie avec les nouveaux bus et lignes. Retourne la topologie
+        :param liste_infra: Groupe d'infrastructures (parc_eoliens, parc_solaires, etc.).
+        :returns: Topologie enrichie avec les nouveaux bus et lignes. Retourne la topologie
             originale sans copie si aucune infrastructure ``is_user_created`` n'est trouvée.
         """
         new_infras = _collect_user_created_infras(liste_infra)

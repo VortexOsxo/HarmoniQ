@@ -127,13 +127,10 @@ def auto_scale_line_capacities(
     - Bus multi-connexion : scale-up proportionnel de toutes les lignes
       connectées, arrondi au multiple de ``s_nom_base``.
 
-    Args:
-        network: Réseau PyPSA (modifié en place).
-        p_max_pu_by_carrier: Facteurs de disponibilité par carrier. Défaut : ``_DEFAULT_P_MAX_PU``.
-        margin: Marge de sécurité sur la capacité requise (défaut : 5 %).
-
-    Returns:
-        Liste des modifications appliquées (dicts avec bus, line, old_s_nom, new_s_nom, etc.).
+    :param network: Réseau PyPSA (modifié en place).
+    :param p_max_pu_by_carrier: Facteurs de disponibilité par carrier. Défaut : ``_DEFAULT_P_MAX_PU``.
+    :param margin: Marge de sécurité sur la capacité requise (défaut : 5 %).
+    :returns: Liste des modifications appliquées (dicts avec bus, line, old_s_nom, new_s_nom, etc.).
     """
     pu = p_max_pu_by_carrier or _DEFAULT_P_MAX_PU
     requirements = _compute_bus_requirements(network, pu)
@@ -206,12 +203,9 @@ def get_bus_capacity_report(
 ) -> List[Dict]:
     """Retourne un rapport de capacité par bus.
 
-    Args:
-        network: Réseau PyPSA.
-        p_max_pu_by_carrier: Facteurs de disponibilité par carrier.
-
-    Returns:
-        Liste de dicts triés par utilisation décroissante. Chaque entrée contient :
+    :param network: Réseau PyPSA.
+    :param p_max_pu_by_carrier: Facteurs de disponibilité par carrier.
+    :returns: Liste de dicts triés par utilisation décroissante. Chaque entrée contient :
         ``bus``, ``degree``, ``line_type``, ``num_parallel``, ``gen_cap_mw``,
         ``demand_peak_mw``, ``line_cap_mva``, ``utilization_pct``, ``is_bottleneck``.
     """
@@ -306,15 +300,12 @@ def build_pypsa_network(
 ) -> pypsa.Network:
     """Construit un réseau PyPSA à partir de la topologie et des profils de génération.
 
-    Args:
-        topology: Dict avec les clés ``buses``, ``lines``, ``line_types`` (DataFrames).
-        generation_profiles: Dict avec les clés ``generators``, ``p_max_pu``,
-            ``marginal_cost`` (DataFrames).
-        demand_profile: DataFrame de la demande (index = snapshots, colonnes = loads).
-        snapshots: Index temporel du réseau.
-
-    Returns:
-        Réseau PyPSA prêt pour l'optimisation.
+    :param topology: Dict avec les clés ``buses``, ``lines``, ``line_types`` (DataFrames).
+    :param generation_profiles: Dict avec les clés ``generators``, ``p_max_pu``,
+        ``marginal_cost`` (DataFrames).
+    :param demand_profile: DataFrame de la demande (index = snapshots, colonnes = loads).
+    :param snapshots: Index temporel du réseau.
+    :returns: Réseau PyPSA prêt pour l'optimisation.
     """
     _validate_topology_payload(topology)
 
