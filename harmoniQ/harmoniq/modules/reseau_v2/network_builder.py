@@ -65,20 +65,9 @@ _MARKET_PRICE_IMPORT_CAD_MWH = 30.0   # fallback annuel (utilisé si pas de snap
 _MARKET_PRICE_EXPORT_CAD_MWH = 12.0
 
 # Fraction minimale obligatoire du débit disponible pour l'hydro fil de l'eau.
-#
-# Réalité opérationnelle HQ (source : arXiv 2405.20199 + Wikipedia + CER Canada) :
-#   - HQ traite le fil de l'eau comme "non-dispatchable/predetermined" dans RALPH :
-#     l'eau coule, l'opérateur turbine TOUT le débit disponible (p_min ≈ p_max).
-#   - Les turbines Francis/Kaplan ont un P_min TECHNIQUE de ~30% (en dessous → arrêt).
-#     Ce 30% est le seuil d'arrêt physique, PAS le point d'opération nominal.
-#   - Un débit réservé écologique (10-30% du module) bypass la centrale sans être turbiné ;
-#     il est déjà exclu du profil p_max_pu fourni par InfraHydro.calculer_production().
-#   - En pratique : ~95% du débit turbinable est effectivement turbiné en continu.
-#
-# Valeur 0.25 = 25% must-run : laisse le LP décider du dispatch optimal tout en
-# garantissant un minimum de production fatale (contrainte physique turbine Francis/Kaplan).
-# Si résultats non réalistes : essayer 0 (traiter comme renouvelable non-pilotable).
-# Exports HQ réels : 33-35 TWh/an (hors sécheresse) sur ~213 TWh de production totale.
+# 0.0 = pleinement pilotable par le LP. Augmenter (0.25 ~ must-run) si on veut
+# forcer un plancher de production fatale pour refléter le fait qu'une centrale
+# au fil de l'eau turbine l'essentiel du débit en continu.
 _HYDRO_FIL_MIN_PU_FRACTION = 0.0
 
 # Fichier des capacités d'interconnexion (optionnel — fallback si absent).

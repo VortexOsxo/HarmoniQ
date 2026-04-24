@@ -1120,29 +1120,22 @@ class NetworkDataLoaderBis:
 def _make_line_types_df() -> pd.DataFrame:
     """Paramètres AC standard pour les types de lignes du Nouveau Réseau.
 
-    Source principale : Hydro-Québec, *Caractéristiques des lignes*,
-    document du cours ELE8452 Réseaux électriques, Polytechnique Montréal
-    (r, x, b, Zc, capacité thermique pour 69, 120, 161, 230, 315, 735 kV).
-
-    Les niveaux 345, 450 et 320 kV ne sont pas couverts par la source :
-    valeurs extrapolées, conservées pour rétrocompatibilité.
-        - 450 kV : proxy AC du HVDC ±450 kV Radisson-Nicolet-Sandy Pond.
-        - 320 kV : approximation HVDC.
-        - 345 kV : interconnexion Madawaska (NB).
+    Valeurs (r, x, b) par niveau de tension utilisées pour peupler la table
+    ``line_types`` de PyPSA. Les niveaux 345, 450 et 320 kV sont des
+    extrapolations (pas de référence directe).
     """
     types = [
         # name,         f_nom, r_per_length, x_per_length, b_per_length (µS/km)
-        # --- Valeurs PDF HQ ELE8452 ---
         ("735kV_line",   60,   0.0100,       0.3300,       4.9),
         ("315kV_line",   60,   0.0280,       0.3600,       4.3),
         ("230kV_line",   60,   0.0550,       0.4900,       3.4),
         ("161kV_line",   60,   0.0750,       0.4900,       3.4),
         ("120kV_line",   60,   0.0750,       0.4500,       3.7),
         ("69kV_line",    60,   0.0750,       0.4500,       3.7),
-        # --- Extrapolations (non couverts par PDF) ---
-        ("450kV_line",   60,   0.0250,       0.2750,       3.8),  # proxy HVDC ±450
-        ("345kV_line",   60,   0.0390,       0.3170,       3.5),  # interco NB
-        ("320kV_line",   60,   0.0420,       0.3300,       3.4),  # HVDC approx
+        # Valeurs extrapolées :
+        ("450kV_line",   60,   0.0250,       0.2750,       3.8),
+        ("345kV_line",   60,   0.0390,       0.3170,       3.5),
+        ("320kV_line",   60,   0.0420,       0.3300,       3.4),
     ]
     return pd.DataFrame(
         types,
