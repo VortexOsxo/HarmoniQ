@@ -1129,11 +1129,6 @@ def _make_line_types_df() -> pd.DataFrame:
         - 450 kV : proxy AC du HVDC ±450 kV Radisson-Nicolet-Sandy Pond.
         - 320 kV : approximation HVDC.
         - 345 kV : interconnexion Madawaska (NB).
-
-    Note : le SIL (puissance naturelle V²/Zc) n'est pas utilisé à
-    l'exécution. Il a servi à calibrer hors-ligne les valeurs de
-    `_SNOM_BASE_PER_TYPE` (cf. network_builder.py) via la méthode
-    SIL × facteur St. Clair, plafonnée par la capacité thermique PDF.
     """
     types = [
         # name,         f_nom, r_per_length, x_per_length, b_per_length (µS/km)
