@@ -18,6 +18,7 @@ from harmoniq.scripts.eolien.build_quebec_offshore_mesh import (
 
 def _session():
     engine = create_engine("sqlite:///:memory:")
+    engine = engine.execution_options(schema_translate_map={"reseau": None})
     schemas.SQLBase.metadata.create_all(bind=engine)
     Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return Session()
