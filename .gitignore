@@ -1,3 +1,7 @@
+# Coverage
+.coverage
+htmlcov/
+
 # Gros fichiers/dossiers
 env
 venv

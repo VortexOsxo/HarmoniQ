@@ -71,12 +71,21 @@ dev = [
     "black",
     "flake8",
     "pytest",
+    "pytest-cov",
     "httpx",
     "gdown"
 ]
 
 [tool.setuptools]
 packages = ["harmoniq"]
+
+[tool.coverage.run]
+source = ["harmoniq"]
+omit = ["harmoniq/scripts/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
 
 [tool.pytest.ini_options]
 markers = [

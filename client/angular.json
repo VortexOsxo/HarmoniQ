@@ -89,6 +89,20 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "setupFiles": ["src/test-setup.ts"]
+          },
+          "configurations": {
+            "coverage": {
+              "coverage": true,
+              "coverageReporters": ["text", "html"],
+              "coverageExclude": [
+                "src/main.ts",
+                "src/test-setup.ts",
+                "src/app/app.config.ts",
+                "src/app/app.routes.ts",
+                "**/*.spec.ts",
+                "**/environments/**"
+              ]
+            }
           }
         }
       }

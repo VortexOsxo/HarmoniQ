@@ -1,4 +1,4 @@
-vi.mock('leaflet', () => ({
+﻿vi.mock('leaflet', () => ({
   default: {
     icon: vi.fn().mockReturnValue({}),
     map: vi.fn().mockReturnValue({}),
@@ -289,6 +289,172 @@ describe('InfrastruturesService', () => {
       const payload = service.buildSimulationPayload();
 
       expect(payload?.nom).toBe(MOCK_INFRA_GROUP.nom);
+    });
+  });
+
+  describe('getInfraByTypeAndId', () => {
+    it('should return undefined when no infra matches', () => {
+      INFRA_TYPES.forEach(type => httpMock.expectOne(`${API_BASE}/${type}`).flush([]));
+      expect(service.getInfraByTypeAndId('hydro', 999)).toBeUndefined();
+    });
+
+    it('should return the infra when it exists', async () => {
+      const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+      INFRA_TYPES.forEach(type => {
+        const data = type === 'hydro'
+          ? [{ id: 1, nom: 'Barrage Test', type_barrage: 'Réservoir', puissance_nominal: 100, latitude: 50, longitude: -75 }]
+          : [];
+        httpMock.expectOne(`${API_BASE}/${type}`).flush(data);
+      });
+      await tick();
+
+      const result = service.getInfraByTypeAndId('hydro', 1);
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('isNameTaken', () => {
+    it('should return false when no infra has that name', () => {
+      flushInitialHttpRequests();
+      expect(service.isNameTaken('Inexistant')).toBe(false);
+    });
+  });
+
+  describe('isDefaultInfraGroup', () => {
+    it('should return true for the default infra group id', () => {
+      flushInitialHttpRequests();
+      const group = { id: DEFAULT_INFRA_GROUP_ID, nom: 'Québec', parc_eoliens: [], parc_solaires: [], central_hydroelectriques: [], central_thermique: [], central_nucleaire: [] };
+      expect(service.isDefaultInfraGroup(group)).toBe(true);
+    });
+
+    it('should return false for a user-created group', () => {
+      flushInitialHttpRequests();
+      expect(service.isDefaultInfraGroup(MOCK_INFRA_GROUP)).toBe(false);
+    });
+
+    it('should return false for null', () => {
+      flushInitialHttpRequests();
+      expect(service.isDefaultInfraGroup(null)).toBe(false);
+    });
+  });
+
+  describe('renameInfraGroup', () => {
+    it('should update the group name in local state', () => {
+      flushInitialHttpRequests();
+      (mockStorageService.loadElements as ReturnType<typeof vi.fn>).mockReturnValue([MOCK_INFRA_GROUP]);
+      service.refreshInfraGroups();
+      service.selectedInfraGroup.set(MOCK_INFRA_GROUP);
+
+      service.renameInfraGroup(MOCK_INFRA_GROUP, 'Nouveau Nom');
+
+      expect(mockStorageService.updateElement).toHaveBeenCalled();
+    });
+
+    it('should update selectedInfraGroup when renaming the active group', () => {
+      flushInitialHttpRequests();
+      (mockStorageService.loadElements as ReturnType<typeof vi.fn>).mockReturnValue([MOCK_INFRA_GROUP]);
+      service.refreshInfraGroups();
+      service.selectedInfraGroup.set(MOCK_INFRA_GROUP);
+
+      service.renameInfraGroup(MOCK_INFRA_GROUP, 'Nouveau Nom');
+
+      expect(service.selectedInfraGroup()?.nom).toBe('Nouveau Nom');
+    });
+
+    it('should not rename the default group', () => {
+      flushInitialHttpRequests();
+      const defaultGroup = { id: DEFAULT_INFRA_GROUP_ID, nom: 'Québec', parc_eoliens: [], parc_solaires: [], central_hydroelectriques: [], central_thermique: [], central_nucleaire: [] };
+
+      service.renameInfraGroup(defaultGroup, 'Nouveau Nom');
+
+      expect(mockStorageService.updateElement).not.toHaveBeenCalled();
+    });
+
+    it('should not rename when name is empty', () => {
+      flushInitialHttpRequests();
+      service.renameInfraGroup(MOCK_INFRA_GROUP, '   ');
+      expect(mockStorageService.updateElement).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setInfrasForTypes', () => {
+    it('should update infrastructure IDs for specified types', () => {
+      flushInitialHttpRequests();
+      service.selectedInfraGroup.set(MOCK_INFRA_GROUP);
+
+      service.setInfrasForTypes({ eolienneparc: ['10', '11'] });
+
+      expect(service.selectedInfraGroup()?.parc_eoliens).toEqual(['10', '11']);
+    });
+
+    it('should do nothing when no group is selected', () => {
+      flushInitialHttpRequests();
+      expect(() => service.setInfrasForTypes({ eolienneparc: ['10'] })).not.toThrow();
+    });
+  });
+
+  describe('refreshService', () => {
+    it('should trigger a new HTTP request for the given type', () => {
+      flushInitialHttpRequests();
+
+      service.refreshService('hydro');
+      httpMock.expectOne(`${API_BASE}/hydro`).flush([]);
+    });
+
+    it('should not throw for unknown type', () => {
+      flushInitialHttpRequests();
+      expect(() => service.refreshService('unknown')).not.toThrow();
+    });
+  });
+
+  describe('overrideHydroPuissance', () => {
+    it('should register an override for a given hydro id', () => {
+      flushInitialHttpRequests();
+
+      service.overrideHydroPuissance(42, 500);
+
+      service.selectedInfraGroup.set(MOCK_INFRA_GROUP);
+      const payload = service.buildSimulationPayload();
+      expect(payload).toBeDefined();
+    });
+  });
+
+  describe('checkOffshore', () => {
+    it('should return true when API says is_offshore', async () => {
+      flushInitialHttpRequests();
+
+      const promise = service.checkOffshore(50, -70);
+      httpMock.expectOne(req => req.url.includes('offshore-check')).flush({ is_offshore: true });
+
+      const result = await promise;
+      expect(result).toBe(true);
+    });
+
+    it('should return false when API says not offshore', async () => {
+      flushInitialHttpRequests();
+
+      const promise = service.checkOffshore(50, -70);
+      httpMock.expectOne(req => req.url.includes('offshore-check')).flush({ is_offshore: false });
+
+      const result = await promise;
+      expect(result).toBe(false);
+    });
+
+    it('should return false when the API call fails', async () => {
+      flushInitialHttpRequests();
+
+      const promise = service.checkOffshore(50, -70);
+      httpMock.expectOne(req => req.url.includes('offshore-check')).error(new ErrorEvent('network error'));
+
+      const result = await promise;
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getAvailableFictionalHydros', () => {
+    it('should return an empty array when no hydro container exists', () => {
+      flushInitialHttpRequests();
+      expect(service.getAvailableFictionalHydros()).toEqual([]);
     });
   });
 });
