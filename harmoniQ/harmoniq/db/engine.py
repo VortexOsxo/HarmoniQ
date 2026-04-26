@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
 # Load .env from the project root (harmoniQ/)
-_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(_ENV_FILE)
 from sqlalchemy.orm import Session, sessionmaker
 
