@@ -97,7 +97,9 @@ init-db --reset --sqlite  # Réinitialise la base SQLite (db.sqlite)
 
 Démarrez le serveur web en mode debug :
 ```powershell
-launch-app --debug
+launch-app --debug #Démarre le serveur et le client avec postgresql
+launch-app --debug --sqlite #Démarre le serveur et le client avec sqlite
+launch-app --debug --postgre #Démarre le serveur et le client avec postgresql
 ```
 
 Une fois lancé, ouvrez votre navigateur et accédez à :
