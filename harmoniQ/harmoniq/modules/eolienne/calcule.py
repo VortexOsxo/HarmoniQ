@@ -208,9 +208,10 @@ def get_parc_power(parc: EolienneParc, meteo: pd.DataFrame) -> pd.DataFrame:
             parc.puissance_nominal,
         )
 
-    # Apply directional losses
-    directional_losses = apply_directional_losses(meteo["direction_vent"])
-    power_with_directional_losses = power_output_direction * directional_losses
+    # Directional losses are intentionally disabled:
+    # modern utility-scale turbines use yaw control to align with wind direction.
+    # Keep wake and icing losses, which remain the dominant directional/environmental effects.
+    power_with_directional_losses = power_output_direction
 
     # Apply wake losses
     wake_losses = apply_wake_losses(meteo["direction_vent"])

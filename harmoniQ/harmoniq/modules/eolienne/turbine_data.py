@@ -173,6 +173,7 @@ _enercon_e126_4 = {
 _enercon_e138_42 = {
     "cut_in_wind_speed": 2.5,
     "cut_out_wind_speed": 34,
+    "rated_power_kw": 4200.0,
     # Approximation fallback used when no manufacturer power curve is available.
     "rated_wind_speed": 12.0,
 }
@@ -741,6 +742,7 @@ _ge_15sle = {
 _ge_22_107 = {
     "cut_in_wind_speed": 3,
     "cut_out_wind_speed": 25,
+    "rated_power_kw": 2200.0,
     # Approximation fallback used when no manufacturer power curve is available.
     "rated_wind_speed": 12.0,
 }

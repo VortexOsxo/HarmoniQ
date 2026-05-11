@@ -1,0 +1,13 @@
+{
+  "scenario": "cer_2026_current",
+  "currency": "C$2025",
+  "capex_cad_per_kw": 1994.0,
+  "project_life_years": 25,
+  "fom_ratio": 0.022202820685023508,
+  "vom_cad_per_mwh": 0.0,
+  "om_turbine_share": 0.7623426911907066,
+  "om_site_share": 0.23765730880929337,
+  "n_ref_turbines": 71.42857142857143,
+  "capex_reference_source": "CER EF2026 Appendix 2 (onshore wind 2024: 1,994 C$2025/kW)",
+  "om_reference_source": "EIA 2024 Case 13 (FOM 33.06 $/kW-yr and O&M decomposition)"
+}

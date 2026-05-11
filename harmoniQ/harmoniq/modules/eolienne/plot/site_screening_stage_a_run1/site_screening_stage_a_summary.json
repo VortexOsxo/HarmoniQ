@@ -1,0 +1,63 @@
+{
+  "input": {
+    "start_year": 2015,
+    "end_year": 2024,
+    "mesh_km": 20.0,
+    "top_n": 10,
+    "park_mw": 200.0,
+    "price_per_mw": 2600000.0,
+    "min_samples": 500,
+    "economic_scenario": "cer_2026_current",
+    "project_life_years": null,
+    "bbox_nwse": [
+      62.0,
+      -79.8,
+      44.5,
+      -57.0
+    ],
+    "projected_crs": "EPSG:32198",
+    "era5_grid_selector": "floor_1p5",
+    "interpolation": "none",
+    "sample_source": "cache_preload_by_cell",
+    "quebec_boundary_filter": true,
+    "quebec_boundary_source": "C:\\Users\\emman\\OneDrive\\MEC8370 PI4\\hq\\HarmoniQ\\harmoniQ\\harmoniq\\modules\\reseau\\data\\MRC_GROUPE_9\\base_mrc_database.shp"
+  },
+  "summary": {
+    "mesh_point_count_before_quebec_filter": 7180,
+    "mesh_point_count": 3715,
+    "era5_unique_cell_count": 120,
+    "representative_point_count": 120,
+    "ranked_site_count": 120,
+    "top_n_requested": 10,
+    "top_n_returned": 10,
+    "best_site": {
+      "top_rank": 1,
+      "mesh_point_id": 2727,
+      "mesh_ix": 74,
+      "mesh_iy": 31,
+      "x_m": 580000.0,
+      "y_m": 740000.0,
+      "latitude": 50.3673883699425,
+      "longitude": -60.278398219688,
+      "longitude_norm": -60.278398219688,
+      "era5_latitude": 49.0,
+      "era5_longitude_norm": -60.3,
+      "era5_longitude": -60.3,
+      "distance_to_cell_center_km": 152.05479991054483,
+      "era5_cell_id": "49.0000_-60.3000",
+      "weibull_k": 2.283852582093756,
+      "weibull_c": 11.655340490626948,
+      "sample_count": 87600,
+      "weibull_method": "mle",
+      "best_model_by_energy": "E92-2.35",
+      "annual_energy_park_mwh": 1154088.079818662,
+      "total_annual_cost_per_mwh_cad": 22.61444998238989,
+      "om_cost_per_mwh_cad": 8.792281398423157,
+      "best_model_rank_total_cost": 5,
+      "best_model_rank_om_cost": 5,
+      "best_model_by_total_cost": "V117-3.45",
+      "min_total_annual_cost_per_mwh_cad": 22.01348312451314,
+      "ranking_model_count": 17
+    }
+  }
+}

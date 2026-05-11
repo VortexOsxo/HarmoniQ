@@ -235,6 +235,25 @@ def _build_turbine_power_curve(
     return _piecewise_power_curve(v_grid, cut_in, rated_speed, cut_out, rated_power_kw)
 
 
+def build_turbine_power_curve(
+    v_grid: np.ndarray,
+    turbine_data: dict,
+    rated_power_kw: float,
+    prefer_real_power_curve: bool = True,
+) -> np.ndarray:
+    """
+    Public wrapper around turbine power-curve construction.
+
+    This keeps curve logic centralized for all Weibull-based workflows.
+    """
+    return _build_turbine_power_curve(
+        v_grid=v_grid,
+        turbine_data=turbine_data,
+        rated_power_kw=rated_power_kw,
+        prefer_real_power_curve=prefer_real_power_curve,
+    )
+
+
 def compute_weibull_expected_power(
     parc: EolienneParc,
     turbine_data: dict,
@@ -257,7 +276,7 @@ def compute_weibull_expected_power(
     vmax = v_max if v_max is not None else max(50.0, cut_out * 1.5, weibull_c * 8.0)
     v = np.linspace(0.0, float(vmax), int(n_points))
     pdf = weibull_min.pdf(v, weibull_k, loc=0, scale=weibull_c)
-    p_turbine_kw = _build_turbine_power_curve(
+    p_turbine_kw = build_turbine_power_curve(
         v,
         turbine_data,
         float(parc.puissance_nominal),
