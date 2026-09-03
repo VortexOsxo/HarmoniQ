@@ -18,7 +18,7 @@ Pour obtenir le code source, vous devez cloner le dépôt Git :
 1. Ouvrez un terminal ou PowerShell dans le dossier où vous souhaitez installer le projet.
 2. Clonez le dépôt Git en exécutant la commande suivante :
 ```powershell
-git clone https://github.com/VortexOsxo/HarmoniQ.git
+git clone https://github.com/HarmoniQPolyMtl/HarmoniQ.git
 ```
 
 3. Déplacez-vous dans le dossier fraîchement cloné :
